@@ -37,5 +37,22 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/about">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="custom_about_timestamp_enabled"
+            app:summary="@string/custom_about_timestamp_enabled_sum"
+            app:title="@string/custom_about_timestamp_enabled" />
+
+        <EditTextPreference
+            app:key="custom_about_timestamp_value"
+            app:title="@string/custom_about_timestamp_value"
+            app:summary="@string/custom_about_timestamp_value_sum"
+            app:dependency="custom_about_timestamp_enabled" />
+
+    </PreferenceCategory>
+
 
 </PreferenceScreen>

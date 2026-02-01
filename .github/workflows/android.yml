@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [ "master", "feature/*" ]
+    branches: ["master", "feature/*"]
 jobs:
   build:
     permissions: write-all
@@ -13,8 +13,8 @@ jobs:
       - name: set up JDK 17
         uses: actions/setup-java@v5
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
           cache: gradle
 
       - name: Write key
@@ -68,7 +68,7 @@ jobs:
             cp app/build/outputs/apk/business/debug/app-business-debug.apk $output_business
             export LOG=$(cat changelog.txt)
             ESCAPED=$(python3 -c 'import json,os,urllib.parse; msg = json.dumps(os.getenv("LOG")); print(urllib.parse.quote(msg if len(msg) <= 1024 else json.dumps(os.getenv("COMMIT_URL"))))')
-          
+
             # Send WhatsApp variant
             curl "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHANNEL_ID}&media=%5B%7B%22type%22%3A%22document%22%2C%20%22media%22%3A%22attach%3A%2F%2Fwa%22%7D%2C%7B%22type%22%3A%22document%22%2C%20%22media%22%3A%22attach%3A%2F%2Fw4b%22%2C%22caption%22%3A${ESCAPED}%7D%5D" -F wa="@$output_whatsapp" -F w4b="@$output_business"
           fi
@@ -83,3 +83,4 @@ jobs:
             app/build/outputs/apk/whatsapp/debug/app-whatsapp-debug.apk
             app/build/outputs/apk/business/debug/app-business-debug.apk
           tag_name: debug-${{ env.SHORT_SHA }}
+          prerelease: ${{ github.ref != 'refs/heads/master' }}

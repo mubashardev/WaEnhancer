@@ -438,5 +438,9 @@
     <string name="disable_ads_sum">Blocks ads from appearing in WhatsApp</string>
     <string name="lockedchats_enhancer">Enhanced Locked Chats</string>
     <string name="lockedchats_enhancer_sum">Improve locked chats by hiding notifications and contacts from the contact list</string>
+    <string name="custom_about_timestamp_enabled">Custom About Timestamp</string>
+    <string name="custom_about_timestamp_enabled_sum">Experimental: Spoof the updated_at timestamp for Profile About</string>
+    <string name="custom_about_timestamp_value">Timestamp (ms)</string>
+    <string name="custom_about_timestamp_value_sum">Enter timestamp in milliseconds (e.g. 1678888888000) or check Google</string>
 
 </resources>

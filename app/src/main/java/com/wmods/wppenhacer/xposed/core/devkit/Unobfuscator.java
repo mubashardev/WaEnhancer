@@ -1654,6 +1654,46 @@ public class Unobfuscator {
         });
     }
 
+    public synchronized static Class<?> loadSetStatusJob(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
+            var jobClass = XposedHelpers.findClass("org.whispersystems.jobqueue.Job", classLoader);
+            // Search for class extending Job and containing "status" related strings
+            // "text_status_update" is a hypothesis, but "status" is safer if we filter
+            var classes = dexkit.findClass(FindClass.create().matcher(
+                    ClassMatcher.create()
+                            .superClass(jobClass.getName())
+                            .addUsingString("status")
+            ));
+
+             // Filter for the one that likely sets the status. 
+             // We can check if it has a String field for the status text.
+             for (var classData : classes) {
+                 var clazz = classData.getInstance(classLoader);
+                 // Check for fields: should have a String field (for the status text)
+                 // and maybe a long/int for timestamp if exists?
+                 // But simply returning the class that has "status" and extends Job might be enough to hook for now
+                 // and we can log it to verify.
+                 
+                 // To be more specific, SetStatusJob often uses "set_status" or similar in debug strings
+                 // if available. If not, we might need to rely on the presence of specific methods.
+                 
+                 // Let's try to find if it uses "text_status" or "about".
+                 // Use "status" for now.
+             }
+             
+             // Fallback: Return the first class found with "status" and "job" if specific strings fail
+             // But valid SetStatusJob usually interacts with the server, so it might use "xmpp" or similar.
+             
+             // Let's rely on finding a class that uses "status" and returns a Job.
+             if (!classes.isEmpty()) {
+                   // Return the first one for now, or filter further (e.g. searching for specific field patterns is safer)
+                   // But without the APK, I will return the likely candidate or throw.
+                   return classes.get(0).getInstance(classLoader);
+             }
+            throw new RuntimeException("SetStatusJob method not found");
+        });
+    }
+
     public synchronized static Class<?> loadExpirationClass(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
             var methods = findAllMethodUsingStrings(classLoader, StringMatchType.Contains, "software_forced_expiration");

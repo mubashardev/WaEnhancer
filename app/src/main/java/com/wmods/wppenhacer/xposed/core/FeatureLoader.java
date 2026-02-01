@@ -361,7 +361,9 @@ public class FeatureLoader {
                 GoogleTranslate.class,
                 ContactBlockedVerify.class,
                 LockedChatsEnhancer.class,
-                CallRecording.class
+                LockedChatsEnhancer.class,
+                CallRecording.class,
+                CustomAboutTimestamp.class
         };
         XposedBridge.log("Loading Plugins");
         var executorService = Executors.newWorkStealingPool(Math.min(Runtime.getRuntime().availableProcessors(), 4));

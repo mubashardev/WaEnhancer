@@ -64,6 +64,7 @@ import com.wmods.wppenhacer.xposed.features.others.AudioTranscript;
 import com.wmods.wppenhacer.xposed.features.others.Channels;
 import com.wmods.wppenhacer.xposed.features.others.ChatFilters;
 import com.wmods.wppenhacer.xposed.features.others.CopyStatus;
+import com.wmods.wppenhacer.xposed.features.others.CustomAboutTimestamp;
 import com.wmods.wppenhacer.xposed.features.others.DebugFeature;
 import com.wmods.wppenhacer.xposed.features.others.GoogleTranslate;
 import com.wmods.wppenhacer.xposed.features.others.GroupAdmin;

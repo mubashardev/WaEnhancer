@@ -193,54 +193,123 @@ section {
     margin-bottom: 5rem;
 }
 
-.section-title h2 {
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 800;
-    margin-bottom: 1rem;
-    letter-spacing: -0.02em;
+/* Background Floating Emojis */
+.floating-emojis {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.emoji {
+    position: absolute;
+    font-size: 2.5rem;
+    opacity: 0.05;
+    filter: grayscale(1) brightness(1.2);
+    -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.4);
+    color: transparent;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Hero Section Refinement */
+.hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5%;
+    position: relative;
+    padding-top: 100px;
+}
+
+.hero-content {
+    max-width: 1000px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero-logo {
+    width: 140px;
+    height: 140px;
+    margin-bottom: 2.5rem;
+    filter: drop-shadow(0 0 30px var(--primary-glow));
+    animation: pulse-logo 4s infinite ease-in-out;
+}
+
+@keyframes pulse-logo {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 30px var(--primary-glow)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 0 50px var(--primary-glow)); }
+}
+
+/* Features Section Redesign */
+#features {
+    padding: 8rem 5%;
 }
 
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2.5rem;
 }
 
 .feature-card {
     background: var(--glass);
     border: 1px solid var(--glass-border);
-    padding: 2.5rem;
-    border-radius: 24px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 3rem;
+    border-radius: 2.5rem;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(12px);
 }
 
 .feature-card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-10px);
     border-color: var(--primary);
-    background: rgba(15, 23, 42, 0.8);
-    box-shadow: var(--shadow-lg);
+    background: rgba(15, 23, 42, 0.85);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
 }
 
 .feature-card h3 {
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-main);
+    font-size: 1.6rem;
+    margin-bottom: 2.5rem;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.feature-card h3::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--primary), transparent);
 }
 
 .feature-card ul {
     list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .feature-card li {
-    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    color: var(--text-muted);
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    color: var(--text-muted);
-    font-size: 0.95rem;
+    gap: 0.85rem;
+    font-weight: 400;
 }
 
 .feature-card li::before {
@@ -250,37 +319,61 @@ section {
     background: var(--primary);
     border-radius: 50%;
     flex-shrink: 0;
+    box-shadow: 0 0 10px var(--primary);
 }
 
-/* Footer */
+/* Footer Styling Fix */
 footer {
-    padding: 5rem 5%;
+    padding: 6rem 5%;
     text-align: center;
     border-top: 1px solid var(--glass-border);
-    background: var(--secondary-bg);
+    background: #020617;
+}
+
+footer p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 2.5rem;
 }
 
 .footer-links {
-    margin-top: 2.5rem;
     display: flex;
     justify-content: center;
-    gap: 2.5rem;
+    gap: 3rem;
     flex-wrap: wrap;
 }
 
 .footer-links a {
     color: var(--text-muted);
     text-decoration: none;
-    font-size: 0.9rem;
-    transition: color 0.2s;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1.2rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
 }
 
 .footer-links a:hover {
     color: var(--primary);
+    background: rgba(34, 197, 94, 0.05);
+    border-color: var(--primary);
+    transform: translateY(-2px);
 }
 
-/* Responsive */
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    .hero h1 { font-size: 3rem; }
+    #features { padding: 6rem 1.5rem; }
+    .footer-links { gap: 1.5rem; }
+}
+
 @media (max-width: 640px) {
-    .hero-btns { flex-direction: column; }
-    .cta-button { width: 100%; text-align: center; }
+    header { padding: 1rem 1.5rem; }
+    .nav-link { display: none; }
+    .hero h1 { font-size: 2.5rem; }
+    .hero-logo { width: 100px; height: 100px; }
 }

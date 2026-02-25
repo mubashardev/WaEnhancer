@@ -1,8 +1,2 @@
-[ADDED]
-* Added Monet colors and some others for WAE
-* Added Monet colors for WhatsApp
-
 [Fixed]
-* Fixed compatibility with version 2.26.6.XX
-* Fixed high-quality profile picture download
-* Fixed bug in IGStatus where dragging would case the user to switch tabs.
+* Fixed compatibility with version 2.26.7.XX

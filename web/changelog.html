@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog | WaEnhancer</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="description" content="WaEnhancer release history — see what's new in each version.">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="changelog.css">
+</head>
+
+<body>
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="floating-emojis" id="emoji-container">
+        <!-- Generated via JS -->
+    </div>
+
+    <header>
+        <div class="logo-container">
+            <img src="logo.png" alt="WaEnhancer Logo" class="logo-img">
+            <a href="index.html" style="text-decoration:none;">
+                <span class="logo-text">WaEnhancer</span>
+            </a>
+        </div>
+        <nav style="display: flex; gap: 1rem; align-items: center;">
+            <a href="index.html#features" class="nav-link">Features</a>
+            <a href="changelog.html" class="nav-link nav-link--active">Changelog</a>
+            <a href="" id="nav-download-btn" class="cta-button-small" target="_blank" rel="nofollow noopener">Download
+                Latest</a>
+        </nav>
+    </header>
+
+    <main class="changelog-main">
+        <section class="changelog-hero">
+            <div class="changelog-hero-content">
+                <div class="changelog-badge">Release History</div>
+                <h1>Changelog</h1>
+                <p>Every update, every fix, every new feature — all in one place.</p>
+            </div>
+        </section>
+
+        <!-- Latest Download Banner -->
+        <div class="latest-banner" id="latest-banner" style="display:none;">
+            <div class="latest-banner-inner">
+                <div class="latest-banner-left">
+                    <div class="latest-tag">Latest</div>
+                    <div>
+                        <div class="latest-version" id="latest-version">—</div>
+                        <div class="latest-date" id="latest-date">—</div>
+                    </div>
+                </div>
+                <a href="" id="latest-download-btn" class="cta-button" target="_blank" rel="nofollow noopener">
+                    ↓ Download Latest
+                </a>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="changelog-loading" id="changelog-loading">
+            <div class="spinner"></div>
+            <p>Fetching releases…</p>
+        </div>
+
+        <!-- Error State -->
+        <div class="changelog-error" id="changelog-error" style="display:none;">
+            <p>⚠️ Could not load releases. <a href="https://github.com/mubashardev/WaEnhancer/releases" target="_blank"
+                    rel="nofollow noopener">View on GitHub →</a></p>
+        </div>
+
+        <!-- Release List -->
+        <div class="changelog-list" id="changelog-list"></div>
+
+        <div class="changelog-footer-cta" id="changelog-footer-cta" style="display:none;">
+            <p>View all releases and source code on GitHub.</p>
+            <a href="https://github.com/mubashardev/WaEnhancer/releases" class="cta-button secondary-btn"
+                target="_blank" rel="nofollow noopener">All Releases on GitHub →</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2026 WaEnhancer. Built for the community.</p>
+        <div class="footer-links">
+            <a href="https://mubashar.dev" target="_blank" rel="noopener">Developer</a>
+            <a href="https://github.com/mubashardev/WaEnhancer" target="_blank" rel="nofollow noopener">GitHub</a>
+            <a href="https://www.youtube.com/watch?v=BIrojFtTGJ8" target="_blank" rel="nofollow noopener">Demo</a>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+    <script src="index.js"></script>
+    <script src="changelog.js"></script>
+</body>
+
+</html>

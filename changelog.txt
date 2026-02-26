@@ -1,2 +1,8 @@
 [Fixed]
-* Fixed compatibility with version 2.26.7.XX
+- Call recording filter (whitelist/blacklist) now works correctly
+- Call recording on loudspeaker now captures both sides of the conversation
+- Status download button now shows consistently
+- Sharing someone else's status now correctly carries the media to the composer
+- Anti-revoke now works in group chats
+
+Thanks @grkmcngns for detailed review and highlighting these issues.

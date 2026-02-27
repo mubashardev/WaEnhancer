@@ -18,7 +18,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@drawable/toolbar_background"
             app:title="@string/search_features_title"
-            app:titleTextColor="@color/text_on_gradient" />
+            app:titleTextColor="?attr/colorOnPrimary" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

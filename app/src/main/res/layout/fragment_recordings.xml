@@ -24,7 +24,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_close"
             android:contentDescription="@string/close"
-            app:tint="@color/text_on_gradient" />
+            app:tint="?attr/colorOnPrimary" />
 
         <TextView
             android:id="@+id/tv_selection_count"
@@ -33,7 +33,7 @@
             android:layout_weight="1"
             android:layout_marginStart="16dp"
             android:text="0 selected"
-            android:textColor="@color/text_on_gradient"
+            android:textColor="?attr/colorOnPrimary"
             android:textAppearance="?attr/textAppearanceSubtitle1" />
 
         <ImageButton
@@ -43,7 +43,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_agenda"
             android:contentDescription="@string/select_all"
-            app:tint="@color/text_on_gradient" />
+            app:tint="?attr/colorOnPrimary" />
 
         <ImageButton
             android:id="@+id/btn_share_selected"
@@ -52,7 +52,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_share"
             android:contentDescription="@string/share"
-            app:tint="@color/text_on_gradient" />
+            app:tint="?attr/colorOnPrimary" />
 
         <ImageButton
             android:id="@+id/btn_delete_selected"
@@ -61,7 +61,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_delete"
             android:contentDescription="@string/delete"
-            app:tint="@color/text_on_gradient" />
+            app:tint="?attr/colorOnPrimary" />
     </LinearLayout>
 
     <!-- Main content -->
@@ -129,7 +129,7 @@
             android:contentDescription="@string/sort_by"
             android:src="@android:drawable/ic_menu_sort_by_size"
             app:backgroundTint="?attr/colorPrimary"
-            app:tint="@color/text_on_gradient"
+            app:tint="?attr/colorOnPrimary"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>

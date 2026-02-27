@@ -17,7 +17,7 @@
             android:background="@drawable/toolbar_background"
             app:navigationIcon="@drawable/ic_back"
             app:title="@string/deleted_messages_title"
-            app:titleTextColor="@color/text_on_gradient" />
+            app:titleTextColor="?attr/colorOnPrimary" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

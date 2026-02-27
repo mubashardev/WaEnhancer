@@ -54,37 +54,37 @@
     </style>
 
     <style name="StatusCardStyle" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardCornerRadius">@dimen/card_radius_large</item>
-        <item name="cardElevation">@dimen/card_elevation_high</item>
+        <item name="cardCornerRadius">@dimen/card_radius_xl</item>
+        <item name="cardElevation">@dimen/card_elevation_low</item>
         <item name="android:layout_marginBottom">@dimen/spacing_medium</item>
-        <item name="contentPadding">@dimen/spacing_medium</item>
+        <item name="contentPadding">0dp</item>
     </style>
 
     <style name="StatusCardTitle">
         <item name="android:textAppearance">?textAppearanceTitleMedium</item>
         <item name="android:textColor">@color/text_on_gradient</item>
         <item name="android:fontFamily">sans-serif-medium</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">18sp</item>
     </style>
 
     <style name="StatusCardSummary">
         <item name="android:textAppearance">?textAppearanceBodyMedium</item>
         <item name="android:textColor">@color/text_on_gradient</item>
-        <item name="android:alpha">0.9</item>
+        <item name="android:alpha">0.85</item>
     </style>
 
     <style name="ModernButton" parent="Widget.Material3.Button">
         <item name="android:minHeight">@dimen/button_height</item>
         <item name="android:minWidth">@dimen/button_min_width</item>
-        <item name="cornerRadius">@dimen/card_radius_medium</item>
+        <item name="cornerRadius">@dimen/card_radius_xl</item>
         <item name="android:textAllCaps">false</item>
-        <item name="android:letterSpacing">0.02</item>
+        <item name="android:letterSpacing">0.0</item>
     </style>
 
     <style name="ModernButton.Outlined" parent="Widget.Material3.Button.OutlinedButton">
         <item name="android:minHeight">@dimen/button_height</item>
         <item name="android:minWidth">@dimen/button_min_width</item>
-        <item name="cornerRadius">@dimen/card_radius_medium</item>
+        <item name="cornerRadius">@dimen/card_radius_xl</item>
         <item name="android:textAllCaps">false</item>
     </style>
 
@@ -92,7 +92,7 @@
         <item name="itemActiveIndicatorStyle">@style/NavActiveIndicator</item>
         <item name="labelVisibilityMode">labeled</item>
         <item name="android:minHeight">@dimen/nav_bar_height</item>
-        <item name="elevation">@dimen/card_elevation_high</item>
+        <item name="elevation">0dp</item>
     </style>
 
     <style name="NavActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">

@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="220dp"
             android:fitsSystemWindows="true"
-            app:contentScrim="?attr/colorPrimary"
+            app:contentScrim="?attr/colorSurface"
             app:expandedTitleGravity="bottom|center_horizontal"
             app:expandedTitleMarginBottom="@dimen/spacing_medium"
             app:layout_scrollFlags="scroll|exitUntilCollapsed">
@@ -25,7 +25,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?attr/colorPrimary"
+                android:background="?attr/colorSurface"
                 android:fitsSystemWindows="true" />
 
             <LinearLayout
@@ -38,9 +38,10 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="88dp"
                     android:layout_height="88dp"
-                    app:cardCornerRadius="@dimen/card_radius_xl"
+                    app:cardCornerRadius="8dp"
                     app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp">
 
                     <ImageView
                         android:layout_width="match_parent"
@@ -56,8 +57,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/spacing_medium"
                     android:text="@string/app_name"
-                    android:textColor="@color/text_on_gradient"
-                    android:textSize="24sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="28sp"
+                    android:letterSpacing="-0.03"
                     android:textStyle="bold" />
 
                 <com.google.android.material.textview.MaterialTextView
@@ -65,9 +67,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/spacing_xs"
-                    android:alpha="0.85"
+                    android:alpha="1.0"
                     android:text="@string/developer"
-                    android:textColor="@color/text_on_gradient"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="15sp" />
 
             </LinearLayout>

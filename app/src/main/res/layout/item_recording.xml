@@ -9,9 +9,10 @@
     android:layout_marginTop="8dp"
     android:layout_marginBottom="8dp"
     app:cardBackgroundColor="?attr/colorSurface"
-    app:cardCornerRadius="@dimen/card_radius_xl"
+    app:cardCornerRadius="8dp"
     app:cardElevation="0dp"
-    app:strokeWidth="0dp"
+    app:strokeColor="?attr/colorOutlineVariant"
+    app:strokeWidth="1dp"
     android:checkable="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -34,14 +35,14 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="@drawable/circle_bg"
-            android:backgroundTint="?attr/colorSurfaceContainerHigh"
+            android:backgroundTint="?attr/colorSurfaceContainer"
             android:padding="10dp"
             android:src="@drawable/ic_recording"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/checkbox"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginStart="0dp"
-            app:tint="?attr/colorPrimary" />
+            app:tint="?attr/colorOnSurface" />
 
         <!-- Contact name (prominent) -->
         <TextView

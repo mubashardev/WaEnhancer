@@ -19,7 +19,7 @@
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:src="@drawable/ic_person"
-            app:tint="?attr/colorPrimary"
+            app:tint="?attr/colorOnSurface"
             android:background="@drawable/circle_bg"
             android:backgroundTint="?attr/colorSurfaceContainerHigh"
             android:padding="12dp" />
@@ -32,7 +32,7 @@
             android:layout_alignEnd="@id/avatar"
             android:src="@drawable/circle_bg"
             android:visibility="gone"
-            android:elevation="2dp"
+            android:elevation="0dp"
             android:background="@drawable/circle_bg"
             android:backgroundTint="?attr/colorSurfaceContainer"/>
     </RelativeLayout>

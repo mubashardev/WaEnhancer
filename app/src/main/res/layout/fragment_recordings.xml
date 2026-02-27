@@ -2,7 +2,8 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground">
 
     <!-- Selection Action Bar (initially hidden) -->
     <LinearLayout
@@ -10,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:background="?attr/colorPrimary"
+        android:elevation="4dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
@@ -22,7 +24,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_close"
             android:contentDescription="@string/close"
-            app:tint="?attr/colorOnPrimary" />
+            app:tint="@color/text_on_gradient" />
 
         <TextView
             android:id="@+id/tv_selection_count"
@@ -31,7 +33,7 @@
             android:layout_weight="1"
             android:layout_marginStart="16dp"
             android:text="0 selected"
-            android:textColor="?attr/colorOnPrimary"
+            android:textColor="@color/text_on_gradient"
             android:textAppearance="?attr/textAppearanceSubtitle1" />
 
         <ImageButton
@@ -41,7 +43,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_agenda"
             android:contentDescription="@string/select_all"
-            app:tint="?attr/colorOnPrimary" />
+            app:tint="@color/text_on_gradient" />
 
         <ImageButton
             android:id="@+id/btn_share_selected"
@@ -50,7 +52,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_share"
             android:contentDescription="@string/share"
-            app:tint="?attr/colorOnPrimary" />
+            app:tint="@color/text_on_gradient" />
 
         <ImageButton
             android:id="@+id/btn_delete_selected"
@@ -59,7 +61,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_delete"
             android:contentDescription="@string/delete"
-            app:tint="?attr/colorOnPrimary" />
+            app:tint="@color/text_on_gradient" />
     </LinearLayout>
 
     <!-- Main content -->
@@ -126,6 +128,8 @@
             android:layout_margin="16dp"
             android:contentDescription="@string/sort_by"
             android:src="@android:drawable/ic_menu_sort_by_size"
+            app:backgroundTint="?attr/colorPrimary"
+            app:tint="@color/text_on_gradient"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>

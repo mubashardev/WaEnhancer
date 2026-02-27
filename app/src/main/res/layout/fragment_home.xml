@@ -41,15 +41,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="@dimen/spacing_medium"
-                    app:cardCornerRadius="@dimen/card_radius_large"
-                    app:cardElevation="@dimen/card_elevation_high"
+                    app:cardCornerRadius="@dimen/card_radius_xl"
+                    app:cardElevation="0dp"
                     app:cardPreventCornerOverlap="false"
                     app:strokeWidth="0dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/gradient_primary"
+                        android:background="?attr/colorPrimary"
                         android:minHeight="@dimen/status_card_min_height"
                         android:padding="@dimen/spacing_medium">
 
@@ -88,15 +88,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="@dimen/spacing_medium"
-                    app:cardCornerRadius="@dimen/card_radius_large"
-                    app:cardElevation="@dimen/card_elevation_high"
+                    app:cardCornerRadius="@dimen/card_radius_xl"
+                    app:cardElevation="0dp"
                     app:cardPreventCornerOverlap="false"
                     app:strokeWidth="0dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/gradient_primary"
+                        android:background="?attr/colorPrimary"
                         android:minHeight="@dimen/status_card_min_height"
                         android:padding="@dimen/spacing_medium">
 
@@ -149,15 +149,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="@dimen/spacing_medium"
-                    app:cardCornerRadius="@dimen/card_radius_large"
-                    app:cardElevation="@dimen/card_elevation_high"
+                    app:cardCornerRadius="@dimen/card_radius_xl"
+                    app:cardElevation="0dp"
                     app:cardPreventCornerOverlap="false"
                     app:strokeWidth="0dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/gradient_primary"
+                        android:background="?attr/colorPrimary"
                         android:minHeight="@dimen/status_card_min_height"
                         android:padding="@dimen/spacing_medium">
 

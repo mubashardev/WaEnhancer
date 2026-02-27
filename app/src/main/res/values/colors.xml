@@ -22,41 +22,77 @@
     <color name="primary_background">@color/background_light</color>
     <color name="codeview_strings">#10B981</color>
 
-    <color name="gradient_start_primary">#0F172A</color>
-    <color name="gradient_end_primary">#334155</color>
-    <color name="gradient_start_success">#10B981</color>
-    <color name="gradient_end_success">#047857</color>
-    <color name="gradient_start_error">#EF4444</color>
-    <color name="gradient_end_error">#B91C1C</color>
-    <color name="gradient_start_warning">#F59E0B</color>
-    <color name="gradient_end_warning">#B45309</color>
+    <color name="md_theme_light_primary">#0055FF</color> <!-- Electric European Blue -->
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#E0E8FF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001855</color>
+    
+    <color name="md_theme_light_secondary">#4A4A4A</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#F0F0F0</color>
+    <color name="md_theme_light_onSecondaryContainer">#1A1A1A</color>
+    
+    <color name="md_theme_light_tertiary">#EFEFEF</color>
+    <color name="md_theme_light_onTertiary">#000000</color>
+    
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    
+    <color name="md_theme_light_background">#FFFFFF</color> <!-- Pure stark white -->
+    <color name="md_theme_light_onBackground">#0F0F0F</color> <!-- Almost black -->
+    <color name="md_theme_light_surface">#FFFFFF</color>
+    <color name="md_theme_light_onSurface">#0F0F0F</color>
+    <color name="md_theme_light_surfaceVariant">#F5F5F5</color>
+    <color name="md_theme_light_onSurfaceVariant">#49454F</color>
+    <color name="md_theme_light_outline">#E0E0E0</color> <!-- Subtle outline -->
+    <color name="md_theme_light_outlineVariant">#EAEAEA</color>
 
-    <color name="whatsapp_green">#25D366</color>
-    <color name="whatsapp_dark_green">#128C7E</color>
-    <color name="whatsapp_teal">#075E54</color>
+    <color name="md_theme_dark_primary">#3377FF</color> <!-- Slightly lighter blue for dark mode -->
+    <color name="md_theme_dark_onPrimary">#FFFFFF</color>
+    <color name="md_theme_dark_primaryContainer">#003399</color>
+    <color name="md_theme_dark_onPrimaryContainer">#DDE8FF</color>
+    
+    <color name="md_theme_dark_secondary">#B0B0B0</color>
+    <color name="md_theme_dark_onSecondary">#000000</color>
+    <color name="md_theme_dark_secondaryContainer">#222222</color>
+    <color name="md_theme_dark_onSecondaryContainer">#E0E0E0</color>
+    
+    <color name="md_theme_dark_tertiary">#1A1A1A</color>
+    <color name="md_theme_dark_onTertiary">#FFFFFF</color>
+    
+    <color name="md_theme_dark_error">#FFB4AB</color>
+    <color name="md_theme_dark_onError">#690005</color>
+    
+    <color name="md_theme_dark_background">#000000</color> <!-- True pitch black -->
+    <color name="md_theme_dark_onBackground">#F5F5F5</color> <!-- High contrast text -->
+    <color name="md_theme_dark_surface">#000000</color> <!-- True pitch black -->
+    <color name="md_theme_dark_onSurface">#F5F5F5</color>
+    <color name="md_theme_dark_surfaceVariant">#111111</color>
+    <color name="md_theme_dark_onSurfaceVariant">#CAC4D0</color>
+    <color name="md_theme_dark_outline">#333333</color> <!-- Subtle dark outline -->
+    <color name="md_theme_dark_outlineVariant">#222222</color>
 
-    <color name="surface_elevated">#FFFFFF</color>
-    <color name="surface_container">#F8FAFC</color>
-    <color name="surface_container_high">#F1F5F9</color>
+    <color name="surface_elevated">@color/md_theme_light_surfaceVariant</color>
+    <color name="surface_container">@color/md_theme_light_surface</color>
+    <color name="surface_container_high">@color/md_theme_light_surfaceVariant</color>
 
-    <color name="nav_indicator">#E2E8F0</color>
-    <color name="nav_background">#FFFFFF</color>
+    <color name="nav_indicator">?attr/colorSurfaceVariant</color>
+    <color name="nav_background">?attr/colorSurface</color>
 
-    <color name="ripple_color">#1A0F172A</color>
-
-    <color name="card_shadow">#0A0F172A</color>
+    <color name="ripple_color">#1A0055FF</color>
+    <color name="card_shadow">#0A000000</color>
 
     <color name="status_active">#10B981</color>
     <color name="status_inactive">#EF4444</color>
     <color name="status_warning">#F59E0B</color>
 
-    <color name="text_primary">#0F172A</color>
-    <color name="text_secondary">#475569</color>
-    <color name="text_tertiary">#94A3B8</color>
-    <color name="text_on_gradient">#FFFFFF</color>
+    <color name="text_primary">?attr/colorOnSurface</color>
+    <color name="text_secondary">?attr/colorOnSurfaceVariant</color>
+    <color name="text_tertiary">?attr/colorOnSurfaceVariant</color>
+    <color name="text_on_gradient">?attr/colorOnPrimary</color>
 
-    <color name="background_color">#F8FAFC</color>
-    <color name="surface_color">#FFFFFF</color>
-    <color name="primary_color">#0F172A</color>
-    <color name="selected_item_color">#1A0F172A</color>
+    <color name="background_color">?attr/colorBackground</color>
+    <color name="surface_color">?attr/colorSurface</color>
+    <color name="primary_color">?attr/colorPrimary</color>
+    <color name="selected_item_color">?attr/colorSurfaceVariant</color>
 </resources>

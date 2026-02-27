@@ -94,7 +94,7 @@ public class MainActivity extends BaseActivity {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 binding.navView.getMenu().getItem(position).setChecked(true);
-                
+
                 // Handle pending scroll after page change
                 if (pendingScrollToFragment == position && pendingScrollToPreference != null) {
                     final String scrollKey = pendingScrollToPreference;
@@ -102,7 +102,7 @@ public class MainActivity extends BaseActivity {
                     pendingScrollToPreference = null;
                     pendingScrollToFragment = -1;
                     pendingParentKey = null;
-                    
+
                     // Wait for fragment to be ready
                     binding.viewPager.postDelayed(() -> {
                         scrollToPreferenceInCurrentFragment(scrollKey, parentKey);
@@ -113,7 +113,7 @@ public class MainActivity extends BaseActivity {
         binding.viewPager.setCurrentItem(2, false);
         createMainDir();
         FilePicker.registerFilePicker(this);
-        
+
         // Handle incoming navigation from search
         handleIncomingIntent(getIntent());
     }
@@ -130,23 +130,24 @@ public class MainActivity extends BaseActivity {
         super.onNewIntent(intent);
         handleIncomingIntent(intent);
     }
-    
+
     private void handleIncomingIntent(Intent intent) {
-        if (intent == null) return;
-        
+        if (intent == null)
+            return;
+
         int fragmentPosition = intent.getIntExtra("navigate_to_fragment", -1);
         String preferenceKey = intent.getStringExtra("scroll_to_preference");
         String parentKey = intent.getStringExtra("parent_preference");
-        
+
         if (fragmentPosition >= 0 && preferenceKey != null) {
             // Store the scroll target
             pendingScrollToPreference = preferenceKey;
             pendingScrollToFragment = fragmentPosition;
             pendingParentKey = parentKey;
-            
+
             // Navigate to the fragment (onPageSelected will handle the scroll)
             binding.viewPager.setCurrentItem(fragmentPosition, false);
-            
+
             // Clear intent extras
             intent.removeExtra("navigate_to_fragment");
             intent.removeExtra("scroll_to_preference");
@@ -156,14 +157,15 @@ public class MainActivity extends BaseActivity {
             binding.viewPager.setCurrentItem(fragmentPosition, true);
         }
     }
-    
+
     private void scrollToPreferenceInCurrentFragment(String preferenceKey, String parentKey) {
         // Get the current fragment from the ViewPager
         int currentItem = binding.viewPager.getCurrentItem();
         Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + currentItem);
-        
-        if (fragment == null) return;
-        
+
+        if (fragment == null)
+            return;
+
         // Handle different fragment types
         if (fragment instanceof GeneralFragment || fragment instanceof HomeFragment) {
             // These fragments have child fragments
@@ -179,11 +181,11 @@ public class MainActivity extends BaseActivity {
             ((BasePreferenceFragment) fragment).scrollToPreference(preferenceKey);
         }
     }
-    
+
     private void navigateToSubFragmentAndScroll(Fragment parentFragment, String parentKey, String childPreferenceKey) {
         // Directly instantiate the sub-fragment
         Fragment subFragment = null;
-        
+
         switch (parentKey) {
             case "general_home":
                 subFragment = new GeneralFragment.HomeGeneralPreference();
@@ -195,14 +197,14 @@ public class MainActivity extends BaseActivity {
                 subFragment = new GeneralFragment.ConversationGeneralPreference();
                 break;
         }
-        
+
         if (subFragment != null && parentFragment.getView() != null) {
             final Fragment finalSubFragment = subFragment;
             // Replace the current child fragment
             parentFragment.getChildFragmentManager().beginTransaction()
-                .replace(R.id.frag_container, subFragment)
-                .commitNow();
-            
+                    .replace(R.id.frag_container, subFragment)
+                    .commitNow();
+
             // Wait for fragment to be ready, then scroll
             parentFragment.getView().postDelayed(() -> {
                 if (finalSubFragment instanceof BasePreferenceFragment) {
@@ -211,14 +213,14 @@ public class MainActivity extends BaseActivity {
             }, 400);
         }
     }
-    
+
     private void scrollInChildFragment(Fragment parentFragment, String preferenceKey) {
         Fragment childFragment = parentFragment.getChildFragmentManager().findFragmentById(R.id.frag_container);
         if (childFragment instanceof BasePreferenceFragment) {
             ((BasePreferenceFragment) childFragment).scrollToPreference(preferenceKey);
         }
     }
-    
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

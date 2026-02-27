@@ -1442,11 +1442,11 @@ public class Unobfuscator {
     public synchronized static Class loadDialogViewClass(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(loader, () -> {
             var id = Utils.getID("touch_outside", "id");
-            var result = dexkit.findMethod(
+            var results = dexkit.findMethod(
                     new FindMethod().matcher(new MethodMatcher().addUsingNumber(id).returnType(FrameLayout.class)));
-            if (result.isEmpty())
-                throw new RuntimeException("DialogView class not found");
-            return result.get(0).getDeclaredClass().getInstance(loader);
+            if (results.isEmpty())
+                throw new Exception("DialogView class not found");
+            return results.get(0).getDeclaredClass().getInstance(loader);
         });
     }
 
@@ -1503,15 +1503,16 @@ public class Unobfuscator {
 
     public synchronized static Method loadOnUpdateStatusChanged(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var clazz = getClassByName("UpdatesViewModel", loader);
-            var clazzData = dexkit.getClassData(clazz);
+            var clazzData = dexkit
+                    .findClass(FindClass.create().matcher(ClassMatcher.create().addUsingString("UpdatesViewModel/")))
+                    .firstOrNull();
             var methodSeduleche = XposedHelpers.findMethodBestMatch(Timer.class, "schedule", TimerTask.class,
                     long.class, long.class);
-            var result = dexkit.findMethod(new FindMethod().searchInClass(List.of(clazzData))
-                    .matcher(new MethodMatcher().addInvoke(DexSignUtil.getMethodDescriptor(methodSeduleche))));
+            var result = clazzData.findMethod(FindMethod.create()
+                    .matcher(MethodMatcher.create().addInvoke(DexSignUtil.getMethodDescriptor(methodSeduleche))));
             if (result.isEmpty())
-                result = dexkit.findMethod(new FindMethod().searchInClass(List.of(clazzData)).matcher(
-                        new MethodMatcher().addUsingString("UpdatesViewModel/Scheduled updates list refresh")));
+                result = dexkit.findMethod(FindMethod.create().matcher(
+                        MethodMatcher.create().addUsingString("UpdatesViewModel/Scheduled updates list refresh")));
             if (result.isEmpty())
                 throw new RuntimeException("OnUpdateStatusChanged method not found");
             return result.get(0).getMethodInstance(loader);

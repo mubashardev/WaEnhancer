@@ -49,7 +49,7 @@
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="?attr/colorPrimary"
+                        android:background="@android:color/transparent"
                         android:minHeight="@dimen/status_card_min_height"
                         android:padding="@dimen/spacing_medium">
 
@@ -59,7 +59,7 @@
                             android:layout_height="@dimen/status_icon_size"
                             android:layout_centerVertical="true"
                             app:srcCompat="@drawable/ic_round_check_circle_24"
-                            app:tint="@color/text_on_gradient"
+                            app:tint="?attr/colorPrimary"
                             tools:ignore="ContentDescription" />
 
                         <com.google.android.material.textview.MaterialTextView
@@ -96,7 +96,7 @@
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="?attr/colorPrimary"
+                        android:background="@android:color/transparent"
                         android:minHeight="@dimen/status_card_min_height"
                         android:padding="@dimen/spacing_medium">
 
@@ -106,7 +106,7 @@
                             android:layout_height="@dimen/status_icon_size"
                             android:layout_centerVertical="true"
                             app:srcCompat="@drawable/ic_round_check_circle_24"
-                            app:tint="@color/text_on_gradient"
+                            app:tint="?attr/colorPrimary"
                             tools:ignore="ContentDescription" />
 
                         <com.google.android.material.textview.MaterialTextView
@@ -138,7 +138,7 @@
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:padding="@dimen/spacing_xs"
                             android:src="@drawable/ic_reload"
-                            app:tint="@color/text_on_gradient"
+                            app:tint="?attr/colorOnSurfaceVariant"
                             tools:ignore="ContentDescription" />
 
                     </RelativeLayout>
@@ -157,7 +157,7 @@
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="?attr/colorPrimary"
+                        android:background="@android:color/transparent"
                         android:minHeight="@dimen/status_card_min_height"
                         android:padding="@dimen/spacing_medium">
 
@@ -167,7 +167,7 @@
                             android:layout_height="@dimen/status_icon_size"
                             android:layout_centerVertical="true"
                             app:srcCompat="@drawable/ic_round_check_circle_24"
-                            app:tint="@color/text_on_gradient"
+                            app:tint="?attr/colorPrimary"
                             tools:ignore="ContentDescription" />
 
                         <com.google.android.material.textview.MaterialTextView
@@ -199,7 +199,7 @@
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:padding="@dimen/spacing_xs"
                             android:src="@drawable/ic_reload"
-                            app:tint="@color/text_on_gradient"
+                            app:tint="?attr/colorOnSurfaceVariant"
                             tools:ignore="ContentDescription" />
 
                     </RelativeLayout>

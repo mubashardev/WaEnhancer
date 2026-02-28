@@ -51,331 +51,395 @@
                         android:layout_height="wrap_content"
                         android:background="@android:color/transparent"
                         android:minHeight="@dimen/status_card_min_height"
-                        android:padding="@dimen/spacing_medium">
+                        android:padding="24dp">
 
                         <ImageView
                             android:id="@+id/status_icon"
-                            android:layout_width="@dimen/status_icon_size"
-                            android:layout_height="@dimen/status_icon_size"
-                            android:layout_centerVertical="true"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
                             app:srcCompat="@drawable/ic_round_check_circle_24"
                             app:tint="?attr/colorPrimary"
                             tools:ignore="ContentDescription" />
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/status_title"
-                            style="@style/StatusCardTitle"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/spacing_medium"
-                            android:layout_toEndOf="@id/status_icon"
-                            android:text="@string/module_enabled" />
+                            android:layout_below="@id/status_icon"
+                            android:layout_marginTop="16dp"
+                            android:letterSpacing="-0.03"
+                            android:text="@string/module_enabled"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textStyle="bold" />
 
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/status_summary"
-                            style="@style/StatusCardSummary"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_below="@id/status_title"
-                            android:layout_alignStart="@id/status_title"
-                            android:layout_marginTop="@dimen/spacing_xs" />
+                            android:layout_marginTop="4dp"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                     </RelativeLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/status2"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_medium"
-                    app:cardCornerRadius="@dimen/card_radius_xl"
-                    app:cardElevation="0dp"
-                    app:cardPreventCornerOverlap="false"
-                    app:strokeWidth="0dp">
+                    android:orientation="horizontal"
+                    android:baselineAligned="false"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:layout_marginBottom="24dp">
 
-                    <RelativeLayout
-                        android:layout_width="match_parent"
+                    <!-- WhatsApp Status Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/status2"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:background="@android:color/transparent"
-                        android:minHeight="@dimen/status_card_min_height"
-                        android:padding="@dimen/spacing_medium">
-
-                        <ImageView
-                            android:id="@+id/status_icon2"
-                            android:layout_width="@dimen/status_icon_size"
-                            android:layout_height="@dimen/status_icon_size"
-                            android:layout_centerVertical="true"
-                            app:srcCompat="@drawable/ic_round_check_circle_24"
-                            app:tint="?attr/colorPrimary"
-                            tools:ignore="ContentDescription" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/status_title2"
-                            style="@style/StatusCardTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/spacing_medium"
-                            android:layout_marginEnd="@dimen/spacing_large"
-                            android:layout_toStartOf="@+id/reboot_btn"
-                            android:layout_toEndOf="@id/status_icon2"
-                            android:text="@string/whatsapp_in_background" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/status_summary1"
-                            style="@style/StatusCardSummary"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_below="@id/status_title2"
-                            android:layout_alignStart="@id/status_title2"
-                            android:layout_marginTop="@dimen/spacing_xs" />
-
-                        <ImageView
-                            android:id="@+id/reboot_btn"
-                            android:layout_width="@dimen/icon_size_large"
-                            android:layout_height="@dimen/icon_size_large"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:padding="@dimen/spacing_xs"
-                            android:src="@drawable/ic_reload"
-                            app:tint="?attr/colorOnSurfaceVariant"
-                            tools:ignore="ContentDescription" />
-
-                    </RelativeLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/status3"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_medium"
-                    app:cardCornerRadius="@dimen/card_radius_xl"
-                    app:cardElevation="0dp"
-                    app:cardPreventCornerOverlap="false"
-                    app:strokeWidth="0dp">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@android:color/transparent"
-                        android:minHeight="@dimen/status_card_min_height"
-                        android:padding="@dimen/spacing_medium">
-
-                        <ImageView
-                            android:id="@+id/status_icon3"
-                            android:layout_width="@dimen/status_icon_size"
-                            android:layout_height="@dimen/status_icon_size"
-                            android:layout_centerVertical="true"
-                            app:srcCompat="@drawable/ic_round_check_circle_24"
-                            app:tint="?attr/colorPrimary"
-                            tools:ignore="ContentDescription" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/status_title3"
-                            style="@style/StatusCardTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/spacing_medium"
-                            android:layout_marginEnd="@dimen/spacing_large"
-                            android:layout_toStartOf="@+id/reboot_btn2"
-                            android:layout_toEndOf="@id/status_icon3"
-                            android:text="@string/business_in_background" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/status_summary3"
-                            style="@style/StatusCardSummary"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_below="@id/status_title3"
-                            android:layout_alignStart="@id/status_title3"
-                            android:layout_marginTop="@dimen/spacing_xs" />
-
-                        <ImageView
-                            android:id="@+id/reboot_btn2"
-                            android:layout_width="@dimen/icon_size_large"
-                            android:layout_height="@dimen/icon_size_large"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:padding="@dimen/spacing_xs"
-                            android:src="@drawable/ic_reload"
-                            app:tint="?attr/colorOnSurfaceVariant"
-                            tools:ignore="ContentDescription" />
-
-                    </RelativeLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/developer_warning_card"
-                    style="@style/CardInfoStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_medium"
-                    android:visibility="gone"
-                    app:cardBackgroundColor="?colorSecondaryContainer">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="@dimen/spacing_medium">
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="string/developer_warning_title"
-                            android:textAppearance="?textAppearanceTitleMedium"
-                            android:textColor="?colorOnSecondaryContainer" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_xs"
-                            android:text="string/developer_warning_summary"
-                            android:textAppearance="?textAppearanceBodyMedium"
-                            android:textColor="?colorOnSecondaryContainer" />
-
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/info_card"
-                    style="@style/CardInfoStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_medium"
-                    app:cardBackgroundColor="@color/surface_container">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="@dimen/spacing_medium">
-
-                        <com.google.android.material.textview.MaterialTextView
-                            style="@style/DeviceInfoDialogLabel"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/android_version" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/sdk"
-                            style="@style/DeviceInfoDialogValue"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            style="@style/DeviceInfoDialogLabel"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/device_name" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/device_name"
-                            style="@style/DeviceInfoDialogValue"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            style="@style/DeviceInfoDialogLabel"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/device_model" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/model_name"
-                            style="@style/DeviceInfoDialogValue"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/list_wpp_title"
-                            style="@style/DeviceInfoDialogLabel"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/list_wpp" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/list_wpp"
-                            style="@style/DeviceInfoDialogValue"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            style="@style/DeviceInfoDialogLabel"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/list_business" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/list_business"
-                            style="@style/DeviceInfoDialogValue"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    style="@style/CardInfoStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardBackgroundColor="@color/surface_container">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="@dimen/spacing_medium">
-
-                        <com.google.android.material.textview.MaterialTextView
-                            style="@style/DeviceInfoDialogLabel"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/backup_settings"
-                            android:textAlignment="center" />
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        app:cardCornerRadius="8dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="?attr/colorOutlineVariant"
+                        app:strokeWidth="1dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_small"
-                            android:orientation="horizontal">
+                            android:orientation="vertical"
+                            android:background="@android:color/transparent"
+                            android:padding="16dp">
+                            
+                            <RelativeLayout 
+                                android:layout_width="match_parent" 
+                                android:layout_height="wrap_content">
+                                
+                                <ImageView
+                                    android:id="@+id/status_icon2"
+                                    android:layout_width="32dp"
+                                    android:layout_height="32dp"
+                                    app:srcCompat="@drawable/ic_round_check_circle_24"
+                                    app:tint="?attr/colorPrimary" />
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/importBtn"
-                                style="@style/ModernButton.Outlined"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="@dimen/spacing_small"
-                                android:layout_weight="1"
-                                android:text="@string/import_settings" />
+                                <ImageView
+                                    android:id="@+id/reboot_btn"
+                                    android:layout_width="32dp"
+                                    android:layout_height="32dp"
+                                    android:layout_alignParentEnd="true"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:padding="4dp"
+                                    android:src="@drawable/ic_reload"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+                            </RelativeLayout>
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/exportBtn"
-                                style="@style/ModernButton"
-                                android:layout_width="0dp"
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/status_title2"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="@dimen/spacing_small"
-                                android:layout_weight="1"
-                                android:text="@string/export_settings" />
+                                android:layout_marginTop="16dp"
+                                android:text="@string/whatsapp_in_background"
+                                android:textAppearance="?attr/textAppearanceTitleMedium"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/status_summary1"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
 
                         </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/resetBtn"
-                            style="@style/ModernButton.Outlined"
+                    <!-- Business Status Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/status3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        app:cardCornerRadius="8dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="?attr/colorOutlineVariant"
+                        app:strokeWidth="1dp">
+
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_small"
-                            android:text="@string/reset_settings"
-                            app:strokeColor="?colorError" />
+                            android:orientation="vertical"
+                            android:background="@android:color/transparent"
+                            android:padding="16dp">
+                            
+                            <RelativeLayout 
+                                android:layout_width="match_parent" 
+                                android:layout_height="wrap_content">
+                                
+                                <ImageView
+                                    android:id="@+id/status_icon3"
+                                    android:layout_width="32dp"
+                                    android:layout_height="32dp"
+                                    app:srcCompat="@drawable/ic_round_check_circle_24"
+                                    app:tint="?attr/colorPrimary" />
+
+                                <ImageView
+                                    android:id="@+id/reboot_btn2"
+                                    android:layout_width="32dp"
+                                    android:layout_height="32dp"
+                                    android:layout_alignParentEnd="true"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:padding="4dp"
+                                    android:src="@drawable/ic_reload"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+                            </RelativeLayout>
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/status_title3"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp"
+                                android:text="@string/business_in_background"
+                                android:textAppearance="?attr/textAppearanceTitleMedium"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/status_summary3"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/developer_warning_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="?attr/colorErrorContainer"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Developer Warning"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnErrorContainer"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Features might be unstable."
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnErrorContainer" />
 
                     </LinearLayout>
-
                 </com.google.android.material.card.MaterialCardView>
+
+                <LinearLayout
+                    android:id="@+id/info_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="32dp">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="System Tracking"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
+                        android:textColor="?attr/colorPrimary"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Device Name -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingVertical="12dp">
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/device_name"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurface" />
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/device_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutlineVariant" />
+
+                    <!-- Device Model -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingVertical="12dp">
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/device_model"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurface" />
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/model_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutlineVariant" />
+
+                    <!-- Android Version -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingVertical="12dp">
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/android_version"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurface" />
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/sdk"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutlineVariant" />
+
+                    <!-- Target WhatsApp -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingVertical="12dp">
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/list_wpp_title"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/list_wpp"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurface" />
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/list_wpp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutlineVariant" />
+
+                    <!-- Target Business -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingVertical="12dp">
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/list_business"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurface" />
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/list_business"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Configuration &amp; Data"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
+                        android:textColor="?attr/colorPrimary"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/importBtn"
+                            style="@style/ModernButton.Outlined"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:paddingVertical="12dp"
+                            android:text="@string/import_settings" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/exportBtn"
+                            style="@style/ModernButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:paddingVertical="12dp"
+                            android:text="@string/export_settings" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/resetBtn"
+                        style="@style/ModernButton.Outlined"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:paddingVertical="12dp"
+                        android:text="@string/reset_settings"
+                        app:strokeColor="?attr/colorError"
+                        android:textColor="?attr/colorError" />
+
+                </LinearLayout>
 
             </LinearLayout>
         </rikka.widget.borderview.BorderNestedScrollView>

@@ -267,11 +267,7 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.header_menu, menu);
-        var powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
-            menu.findItem(R.id.batteryoptimization).setVisible(false);
-        }
+        // Menu items are handled by custom action buttons in the layout
         return true;
     }
 

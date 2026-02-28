@@ -21,7 +21,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textAppearance="?textAppearanceTitleMedium"
-            android:textColor="@color/text_primary"
+            android:textColor="?attr/colorOnSurface"
             app:layout_constraintBottom_toTopOf="@id/linearLayout2"
             app:layout_constraintEnd_toStartOf="@id/edit_button"
             app:layout_constraintStart_toStartOf="parent"
@@ -56,7 +56,7 @@
                 android:paddingEnd="@dimen/spacing_xs"
                 android:text="author:"
                 android:textAppearance="?textAppearanceBodySmall"
-                android:textColor="@color/text_secondary" />
+                android:textColor="?attr/colorOnSurfaceVariant" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/author"
@@ -64,7 +64,7 @@
                 android:layout_height="wrap_content"
                 android:text="unknown"
                 android:textAppearance="?textAppearanceBodySmall"
-                android:textColor="@color/text_secondary" />
+                android:textColor="?attr/colorOnSurfaceVariant" />
 
         </LinearLayout>
 

@@ -192,13 +192,10 @@ public class DeletedMessagesAdapter extends RecyclerView.Adapter<DeletedMessages
 
         // Selection Logic
         if (selectedItems.contains(message.getChatJid())) {
-            holder.itemView.setBackgroundColor(
-                    holder.itemView.getContext().getResources().getColor(R.color.selected_item_color, null)); // You
-                                                                                                              // might
-                                                                                                              // need to
-                                                                                                              // define
-                                                                                                              // this
-                                                                                                              // color
+            android.util.TypedValue outValue = new android.util.TypedValue();
+            holder.itemView.getContext().getTheme()
+                    .resolveAttribute(com.google.android.material.R.attr.colorSurfaceVariant, outValue, true);
+            holder.itemView.setBackgroundColor(outValue.data);
         } else {
             android.util.TypedValue outValue = new android.util.TypedValue();
             holder.itemView.getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue,

@@ -340,22 +340,42 @@
                     </LinearLayout>
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutlineVariant" />
 
-                    <!-- Target WhatsApp -->
+                    <!-- WhatsApp Version Info -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/list_wpp_title"
+                        android:minHeight="48dp"
+                        android:paddingVertical="12dp"
+                        android:gravity="center_vertical">
+                        <ImageView
+                            android:id="@+id/wpp_status_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="12dp"
+                            android:src="@drawable/ic_round_check_circle_24"
+                            app:tint="?attr/colorPrimary" />
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/list_wpp"
-                            android:textAppearance="?attr/textAppearanceBodyLarge"
-                            android:textColor="?attr/colorOnSurface" />
+                            android:orientation="vertical">
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="WhatsApp Version"
+                                android:textAppearance="?attr/textAppearanceBodyLarge"
+                                android:textColor="?attr/colorOnSurface" />
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/wpp_version_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Checking..."
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
                         <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/list_wpp"
+                            android:id="@+id/wpp_installed_version"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textAppearance="?attr/textAppearanceBodyLarge"
@@ -363,26 +383,56 @@
                     </LinearLayout>
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutlineVariant" />
 
-                    <!-- Target Business -->
+                    <!-- Business Version Info -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:paddingVertical="12dp">
-                        <com.google.android.material.textview.MaterialTextView
+                        android:minHeight="48dp"
+                        android:paddingVertical="12dp"
+                        android:gravity="center_vertical">
+                        <ImageView
+                            android:id="@+id/business_status_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="12dp"
+                            android:src="@drawable/ic_round_check_circle_24"
+                            app:tint="?attr/colorPrimary" />
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/list_business"
-                            android:textAppearance="?attr/textAppearanceBodyLarge"
-                            android:textColor="?attr/colorOnSurface" />
+                            android:orientation="vertical">
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Business Version"
+                                android:textAppearance="?attr/textAppearanceBodyLarge"
+                                android:textColor="?attr/colorOnSurface" />
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/business_version_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Checking..."
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
                         <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/list_business"
+                            android:id="@+id/business_installed_version"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textAppearance="?attr/textAppearanceBodyLarge"
                             android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
+                    
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/view_supported_versions_btn"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="View All Supported Versions →"
+                        android:textColor="?attr/colorPrimary" />
                 </LinearLayout>
 
                 <LinearLayout

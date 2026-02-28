@@ -41,13 +41,15 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-public class FileReaderPreference extends Preference implements Preference.OnPreferenceClickListener, FilePicker.OnFilePickedListener, FilePicker.OnUriPickedListener {
+public class FileReaderPreference extends Preference implements Preference.OnPreferenceClickListener,
+        FilePicker.OnFilePickedListener, FilePicker.OnUriPickedListener {
 
-    private static final String[] XML_MIME_TYPE = {"text/xml", "application/xml"};
+    private static final String[] XML_MIME_TYPE = { "text/xml", "application/xml" };
     private String xmlContent;
     private String filePath;
 
-    public FileReaderPreference(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public FileReaderPreference(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr,
+            int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context, attrs);
     }
@@ -64,17 +66,18 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void showAlertPermission() {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getContext());
-        builder.setTitle(R.string.storage_permission);
-        builder.setMessage(R.string.permission_storage);
-        builder.setPositiveButton(R.string.allow, (dialog, which) -> {
-            Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.setData(Uri.fromParts("package", getContext().getPackageName(), null));
-            getContext().startActivity(intent);
-        });
-        builder.setNegativeButton(R.string.deny, (dialog, which) -> dialog.dismiss());
-        builder.show();
+        com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showConfirmation(
+                getContext(),
+                getContext().getString(R.string.storage_permission),
+                getContext().getString(R.string.permission_storage),
+                getContext().getString(R.string.allow),
+                false,
+                () -> {
+                    Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.setData(Uri.fromParts("package", getContext().getPackageName(), null));
+                    getContext().startActivity(intent);
+                });
     }
 
     @Override
@@ -85,12 +88,14 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                ((Activity) getContext()).requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, 1);
+            if (ContextCompat.checkSelfPermission(getContext(),
+                    Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                ((Activity) getContext()).requestPermissions(new String[] { Manifest.permission.READ_MEDIA_IMAGES }, 1);
                 return true;
             }
-        } else if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ((Activity) getContext()).requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        } else if (ContextCompat.checkSelfPermission(getContext(),
+                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ((Activity) getContext()).requestPermissions(new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, 1);
             return true;
         }
 
@@ -136,7 +141,8 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
         }
     }
 
-    private void processXmlStream(InputStream inputStream, String filePath) throws ParserConfigurationException, IOException, SAXException, TransformerException {
+    private void processXmlStream(InputStream inputStream, String filePath)
+            throws ParserConfigurationException, IOException, SAXException, TransformerException {
         // Parse XML document
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();

@@ -1,15 +1,24 @@
 package com.wmods.wppenhacer.ui.helpers;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.LinearLayout;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.checkbox.MaterialCheckBox;
+import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
 import com.wmods.wppenhacer.R;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Global helper for showing professional bottom sheets throughout the app.
@@ -26,12 +35,14 @@ public class BottomSheetHelper {
     }
 
     /**
-     * Show a confirmation bottom sheet with a destructive (red) action button.
+     * Show a confirmation bottom sheet. If isDestructive is true, the action button
+     * is red.
      */
     public static void showConfirmation(Context context, String title, String message,
-            String confirmText, OnConfirmListener onConfirm) {
+            String confirmText, boolean isDestructive, OnConfirmListener onConfirm) {
         BottomSheetDialog dialog = createDialog(context);
-        View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_confirmation, null);
+        int layoutId = isDestructive ? R.layout.bottom_sheet_confirmation : R.layout.bottom_sheet_action;
+        View view = LayoutInflater.from(context).inflate(layoutId, null);
         dialog.setContentView(view);
 
         ((MaterialTextView) view.findViewById(R.id.bs_title)).setText(title);
@@ -53,9 +64,10 @@ public class BottomSheetHelper {
      * Show a confirmation with CharSequence message (for styled text).
      */
     public static void showConfirmation(Context context, String title, CharSequence message,
-            String confirmText, OnConfirmListener onConfirm) {
+            String confirmText, boolean isDestructive, OnConfirmListener onConfirm) {
         BottomSheetDialog dialog = createDialog(context);
-        View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_confirmation, null);
+        int layoutId = isDestructive ? R.layout.bottom_sheet_confirmation : R.layout.bottom_sheet_action;
+        View view = LayoutInflater.from(context).inflate(layoutId, null);
         dialog.setContentView(view);
 
         ((MaterialTextView) view.findViewById(R.id.bs_title)).setText(title);
@@ -119,6 +131,94 @@ public class BottomSheetHelper {
 
         // Auto-focus the input and show keyboard
         input.requestFocus();
+    }
+
+    public interface OnSingleChoiceListener {
+        void onChoice(int index, String value);
+    }
+
+    public interface OnMultiChoiceListener {
+        void onChoices(Set<String> values);
+    }
+
+    public static void showSingleChoice(Context context, String title, CharSequence[] entries,
+            CharSequence[] entryValues, String currentValue, OnSingleChoiceListener listener) {
+        BottomSheetDialog dialog = createDialog(context);
+        View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_options, null);
+        dialog.setContentView(view);
+
+        ((MaterialTextView) view.findViewById(R.id.bs_title)).setText(title);
+        LinearLayout container = view.findViewById(R.id.bs_options_container);
+
+        // Hide buttons for single choice, it acts immediately on click
+        view.findViewById(R.id.bs_buttons_container).setVisibility(View.GONE);
+
+        List<MaterialRadioButton> radioButtons = new ArrayList<>();
+        LayoutInflater inflater = LayoutInflater.from(context);
+
+        for (int i = 0; i < entries.length; i++) {
+            MaterialRadioButton rb = (MaterialRadioButton) inflater.inflate(R.layout.item_bs_single_choice, container,
+                    false);
+            rb.setText(entries[i]);
+            String val = entryValues[i].toString();
+            if (val.equals(currentValue)) {
+                rb.setChecked(true);
+            }
+            final int index = i;
+            rb.setOnClickListener(v -> {
+                for (MaterialRadioButton btn : radioButtons) {
+                    btn.setChecked(false);
+                }
+                rb.setChecked(true);
+                dialog.dismiss();
+                listener.onChoice(index, val);
+            });
+            radioButtons.add(rb);
+            container.addView(rb);
+        }
+
+        dialog.show();
+    }
+
+    public static void showMultiChoice(Context context, String title, CharSequence[] entries,
+            CharSequence[] entryValues, Set<String> currentValues, OnMultiChoiceListener listener) {
+        BottomSheetDialog dialog = createDialog(context);
+        View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_options, null);
+        dialog.setContentView(view);
+
+        ((MaterialTextView) view.findViewById(R.id.bs_title)).setText(title);
+        LinearLayout container = view.findViewById(R.id.bs_options_container);
+
+        LayoutInflater inflater = LayoutInflater.from(context);
+        List<MaterialCheckBox> checkBoxes = new ArrayList<>();
+
+        for (int i = 0; i < entries.length; i++) {
+            MaterialCheckBox cb = (MaterialCheckBox) inflater.inflate(R.layout.item_bs_multi_choice, container, false);
+            cb.setText(entries[i]);
+            String val = entryValues[i].toString();
+            if (currentValues != null && currentValues.contains(val)) {
+                cb.setChecked(true);
+            }
+            checkBoxes.add(cb);
+            container.addView(cb);
+        }
+
+        MaterialButton confirmBtn = view.findViewById(R.id.bs_confirm_btn);
+        confirmBtn.setText(android.R.string.ok);
+        confirmBtn.setOnClickListener(v -> {
+            Set<String> selected = new HashSet<>();
+            for (int i = 0; i < checkBoxes.size(); i++) {
+                if (checkBoxes.get(i).isChecked()) {
+                    selected.add(entryValues[i].toString());
+                }
+            }
+            dialog.dismiss();
+            listener.onChoices(selected);
+        });
+
+        view.findViewById(R.id.bs_cancel_btn).setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     /**

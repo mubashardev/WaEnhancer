@@ -36,6 +36,7 @@ public class App extends Application {
                 activity.getString(R.string.storage_permission),
                 activity.getString(R.string.permission_storage),
                 activity.getString(R.string.allow),
+                false,
                 () -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         Intent intent = new Intent(

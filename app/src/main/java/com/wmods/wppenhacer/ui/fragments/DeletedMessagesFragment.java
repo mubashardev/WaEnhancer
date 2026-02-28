@@ -190,6 +190,7 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
                 "Delete Chats?",
                 "Are you sure you want to delete " + selected.size() + " chat(s)? This cannot be undone.",
                 "Delete",
+                true,
                 () -> {
                     new Thread(() -> {
                         for (String jid : selected) {

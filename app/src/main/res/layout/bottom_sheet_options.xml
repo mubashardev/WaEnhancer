@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:background="@drawable/bottom_sheet_bg"
     android:orientation="vertical"
     android:paddingBottom="24dp">
@@ -17,54 +18,60 @@
 
     <!-- Title -->
     <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/bs_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:paddingHorizontal="24dp"
-        android:text="@string/theme_manager"
         android:textAppearance="?attr/textAppearanceTitleLarge"
         android:textColor="?attr/colorOnSurface"
         android:textStyle="bold" />
 
-    <ScrollView
+    <!-- Options List -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingHorizontal="16dp"
-        android:scrollbars="none">
+        android:requiresFadingEdge="vertical"
+        android:fadingEdgeLength="24dp">
 
         <LinearLayout
-            android:id="@+id/folder_list_container"
+            android:id="@+id/bs_options_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="8dp" />
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
+    <!-- Buttons -->
     <LinearLayout
+        android:id="@+id/bs_buttons_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_medium"
-        android:paddingHorizontal="24dp"
-        android:orientation="horizontal">
+        android:layout_marginTop="16dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/import_theme_button"
-            style="@style/ModernButton.Outlined"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/spacing_small"
-            android:layout_weight="1"
-            android:text="@string/import_theme" />
+            android:id="@+id/bs_confirm_btn"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/create_theme_button"
-            style="@style/ModernButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/spacing_small"
-            android:layout_weight="1"
-            android:text="@string/create_new_theme" />
+            android:id="@+id/bs_cancel_btn"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:text="@string/cancel"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="15sp" />
 
     </LinearLayout>
 

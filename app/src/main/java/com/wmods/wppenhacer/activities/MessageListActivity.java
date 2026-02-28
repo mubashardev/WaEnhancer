@@ -145,6 +145,7 @@ public class MessageListActivity extends BaseActivity implements MessageListAdap
                 "Delete Messages?",
                 "Are you sure you want to delete " + selected.size() + " message(s)?",
                 "Delete",
+                true,
                 () -> {
                     new Thread(() -> {
                         delMessageStore.deleteMessages(selected);

@@ -26,7 +26,8 @@
             app:titleCentered="false"
             app:titleTextAppearance="?attr/textAppearanceTitleLarge"
             app:titleTextColor="?attr/colorOnSurface"
-            app:navigationIconTint="?attr/colorOnSurface" />
+            app:navigationIconTint="?attr/colorOnSurface"
+            app:menu="@null" />
 
         <!-- Action buttons row (overlaid right side of toolbar) -->
         <LinearLayout

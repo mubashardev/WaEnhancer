@@ -6,15 +6,15 @@ import android.view.View;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 
+import com.wmods.wppenhacer.activities.base.BaseActivity;
 import com.google.android.material.textview.MaterialTextView;
 import com.wmods.wppenhacer.R;
 
 import java.util.Arrays;
 import java.util.Collections;
 
-public class SupportedVersionsActivity extends AppCompatActivity {
+public class SupportedVersionsActivity extends BaseActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

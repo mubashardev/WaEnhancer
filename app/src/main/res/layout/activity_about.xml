@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground"
@@ -209,12 +210,17 @@
                         android:layout_height="wrap_content"
                         android:text="@string/contributors" />
 
-                    <LinearLayout
-                        android:id="@+id/contributorsContainer"
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvContributors"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:orientation="vertical" />
+                        android:layout_marginTop="8dp"
+                        android:clipToPadding="false"
+                        android:nestedScrollingEnabled="false"
+                        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                        app:spanCount="5"
+                        tools:itemCount="5"
+                        tools:listitem="@layout/item_contributor" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

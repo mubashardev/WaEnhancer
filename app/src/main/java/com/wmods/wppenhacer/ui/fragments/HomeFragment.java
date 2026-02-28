@@ -328,10 +328,11 @@ public class HomeFragment extends BaseFragment {
 
         if (App.isOriginalPackage()) {
             checkPackageVersion(activity, FeatureLoader.PACKAGE_WPP, binding.wppInstalledVersion,
-                    binding.wppVersionStatus, binding.wppStatusIcon, R.array.supported_versions_wpp);
+                    binding.wppVersionStatus, binding.wppStatusIcon, binding.wppUnsupportedBtn,
+                    R.array.supported_versions_wpp);
         } else {
             // Hide WhatsApp section if not the original package flavor
-            View parent = (View) binding.wppInstalledVersion.getParent().getParent();
+            View parent = (View) binding.wppInstalledVersion.getParent().getParent().getParent();
             if (parent != null)
                 parent.setVisibility(View.GONE);
             View divider = (View) ((ViewGroup) parent.getParent())
@@ -341,7 +342,8 @@ public class HomeFragment extends BaseFragment {
         }
 
         checkPackageVersion(activity, FeatureLoader.PACKAGE_BUSINESS, binding.businessInstalledVersion,
-                binding.businessVersionStatus, binding.businessStatusIcon, R.array.supported_versions_business);
+                binding.businessVersionStatus, binding.businessStatusIcon, binding.businessUnsupportedBtn,
+                R.array.supported_versions_business);
     }
 
     private boolean isInstalled(String packageWpp) {
@@ -356,10 +358,13 @@ public class HomeFragment extends BaseFragment {
     private void checkPackageVersion(FragmentActivity activity, String packageName,
             com.google.android.material.textview.MaterialTextView versionView,
             com.google.android.material.textview.MaterialTextView statusView, android.widget.ImageView iconView,
+            View unsupportedBtnView,
             int supportedArrayResId) {
-        // Fallback to standard android colors to bypass custom theme attribute mapping
-        // issues
-        int colorPrimary = androidx.core.content.ContextCompat.getColor(activity, android.R.color.holo_blue_light);
+
+        android.util.TypedValue typedValue = new android.util.TypedValue();
+        activity.getTheme().resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
+        int colorPrimary = typedValue.data;
+
         int colorError = androidx.core.content.ContextCompat.getColor(activity, android.R.color.holo_red_light);
         int colorOutline = androidx.core.content.ContextCompat.getColor(activity, android.R.color.darker_gray);
 
@@ -372,6 +377,16 @@ public class HomeFragment extends BaseFragment {
             boolean isSupported = false;
             if (installedVersion != null) {
                 isSupported = supportedList.stream().anyMatch(s -> installedVersion.startsWith(s.replace(".xx", "")));
+            }
+
+            unsupportedBtnView.setVisibility(isSupported ? View.GONE : View.VISIBLE);
+            if (!isSupported) {
+                unsupportedBtnView.setOnClickListener(v -> {
+                    com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showInfo(
+                            activity,
+                            "Unsupported Version",
+                            "The installed WaEnhancer has no support for your installed version of WhatsApp. It may not work as expected. Please either update WaEnhancer, install a supported version of WhatsApp, or open an issue on GitHub.");
+                });
             }
 
             if (isSupported) {
@@ -388,6 +403,7 @@ public class HomeFragment extends BaseFragment {
         } catch (Exception e) {
             versionView.setText("Not Installed");
             statusView.setText("-");
+            unsupportedBtnView.setVisibility(View.GONE);
             iconView.setImageResource(R.drawable.ic_round_error_outline_24);
             iconView.setColorFilter(colorOutline);
         }

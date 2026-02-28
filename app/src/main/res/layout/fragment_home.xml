@@ -477,13 +477,35 @@
                                     android:textColor="?attr/colorOnSurfaceVariant" />
                             </LinearLayout>
 
-                            <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/wpp_installed_version"
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textAppearance="?attr/textAppearanceBodyMedium"
-                                android:textColor="?attr/colorOnSurface"
-                                android:textStyle="bold" />
+                                android:orientation="vertical"
+                                android:gravity="end">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/wpp_installed_version"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textStyle="bold" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/wpp_unsupported_btn"
+                                    style="@style/Widget.Material3.Button.TextButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:minHeight="0dp"
+                                    android:minWidth="0dp"
+                                    android:paddingHorizontal="8dp"
+                                    android:paddingVertical="4dp"
+                                    android:text="Why?"
+                                    android:textColor="?attr/colorError"
+                                    android:textSize="12sp"
+                                    android:visibility="gone" />
+                            </LinearLayout>
                         </LinearLayout>
 
                         <View
@@ -532,13 +554,35 @@
                                     android:textColor="?attr/colorOnSurfaceVariant" />
                             </LinearLayout>
 
-                            <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/business_installed_version"
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textAppearance="?attr/textAppearanceBodyMedium"
-                                android:textColor="?attr/colorOnSurface"
-                                android:textStyle="bold" />
+                                android:orientation="vertical"
+                                android:gravity="end">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/business_installed_version"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textStyle="bold" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/business_unsupported_btn"
+                                    style="@style/Widget.Material3.Button.TextButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:minHeight="0dp"
+                                    android:minWidth="0dp"
+                                    android:paddingHorizontal="8dp"
+                                    android:paddingVertical="4dp"
+                                    android:text="Why?"
+                                    android:textColor="?attr/colorError"
+                                    android:textSize="12sp"
+                                    android:visibility="gone" />
+                            </LinearLayout>
                         </LinearLayout>
 
                         <!-- View Supported Versions -->

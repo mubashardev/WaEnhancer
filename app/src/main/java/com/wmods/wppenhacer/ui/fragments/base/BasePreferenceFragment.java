@@ -199,6 +199,11 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(enabled);
         }
+        // Toggle action buttons visibility — hide when back button shows
+        var actionButtons = getActivity().findViewById(com.wmods.wppenhacer.R.id.action_buttons);
+        if (actionButtons != null) {
+            actionButtons.setVisibility(enabled ? View.GONE : View.VISIBLE);
+        }
     }
 
     /**

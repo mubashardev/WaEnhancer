@@ -114,6 +114,36 @@ public class MainActivity extends BaseActivity {
         createMainDir();
         FilePicker.registerFilePicker(this);
 
+        // Wire up custom header action buttons
+        binding.btnSearch.setOnClickListener(v -> {
+            var options = ActivityOptionsCompat.makeCustomAnimation(
+                    this, R.anim.slide_in_right, R.anim.slide_out_left);
+            startActivity(new Intent(this, SearchActivity.class), options.toBundle());
+        });
+
+        binding.btnAbout.setOnClickListener(v -> {
+            var options = ActivityOptionsCompat.makeCustomAnimation(
+                    this, R.anim.slide_in_right, R.anim.slide_out_left);
+            startActivity(new Intent(this, AboutActivity.class), options.toBundle());
+        });
+
+        binding.btnBattery.setOnClickListener(v -> {
+            if (batteryPermissionHelper.isBatterySaverPermissionAvailable(this, true)) {
+                batteryPermissionHelper.getPermission(this, true, true);
+            } else {
+                var intent = new Intent();
+                intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        // Hide battery button if already optimized
+        var powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
+            binding.btnBattery.setVisibility(android.view.View.GONE);
+        }
+
         // Handle incoming navigation from search
         handleIncomingIntent(getIntent());
     }

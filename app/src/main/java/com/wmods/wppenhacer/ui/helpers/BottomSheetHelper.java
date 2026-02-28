@@ -371,6 +371,8 @@ public class BottomSheetHelper {
 
             com.google.android.material.button.MaterialButton btnGithub = view.findViewById(R.id.bsGithubBtn);
             com.google.android.material.button.MaterialButton btnWebsite = view.findViewById(R.id.bsWebsiteBtn);
+            com.google.android.material.button.MaterialButton btnContributions = view
+                    .findViewById(R.id.bsContributionsBtn);
 
             tvName.setText(name);
 
@@ -395,8 +397,16 @@ public class BottomSheetHelper {
                     tvContributions.setVisibility(View.VISIBLE);
                     boolean hasPrev = hasLocation || followers > 0;
                     tvContributions.setText(hasPrev ? "• " + contributions + " commits" : contributions + " commits");
+
+                    btnContributions.setVisibility(View.VISIBLE);
+                    final String finalName = name;
+                    btnContributions.setOnClickListener(v -> {
+                        bottomSheet.dismiss();
+                        showContributions(context, login, finalName);
+                    });
                 } else {
                     tvContributions.setVisibility(View.GONE);
+                    btnContributions.setVisibility(View.GONE);
                 }
             }
 
@@ -462,6 +472,139 @@ public class BottomSheetHelper {
         } catch (Exception e) {
             e.printStackTrace();
             android.widget.Toast.makeText(context, "Failed to parse profile", android.widget.Toast.LENGTH_SHORT).show();
+            bottomSheet.dismiss();
+        }
+    }
+
+    private static void showContributions(Context context, String login, String displayName) {
+        BottomSheetDialog bottomSheet = createDialog(context);
+        View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_contributions, null);
+        bottomSheet.setContentView(view);
+
+        com.google.android.material.textview.MaterialTextView tvTitle = view.findViewById(R.id.bsContribTitle);
+        tvTitle.setText(displayName + "'s Contributions");
+
+        com.facebook.shimmer.ShimmerFrameLayout shimmerLayout = view.findViewById(R.id.bsContribShimmer);
+        View contentLayout = view.findViewById(R.id.bsContribContent);
+
+        shimmerLayout.setVisibility(View.VISIBLE);
+        shimmerLayout.startShimmer();
+        contentLayout.setVisibility(View.GONE);
+
+        bottomSheet.show();
+
+        android.content.SharedPreferences prefs = context.getSharedPreferences("github_user_cache",
+                Context.MODE_PRIVATE);
+        long lastFetch = prefs.getLong("repo_stats_time", 0);
+        String cachedJson = prefs.getString("repo_stats_json", null);
+
+        if (cachedJson != null && (System.currentTimeMillis() - lastFetch < 3600000)) {
+            parseAndPopulateContributions(context, view, bottomSheet, cachedJson, login);
+            return;
+        }
+
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url("https://api.github.com/repos/mubashardev/WaEnhancer/stats/contributors")
+                .header("User-Agent", "WaEnhancer-App")
+                .header("Accept", "application/vnd.github.v3+json")
+                .build();
+
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(@androidx.annotation.NonNull okhttp3.Call call,
+                    @androidx.annotation.NonNull java.io.IOException e) {
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                    if (cachedJson != null) {
+                        parseAndPopulateContributions(context, view, bottomSheet, cachedJson, login);
+                    } else {
+                        android.widget.Toast
+                                .makeText(context, "Failed to load contributions", android.widget.Toast.LENGTH_SHORT)
+                                .show();
+                        bottomSheet.dismiss();
+                    }
+                });
+            }
+
+            @Override
+            public void onResponse(@androidx.annotation.NonNull okhttp3.Call call,
+                    @androidx.annotation.NonNull okhttp3.Response response) throws java.io.IOException {
+
+                // GitHub stats API can return 202 Accepted if calculating
+                if (!response.isSuccessful() || response.body() == null || response.code() == 202) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                        if (cachedJson != null) {
+                            parseAndPopulateContributions(context, view, bottomSheet, cachedJson, login);
+                        } else {
+                            android.widget.Toast.makeText(context, "GitHub is calculating stats, try again later.",
+                                    android.widget.Toast.LENGTH_SHORT).show();
+                            bottomSheet.dismiss();
+                        }
+                    });
+                    return;
+                }
+
+                try {
+                    String json = response.body().string();
+                    prefs.edit()
+                            .putLong("repo_stats_time", System.currentTimeMillis())
+                            .putString("repo_stats_json", json)
+                            .apply();
+
+                    new android.os.Handler(android.os.Looper.getMainLooper())
+                            .post(() -> parseAndPopulateContributions(context, view, bottomSheet, json, login));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private static void parseAndPopulateContributions(Context context, View view, BottomSheetDialog bottomSheet,
+            String json, String login) {
+        try {
+            org.json.JSONArray jsonArray = new org.json.JSONArray(json);
+            int totalCommits = 0;
+            long linesAdded = 0;
+            long linesDeleted = 0;
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                org.json.JSONObject obj = jsonArray.getJSONObject(i);
+                org.json.JSONObject author = obj.optJSONObject("author");
+                if (author != null) {
+                    String authorLogin = author.optString("login");
+                    if (authorLogin.equalsIgnoreCase(login)) {
+                        totalCommits = obj.optInt("total", 0);
+                        org.json.JSONArray weeks = obj.optJSONArray("weeks");
+                        if (weeks != null) {
+                            for (int j = 0; j < weeks.length(); j++) {
+                                org.json.JSONObject week = weeks.getJSONObject(j);
+                                linesAdded += week.optLong("a", 0);
+                                linesDeleted += week.optLong("d", 0);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            com.google.android.material.textview.MaterialTextView tvTotal = view.findViewById(R.id.bsContribTotal);
+            com.google.android.material.textview.MaterialTextView tvAdded = view.findViewById(R.id.bsContribAdded);
+            com.google.android.material.textview.MaterialTextView tvDeleted = view.findViewById(R.id.bsContribDeleted);
+            com.facebook.shimmer.ShimmerFrameLayout shimmerLayout = view.findViewById(R.id.bsContribShimmer);
+            View contentLayout = view.findViewById(R.id.bsContribContent);
+
+            java.text.NumberFormat format = java.text.NumberFormat.getInstance();
+            tvTotal.setText(format.format(totalCommits));
+            tvAdded.setText("+ " + format.format(linesAdded));
+            tvDeleted.setText("- " + format.format(linesDeleted));
+
+            shimmerLayout.stopShimmer();
+            shimmerLayout.setVisibility(View.GONE);
+            contentLayout.setVisibility(View.VISIBLE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            android.widget.Toast.makeText(context, "Failed to parse contributions", android.widget.Toast.LENGTH_SHORT)
+                    .show();
             bottomSheet.dismiss();
         }
     }

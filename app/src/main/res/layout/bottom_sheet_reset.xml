@@ -17,20 +17,13 @@
         android:layout_marginBottom="24dp"
         android:background="@drawable/badge_background" />
 
-    <!-- Warning Icon -->
-    <ImageView
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginBottom="16dp"
-        app:srcCompat="@drawable/ic_round_warning_24"
-        app:tint="?attr/colorError" />
-
     <!-- Title -->
     <com.google.android.material.textview.MaterialTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:text="@string/reset_settings"
+        android:gravity="center"
         android:textAppearance="?attr/textAppearanceHeadlineSmall"
         android:textColor="?attr/colorOnSurface"
         android:textStyle="bold" />
@@ -60,11 +53,7 @@
         android:textAllCaps="false"
         android:textColor="?attr/colorOnError"
         android:textStyle="bold"
-        app:cornerRadius="50dp"
-        app:icon="@drawable/ic_delete"
-        app:iconGravity="textStart"
-        app:iconSize="18dp"
-        app:iconTint="?attr/colorOnError" />
+        app:cornerRadius="50dp" />
 
     <!-- Cancel Button -->
     <com.google.android.material.button.MaterialButton

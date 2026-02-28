@@ -101,22 +101,33 @@
     </style>
 
     <style name="BottomNavStyle" parent="Widget.Material3.BottomNavigationView">
-        <item name="itemActiveIndicatorStyle">@style/NavActiveIndicator</item>
         <item name="labelVisibilityMode">labeled</item>
-        <item name="android:minHeight">@dimen/nav_bar_height</item>
+        <item name="android:minHeight">64dp</item>
         <item name="elevation">0dp</item>
-        <item name="android:background">?attr/colorSurface</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="itemIconSize">24dp</item>
+        <item name="itemIconTint">@color/bottom_nav_icon_color</item>
+        <item name="itemTextColor">@color/bottom_nav_text_color</item>
+        <item name="itemActiveIndicatorStyle">@style/NavActiveIndicator</item>
         <item name="itemTextAppearanceActive">@style/BottomNavActiveText</item>
+        <item name="itemTextAppearanceInactive">@style/BottomNavInactiveText</item>
     </style>
 
     <style name="NavActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">?attr/colorSurfaceVariant</item>
+        <item name="android:color">?attr/colorPrimaryContainer</item>
         <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item>
     </style>
-    
+
     <style name="BottomNavActiveText" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">11sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:fontFamily">@font/outfit</item>
+    </style>
+
+    <style name="BottomNavInactiveText" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">@font/outfit</item>
     </style>
 
 </resources>

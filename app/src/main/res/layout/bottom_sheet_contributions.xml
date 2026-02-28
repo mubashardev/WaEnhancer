@@ -8,23 +8,33 @@
     android:orientation="vertical"
     android:padding="24dp">
 
-    <!-- Handle -->
-    <View
-        android:layout_width="32dp"
-        android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="24dp"
-        android:background="@drawable/drag_handle_bg" />
-
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/bsContribTitle"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?attr/textAppearanceTitleLarge"
-        android:textColor="?attr/colorOnSurface"
-        android:textStyle="bold"
-        android:layout_marginBottom="24dp"
-        tools:text="John's Contributions" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
+
+        <ImageButton
+            android:id="@+id/bsContribBackBtn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back"
+            app:tint="?attr/colorOnSurface" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/bsContribTitle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textAppearance="?attr/textAppearanceTitleLarge"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold"
+            tools:text="John's Contributions" />
+    </LinearLayout>
 
     <!-- Shimmer Layout for parsing API data -->
     <com.facebook.shimmer.ShimmerFrameLayout
@@ -107,7 +117,7 @@
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Lines Added"
+                    android:text="Lines Written"
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -141,7 +151,7 @@
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Lines Deleted"
+                    android:text="Lines Updated"
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -151,9 +161,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                    android:textColor="#F44336"
+                    android:textColor="#F57C00"
                     android:textStyle="bold"
-                    tools:text="- 1,842" />
+                    tools:text="~ 1,842" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>

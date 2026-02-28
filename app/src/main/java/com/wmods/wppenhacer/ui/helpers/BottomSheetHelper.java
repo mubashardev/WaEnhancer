@@ -279,7 +279,7 @@ public class BottomSheetHelper {
         String cachedJson = prefs.getString(username + "_json", null);
 
         if (cachedJson != null && (System.currentTimeMillis() - lastFetch < 3600000)) {
-            parseAndPopulateProfile(context, view, bottomSheet, cachedJson, htmlUrl, contributions);
+            parseAndPopulateProfile(context, view, bottomSheet, cachedJson, htmlUrl, avatarUrl, contributions);
             return;
         }
 
@@ -295,7 +295,8 @@ public class BottomSheetHelper {
                     @androidx.annotation.NonNull java.io.IOException e) {
                 new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
                     if (cachedJson != null) {
-                        parseAndPopulateProfile(context, view, bottomSheet, cachedJson, htmlUrl, contributions);
+                        parseAndPopulateProfile(context, view, bottomSheet, cachedJson, htmlUrl, avatarUrl,
+                                contributions);
                     } else {
                         android.widget.Toast
                                 .makeText(context, "Failed to load user profile", android.widget.Toast.LENGTH_SHORT)
@@ -311,7 +312,8 @@ public class BottomSheetHelper {
                 if (!response.isSuccessful() || response.body() == null) {
                     new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
                         if (cachedJson != null) {
-                            parseAndPopulateProfile(context, view, bottomSheet, cachedJson, htmlUrl, contributions);
+                            parseAndPopulateProfile(context, view, bottomSheet, cachedJson, htmlUrl, avatarUrl,
+                                    contributions);
                         } else {
                             android.widget.Toast
                                     .makeText(context, "Error fetching user", android.widget.Toast.LENGTH_SHORT).show();
@@ -329,7 +331,7 @@ public class BottomSheetHelper {
                             .apply();
 
                     new android.os.Handler(android.os.Looper.getMainLooper())
-                            .post(() -> parseAndPopulateProfile(context, view, bottomSheet, json, htmlUrl,
+                            .post(() -> parseAndPopulateProfile(context, view, bottomSheet, json, htmlUrl, avatarUrl,
                                     contributions));
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -339,7 +341,7 @@ public class BottomSheetHelper {
     }
 
     private static void parseAndPopulateProfile(Context context, View view, BottomSheetDialog bottomSheet, String json,
-            String fallbackHtmlUrl, int contributions) {
+            String fallbackHtmlUrl, String avatarUrl, int contributions) {
         try {
             org.json.JSONObject obj = new org.json.JSONObject(json);
             String name = obj.optString("name", "");
@@ -399,10 +401,11 @@ public class BottomSheetHelper {
                     tvContributions.setText(hasPrev ? "• " + contributions + " commits" : contributions + " commits");
 
                     btnContributions.setVisibility(View.VISIBLE);
+                    btnContributions.setVisibility(View.VISIBLE);
                     final String finalName = name;
                     btnContributions.setOnClickListener(v -> {
                         bottomSheet.dismiss();
-                        showContributions(context, login, finalName);
+                        showContributions(context, login, finalName, avatarUrl, htmlUrl, contributions);
                     });
                 } else {
                     tvContributions.setVisibility(View.GONE);
@@ -476,10 +479,17 @@ public class BottomSheetHelper {
         }
     }
 
-    private static void showContributions(Context context, String login, String displayName) {
+    private static void showContributions(Context context, String login, String displayName, String avatarUrl,
+            String htmlUrl, int contributions) {
         BottomSheetDialog bottomSheet = createDialog(context);
         View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_contributions, null);
         bottomSheet.setContentView(view);
+
+        android.widget.ImageButton btnBack = view.findViewById(R.id.bsContribBackBtn);
+        btnBack.setOnClickListener(v -> {
+            bottomSheet.dismiss();
+            showUserProfile(context, login, avatarUrl, htmlUrl, contributions);
+        });
 
         com.google.android.material.textview.MaterialTextView tvTitle = view.findViewById(R.id.bsContribTitle);
         tvTitle.setText(displayName + "'s Contributions");
@@ -596,7 +606,7 @@ public class BottomSheetHelper {
             java.text.NumberFormat format = java.text.NumberFormat.getInstance();
             tvTotal.setText(format.format(totalCommits));
             tvAdded.setText("+ " + format.format(linesAdded));
-            tvDeleted.setText("- " + format.format(linesDeleted));
+            tvDeleted.setText("~ " + format.format(linesDeleted));
 
             shimmerLayout.stopShimmer();
             shimmerLayout.setVisibility(View.GONE);

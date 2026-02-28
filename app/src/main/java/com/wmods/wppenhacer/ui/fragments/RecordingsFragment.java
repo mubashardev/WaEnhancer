@@ -212,6 +212,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
                 getString(R.string.delete_confirmation),
                 recording.getFile().getName(),
                 getString(android.R.string.yes),
+                true,
                 () -> {
                     if (recording.getFile().delete()) {
                         loadRecordings();
@@ -283,6 +284,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
                 getString(R.string.delete_confirmation),
                 getString(R.string.delete_multiple_confirmation, selected.size()),
                 getString(android.R.string.yes),
+                true,
                 () -> {
                     int deleted = 0;
                     for (Recording rec : selected) {

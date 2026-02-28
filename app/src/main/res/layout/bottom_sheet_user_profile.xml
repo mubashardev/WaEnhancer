@@ -30,8 +30,7 @@
             android:scaleType="centerCrop"
             android:background="?attr/colorSurfaceContainerHigh"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-            app:srcCompat="@drawable/ic_github"
-            app:tint="?attr/colorOnSurfaceVariant" />
+            app:srcCompat="@drawable/ic_github" />
 
         <LinearLayout
             android:layout_width="0dp"

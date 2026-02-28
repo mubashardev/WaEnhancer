@@ -319,7 +319,7 @@ public class BottomSheetHelper {
             chipTwitter.setOnClickListener(v -> {
                 try {
                     context.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse("https://twitter.com/" + twitter)));
+                            android.net.Uri.parse("https://x.com/" + twitter)));
                 } catch (Exception ignored) {
                 }
             });

@@ -126,11 +126,11 @@ public class HomeFragment extends BaseFragment {
         binding.status3.postDelayed(() -> {
             var anim = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
             binding.status3.startAnimation(anim);
-        }, 200);
+        }, 100);
 
         binding.infoCard.postDelayed(() -> {
             binding.infoCard.startAnimation(fadeIn);
-        }, 300);
+        }, 200);
     }
 
     private void animateClick(View view) {
@@ -151,14 +151,13 @@ public class HomeFragment extends BaseFragment {
         var supported_list = Arrays.asList(context.getResources().getStringArray(R.array.supported_versions_business));
         if (version != null && supported_list.stream().anyMatch(s -> version.startsWith(s.replace(".xx", "")))) {
             binding.statusSummary3.setText(getString(R.string.version_s, version));
-            binding.status3.getChildAt(0).setBackgroundResource(R.drawable.gradient_success);
+            binding.statusDotBusiness.setBackgroundResource(R.drawable.status_dot_active);
         } else {
             binding.statusSummary3.setText(getString(R.string.version_s_not_listed, version));
-            binding.status3.getChildAt(0).setBackgroundResource(R.drawable.gradient_warning);
+            binding.statusDotBusiness.setBackgroundResource(R.drawable.status_dot_inactive);
         }
         binding.rebootBtn2.setVisibility(View.VISIBLE);
         binding.statusSummary3.setVisibility(View.VISIBLE);
-        binding.statusIcon3.setImageResource(R.drawable.ic_round_check_circle_24);
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -169,14 +168,13 @@ public class HomeFragment extends BaseFragment {
 
         if (version != null && supported_list.stream().anyMatch(s -> version.startsWith(s.replace(".xx", "")))) {
             binding.statusSummary1.setText(getString(R.string.version_s, version));
-            binding.status2.getChildAt(0).setBackgroundResource(R.drawable.gradient_success);
+            binding.statusDotWpp.setBackgroundResource(R.drawable.status_dot_active);
         } else {
             binding.statusSummary1.setText(getString(R.string.version_s_not_listed, version));
-            binding.status2.getChildAt(0).setBackgroundResource(R.drawable.gradient_warning);
+            binding.statusDotWpp.setBackgroundResource(R.drawable.status_dot_inactive);
         }
         binding.rebootBtn.setVisibility(View.VISIBLE);
         binding.statusSummary1.setVisibility(View.VISIBLE);
-        binding.statusIcon2.setImageResource(R.drawable.ic_round_check_circle_24);
     }
 
     private void resetConfigs(Context context) {
@@ -279,11 +277,13 @@ public class HomeFragment extends BaseFragment {
             binding.statusIcon.setImageResource(R.drawable.ic_round_check_circle_24);
             binding.statusTitle.setText(R.string.module_enabled);
             binding.statusSummary.setText(String.format(getString(R.string.version_s), BuildConfig.VERSION_NAME));
-            binding.status.getChildAt(0).setBackgroundResource(R.drawable.gradient_success);
+            // Use hero glow enabled drawable
+            binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_enabled);
         } else {
             binding.statusIcon.setImageResource(R.drawable.ic_round_error_outline_24);
             binding.statusTitle.setText(R.string.module_disabled);
-            binding.status.getChildAt(0).setBackgroundResource(R.drawable.gradient_error);
+            // Use hero glow disabled drawable
+            binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_disabled);
             binding.statusSummary.setVisibility(View.GONE);
         }
         if (isInstalled(FeatureLoader.PACKAGE_WPP) && App.isOriginalPackage()) {
@@ -300,7 +300,6 @@ public class HomeFragment extends BaseFragment {
         checkWpp(activity);
         binding.deviceName.setText(Build.MANUFACTURER);
         binding.sdk.setText(String.valueOf(Build.VERSION.SDK_INT));
-        binding.modelName.setText(Build.DEVICE);
         binding.modelName.setText(Build.DEVICE);
 
         if (App.isOriginalPackage()) {
@@ -371,17 +370,15 @@ public class HomeFragment extends BaseFragment {
     }
 
     private void disableBusiness(FragmentActivity activity) {
-        binding.statusIcon3.setImageResource(R.drawable.ic_round_error_outline_24);
         binding.statusTitle3.setText(R.string.business_is_not_running_or_has_not_been_activated_in_lsposed);
-        binding.status3.getChildAt(0).setBackgroundResource(R.drawable.gradient_error);
+        binding.statusDotBusiness.setBackgroundResource(R.drawable.status_dot_inactive);
         binding.statusSummary3.setVisibility(View.GONE);
         binding.rebootBtn2.setVisibility(View.GONE);
     }
 
     private void disableWpp(FragmentActivity activity) {
-        binding.statusIcon2.setImageResource(R.drawable.ic_round_error_outline_24);
         binding.statusTitle2.setText(R.string.whatsapp_is_not_running_or_has_not_been_activated_in_lsposed);
-        binding.status2.getChildAt(0).setBackgroundResource(R.drawable.gradient_error);
+        binding.statusDotWpp.setBackgroundResource(R.drawable.status_dot_inactive);
         binding.statusSummary1.setVisibility(View.GONE);
         binding.rebootBtn.setVisibility(View.GONE);
     }

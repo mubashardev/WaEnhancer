@@ -230,10 +230,12 @@ public class MainActivity extends BaseActivity {
 
         if (subFragment != null && parentFragment.getView() != null) {
             final Fragment finalSubFragment = subFragment;
-            // Replace the current child fragment
+            // Replace the current child fragment with back stack so back button works
             parentFragment.getChildFragmentManager().beginTransaction()
                     .replace(R.id.frag_container, subFragment)
-                    .commitNow();
+                    .addToBackStack(null)
+                    .commit();
+            parentFragment.getChildFragmentManager().executePendingTransactions();
 
             // Wait for fragment to be ready, then scroll
             parentFragment.getView().postDelayed(() -> {

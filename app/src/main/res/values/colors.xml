@@ -4,59 +4,85 @@
     <color name="primary_text_material">@color/abc_primary_text_material_light</color>
 
     <color name="ic_launcher_foreground">#FFFFFF</color>
-    <color name="ic_launcher_background">#F48FB1</color>
+    <color name="ic_launcher_background">#0F172A</color>
 
-    <color name="material_state_yellow">@color/material_yellow_A400</color>
-    <color name="material_state_green">@color/material_green_A400</color>
-    <color name="material_state_red">@color/material_red_A400</color>
+    <color name="material_state_yellow">#F59E0B</color>
+    <color name="material_state_green">#10B981</color>
+    <color name="material_state_red">#EF4444</color>
 
-    <color name="codeview_background">#282C34</color>
-    <color name="codeview_selector">#61aeee</color>
-    <color name="codeview_units">#d19a66</color>
-    <color name="codeview_important">#d19a66</color>
-    <color name="codeview_properties">#56b6c2</color>
-    <color name="codeview_comments">#757875</color>
-    <color name="codeview_text">#FFFFFF</color>
-    <color name="codeview_css_properties">#cc7832</color>
-    <color name="codeview_nth_child">#e0c46c</color>
+    <color name="codeview_background">#0F172A</color>
+    <color name="codeview_selector">#E2E8F0</color>
+    <color name="codeview_units">#38BDF8</color>
+    <color name="codeview_important">#F43F5E</color>
+    <color name="codeview_properties">#A78BFA</color>
+    <color name="codeview_comments">#64748B</color>
+    <color name="codeview_text">#F8FAFC</color>
+    <color name="codeview_css_properties">#FBBF24</color>
+    <color name="codeview_nth_child">#34D399</color>
     <color name="primary_background">@color/background_light</color>
-    <color name="codeview_strings">#24D52B</color>
+    <color name="codeview_strings">#10B981</color>
 
-    <color name="gradient_start_primary">#26A69A</color>
-    <color name="gradient_end_primary">#00796B</color>
-    <color name="gradient_start_success">#4CAF50</color>
-    <color name="gradient_end_success">#1B5E20</color>
-    <color name="gradient_start_error">#FF5252</color>
-    <color name="gradient_end_error">#D50000</color>
-    <color name="gradient_start_warning">#FFD740</color>
-    <color name="gradient_end_warning">#FF6D00</color>
+    <color name="md_theme_light_primary">#0055FF</color> <!-- Electric European Blue -->
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#E0E8FF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001855</color>
+    
+    <color name="md_theme_light_secondary">#4A4A4A</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#F0F0F0</color>
+    <color name="md_theme_light_onSecondaryContainer">#1A1A1A</color>
+    
+    <color name="md_theme_light_tertiary">#EFEFEF</color>
+    <color name="md_theme_light_onTertiary">#000000</color>
+    
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    
+    <color name="md_theme_light_background">#FFFFFF</color> <!-- Pure stark white -->
+    <color name="md_theme_light_onBackground">#0F0F0F</color> <!-- Almost black -->
+    <color name="md_theme_light_surface">#FFFFFF</color>
+    <color name="md_theme_light_onSurface">#0F0F0F</color>
+    <color name="md_theme_light_surfaceVariant">#F5F5F5</color>
+    <color name="md_theme_light_onSurfaceVariant">#49454F</color>
+    <color name="md_theme_light_outline">#E0E0E0</color> <!-- Subtle outline -->
+    <color name="md_theme_light_outlineVariant">#EAEAEA</color>
 
-    <color name="whatsapp_green">#25D366</color>
-    <color name="whatsapp_dark_green">#128C7E</color>
-    <color name="whatsapp_teal">#075E54</color>
+    <color name="md_theme_dark_primary">#3377FF</color> <!-- Slightly lighter blue for dark mode -->
+    <color name="md_theme_dark_onPrimary">#FFFFFF</color>
+    <color name="md_theme_dark_primaryContainer">#003399</color>
+    <color name="md_theme_dark_onPrimaryContainer">#DDE8FF</color>
+    
+    <color name="md_theme_dark_secondary">#B0B0B0</color>
+    <color name="md_theme_dark_onSecondary">#000000</color>
+    <color name="md_theme_dark_secondaryContainer">#222222</color>
+    <color name="md_theme_dark_onSecondaryContainer">#E0E0E0</color>
+    
+    <color name="md_theme_dark_tertiary">#1A1A1A</color>
+    <color name="md_theme_dark_onTertiary">#FFFFFF</color>
+    
+    <color name="md_theme_dark_error">#FFB4AB</color>
+    <color name="md_theme_dark_onError">#690005</color>
+    
+    <color name="md_theme_dark_background">#000000</color> <!-- True pitch black -->
+    <color name="md_theme_dark_onBackground">#F5F5F5</color> <!-- High contrast text -->
+    <color name="md_theme_dark_surface">#000000</color> <!-- True pitch black -->
+    <color name="md_theme_dark_onSurface">#F5F5F5</color>
+    <color name="md_theme_dark_surfaceVariant">#111111</color>
+    <color name="md_theme_dark_onSurfaceVariant">#CAC4D0</color>
+    <color name="md_theme_dark_outline">#333333</color> <!-- Subtle dark outline -->
+    <color name="md_theme_dark_outlineVariant">#222222</color>
 
-    <color name="surface_elevated">#FAFAFA</color>
-    <color name="surface_container">#F5F5F5</color>
-    <color name="surface_container_high">#EEEEEE</color>
+    <color name="surface_elevated">@color/md_theme_light_surfaceVariant</color>
+    <color name="surface_container">@color/md_theme_light_surface</color>
+    <color name="surface_container_high">@color/md_theme_light_surfaceVariant</color>
 
-    <color name="nav_indicator">#E8F5E9</color>
-    <color name="nav_background">#FFFFFF</color>
+    <color name="ripple_color">#1A0055FF</color>
+    <color name="card_shadow">#0A000000</color>
 
-    <color name="ripple_color">#1F000000</color>
+    <color name="status_active">#10B981</color>
+    <color name="status_inactive">#EF4444</color>
+    <color name="status_warning">#F59E0B</color>
 
-    <color name="card_shadow">#14000000</color>
+    <color name="destructive_red">#DC2626</color>
 
-    <color name="status_active">#00E676</color>
-    <color name="status_inactive">#FF5252</color>
-    <color name="status_warning">#FFAB40</color>
-
-    <color name="text_primary">#212121</color>
-    <color name="text_secondary">#757575</color>
-    <color name="text_tertiary">#9E9E9E</color>
-    <color name="text_on_gradient">#FFFFFF</color>
-
-    <color name="background_color">#FAFAFA</color>
-    <color name="surface_color">#FFFFFF</color>
-    <color name="primary_color">#00796B</color>
-    <color name="selected_item_color">#4D2196F3</color> <!-- Light Blue with transparency -->
 </resources>

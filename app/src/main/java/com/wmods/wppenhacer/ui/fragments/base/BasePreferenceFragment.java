@@ -64,6 +64,57 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     @Override
+    public void onDisplayPreferenceDialog(androidx.preference.Preference preference) {
+        if (preference instanceof androidx.preference.ListPreference) {
+            androidx.preference.ListPreference listPref = (androidx.preference.ListPreference) preference;
+            com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showSingleChoice(
+                    getContext(),
+                    listPref.getDialogTitle() != null ? listPref.getDialogTitle().toString()
+                            : listPref.getTitle() != null ? listPref.getTitle().toString() : "",
+                    listPref.getEntries(),
+                    listPref.getEntryValues(),
+                    listPref.getValue(),
+                    (index, value) -> {
+                        if (listPref.callChangeListener(value)) {
+                            listPref.setValue(value);
+                        }
+                    });
+            return;
+        } else if (preference instanceof androidx.preference.MultiSelectListPreference) {
+            androidx.preference.MultiSelectListPreference multiPref = (androidx.preference.MultiSelectListPreference) preference;
+            com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showMultiChoice(
+                    getContext(),
+                    multiPref.getDialogTitle() != null ? multiPref.getDialogTitle().toString()
+                            : multiPref.getTitle() != null ? multiPref.getTitle().toString() : "",
+                    multiPref.getEntries(),
+                    multiPref.getEntryValues(),
+                    multiPref.getValues(),
+                    values -> {
+                        if (multiPref.callChangeListener(values)) {
+                            multiPref.setValues(values);
+                        }
+                    });
+            return;
+        } else if (preference instanceof androidx.preference.EditTextPreference) {
+            androidx.preference.EditTextPreference editPref = (androidx.preference.EditTextPreference) preference;
+            com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showInput(
+                    getContext(),
+                    editPref.getDialogTitle() != null ? editPref.getDialogTitle().toString()
+                            : editPref.getTitle() != null ? editPref.getTitle().toString() : "",
+                    editPref.getText(),
+                    getString(android.R.string.ok),
+                    value -> {
+                        if (editPref.callChangeListener(value)) {
+                            editPref.setText(value);
+                        }
+                    });
+            return;
+        }
+
+        super.onDisplayPreferenceDialog(preference);
+    }
+
+    @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String s) {
         Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
         App.getInstance().sendBroadcast(intent);
@@ -198,6 +249,11 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         var actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(enabled);
+        }
+        // Toggle action buttons visibility — hide when back button shows
+        var actionButtons = getActivity().findViewById(com.wmods.wppenhacer.R.id.action_buttons);
+        if (actionButtons != null) {
+            actionButtons.setVisibility(enabled ? View.GONE : View.VISIBLE);
         }
     }
 

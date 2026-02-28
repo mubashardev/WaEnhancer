@@ -43,7 +43,7 @@ import kotlin.io.FilesKt;
 import rikka.core.util.IOUtils;
 
 public class TextEditorActivity extends BaseActivity {
-    //    private CodeView codeView;
+    // private CodeView codeView;
     private String folderName;
     private ActivityResultLauncher<String> mGetContent;
     private ActivityResultLauncher<String> mExportFile;
@@ -71,9 +71,7 @@ public class TextEditorActivity extends BaseActivity {
         FrameLayout container = findViewById(R.id.webViewContainer);
         container.addView(webView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-        ));
-
+                FrameLayout.LayoutParams.MATCH_PARENT));
 
         mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(), this::onUriSelected);
         mExportFile = registerForActivityResult(new ActivityResultContracts.CreateDocument("*/*"), this::exportAsZip);
@@ -126,7 +124,7 @@ public class TextEditorActivity extends BaseActivity {
             if (cssCode.exists()) {
                 var code = FilesKt.readText(cssCode, Charset.defaultCharset());
                 updateWebViewContent(code);
-                //                codeView.setText(code);
+                // codeView.setText(code);
             } else {
                 cssCode.createNewFile();
             }
@@ -140,7 +138,6 @@ public class TextEditorActivity extends BaseActivity {
         getMenuInflater().inflate(R.menu.css_editor_menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
-
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -215,30 +212,22 @@ public class TextEditorActivity extends BaseActivity {
         return list;
     }
 
-
     public void onUriSelected(Uri uri) {
         if (uri == null) {
             return;
         }
-        var linearLayout = new LinearLayout(this);
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
-        linearLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
-        var input = new EditText(this);
-        input.setHint("example.png");
-        input.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        linearLayout.addView(input);
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.enter_image_file_name)
-                .setPositiveButton("OK", (dialog, which) -> {
-                    var fileName = input.getText().toString();
+        com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showInput(
+                this,
+                getString(R.string.enter_image_file_name),
+                "example.png",
+                "OK",
+                fileName -> {
                     if (fileName.endsWith(".png")) {
                         copyFromUri(fileName, uri);
                     } else {
                         Toast.makeText(this, R.string.error_image_name, Toast.LENGTH_SHORT).show();
                     }
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .setView(linearLayout).show();
+                });
     }
 
     public void copyFromUri(String fileName, Uri uri) {

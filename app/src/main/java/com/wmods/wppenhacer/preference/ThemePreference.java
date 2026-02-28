@@ -45,9 +45,8 @@ import kotlin.io.FilesKt;
 
 public class ThemePreference extends Preference implements FilePicker.OnUriPickedListener {
 
-
     public static File rootDirectory = new File(App.getWaEnhancerFolder(), "themes");
-    private androidx.appcompat.app.AlertDialog mainDialog;
+    private android.app.Dialog mainDialog;
 
     public ThemePreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -57,7 +56,9 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
     @Override
     protected void onClick() {
         super.onClick();
-        if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) || (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
+        if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager())
+                || (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && ContextCompat.checkSelfPermission(getContext(),
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
             App.showRequestStoragePermission((Activity) getContext());
         } else {
             showThemeDialog();
@@ -72,9 +73,17 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
 
         var folder_name = getSharedPreferences().getString(getKey(), null);
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
+        com.google.android.material.bottomsheet.BottomSheetDialog builder = new com.google.android.material.bottomsheet.BottomSheetDialog(
+                context);
         View dialogView = LayoutInflater.from(context).inflate(R.layout.preference_theme, null);
-        builder.setView(dialogView);
+        builder.setContentView(dialogView);
+        builder.setOnShowListener(d -> {
+            com.google.android.material.bottomsheet.BottomSheetDialog bsd = (com.google.android.material.bottomsheet.BottomSheetDialog) d;
+            View bottomSheet = bsd.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                bottomSheet.setBackgroundResource(android.R.color.transparent);
+            }
+        });
 
         LinearLayout folderListContainer = dialogView.findViewById(R.id.folder_list_container);
         Button newTheme = dialogView.findViewById(R.id.create_theme_button);
@@ -83,7 +92,7 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
         Button importTheme = dialogView.findViewById(R.id.import_theme_button);
         importTheme.setOnClickListener(v -> {
             FilePicker.setOnUriPickedListener(this);
-            FilePicker.fileCapture.launch(new String[]{"application/zip"});
+            FilePicker.fileCapture.launch(new String[] { "application/zip" });
         });
 
         for (String folder : folders) {
@@ -96,7 +105,8 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
             folderNameView.setText(folder);
 
             if (folder.equals(folder_name)) {
-                folderNameView.setTextColor(ContextCompat.getColor(context, R.color.md_theme_material_green_dark_onPrimaryContainer));
+                folderNameView.setTextColor(
+                        ContextCompat.getColor(context, R.color.md_theme_material_green_dark_onPrimaryContainer));
             }
             if (cssFile.exists()) {
                 var code = FilesKt.readText(cssFile, Charset.defaultCharset());
@@ -130,7 +140,8 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
             }
             folderListContainer.addView(itemView);
         }
-        mainDialog = builder.show();
+        mainDialog = builder;
+        mainDialog.show();
     }
 
     private List<String> getFolders() {
@@ -147,19 +158,16 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
     }
 
     private void showCreateNewThemeDialog() {
-        final Context context = getContext();
-        final EditText input = new EditText(context);
-        new MaterialAlertDialogBuilder(context)
-                .setTitle(R.string.new_theme_name)
-                .setView(input)
-                .setPositiveButton(R.string.create, (dialog, whichButton) -> {
-                    String folderName = input.getText().toString();
+        com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showInput(
+                getContext(),
+                getContext().getString(R.string.new_theme_name),
+                "Theme Name",
+                getContext().getString(R.string.create),
+                folderName -> {
                     if (!TextUtils.isEmpty(folderName)) {
                         createNewFolder(folderName);
                     }
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
+                });
     }
 
     private void createNewFolder(String folderName) {
@@ -185,10 +193,11 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
                 ZipEntry zipEntry;
 
                 String zipFileName = getZipFileName(uri);
-                
+
                 while ((zipEntry = zipInputStream.getNextEntry()) != null) {
                     var entryName = zipEntry.getName();
-                    var rootDirectory = new File(Environment.getExternalStorageDirectory(), "Download/WaEnhancer/themes");
+                    var rootDirectory = new File(Environment.getExternalStorageDirectory(),
+                            "Download/WaEnhancer/themes");
 
                     String folderName;
                     String targetPath;
@@ -201,12 +210,13 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
                         folderName = zipFileName;
                         targetPath = zipFileName + "/" + entryName;
                     }
-                    
+
                     var newFolder = new File(rootDirectory, folderName);
                     if (!newFolder.exists()) {
                         newFolder.mkdirs();
                     }
-                    if (entryName.endsWith("/")) continue;
+                    if (entryName.endsWith("/"))
+                        continue;
                     var file = new File(rootDirectory, targetPath);
                     Files.copy(zipInputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }

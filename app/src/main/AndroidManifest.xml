@@ -110,6 +110,12 @@
             android:parentActivityName=".activities.DeletedMessagesActivity" />
 
         <activity
+            android:name=".ui.fragments.SupportedVersionsActivity"
+            android:theme="@style/AppTheme"
+            android:exported="true"
+            android:parentActivityName=".activities.MainActivity" />
+
+        <activity
             android:name=".activities.ForceStartActivity"
             android:excludeFromRecents="true"
             android:exported="true"

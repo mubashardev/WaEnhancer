@@ -42,12 +42,14 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-public class FileSelectPreference extends Preference implements Preference.OnPreferenceClickListener, FilePicker.OnFilePickedListener, FilePicker.OnUriPickedListener {
+public class FileSelectPreference extends Preference implements Preference.OnPreferenceClickListener,
+        FilePicker.OnFilePickedListener, FilePicker.OnUriPickedListener {
 
     private String[] mineTypes;
     private boolean selectDirectory;
 
-    public FileSelectPreference(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public FileSelectPreference(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr,
+            int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context, attrs);
     }
@@ -64,17 +66,18 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void showAlertPermission() {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getContext());
-        builder.setTitle(R.string.storage_permission);
-        builder.setMessage(R.string.permission_storage);
-        builder.setPositiveButton(R.string.allow, (dialog, which) -> {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.setData(Uri.fromParts("package", getContext().getPackageName(), null));
-            getContext().startActivity(intent);
-        });
-        builder.setNegativeButton(R.string.deny, (dialog, which) -> dialog.dismiss());
-        builder.show();
+        com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showConfirmation(
+                getContext(),
+                getContext().getString(R.string.storage_permission),
+                getContext().getString(R.string.permission_storage),
+                getContext().getString(R.string.allow),
+                false,
+                () -> {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.setData(Uri.fromParts("package", getContext().getPackageName(), null));
+                    getContext().startActivity(intent);
+                });
     }
 
     @Override
@@ -83,16 +86,18 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
         if (getSharedPreferences().getBoolean("lite_mode", false)) {
             String packageName = "";
             PackageInfo packageInfo = null;
-            for (var possiblePackage : new String[]{"com.whatsapp", "com.whatsapp.w4b"}) {
+            for (var possiblePackage : new String[] { "com.whatsapp", "com.whatsapp.w4b" }) {
                 try {
-                    packageInfo = getContext().getApplicationContext().getPackageManager().getPackageInfo(possiblePackage, PackageManager.GET_ACTIVITIES);
+                    packageInfo = getContext().getApplicationContext().getPackageManager()
+                            .getPackageInfo(possiblePackage, PackageManager.GET_ACTIVITIES);
                     packageName = possiblePackage;
                     break;
                 } catch (PackageManager.NameNotFoundException ignored) {
                 }
             }
             if (packageInfo == null) {
-                Utils.showToast("Unable to find WhatsApp package, please select the folder manually in the next screen", Toast.LENGTH_LONG);
+                Utils.showToast("Unable to find WhatsApp package, please select the folder manually in the next screen",
+                        Toast.LENGTH_LONG);
                 return true;
             }
 
@@ -104,7 +109,9 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
                 }
             }
             if (className == null) {
-                Utils.showToast("Unable to find the activity to select folder, please select it manually in the next screen", Toast.LENGTH_LONG);
+                Utils.showToast(
+                        "Unable to find the activity to select folder, please select it manually in the next screen",
+                        Toast.LENGTH_LONG);
                 return true;
             }
             Intent intent = new Intent();
@@ -121,12 +128,14 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                ((Activity) getContext()).requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, 1);
+            if (ContextCompat.checkSelfPermission(getContext(),
+                    Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                ((Activity) getContext()).requestPermissions(new String[] { Manifest.permission.READ_MEDIA_IMAGES }, 1);
                 return true;
             }
-        } else if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ((Activity) getContext()).requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        } else if (ContextCompat.checkSelfPermission(getContext(),
+                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ((Activity) getContext()).requestPermissions(new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, 1);
             return true;
         }
 
@@ -138,7 +147,8 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
 
         if (mineTypes.length == 1 && mineTypes[0].contains("image")) {
             FilePicker.setOnUriPickedListener(this);
-            FilePicker.imageCapture.launch(new PickVisualMediaRequest.Builder().setMediaType(new ActivityResultContracts.PickVisualMedia.SingleMimeType(mineTypes[0])).build());
+            FilePicker.imageCapture.launch(new PickVisualMediaRequest.Builder()
+                    .setMediaType(new ActivityResultContracts.PickVisualMedia.SingleMimeType(mineTypes[0])).build());
             return true;
         }
         FilePicker.fileCapture.launch(mineTypes);
@@ -186,13 +196,12 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
         setOnPreferenceClickListener(this);
         var typedArray = context.getTheme().obtainStyledAttributes(
                 attrs, R.styleable.FileSelectPreference,
-                0, 0
-        );
+                0, 0);
         var attrsArray = typedArray.getTextArray(R.styleable.FileSelectPreference_android_entryValues);
         if (attrsArray != null) {
             mineTypes = Arrays.stream(attrsArray).map(String::valueOf).toArray(String[]::new);
         } else {
-            mineTypes = new String[]{"*/*"};
+            mineTypes = new String[] { "*/*" };
         }
         selectDirectory = typedArray.getBoolean(R.styleable.FileSelectPreference_directory, false);
         var prefs = PreferenceManager.getDefaultSharedPreferences(context);

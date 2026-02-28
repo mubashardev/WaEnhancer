@@ -49,21 +49,21 @@
 
     <style name="SectionTitle">
         <item name="android:textAppearance">?textAppearanceTitleLarge</item>
-        <item name="android:textColor">@color/text_primary</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:fontFamily">@font/outfit</item>
         <item name="android:paddingBottom">@dimen/spacing_small</item>
     </style>
 
     <style name="SectionDescription">
         <item name="android:textAppearance">?textAppearanceBodyMedium</item>
-        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
         <item name="android:lineSpacingMultiplier">1.3</item>
     </style>
 
     <style name="ToolbarTitleStyle" parent="TextAppearance.Material3.TitleLarge">
-        <item name="android:textColor">@color/text_on_gradient</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
         <item name="android:textSize">20sp</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">@font/outfit</item>
     </style>
 
     <style name="ModernToolbarStyle" parent="Widget.Material3.Toolbar">

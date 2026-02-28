@@ -31,21 +31,26 @@ public class App extends Application {
     private static final Handler MainHandler = new Handler(Looper.getMainLooper());
 
     public static void showRequestStoragePermission(Activity activity) {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
-        builder.setTitle(R.string.storage_permission);
-        builder.setMessage(R.string.permission_storage);
-        builder.setPositiveButton(R.string.allow, (dialog, which) -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.setData(Uri.fromParts("package", activity.getPackageName(), null));
-                activity.startActivity(intent);
-            } else {
-                ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
-            }
-        });
-        builder.setNegativeButton(R.string.deny, (dialog, which) -> dialog.dismiss());
-        builder.show();
+        com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showConfirmation(
+                activity,
+                activity.getString(R.string.storage_permission),
+                activity.getString(R.string.permission_storage),
+                activity.getString(R.string.allow),
+                false,
+                () -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        Intent intent = new Intent(
+                                android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.setData(Uri.fromParts("package", activity.getPackageName(), null));
+                        activity.startActivity(intent);
+                    } else {
+                        ActivityCompat.requestPermissions(activity,
+                                new String[] { android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                        android.Manifest.permission.READ_EXTERNAL_STORAGE },
+                                0);
+                    }
+                });
     }
 
     @SuppressLint("ApplySharedPref")
@@ -74,7 +79,6 @@ public class App extends Application {
         }
     }
 
-
     public static App getInstance() {
         return instance;
     }
@@ -86,7 +90,6 @@ public class App extends Application {
     public static Handler getMainHandler() {
         return MainHandler;
     }
-
 
     public void restartApp(String packageWpp) {
         Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".WHATSAPP.RESTART");
@@ -100,19 +103,20 @@ public class App extends Application {
         var res = context.getResources();
         var config = res.getConfiguration();
         config.setLocale(LocaleDelegate.getDefaultLocale());
-        //noinspection deprecation
+        // noinspection deprecation
         res.updateConfiguration(config, res.getDisplayMetrics());
     }
 
     public static File getWaEnhancerFolder() {
         var download = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         var waEnhancerFolder = new File(download, "WaEnhancer");
-        if (!waEnhancerFolder.exists()) waEnhancerFolder.mkdirs();
+        if (!waEnhancerFolder.exists())
+            waEnhancerFolder.mkdirs();
         return waEnhancerFolder;
     }
 
     public static boolean isOriginalPackage() {
-        //noinspection ConstantValue
+        // noinspection ConstantValue
         return BuildConfig.APPLICATION_ID.equals("com.wmods.wppenhacer");
     }
 

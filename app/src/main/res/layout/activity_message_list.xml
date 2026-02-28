@@ -2,21 +2,31 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
+        android:background="?attr/colorSurface"
         app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@drawable/toolbar_background"
+            android:layout_height="64dp"
+            android:background="@android:color/transparent"
             app:navigationIcon="@drawable/ic_back"
-            app:titleTextColor="@color/text_on_gradient" />
+            app:navigationIconTint="?attr/colorOnSurface"
+            app:titleCentered="true"
+            app:titleTextAppearance="?attr/textAppearanceTitleMedium"
+            app:titleTextColor="?attr/colorOnSurface" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:alpha="0.5"
+            android:background="?attr/colorOutlineVariant" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -40,9 +50,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawablePadding="16dp"
-            android:text="@string/no_deleted_messages"
             android:gravity="center"
+            android:text="@string/no_deleted_messages"
             android:textAppearance="?attr/textAppearanceHeadline6"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:visibility="gone"
             app:drawableTopCompat="@drawable/ic_delete"
             app:layout_constraintBottom_toBottomOf="parent"

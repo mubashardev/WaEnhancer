@@ -29,12 +29,12 @@ import java.util.concurrent.FutureTask;
 
 public class BaseFragment extends Fragment {
 
-
     public BaseFragmentBinding binding;
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         binding = BaseFragmentBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -77,12 +77,15 @@ public class BaseFragment extends Fragment {
         setupToolbar(toolbar, tipsView, title, menu, null);
     }
 
-    public void setupToolbar(Toolbar toolbar, View tipsView, String title, int menu, View.OnClickListener navigationOnClickListener) {
-        toolbar.setNavigationOnClickListener(navigationOnClickListener == null ? (v -> navigateUp()) : navigationOnClickListener);
+    public void setupToolbar(Toolbar toolbar, View tipsView, String title, int menu,
+            View.OnClickListener navigationOnClickListener) {
+        toolbar.setNavigationOnClickListener(
+                navigationOnClickListener == null ? (v -> navigateUp()) : navigationOnClickListener);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_24);
         toolbar.setTitle(title);
         toolbar.setTooltipText(title);
-        if (tipsView != null) tipsView.setTooltipText(title);
+        if (tipsView != null)
+            tipsView.setTooltipText(title);
         if (menu != -1) {
             toolbar.inflateMenu(menu);
             if (this instanceof MenuProvider self) {
@@ -110,7 +113,8 @@ public class BaseFragment extends Fragment {
         return task;
     }
 
-    public void showHint(@StringRes int res, boolean lengthShort, @StringRes int actionRes, View.OnClickListener action) {
+    public void showHint(@StringRes int res, boolean lengthShort, @StringRes int actionRes,
+            View.OnClickListener action) {
         showHint(App.getInstance().getString(res), lengthShort, App.getInstance().getString(actionRes), action);
     }
 
@@ -126,7 +130,8 @@ public class BaseFragment extends Fragment {
         var container = getView();
         if (isResumed() && container != null) {
             var snackbar = Snackbar.make(container, str, lengthShort ? Snackbar.LENGTH_SHORT : Snackbar.LENGTH_LONG);
-            if (actionStr != null && action != null) snackbar.setAction(actionStr, action);
+            if (actionStr != null && action != null)
+                snackbar.setAction(actionStr, action);
             snackbar.show();
             return;
         }
@@ -139,12 +144,17 @@ public class BaseFragment extends Fragment {
     }
 
     public void setDisplayHomeAsUpEnabled(boolean enabled) {
-        if (getActivity() == null) return;
+        if (getActivity() == null)
+            return;
         var actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(enabled);
         }
+        // Toggle action buttons visibility — hide when back button shows
+        var actionButtons = getActivity().findViewById(R.id.action_buttons);
+        if (actionButtons != null) {
+            actionButtons.setVisibility(enabled ? View.GONE : View.VISIBLE);
+        }
     }
-
 
 }

@@ -260,6 +260,7 @@ public class BottomSheetHelper {
         com.google.android.material.textview.MaterialTextView tvFollowers = view.findViewById(R.id.bsFollowers);
         com.google.android.material.textview.MaterialTextView tvBio = view.findViewById(R.id.bsBio);
 
+        android.widget.ImageView ivLocationIcon = view.findViewById(R.id.bsLocationIcon);
         View locationContainer = view.findViewById(R.id.bsLocationContainer);
         View chipsScroll = view.findViewById(R.id.bsChipsScroll);
 
@@ -282,9 +283,11 @@ public class BottomSheetHelper {
             locationContainer.setVisibility(View.VISIBLE);
 
             if (hasLocation) {
+                ivLocationIcon.setVisibility(View.VISIBLE);
                 tvLocation.setVisibility(View.VISIBLE);
                 tvLocation.setText(location);
             } else {
+                ivLocationIcon.setVisibility(View.GONE);
                 tvLocation.setVisibility(View.GONE);
             }
 

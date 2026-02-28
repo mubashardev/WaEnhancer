@@ -70,7 +70,7 @@ public class HomeFragment extends BaseFragment {
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
+            ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
 
         checkStateWpp(requireActivity());
@@ -100,6 +100,11 @@ public class HomeFragment extends BaseFragment {
         binding.resetBtn.setOnClickListener(view -> {
             animateClick(view);
             resetConfigs(this.getContext());
+        });
+
+        binding.viewSupportedVersionsBtn.setOnClickListener(view -> {
+            animateClick(view);
+            startActivity(new Intent(requireContext(), SupportedVersionsActivity.class));
         });
 
         startCardAnimations();
@@ -264,7 +269,7 @@ public class HomeFragment extends BaseFragment {
                 Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-        FilePicker.fileCapture.launch(new String[]{"application/json"});
+        FilePicker.fileCapture.launch(new String[] { "application/json" });
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -296,13 +301,24 @@ public class HomeFragment extends BaseFragment {
         binding.deviceName.setText(Build.MANUFACTURER);
         binding.sdk.setText(String.valueOf(Build.VERSION.SDK_INT));
         binding.modelName.setText(Build.DEVICE);
+        binding.modelName.setText(Build.DEVICE);
+
         if (App.isOriginalPackage()) {
-            binding.listWpp.setText(Arrays.toString(activity.getResources().getStringArray(R.array.supported_versions_wpp)));
+            checkPackageVersion(activity, FeatureLoader.PACKAGE_WPP, binding.wppInstalledVersion,
+                    binding.wppVersionStatus, binding.wppStatusIcon, R.array.supported_versions_wpp);
         } else {
-            binding.listWppTitle.setVisibility(View.GONE);
-            binding.listWpp.setVisibility(View.GONE);
+            // Hide WhatsApp section if not the original package flavor
+            View parent = (View) binding.wppInstalledVersion.getParent().getParent();
+            if (parent != null)
+                parent.setVisibility(View.GONE);
+            View divider = (View) ((ViewGroup) parent.getParent())
+                    .getChildAt(((ViewGroup) parent.getParent()).indexOfChild(parent) + 1);
+            if (divider != null)
+                divider.setVisibility(View.GONE);
         }
-        binding.listBusiness.setText(Arrays.toString(activity.getResources().getStringArray(R.array.supported_versions_business)));
+
+        checkPackageVersion(activity, FeatureLoader.PACKAGE_BUSINESS, binding.businessInstalledVersion,
+                binding.businessVersionStatus, binding.businessStatusIcon, R.array.supported_versions_business);
     }
 
     private boolean isInstalled(String packageWpp) {
@@ -312,6 +328,46 @@ public class HomeFragment extends BaseFragment {
         } catch (Exception ignored) {
         }
         return false;
+    }
+
+    private void checkPackageVersion(FragmentActivity activity, String packageName,
+            com.google.android.material.textview.MaterialTextView versionView,
+            com.google.android.material.textview.MaterialTextView statusView, android.widget.ImageView iconView,
+            int supportedArrayResId) {
+        // Fallback to standard android colors to bypass custom theme attribute mapping
+        // issues
+        int colorPrimary = androidx.core.content.ContextCompat.getColor(activity, android.R.color.holo_blue_light);
+        int colorError = androidx.core.content.ContextCompat.getColor(activity, android.R.color.holo_red_light);
+        int colorOutline = androidx.core.content.ContextCompat.getColor(activity, android.R.color.darker_gray);
+
+        try {
+            var packageInfo = App.getInstance().getPackageManager().getPackageInfo(packageName, 0);
+            var installedVersion = packageInfo.versionName;
+            versionView.setText(installedVersion);
+
+            var supportedList = Arrays.asList(activity.getResources().getStringArray(supportedArrayResId));
+            boolean isSupported = false;
+            if (installedVersion != null) {
+                isSupported = supportedList.stream().anyMatch(s -> installedVersion.startsWith(s.replace(".xx", "")));
+            }
+
+            if (isSupported) {
+                statusView.setText("Supported");
+                statusView.setTextColor(colorPrimary);
+                iconView.setImageResource(R.drawable.ic_round_check_circle_24);
+                iconView.setColorFilter(colorPrimary);
+            } else {
+                statusView.setText("Not Supported");
+                statusView.setTextColor(colorError);
+                iconView.setImageResource(R.drawable.ic_round_error_outline_24);
+                iconView.setColorFilter(colorError);
+            }
+        } catch (Exception e) {
+            versionView.setText("Not Installed");
+            statusView.setText("-");
+            iconView.setImageResource(R.drawable.ic_round_error_outline_24);
+            iconView.setColorFilter(colorOutline);
+        }
     }
 
     private void disableBusiness(FragmentActivity activity) {

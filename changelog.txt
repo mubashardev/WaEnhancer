@@ -1,17 +1,7 @@
 [ADDED]
-* Added Call Recording feature (Voice/Video as Audio) (Thanks to @mubashardev)
-* Call Recording Toast Toggle: Added option to show/hide recording toast notifications (default: off) (Thanks to @mubashardev)
-* [EXPERIMENTAL] Use "Force Restore Backup" option in Chat Backup settings to restore backups after login (Thanks to @mubashardev)
-* Global Search: Added comprehensive search functionality across all app settings and features. (Thanks to @mubashardev)
-* Recover deleted for me message: Added option to recover deleted for me messages. (Thanks to @mubashardev)
-* Added Contributors section in About page to acknowledge the efforts of contributors.
-* Added Support for WA/WB 2.26.7.xx
 
-[Fixed]
-- Call recording filter (whitelist/blacklist) now works correctly
-- Call recording on loudspeaker now captures both sides of the conversation
-- Status download button now shows consistently
-- Sharing someone else's status now correctly carries the media to the composer
-- Anti-revoke now works in group chats
-* Fixed profile picture download for old contacts
-* Optimized initial app load
+* Redesigned App Version display in Home page with Support status indicator
+* Replaced System Dialogs with modern Bottom Sheets globally (Confirmation, Info, Options, Input)
+* Upgraded Contributors section with a 3-column grid and a detailed visual Bottom Sheet (Name, Location, Followers, Bio, Social Links)
+* Added Detailed Contributions Sheet to compute and display precise code lines added/updated per contributor
+* Upgraded App typography across the board to Outfit (Aesthetic font)

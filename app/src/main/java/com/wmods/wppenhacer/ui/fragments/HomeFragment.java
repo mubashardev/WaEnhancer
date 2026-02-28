@@ -99,7 +99,7 @@ public class HomeFragment extends BaseFragment {
 
         binding.resetBtn.setOnClickListener(view -> {
             animateClick(view);
-            resetConfigs(this.getContext());
+            showResetBottomSheet();
         });
 
         binding.viewSupportedVersionsBtn.setOnClickListener(view -> {
@@ -175,6 +175,30 @@ public class HomeFragment extends BaseFragment {
         }
         binding.rebootBtn.setVisibility(View.VISIBLE);
         binding.statusSummary1.setVisibility(View.VISIBLE);
+    }
+
+    private void showResetBottomSheet() {
+        var context = requireContext();
+        var bottomSheetDialog = new com.google.android.material.bottomsheet.BottomSheetDialog(context);
+        var sheetView = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_reset, null);
+        bottomSheetDialog.setContentView(sheetView);
+
+        // Make background transparent so our custom shape shows
+        var bottomSheet = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (bottomSheet != null) {
+            bottomSheet.setBackgroundResource(android.R.color.transparent);
+        }
+
+        sheetView.findViewById(R.id.confirm_reset_btn).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            resetConfigs(context);
+        });
+
+        sheetView.findViewById(R.id.cancel_reset_btn).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.show();
     }
 
     private void resetConfigs(Context context) {

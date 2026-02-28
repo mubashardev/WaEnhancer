@@ -185,10 +185,12 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
         if (selected.isEmpty())
             return;
 
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Delete Chats?")
-                .setMessage("Are you sure you want to delete " + selected.size() + " chat(s)? This cannot be undone.")
-                .setPositiveButton("Delete", (dialog, which) -> {
+        com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showConfirmation(
+                requireContext(),
+                "Delete Chats?",
+                "Are you sure you want to delete " + selected.size() + " chat(s)? This cannot be undone.",
+                "Delete",
+                () -> {
                     new Thread(() -> {
                         for (String jid : selected) {
                             delMessageStore.deleteMessagesByChat(jid);
@@ -200,9 +202,7 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
                                     .show();
                         });
                     }).start();
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+                });
     }
 
     @Override

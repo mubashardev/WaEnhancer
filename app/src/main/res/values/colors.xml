@@ -83,4 +83,6 @@
     <color name="status_inactive">#EF4444</color>
     <color name="status_warning">#F59E0B</color>
 
+    <color name="destructive_red">#DC2626</color>
+
 </resources>

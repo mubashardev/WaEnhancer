@@ -94,14 +94,12 @@ public class MessageListActivity extends BaseActivity implements MessageListAdap
             onBackPressed();
             return true;
         } else if (item.getItemId() == R.id.action_info) {
-            new androidx.appcompat.app.AlertDialog.Builder(this)
-                    .setTitle("Chat Info")
-                    .setMessage(
-                            "This identifier (JID) or number is shown because the contact name could not be resolved at the time of deletion.\n\n"
-                                    +
-                                    "This happens if the contact is not saved in your address book or if the name wasn't available in the database when the message was processed.")
-                    .setPositiveButton("OK", null)
-                    .show();
+            com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showInfo(
+                    this,
+                    "Chat Info",
+                    "This identifier (JID) or number is shown because the contact name could not be resolved at the time of deletion.\n\n"
+                            +
+                            "This happens if the contact is not saved in your address book or if the name wasn't available in the database when the message was processed.");
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -142,10 +140,12 @@ public class MessageListActivity extends BaseActivity implements MessageListAdap
         if (selected.isEmpty())
             return;
 
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Delete Messages?")
-                .setMessage("Are you sure you want to delete " + selected.size() + " message(s)?")
-                .setPositiveButton("Delete", (dialog, which) -> {
+        com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showConfirmation(
+                this,
+                "Delete Messages?",
+                "Are you sure you want to delete " + selected.size() + " message(s)?",
+                "Delete",
+                () -> {
                     new Thread(() -> {
                         delMessageStore.deleteMessages(selected);
                         runOnUiThread(() -> {
@@ -153,9 +153,7 @@ public class MessageListActivity extends BaseActivity implements MessageListAdap
                             Toast.makeText(this, "Messages deleted", Toast.LENGTH_SHORT).show();
                         });
                     }).start();
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+                });
     }
 
     @Override

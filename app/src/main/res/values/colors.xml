@@ -76,9 +76,6 @@
     <color name="surface_container">@color/md_theme_light_surface</color>
     <color name="surface_container_high">@color/md_theme_light_surfaceVariant</color>
 
-    <color name="nav_indicator">?attr/colorSurfaceVariant</color>
-    <color name="nav_background">?attr/colorSurface</color>
-
     <color name="ripple_color">#1A0055FF</color>
     <color name="card_shadow">#0A000000</color>
 
@@ -86,13 +83,4 @@
     <color name="status_inactive">#EF4444</color>
     <color name="status_warning">#F59E0B</color>
 
-    <color name="text_primary">?attr/colorOnSurface</color>
-    <color name="text_secondary">?attr/colorOnSurfaceVariant</color>
-    <color name="text_tertiary">?attr/colorOnSurfaceVariant</color>
-    <color name="text_on_gradient">?attr/colorOnPrimary</color>
-
-    <color name="background_color">?attr/colorBackground</color>
-    <color name="surface_color">?attr/colorSurface</color>
-    <color name="primary_color">?attr/colorPrimary</color>
-    <color name="selected_item_color">?attr/colorSurfaceVariant</color>
 </resources>

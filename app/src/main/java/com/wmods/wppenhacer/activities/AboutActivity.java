@@ -135,6 +135,7 @@ public class AboutActivity extends BaseActivity {
                 c.login = obj.optString("login");
                 c.avatarUrl = obj.optString("avatar_url");
                 c.htmlUrl = obj.optString("html_url");
+                c.contributions = obj.optInt("contributions", 0);
                 fetchList.add(c);
             }
 
@@ -160,6 +161,7 @@ public class AboutActivity extends BaseActivity {
         String login;
         String avatarUrl;
         String htmlUrl;
+        int contributions;
     }
 
     private class ContributorAdapter extends RecyclerView.Adapter<ContributorAdapter.ViewHolder> {
@@ -177,11 +179,15 @@ public class AboutActivity extends BaseActivity {
 
             holder.ivAvatar.clearColorFilter(); // Remove default tint when loading real image
             com.bumptech.glide.Glide.with(holder.itemView.getContext())
-                    .load(c.avatarUrl)
+                    .load(new com.bumptech.glide.load.model.GlideUrl(c.avatarUrl,
+                            new com.bumptech.glide.load.model.LazyHeaders.Builder()
+                                    .addHeader("User-Agent", "WaEnhancer-App")
+                                    .build()))
                     .placeholder(R.drawable.ic_github)
                     .into(holder.ivAvatar);
 
-            holder.ivAvatar.setOnClickListener(v -> fetchAndShowUserProfile(c.login));
+            holder.ivAvatar.setOnClickListener(v -> com.wmods.wppenhacer.ui.helpers.BottomSheetHelper
+                    .showUserProfile(AboutActivity.this, c.login, c.avatarUrl, c.htmlUrl, c.contributions));
         }
 
         @Override
@@ -199,95 +205,4 @@ public class AboutActivity extends BaseActivity {
         }
     }
 
-    private void fetchAndShowUserProfile(String username) {
-        android.content.SharedPreferences prefs = getSharedPreferences("github_user_cache", MODE_PRIVATE);
-        long lastFetch = prefs.getLong(username + "_time", 0);
-        String cachedJson = prefs.getString(username + "_json", null);
-
-        if (cachedJson != null && (System.currentTimeMillis() - lastFetch < 3600000)) {
-            parseAndShowUserProfileBottomSheet(cachedJson);
-            return;
-        }
-
-        Request request = new Request.Builder()
-                .url("https://api.github.com/users/" + username)
-                .header("User-Agent", "WaEnhancer-App")
-                .header("Accept", "application/vnd.github.v3+json")
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull java.io.IOException e) {
-                runOnUiThread(() -> {
-                    if (cachedJson != null) {
-                        parseAndShowUserProfileBottomSheet(cachedJson);
-                    } else {
-                        Toast.makeText(AboutActivity.this, "Failed to load user profile", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws java.io.IOException {
-                if (!response.isSuccessful() || response.body() == null) {
-                    runOnUiThread(() -> {
-                        if (cachedJson != null) {
-                            parseAndShowUserProfileBottomSheet(cachedJson);
-                        } else {
-                            Toast.makeText(AboutActivity.this, "Error fetching user", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                    return;
-                }
-
-                try {
-                    String json = response.body().string();
-                    prefs.edit()
-                            .putLong(username + "_time", System.currentTimeMillis())
-                            .putString(username + "_json", json)
-                            .apply();
-
-                    runOnUiThread(() -> parseAndShowUserProfileBottomSheet(json));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
-    private void parseAndShowUserProfileBottomSheet(String json) {
-        try {
-            JSONObject obj = new JSONObject(json);
-            String name = obj.optString("name", "");
-            String login = obj.optString("login", "");
-            String avatarUrl = obj.optString("avatar_url", "");
-            String location = obj.optString("location", "");
-            String bio = obj.optString("bio", "");
-            boolean hireable = obj.optBoolean("hireable", false);
-            int followers = obj.optInt("followers", 0);
-            String twitter = obj.optString("twitter_username", "");
-            String blog = obj.optString("blog", "");
-            String htmlUrl = obj.optString("html_url", "");
-
-            if (name.isEmpty() || name.equals("null"))
-                name = login;
-
-            com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showUserProfile(
-                    this,
-                    avatarUrl,
-                    name,
-                    login,
-                    location,
-                    bio,
-                    twitter,
-                    blog,
-                    hireable,
-                    followers,
-                    htmlUrl);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error parsing user profile", Toast.LENGTH_SHORT).show();
-        }
-    }
 }

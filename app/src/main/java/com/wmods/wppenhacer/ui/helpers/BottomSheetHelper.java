@@ -235,4 +235,120 @@ public class BottomSheetHelper {
         });
         return dialog;
     }
+
+    public static void showUserProfile(
+            Context context,
+            String avatarUrl,
+            String name,
+            String username,
+            String location,
+            String bio,
+            String twitter,
+            String blog,
+            boolean hireable,
+            int followers,
+            String htmlUrl) {
+
+        BottomSheetDialog bottomSheet = createDialog(context);
+        View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_user_profile, null);
+        bottomSheet.setContentView(view);
+
+        com.google.android.material.imageview.ShapeableImageView ivAvatar = view.findViewById(R.id.bsAvatar);
+        com.google.android.material.textview.MaterialTextView tvName = view.findViewById(R.id.bsName);
+        com.google.android.material.textview.MaterialTextView tvUsername = view.findViewById(R.id.bsUsername);
+        com.google.android.material.textview.MaterialTextView tvLocation = view.findViewById(R.id.bsLocation);
+        com.google.android.material.textview.MaterialTextView tvFollowers = view.findViewById(R.id.bsFollowers);
+        com.google.android.material.textview.MaterialTextView tvBio = view.findViewById(R.id.bsBio);
+
+        View locationContainer = view.findViewById(R.id.bsLocationContainer);
+        View chipsScroll = view.findViewById(R.id.bsChipsScroll);
+
+        com.google.android.material.chip.Chip chipHireable = view.findViewById(R.id.chipHireable);
+        com.google.android.material.chip.Chip chipTwitter = view.findViewById(R.id.chipTwitter);
+
+        com.google.android.material.button.MaterialButton btnGithub = view.findViewById(R.id.bsGithubBtn);
+        com.google.android.material.button.MaterialButton btnWebsite = view.findViewById(R.id.bsWebsiteBtn);
+
+        com.bumptech.glide.Glide.with(context)
+                .load(avatarUrl)
+                .placeholder(R.drawable.ic_github)
+                .into(ivAvatar);
+
+        tvName.setText(name);
+        tvUsername.setText("@" + username);
+
+        boolean hasLocation = location != null && !location.isEmpty() && !location.equals("null");
+        if (hasLocation || followers > 0) {
+            locationContainer.setVisibility(View.VISIBLE);
+
+            if (hasLocation) {
+                tvLocation.setVisibility(View.VISIBLE);
+                tvLocation.setText(location);
+            } else {
+                tvLocation.setVisibility(View.GONE);
+            }
+
+            if (followers > 0) {
+                tvFollowers.setVisibility(View.VISIBLE);
+                tvFollowers.setText(followers + " followers");
+            } else {
+                tvFollowers.setVisibility(View.GONE);
+            }
+        }
+
+        if (bio != null && !bio.isEmpty() && !bio.equals("null")) {
+            tvBio.setVisibility(View.VISIBLE);
+            tvBio.setText(bio);
+        }
+
+        boolean hasChips = false;
+
+        if (hireable) {
+            hasChips = true;
+            chipHireable.setVisibility(View.VISIBLE);
+            chipHireable.setText("Open to hire");
+        }
+
+        if (twitter != null && !twitter.isEmpty() && !twitter.equals("null")) {
+            hasChips = true;
+            chipTwitter.setVisibility(View.VISIBLE);
+            chipTwitter.setText("@" + twitter);
+            chipTwitter.setOnClickListener(v -> {
+                try {
+                    context.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                            android.net.Uri.parse("https://twitter.com/" + twitter)));
+                } catch (Exception ignored) {
+                }
+            });
+        }
+
+        if (blog != null && !blog.isEmpty() && !blog.equals("null")) {
+            btnWebsite.setVisibility(View.VISIBLE);
+            btnWebsite.setOnClickListener(v -> {
+                String url = blog;
+                if (!url.startsWith("http"))
+                    url = "https://" + url;
+                try {
+                    context.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                            android.net.Uri.parse(url)));
+                } catch (Exception ignored) {
+                }
+            });
+        }
+
+        if (hasChips) {
+            chipsScroll.setVisibility(View.VISIBLE);
+        }
+
+        btnGithub.setOnClickListener(v -> {
+            try {
+                context.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse(htmlUrl)));
+                bottomSheet.dismiss();
+            } catch (Exception ignored) {
+            }
+        });
+
+        bottomSheet.show();
+    }
 }

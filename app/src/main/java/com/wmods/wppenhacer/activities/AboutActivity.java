@@ -174,14 +174,14 @@ public class AboutActivity extends BaseActivity {
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Contributor c = contributorList.get(position);
-            holder.tvUsername.setText("@" + c.login);
-            holder.ivAvatar.setImageResource(R.drawable.ic_github); // placeholder
-            holder.ivAvatar.clearColorFilter(); // Remove the placeholder tint to show the real image colored
-                                                // appropriately
 
-            AvatarLoader.loadAvatar(c.avatarUrl, holder.ivAvatar);
+            holder.ivAvatar.clearColorFilter(); // Remove default tint when loading real image
+            com.bumptech.glide.Glide.with(holder.itemView.getContext())
+                    .load(c.avatarUrl)
+                    .placeholder(R.drawable.ic_github)
+                    .into(holder.ivAvatar);
 
-            holder.itemView.setOnClickListener(v -> openUrl(c.htmlUrl));
+            holder.ivAvatar.setOnClickListener(v -> fetchAndShowUserProfile(c.login));
         }
 
         @Override
@@ -191,69 +191,103 @@ public class AboutActivity extends BaseActivity {
 
         class ViewHolder extends RecyclerView.ViewHolder {
             ImageView ivAvatar;
-            TextView tvUsername;
 
             ViewHolder(View itemView) {
                 super(itemView);
                 ivAvatar = itemView.findViewById(R.id.ivAvatar);
-                tvUsername = itemView.findViewById(R.id.tvUsername);
             }
         }
     }
 
-    // Basic Image Loader to fetch and cache avatars without a large 3rd party
-    // library
-    private static class AvatarLoader {
-        private static final LruCache<String, Bitmap> memoryCache;
-        private static final ExecutorService executor = Executors.newFixedThreadPool(4);
-        private static final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private void fetchAndShowUserProfile(String username) {
+        android.content.SharedPreferences prefs = getSharedPreferences("github_user_cache", MODE_PRIVATE);
+        long lastFetch = prefs.getLong(username + "_time", 0);
+        String cachedJson = prefs.getString(username + "_json", null);
 
-        static {
-            final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-            final int cacheSize = maxMemory / 8;
-            memoryCache = new LruCache<String, Bitmap>(cacheSize) {
-                @Override
-                protected int sizeOf(String key, Bitmap bitmap) {
-                    return bitmap.getByteCount() / 1024;
-                }
-            };
+        if (cachedJson != null && (System.currentTimeMillis() - lastFetch < 3600000)) {
+            parseAndShowUserProfileBottomSheet(cachedJson);
+            return;
         }
 
-        static void loadAvatar(String urlString, ImageView imageView) {
-            if (urlString == null || urlString.isEmpty())
-                return;
+        Request request = new Request.Builder()
+                .url("https://api.github.com/users/" + username)
+                .header("User-Agent", "WaEnhancer-App")
+                .header("Accept", "application/vnd.github.v3+json")
+                .build();
 
-            imageView.setTag(urlString);
-            Bitmap cachedBitmap = memoryCache.get(urlString);
-            if (cachedBitmap != null) {
-                imageView.setImageBitmap(cachedBitmap);
-                return;
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull java.io.IOException e) {
+                runOnUiThread(() -> {
+                    if (cachedJson != null) {
+                        parseAndShowUserProfileBottomSheet(cachedJson);
+                    } else {
+                        Toast.makeText(AboutActivity.this, "Failed to load user profile", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
-            executor.execute(() -> {
-                try {
-                    Request request = new Request.Builder()
-                            .url(urlString)
-                            .header("User-Agent", "WaEnhancer-App")
-                            .build();
-
-                    try (Response response = client.newCall(request).execute()) {
-                        if (response.isSuccessful() && response.body() != null) {
-                            Bitmap bitmap = BitmapFactory.decodeStream(response.body().byteStream());
-                            if (bitmap != null) {
-                                memoryCache.put(urlString, bitmap);
-                                mainHandler.post(() -> {
-                                    if (urlString.equals(imageView.getTag())) {
-                                        imageView.setImageBitmap(bitmap);
-                                    }
-                                });
-                            }
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws java.io.IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    runOnUiThread(() -> {
+                        if (cachedJson != null) {
+                            parseAndShowUserProfileBottomSheet(cachedJson);
+                        } else {
+                            Toast.makeText(AboutActivity.this, "Error fetching user", Toast.LENGTH_SHORT).show();
                         }
-                    }
+                    });
+                    return;
+                }
+
+                try {
+                    String json = response.body().string();
+                    prefs.edit()
+                            .putLong(username + "_time", System.currentTimeMillis())
+                            .putString(username + "_json", json)
+                            .apply();
+
+                    runOnUiThread(() -> parseAndShowUserProfileBottomSheet(json));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            });
+            }
+        });
+    }
+
+    private void parseAndShowUserProfileBottomSheet(String json) {
+        try {
+            JSONObject obj = new JSONObject(json);
+            String name = obj.optString("name", "");
+            String login = obj.optString("login", "");
+            String avatarUrl = obj.optString("avatar_url", "");
+            String location = obj.optString("location", "");
+            String bio = obj.optString("bio", "");
+            boolean hireable = obj.optBoolean("hireable", false);
+            int followers = obj.optInt("followers", 0);
+            String twitter = obj.optString("twitter_username", "");
+            String blog = obj.optString("blog", "");
+            String htmlUrl = obj.optString("html_url", "");
+
+            if (name.isEmpty() || name.equals("null"))
+                name = login;
+
+            com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showUserProfile(
+                    this,
+                    avatarUrl,
+                    name,
+                    login,
+                    location,
+                    bio,
+                    twitter,
+                    blog,
+                    hireable,
+                    followers,
+                    htmlUrl);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error parsing user profile", Toast.LENGTH_SHORT).show();
         }
     }
 }

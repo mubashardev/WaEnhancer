@@ -230,6 +230,12 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        invalidateOptionsMenu();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.header_menu, menu);
         var powerManager = (PowerManager) getSystemService(POWER_SERVICE);

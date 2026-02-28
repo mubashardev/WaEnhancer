@@ -6,7 +6,8 @@
     android:layout_height="wrap_content"
     android:background="?android:attr/selectableItemBackground"
     android:orientation="horizontal"
-    android:padding="12dp">
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
 
     <RelativeLayout
         android:layout_width="wrap_content"
@@ -15,24 +16,25 @@
 
         <ImageView
             android:id="@+id/avatar"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
             android:src="@drawable/ic_person"
-            app:tint="?android:attr/textColorSecondary"
+            app:tint="?attr/colorOnSurface"
             android:background="@drawable/circle_bg"
-            android:padding="8dp" />
+            android:backgroundTint="?attr/colorSurfaceContainerHigh"
+            android:padding="12dp" />
 
         <ImageView
             android:id="@+id/app_badge"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_alignBottom="@id/avatar"
             android:layout_alignEnd="@id/avatar"
             android:src="@drawable/circle_bg"
             android:visibility="gone"
-            android:elevation="2dp"
+            android:elevation="0dp"
             android:background="@drawable/circle_bg"
-            android:backgroundTint="@android:color/white"/>
+            android:backgroundTint="?attr/colorSurfaceContainer"/>
     </RelativeLayout>
 
     <LinearLayout
@@ -40,7 +42,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="16dp"
         android:layout_gravity="center_vertical">
 
         <LinearLayout
@@ -54,7 +56,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Contact Name"
-                android:textAppearance="?attr/textAppearanceSubtitle1"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textStyle="bold"
                 android:singleLine="true"
@@ -65,8 +67,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Yesterday"
-                android:textAppearance="?attr/textAppearanceCaption"
-                android:textColor="?android:attr/textColorSecondary" />
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?android:attr/textColorTertiary" />
         </LinearLayout>
 
         <TextView
@@ -75,7 +77,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="Last deleted message..."
-            android:textAppearance="?attr/textAppearanceBody2"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
             android:textColor="?android:attr/textColorSecondary"
             android:singleLine="true"
             android:ellipsize="end" />

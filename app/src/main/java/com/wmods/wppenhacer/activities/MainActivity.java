@@ -114,6 +114,36 @@ public class MainActivity extends BaseActivity {
         createMainDir();
         FilePicker.registerFilePicker(this);
 
+        // Wire up custom header action buttons
+        binding.btnSearch.setOnClickListener(v -> {
+            var options = ActivityOptionsCompat.makeCustomAnimation(
+                    this, R.anim.slide_in_right, R.anim.slide_out_left);
+            startActivity(new Intent(this, SearchActivity.class), options.toBundle());
+        });
+
+        binding.btnAbout.setOnClickListener(v -> {
+            var options = ActivityOptionsCompat.makeCustomAnimation(
+                    this, R.anim.slide_in_right, R.anim.slide_out_left);
+            startActivity(new Intent(this, AboutActivity.class), options.toBundle());
+        });
+
+        binding.btnBattery.setOnClickListener(v -> {
+            if (batteryPermissionHelper.isBatterySaverPermissionAvailable(this, true)) {
+                batteryPermissionHelper.getPermission(this, true, true);
+            } else {
+                var intent = new Intent();
+                intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        // Hide battery button if already optimized
+        var powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
+            binding.btnBattery.setVisibility(android.view.View.GONE);
+        }
+
         // Handle incoming navigation from search
         handleIncomingIntent(getIntent());
     }
@@ -200,10 +230,12 @@ public class MainActivity extends BaseActivity {
 
         if (subFragment != null && parentFragment.getView() != null) {
             final Fragment finalSubFragment = subFragment;
-            // Replace the current child fragment
+            // Replace the current child fragment with back stack so back button works
             parentFragment.getChildFragmentManager().beginTransaction()
                     .replace(R.id.frag_container, subFragment)
-                    .commitNow();
+                    .addToBackStack(null)
+                    .commit();
+            parentFragment.getChildFragmentManager().executePendingTransactions();
 
             // Wait for fragment to be ready, then scroll
             parentFragment.getView().postDelayed(() -> {
@@ -230,12 +262,14 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        invalidateOptionsMenu();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.header_menu, menu);
-        var powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
-            menu.findItem(R.id.batteryoptimization).setVisible(false);
-        }
+        // Menu items are handled by custom action buttons in the layout
         return true;
     }
 

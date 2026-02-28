@@ -70,7 +70,7 @@ public class HomeFragment extends BaseFragment {
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
+            ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
 
         checkStateWpp(requireActivity());
@@ -99,7 +99,12 @@ public class HomeFragment extends BaseFragment {
 
         binding.resetBtn.setOnClickListener(view -> {
             animateClick(view);
-            resetConfigs(this.getContext());
+            showResetBottomSheet();
+        });
+
+        binding.viewSupportedVersionsBtn.setOnClickListener(view -> {
+            animateClick(view);
+            startActivity(new Intent(requireContext(), SupportedVersionsActivity.class));
         });
 
         startCardAnimations();
@@ -121,11 +126,11 @@ public class HomeFragment extends BaseFragment {
         binding.status3.postDelayed(() -> {
             var anim = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
             binding.status3.startAnimation(anim);
-        }, 200);
+        }, 100);
 
         binding.infoCard.postDelayed(() -> {
             binding.infoCard.startAnimation(fadeIn);
-        }, 300);
+        }, 200);
     }
 
     private void animateClick(View view) {
@@ -146,14 +151,13 @@ public class HomeFragment extends BaseFragment {
         var supported_list = Arrays.asList(context.getResources().getStringArray(R.array.supported_versions_business));
         if (version != null && supported_list.stream().anyMatch(s -> version.startsWith(s.replace(".xx", "")))) {
             binding.statusSummary3.setText(getString(R.string.version_s, version));
-            binding.status3.getChildAt(0).setBackgroundResource(R.drawable.gradient_success);
+            binding.statusDotBusiness.setBackgroundResource(R.drawable.status_dot_active);
         } else {
             binding.statusSummary3.setText(getString(R.string.version_s_not_listed, version));
-            binding.status3.getChildAt(0).setBackgroundResource(R.drawable.gradient_warning);
+            binding.statusDotBusiness.setBackgroundResource(R.drawable.status_dot_inactive);
         }
         binding.rebootBtn2.setVisibility(View.VISIBLE);
         binding.statusSummary3.setVisibility(View.VISIBLE);
-        binding.statusIcon3.setImageResource(R.drawable.ic_round_check_circle_24);
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -164,14 +168,37 @@ public class HomeFragment extends BaseFragment {
 
         if (version != null && supported_list.stream().anyMatch(s -> version.startsWith(s.replace(".xx", "")))) {
             binding.statusSummary1.setText(getString(R.string.version_s, version));
-            binding.status2.getChildAt(0).setBackgroundResource(R.drawable.gradient_success);
+            binding.statusDotWpp.setBackgroundResource(R.drawable.status_dot_active);
         } else {
             binding.statusSummary1.setText(getString(R.string.version_s_not_listed, version));
-            binding.status2.getChildAt(0).setBackgroundResource(R.drawable.gradient_warning);
+            binding.statusDotWpp.setBackgroundResource(R.drawable.status_dot_inactive);
         }
         binding.rebootBtn.setVisibility(View.VISIBLE);
         binding.statusSummary1.setVisibility(View.VISIBLE);
-        binding.statusIcon2.setImageResource(R.drawable.ic_round_check_circle_24);
+    }
+
+    private void showResetBottomSheet() {
+        var context = requireContext();
+        var bottomSheetDialog = new com.google.android.material.bottomsheet.BottomSheetDialog(context);
+        var sheetView = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_reset, null);
+        bottomSheetDialog.setContentView(sheetView);
+
+        // Make background transparent so our custom shape shows
+        var bottomSheet = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (bottomSheet != null) {
+            bottomSheet.setBackgroundResource(android.R.color.transparent);
+        }
+
+        sheetView.findViewById(R.id.confirm_reset_btn).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            resetConfigs(context);
+        });
+
+        sheetView.findViewById(R.id.cancel_reset_btn).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.show();
     }
 
     private void resetConfigs(Context context) {
@@ -264,7 +291,7 @@ public class HomeFragment extends BaseFragment {
                 Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-        FilePicker.fileCapture.launch(new String[]{"application/json"});
+        FilePicker.fileCapture.launch(new String[] { "application/json" });
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -274,11 +301,13 @@ public class HomeFragment extends BaseFragment {
             binding.statusIcon.setImageResource(R.drawable.ic_round_check_circle_24);
             binding.statusTitle.setText(R.string.module_enabled);
             binding.statusSummary.setText(String.format(getString(R.string.version_s), BuildConfig.VERSION_NAME));
-            binding.status.getChildAt(0).setBackgroundResource(R.drawable.gradient_success);
+            // Use hero glow enabled drawable
+            binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_enabled);
         } else {
             binding.statusIcon.setImageResource(R.drawable.ic_round_error_outline_24);
             binding.statusTitle.setText(R.string.module_disabled);
-            binding.status.getChildAt(0).setBackgroundResource(R.drawable.gradient_error);
+            // Use hero glow disabled drawable
+            binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_disabled);
             binding.statusSummary.setVisibility(View.GONE);
         }
         if (isInstalled(FeatureLoader.PACKAGE_WPP) && App.isOriginalPackage()) {
@@ -296,13 +325,25 @@ public class HomeFragment extends BaseFragment {
         binding.deviceName.setText(Build.MANUFACTURER);
         binding.sdk.setText(String.valueOf(Build.VERSION.SDK_INT));
         binding.modelName.setText(Build.DEVICE);
+
         if (App.isOriginalPackage()) {
-            binding.listWpp.setText(Arrays.toString(activity.getResources().getStringArray(R.array.supported_versions_wpp)));
+            checkPackageVersion(activity, FeatureLoader.PACKAGE_WPP, binding.wppInstalledVersion,
+                    binding.wppVersionStatus, binding.wppStatusIcon, binding.wppUnsupportedBtn,
+                    R.array.supported_versions_wpp);
         } else {
-            binding.listWppTitle.setVisibility(View.GONE);
-            binding.listWpp.setVisibility(View.GONE);
+            // Hide WhatsApp section if not the original package flavor
+            View parent = (View) binding.wppInstalledVersion.getParent().getParent().getParent();
+            if (parent != null)
+                parent.setVisibility(View.GONE);
+            View divider = (View) ((ViewGroup) parent.getParent())
+                    .getChildAt(((ViewGroup) parent.getParent()).indexOfChild(parent) + 1);
+            if (divider != null)
+                divider.setVisibility(View.GONE);
         }
-        binding.listBusiness.setText(Arrays.toString(activity.getResources().getStringArray(R.array.supported_versions_business)));
+
+        checkPackageVersion(activity, FeatureLoader.PACKAGE_BUSINESS, binding.businessInstalledVersion,
+                binding.businessVersionStatus, binding.businessStatusIcon, binding.businessUnsupportedBtn,
+                R.array.supported_versions_business);
     }
 
     private boolean isInstalled(String packageWpp) {
@@ -314,18 +355,70 @@ public class HomeFragment extends BaseFragment {
         return false;
     }
 
+    private void checkPackageVersion(FragmentActivity activity, String packageName,
+            com.google.android.material.textview.MaterialTextView versionView,
+            com.google.android.material.textview.MaterialTextView statusView, android.widget.ImageView iconView,
+            View unsupportedBtnView,
+            int supportedArrayResId) {
+
+        android.util.TypedValue typedValue = new android.util.TypedValue();
+        activity.getTheme().resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
+        int colorPrimary = typedValue.data;
+
+        int colorError = androidx.core.content.ContextCompat.getColor(activity, android.R.color.holo_red_light);
+        int colorOutline = androidx.core.content.ContextCompat.getColor(activity, android.R.color.darker_gray);
+
+        try {
+            var packageInfo = App.getInstance().getPackageManager().getPackageInfo(packageName, 0);
+            var installedVersion = packageInfo.versionName;
+            versionView.setText(installedVersion);
+
+            var supportedList = Arrays.asList(activity.getResources().getStringArray(supportedArrayResId));
+            boolean isSupported = false;
+            if (installedVersion != null) {
+                isSupported = supportedList.stream().anyMatch(s -> installedVersion.startsWith(s.replace(".xx", "")));
+            }
+
+            unsupportedBtnView.setVisibility(isSupported ? View.GONE : View.VISIBLE);
+            if (!isSupported) {
+                unsupportedBtnView.setOnClickListener(v -> {
+                    com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showInfo(
+                            activity,
+                            "Unsupported Version",
+                            "The installed WaEnhancer has no support for your installed version of WhatsApp. It may not work as expected. Please either update WaEnhancer, install a supported version of WhatsApp, or open an issue on GitHub.");
+                });
+            }
+
+            if (isSupported) {
+                statusView.setText("Supported");
+                statusView.setTextColor(colorPrimary);
+                iconView.setImageResource(R.drawable.ic_round_check_circle_24);
+                iconView.setColorFilter(colorPrimary);
+            } else {
+                statusView.setText("Not Supported");
+                statusView.setTextColor(colorError);
+                iconView.setImageResource(R.drawable.ic_round_error_outline_24);
+                iconView.setColorFilter(colorError);
+            }
+        } catch (Exception e) {
+            versionView.setText("Not Installed");
+            statusView.setText("-");
+            unsupportedBtnView.setVisibility(View.GONE);
+            iconView.setImageResource(R.drawable.ic_round_error_outline_24);
+            iconView.setColorFilter(colorOutline);
+        }
+    }
+
     private void disableBusiness(FragmentActivity activity) {
-        binding.statusIcon3.setImageResource(R.drawable.ic_round_error_outline_24);
         binding.statusTitle3.setText(R.string.business_is_not_running_or_has_not_been_activated_in_lsposed);
-        binding.status3.getChildAt(0).setBackgroundResource(R.drawable.gradient_error);
+        binding.statusDotBusiness.setBackgroundResource(R.drawable.status_dot_inactive);
         binding.statusSummary3.setVisibility(View.GONE);
         binding.rebootBtn2.setVisibility(View.GONE);
     }
 
     private void disableWpp(FragmentActivity activity) {
-        binding.statusIcon2.setImageResource(R.drawable.ic_round_error_outline_24);
         binding.statusTitle2.setText(R.string.whatsapp_is_not_running_or_has_not_been_activated_in_lsposed);
-        binding.status2.getChildAt(0).setBackgroundResource(R.drawable.gradient_error);
+        binding.statusDotWpp.setBackgroundResource(R.drawable.status_dot_inactive);
         binding.statusSummary1.setVisibility(View.GONE);
         binding.rebootBtn.setVisibility(View.GONE);
     }

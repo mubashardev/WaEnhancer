@@ -206,7 +206,7 @@
         <!-- Buttons -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/bsGithubBtn"
-            style="@style/Widget.Material3.Button"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="24dp"
@@ -224,6 +224,18 @@
             android:visibility="gone"
             tools:visibility="visible"
             app:icon="@drawable/ic_language"
+            app:iconGravity="textStart" />
+            
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/bsContributionsBtn"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="View Detailed Contributions"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:icon="@drawable/ic_round_check_circle_24"
             app:iconGravity="textStart" />
 
     </LinearLayout>

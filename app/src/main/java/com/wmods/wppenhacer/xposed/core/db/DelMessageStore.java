@@ -143,11 +143,11 @@ public class DelMessageStore extends SQLiteOpenHelper {
         }
     }
 
-    public java.util.ArrayList<DeletedMessage> getDeletedMessagesByChat(String chatJid) {
+    public java.util.ArrayList<DeletedMessage> getDeletedMessagesByChat(String chatJid, String sortOrder) {
         java.util.ArrayList<DeletedMessage> messages = new java.util.ArrayList<>();
         SQLiteDatabase dbReader = this.getReadableDatabase();
         try (Cursor cursor = dbReader.query(TABLE_DELETED_FOR_ME, null, "chat_jid=?", new String[] { chatJid }, null,
-                null, "timestamp ASC")) {
+                null, sortOrder)) {
             if (cursor.moveToFirst()) {
                 do {
                     long originalTs = 0;

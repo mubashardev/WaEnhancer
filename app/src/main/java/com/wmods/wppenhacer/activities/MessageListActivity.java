@@ -23,6 +23,12 @@ public class MessageListActivity extends BaseActivity implements MessageListAdap
     private MessageListAdapter adapter;
     private DelMessageStore delMessageStore;
     private String chatJid;
+    private android.content.SharedPreferences prefs;
+    private String currentSortOrder;
+
+    private static final String PREF_SORT_ORDER = "message_list_sort_order";
+    private static final String SORT_DELETED_TIME = "timestamp ASC";
+    private static final String SORT_ORIGINAL_TIME = "(CASE WHEN original_timestamp > 0 THEN original_timestamp ELSE timestamp END) ASC";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,12 +62,15 @@ public class MessageListActivity extends BaseActivity implements MessageListAdap
         binding.recyclerView.setLayoutManager(layoutManager);
         binding.recyclerView.setAdapter(adapter);
 
+        prefs = getSharedPreferences("WaEnhancerPrefs", MODE_PRIVATE);
+        currentSortOrder = prefs.getString(PREF_SORT_ORDER, SORT_DELETED_TIME);
+
         loadMessages();
     }
 
     private void loadMessages() {
         new Thread(() -> {
-            List<DeletedMessage> messages = delMessageStore.getDeletedMessagesByChat(chatJid);
+            List<DeletedMessage> messages = delMessageStore.getDeletedMessagesByChat(chatJid, currentSortOrder);
             runOnUiThread(() -> {
                 if (messages.isEmpty()) {
                     binding.emptyView.setVisibility(View.VISIBLE);
@@ -92,6 +101,16 @@ public class MessageListActivity extends BaseActivity implements MessageListAdap
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
+            return true;
+        } else if (item.getItemId() == R.id.action_sort_original_time) {
+            currentSortOrder = SORT_ORIGINAL_TIME;
+            prefs.edit().putString(PREF_SORT_ORDER, currentSortOrder).apply();
+            loadMessages();
+            return true;
+        } else if (item.getItemId() == R.id.action_sort_deleted_time) {
+            currentSortOrder = SORT_DELETED_TIME;
+            prefs.edit().putString(PREF_SORT_ORDER, currentSortOrder).apply();
+            loadMessages();
             return true;
         } else if (item.getItemId() == R.id.action_info) {
             com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showInfo(

@@ -1,7 +1,2 @@
-[ADDED]
-
-* Redesigned App Version display in Home page with Support status indicator
-* Replaced System Dialogs with modern Bottom Sheets globally (Confirmation, Info, Options, Input)
-* Upgraded Contributors section with a 3-column grid and a detailed visual Bottom Sheet (Name, Location, Followers, Bio, Social Links)
-* Added Detailed Contributions Sheet to compute and display precise code lines added/updated per contributor
-* Upgraded App typography across the board to Outfit (Aesthetic font)
+[Added]
+- Implement messages sorting in Delete For Me messages

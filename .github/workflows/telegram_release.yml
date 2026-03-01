@@ -12,14 +12,17 @@ on:
             release_url:
                 description: "URL of the release to link"
                 required: true
-                default: "https://github.com/mubashariqbals/WaEnhancer/releases/latest"
+                default: "https://github.com/mubashardev/WaEnhancer/releases/latest"
 
 jobs:
     telegram-notify:
         runs-on: ubuntu-latest
+        env:
+            BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+            CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
         steps:
             - name: Post release to Telegram channel
-              if: ${{ secrets.BOT_TOKEN != '' && secrets.CHANNEL_ID != '' }}
+              if: ${{ env.BOT_TOKEN != '' && env.CHANNEL_ID != '' }}
               uses: mubashardev/telegram-github-action@master
               with:
                   to: ${{ secrets.CHANNEL_ID }}

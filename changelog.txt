@@ -1,2 +1,3 @@
 [Added]
-- Implement messages sorting in Delete For Me messages
+- Added video file as Video Note Attachment feature to chat attachment menu.
+     Enable at: **(Settings > Conversation > Video Note Attachment)**

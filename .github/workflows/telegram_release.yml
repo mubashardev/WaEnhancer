@@ -1,0 +1,32 @@
+name: Telegram Release Notification
+
+on:
+    release:
+        types: [published]
+    workflow_dispatch:
+        inputs:
+            release_body:
+                description: "Changelog/Body of the fake release"
+                required: true
+                default: "Test Notification - Testing the bot!"
+            release_url:
+                description: "URL of the release to link"
+                required: true
+                default: "https://github.com/mubashariqbals/WaEnhancer/releases/latest"
+
+jobs:
+    telegram-notify:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Post release to Telegram channel
+              if: ${{ secrets.BOT_TOKEN != '' && secrets.CHANNEL_ID != '' }}
+              uses: mubashardev/telegram-github-action@master
+              with:
+                  to: ${{ secrets.CHANNEL_ID }}
+                  token: ${{ secrets.BOT_TOKEN }}
+                  format: markdown
+                  disable_web_page_preview: true
+                  message: |
+                      ${{ github.event.release.body || inputs.release_body }}
+
+                      Release: ${{ github.event.release.html_url || inputs.release_url }}

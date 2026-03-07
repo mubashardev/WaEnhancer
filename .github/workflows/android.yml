@@ -56,6 +56,7 @@ jobs:
           path: app/build/outputs/apk/business/debug/app-business-debug.apk
 
       - name: Upload to GitHub release
+        id: release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -65,3 +66,24 @@ jobs:
             app/build/outputs/apk/whatsapp/debug/app-whatsapp-debug.apk
             app/build/outputs/apk/business/debug/app-business-debug.apk
           tag_name: debug-${{ env.SHORT_SHA }}
+
+      - name: Read changelog
+        id: changelog
+        run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "body<<$EOF" >> $GITHUB_OUTPUT
+          cat changelog.txt >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      - name: Post release to Telegram channel
+        if: ${{ env.BOT_TOKEN != '' && env.CHANNEL_ID != '' }}
+        uses: mubashardev/telegram-github-action@master
+        with:
+          to: ${{ secrets.CHANNEL_ID }}
+          token: ${{ secrets.BOT_TOKEN }}
+          format: markdown
+          disable_web_page_preview: true
+          message: |
+            ${{ steps.changelog.outputs.body }}
+
+            Release: ${{ steps.release.outputs.url }}

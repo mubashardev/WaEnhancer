@@ -1,12 +1,3 @@
-[ADDED]
-* Added pull-to-refresh in the call recorder manager.
-
 [FIXED]
-* Refactored the call recorder for correct microphone recording and saving in the correct folder; internal audio may not work (In the plus version, we have some methods to record internal audio, but it is not 100% compatible with all devices).
-* Fixed bug with duplicated recorded audios.
-* Fixed issue with unknown numbers in recorded calls.
-* Fixed increased limit in pinned chats.
-* Fixed bug in experimental backup restore.
-* Removed the ad-blocking feature, as it was no longer working and will require more time to fix; it may be reimplemented in the future.
-* Fixed the function to disable META AI.
-
+- Fixed calls recording both sides audio (still not 100% compatible with all devices)
+- Fixed contact name not showing in recorded calls.

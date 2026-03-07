@@ -1,5 +1,8 @@
 package com.wmods.wppenhacer.ui.fragments;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.content.ContextCompat;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
@@ -35,6 +38,7 @@ import java.util.Set;
 
 public class RecordingsFragment extends Fragment implements RecordingsAdapter.OnRecordingActionListener {
 
+    private static final int REQUEST_CODE_CONTACTS = 101;
     private FragmentRecordingsBinding binding;
     private RecordingsAdapter adapter;
     private List<Recording> allRecordings = new ArrayList<>();
@@ -44,7 +48,8 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         binding = FragmentRecordingsBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -75,10 +80,15 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
             isGroupByContact = false;
             loadRecordings();
         });
-        
+
         binding.chipGroupByContact.setOnClickListener(v -> {
             isGroupByContact = true;
             loadRecordings();
+        });
+
+        // Banner
+        binding.btnGrantPermission.setOnClickListener(v -> {
+            requestPermissions(new String[] { Manifest.permission.READ_CONTACTS }, REQUEST_CODE_CONTACTS);
         });
 
         // Selection bar buttons
@@ -95,15 +105,39 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
             loadRecordings();
         });
 
+        checkContactsPermissionAndLoad();
+    }
+
+    private void checkContactsPermissionAndLoad() {
+        if (ContextCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            binding.permissionBanner.setVisibility(View.VISIBLE);
+        } else {
+            binding.permissionBanner.setVisibility(View.GONE);
+        }
         loadRecordings();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_CONTACTS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                binding.permissionBanner.setVisibility(View.GONE);
+            }
+            // Reload recordings to show names if granted, or just refresh if denied
+            loadRecordings();
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (binding == null) return;
+        if (binding == null)
+            return;
         initializeBaseDirs();
-        loadRecordings();
+        checkContactsPermissionAndLoad();
     }
 
     private void initializeBaseDirs() {
@@ -116,8 +150,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
         // 1. Current default location used by CallRecording
         addBaseDir(addedPaths, new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "WA Call Recordings"
-        ));
+                "WA Call Recordings"));
 
         // 2. User configured location from shared preferences
         if (configuredPath != null && !configuredPath.isEmpty()) {
@@ -176,8 +209,10 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
                 applySort();
 
                 if (isGroupByContact) {
-                    // For group by contact, we'll navigate to ContactRecordingsActivity when a contact is clicked
-                    // For now, just show sorted list (full group UI needs ContactRecordingsActivity)
+                    // For group by contact, we'll navigate to ContactRecordingsActivity when a
+                    // contact is clicked
+                    // For now, just show sorted list (full group UI needs
+                    // ContactRecordingsActivity)
                     adapter.setRecordings(allRecordings);
                 } else {
                     adapter.setRecordings(allRecordings);
@@ -196,7 +231,8 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
                     traverseDirectory(file);
                 } else {
                     String name = file.getName().toLowerCase();
-                    if (name.endsWith(".wav") || name.endsWith(".mp3") || name.endsWith(".aac") || name.endsWith(".m4a")) {
+                    if (name.endsWith(".wav") || name.endsWith(".mp3") || name.endsWith(".aac")
+                            || name.endsWith(".m4a")) {
                         allRecordings.add(new Recording(file, requireContext()));
                     }
                 }
@@ -220,7 +256,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
         popup.getMenu().add(0, 2, 0, R.string.sort_name);
         popup.getMenu().add(0, 3, 0, R.string.sort_duration);
         popup.getMenu().add(0, 4, 0, R.string.sort_contact);
-        
+
         popup.setOnMenuItemClickListener(item -> {
             currentSortType = item.getItemId();
             applySort();
@@ -269,7 +305,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
     private void shareRecording(File file) {
         try {
-            Uri uri = FileProvider.getUriForFile(requireContext(), 
+            Uri uri = FileProvider.getUriForFile(requireContext(),
                     requireContext().getPackageName() + ".fileprovider", file);
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("audio/*");
@@ -283,7 +319,8 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
     private void shareSelectedRecordings() {
         List<Recording> selected = adapter.getSelectedRecordings();
-        if (selected.isEmpty()) return;
+        if (selected.isEmpty())
+            return;
 
         if (selected.size() == 1) {
             shareRecording(selected.get(0).getFile());
@@ -297,7 +334,8 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
                 Uri uri = FileProvider.getUriForFile(requireContext(),
                         requireContext().getPackageName() + ".fileprovider", rec.getFile());
                 uris.add(uri);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         if (!uris.isEmpty()) {
@@ -312,7 +350,8 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
     private void deleteSelectedRecordings() {
         List<Recording> selected = adapter.getSelectedRecordings();
-        if (selected.isEmpty()) return;
+        if (selected.isEmpty())
+            return;
 
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.delete_confirmation)

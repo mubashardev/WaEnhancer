@@ -28,7 +28,6 @@ import org.luckypray.dexkit.query.enums.OpCodeMatchType;
 import org.luckypray.dexkit.query.enums.StringMatchType;
 import org.luckypray.dexkit.query.matchers.ClassMatcher;
 import org.luckypray.dexkit.query.matchers.MethodMatcher;
-import org.luckypray.dexkit.query.matchers.MethodsMatcher;
 import org.luckypray.dexkit.query.matchers.base.OpCodesMatcher;
 import org.luckypray.dexkit.result.ClassData;
 import org.luckypray.dexkit.result.ClassDataList;
@@ -49,12 +48,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import de.robv.android.xposed.XposedBridge;
@@ -537,16 +536,19 @@ public class Unobfuscator {
 
     public synchronized static Method loadTimeToSecondsMethod(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
-            Class<?> cls = findFirstClassUsingStrings(classLoader, StringMatchType.Contains, "aBhHKm");
-            if (cls == null)
-                throw new Exception("TimeToSeconds class not found");
-            var clsData = dexkit.getClassData(cls);
-            var method = XposedHelpers.findMethodBestMatch(Calendar.class, "setTimeInMillis", long.class);
-            var result = clsData.findMethod(new FindMethod().matcher(new MethodMatcher()
-                    .addInvoke(DexSignUtil.getMethodDescriptor(method)).returnType(String.class).paramCount(2)));
-            if (result.isEmpty())
-                throw new Exception("TimeToSeconds method not found");
-            return result.get(0).getMethodInstance(classLoader);
+            Method setTimeInMillis = Calendar.class.getDeclaredMethod("setTimeInMillis", long.class);
+            Method getInstance = Calendar.class.getDeclaredMethod("getInstance", Locale.class);
+
+            var result = dexkit.findMethod(FindMethod.create().matcher(MethodMatcher.create()
+                    .addInvoke(DexSignUtil.getMethodDescriptor(setTimeInMillis))
+                    .addInvoke(DexSignUtil.getMethodDescriptor(getInstance))
+                    .modifiers(Modifier.STATIC)
+                    .returnType(String.class).paramCount(2)
+                    .paramTypes(null, long.class)
+
+            )).singleOrNull();
+            if (result == null) throw new Exception("TimeToSeconds method not found");
+            return result.getMethodInstance(classLoader);
         });
     }
 
@@ -861,36 +863,36 @@ public class Unobfuscator {
 
     public synchronized static Field loadAntiRevokeConvFragmentField(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getField(loader, () -> {
-            Class<?> chatClass = findFirstClassUsingStrings(loader, StringMatchType.Contains,
-                    "conversation/createconversation");
+            Class<?> chatClass = findFirstClassUsingStrings(loader, StringMatchType.Contains, "conversation/createconversation");
             Class<?> conversation = XposedHelpers.findClass("com.whatsapp.ConversationFragment", loader);
             Field field = ReflectionUtils.getFieldByType(conversation, chatClass);
-            if (field == null)
-                throw new Exception("AntiRevokeConvChat field not found");
+            if (field == null) throw new Exception("AntiRevokeConvChat field not found");
             return field;
         });
     }
 
-    public synchronized static Field loadAntiRevokeConvChatField(ClassLoader loader) throws Exception {
+    public synchronized static Field loadConversationDelegateField(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getField(loader, () -> {
-            Class<?> chatClass = findFirstClassUsingStrings(loader, StringMatchType.Contains,
-                    "conversation/createconversation");
+            Class<?> conversationDelegateClass = findFirstClassUsingStrings(loader, StringMatchType.Contains, "conversation/createconversation");
             Class<?> conversation = XposedHelpers.findClass("com.whatsapp.Conversation", loader);
-            Field field = ReflectionUtils.getFieldByType(conversation, chatClass);
-            if (field == null)
-                throw new Exception("AntiRevokeConvChat field not found");
-            return field;
+            Field field = ReflectionUtils.getFieldByExtendType(conversation, conversationDelegateClass);
+            if (field != null) return field;
+            for (var f : conversation.getDeclaredFields()) {
+                var clazz = f.getType();
+                if (clazz.isPrimitive()) continue;
+                var field1 = ReflectionUtils.getFieldByExtendType(clazz, conversationDelegateClass);
+                if (field1 != null) return field1;
+            }
+            return null;
         });
     }
 
-    public synchronized static Field loadAntiRevokeChatJidField(ClassLoader loader) throws Exception {
+    public synchronized static Field loadUserJidConversationDelegate(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getField(loader, () -> {
-            Class<?> chatClass = findFirstClassUsingStrings(loader, StringMatchType.Contains,
-                    "conversation/createconversation");
+            Class<?> chatClass = findFirstClassUsingStrings(loader, StringMatchType.Contains, "conversation/createconversation");
             Class<?> jidClass = Unobfuscator.findFirstClassUsingName(loader, StringMatchType.EndsWith, "jid.Jid");
             Field field = ReflectionUtils.getFieldByExtendType(chatClass, jidClass);
-            if (field == null)
-                throw new Exception("AntiRevokeChatJid field not found");
+            if (field == null) throw new Exception("UserJidConversationDelegate field not found");
             return field;
         });
     }
@@ -901,59 +903,6 @@ public class Unobfuscator {
             if (method == null)
                 throw new Exception("AntiRevokeMessage method not found");
             return method;
-        });
-    }
-
-    public synchronized static Class<?> loadSettingsGoogleDriveActivity(ClassLoader loader) throws Exception {
-        return UnobfuscatorCache.getInstance().getClass(loader, () -> {
-            var classes = findAllClassUsingStrings(loader, StringMatchType.Contains, "SettingsGoogleDrive");
-            if (classes == null)
-                throw new Exception("SettingsGoogleDriveActivity not found (No classes with string)");
-
-            StringBuilder candidates = new StringBuilder();
-            for (var cls : classes) {
-                String name = cls.getName();
-                if (name.contains("com.whatsapp.deeplink"))
-                    continue;
-
-                candidates.append(name).append(", ");
-
-                // Check for onCreate method (Standard for Activity/Fragment)
-                try {
-                    // Check declared methods for "onCreate"
-                    for (Method m : cls.getDeclaredMethods()) {
-                        if (m.getName().equals("onCreate")) {
-                            return cls;
-                        }
-                    }
-                } catch (Throwable t) {
-                    // Ignore reflection errors
-                }
-            }
-            throw new Exception("SettingsGoogleDriveActivity not found. Candidates checked: " + candidates.toString());
-        });
-    }
-
-    public synchronized static Class<?> loadRestoreBackupActivity(ClassLoader loader) throws Exception {
-        return UnobfuscatorCache.getInstance().getClass(loader, () -> {
-            var strings = new String[] { "RestoreFromBackupActivity", "gdrive/restore/activity",
-                    "gdrive_restore_title" };
-            for (String s : strings) {
-                var classes = findAllClassUsingStrings(loader, StringMatchType.Contains, s);
-                if (classes != null) {
-                    for (var cls : classes) {
-                        try {
-                            for (Method m : cls.getDeclaredMethods()) {
-                                if (m.getName().equals("onCreate")) {
-                                    return cls;
-                                }
-                            }
-                        } catch (Throwable t) {
-                        }
-                    }
-                }
-            }
-            throw new Exception("RestoreBackupActivity not found");
         });
     }
 
@@ -1398,24 +1347,17 @@ public class Unobfuscator {
     /**
      * @noinspection DataFlowIssue
      */
-    /**
-     * @noinspection DataFlowIssue
-     */
     public synchronized static Field loadSetEditMessageField(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getField(loader, () -> {
-            var classData = dexkit.getClassData(loadCoreMessageStore(loader));
-            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
-                    "CoreMessageStore/updateCheckoutMessageWithTransactionInfo");
+            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains, "CoreMessageStore/updateCheckoutMessageWithTransactionInfo");
             if (method == null)
-                method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
-                        "UPDATE_MESSAGE_ADD_ON_FLAGS_MAIN_SQL");
-
+                method = findFirstMethodUsingStrings(loader, StringMatchType.Contains, "UPDATE_MESSAGE_ADD_ON_FLAGS_MAIN_SQL");
+            var classData = dexkit.getClassData(loadFMessageClass(loader));
             var methodData = dexkit.getMethodData(DexSignUtil.getMethodDescriptor(method));
             var usingFields = methodData.getUsingFields();
             for (var f : usingFields) {
                 var field = f.getField();
-                if (field.getDeclaredClass().equals(classData)
-                        && field.getType().getName().equals(long.class.getName())) {
+                if (field.getDeclaredClass().equals(classData) && field.getType().getName().equals(long.class.getName())) {
                     return field.getFieldInstance(loader);
                 }
             }
@@ -1503,16 +1445,11 @@ public class Unobfuscator {
 
     public synchronized static Method loadOnUpdateStatusChanged(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var clazzData = dexkit
-                    .findClass(FindClass.create().matcher(ClassMatcher.create().addUsingString("UpdatesViewModel/")))
-                    .firstOrNull();
-            var methodSeduleche = XposedHelpers.findMethodBestMatch(Timer.class, "schedule", TimerTask.class,
-                    long.class, long.class);
-            var result = clazzData.findMethod(FindMethod.create()
-                    .matcher(MethodMatcher.create().addInvoke(DexSignUtil.getMethodDescriptor(methodSeduleche))));
+            var clazzData = dexkit.findClass(FindClass.create().matcher(ClassMatcher.create().addUsingString("UpdatesViewModel/"))).firstOrNull();
+            var methodSeduleche = XposedHelpers.findMethodBestMatch(Timer.class, "schedule", TimerTask.class, long.class, long.class);
+            var result = clazzData.findMethod(FindMethod.create().matcher(MethodMatcher.create().addInvoke(DexSignUtil.getMethodDescriptor(methodSeduleche))));
             if (result.isEmpty())
-                result = dexkit.findMethod(FindMethod.create().matcher(
-                        MethodMatcher.create().addUsingString("UpdatesViewModel/Scheduled updates list refresh")));
+                result = dexkit.findMethod(FindMethod.create().matcher(MethodMatcher.create().addUsingString("UpdatesViewModel/Scheduled updates list refresh")));
             if (result.isEmpty())
                 throw new RuntimeException("OnUpdateStatusChanged method not found");
             return result.get(0).getMethodInstance(loader);
@@ -2674,18 +2611,20 @@ public class Unobfuscator {
         });
     }
 
-    public synchronized static Class<?> loadAttachmentPickerClass(ClassLoader classLoader) throws Exception {
-        // Attempt to find the Attachment Picker class.
-        // It often inflates items like document, camera, gallery, audio, etc.
-        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
-            var clazz = findFirstClassUsingStrings(classLoader, StringMatchType.Contains,
-                    "document", "camera", "gallery", "audio", "location", "contact");
-            if (clazz != null)
-                return clazz;
-
-            // Fallback: search for BottomSheet or picker related strings
-            return findFirstClassUsingStrings(classLoader, StringMatchType.Contains,
-                    "attachment_picker_bottom_sheet");
+    public static Method loadPinnedFilterMethod(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
+            var method = findFirstMethodUsingStrings(classLoader, StringMatchType.Contains, "pinSelectedJids");
+            var methodData = dexkit.getMethodData(method);
+            var invokes = methodData.getInvokes();
+            for (var invoke : invokes) {
+                if (!invoke.isMethod()) continue;
+                var methodInstance = invoke.getMethodInstance(classLoader);
+                if (!Set.class.isAssignableFrom(methodInstance.getReturnType()))
+                    continue;
+                if (methodInstance.getParameterCount() == 2 && methodInstance.getParameterTypes()[0] == Iterable.class && methodInstance.getParameterTypes()[1] == Set.class)
+                    return methodInstance;
+            }
+            throw new NoSuchMethodException("PinnedLinkedHashMethod not found");
         });
     }
 }

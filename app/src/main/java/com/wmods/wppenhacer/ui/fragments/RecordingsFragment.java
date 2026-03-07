@@ -26,11 +26,12 @@ import com.wmods.wppenhacer.model.Recording;
 import com.wmods.wppenhacer.ui.dialogs.AudioPlayerDialog;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 public class RecordingsFragment extends Fragment implements RecordingsAdapter.OnRecordingActionListener {
 
@@ -43,8 +44,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentRecordingsBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -75,7 +75,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
             isGroupByContact = false;
             loadRecordings();
         });
-
+        
         binding.chipGroupByContact.setOnClickListener(v -> {
             isGroupByContact = true;
             loadRecordings();
@@ -90,61 +90,101 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
         // Sort FAB
         binding.fabSort.setOnClickListener(v -> showSortMenu());
 
+        binding.swipeRefresh.setOnRefreshListener(() -> {
+            initializeBaseDirs();
+            loadRecordings();
+        });
+
+        loadRecordings();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (binding == null) return;
+        initializeBaseDirs();
         loadRecordings();
     }
 
     private void initializeBaseDirs() {
         var prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        String path = prefs.getString("call_recording_path", null);
+        String configuredPath = prefs.getString("call_recording_path", null);
 
         baseDirs.clear();
+        Set<String> addedPaths = new LinkedHashSet<>();
 
-        // 1. Root folder if MANAGE_EXTERNAL_STORAGE
-        if (Environment.isExternalStorageManager()) {
-            baseDirs.add(new File(Environment.getExternalStorageDirectory(), "WA Call Recordings"));
+        // 1. Current default location used by CallRecording
+        addBaseDir(addedPaths, new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "WA Call Recordings"
+        ));
+
+        // 2. User configured location from shared preferences
+        if (configuredPath != null && !configuredPath.isEmpty()) {
+            addBaseDir(addedPaths, new File(configuredPath, "WA Call Recordings"));
         }
 
-        // 2. Settings path
-        if (path != null && !path.isEmpty()) {
-            baseDirs.add(new File(path, "WA Call Recordings"));
+        // 3. Legacy root folder from older versions
+        addBaseDir(addedPaths, new File(Environment.getExternalStorageDirectory(), "WA Call Recordings"));
+
+        // 4. WhatsApp app external files
+        addBaseDir(addedPaths, new File("/sdcard/Android/data/com.whatsapp/files/Recordings"));
+        addBaseDir(addedPaths, new File("/sdcard/Android/data/com.whatsapp.w4b/files/Recordings"));
+
+        // 5. Legacy fallback
+        addBaseDir(addedPaths, new File(Environment.getExternalStorageDirectory(), "Music/WaEnhancer/Recordings"));
+    }
+
+    private void addBaseDir(@NonNull Set<String> addedPaths, @NonNull File dir) {
+        String normalizedPath = normalizePath(dir);
+        if (addedPaths.add(normalizedPath)) {
+            baseDirs.add(dir);
         }
+    }
 
-        // 3. WhatsApp app external files
-        baseDirs.add(new File("/sdcard/Android/data/com.whatsapp/files/Recordings"));
-        baseDirs.add(new File("/sdcard/Android/data/com.whatsapp.w4b/files/Recordings"));
-
-        // 4. Legacy fallback
-        baseDirs.add(new File(Environment.getExternalStorageDirectory(), "Music/WaEnhancer/Recordings"));
+    @NonNull
+    private String normalizePath(@NonNull File dir) {
+        try {
+            return dir.getCanonicalPath();
+        } catch (IOException ignored) {
+            return dir.getAbsolutePath();
+        }
     }
 
     private void loadRecordings() {
-        allRecordings.clear();
-
-        for (File baseDir : baseDirs) {
-            if (baseDir.exists() && baseDir.isDirectory()) {
-                traverseDirectory(baseDir);
-            }
+        if (binding == null) {
+            return;
         }
 
-        if (allRecordings.isEmpty()) {
-            binding.emptyView.setVisibility(View.VISIBLE);
-            binding.recyclerView.setVisibility(View.GONE);
-        } else {
-            binding.emptyView.setVisibility(View.GONE);
-            binding.recyclerView.setVisibility(View.VISIBLE);
+        allRecordings.clear();
 
-            // Apply sorting
-            applySort();
-
-            if (isGroupByContact) {
-                // For group by contact, we'll navigate to ContactRecordingsActivity when a
-                // contact is clicked
-                // For now, just show sorted list (full group UI needs
-                // ContactRecordingsActivity)
-                adapter.setRecordings(allRecordings);
-            } else {
-                adapter.setRecordings(allRecordings);
+        try {
+            for (File baseDir : baseDirs) {
+                if (baseDir.exists() && baseDir.isDirectory()) {
+                    traverseDirectory(baseDir);
+                }
             }
+
+            if (allRecordings.isEmpty()) {
+                binding.emptyView.setVisibility(View.VISIBLE);
+                binding.recyclerView.setVisibility(View.GONE);
+            } else {
+                binding.emptyView.setVisibility(View.GONE);
+                binding.recyclerView.setVisibility(View.VISIBLE);
+
+                // Apply sorting
+                applySort();
+
+                if (isGroupByContact) {
+                    // For group by contact, we'll navigate to ContactRecordingsActivity when a contact is clicked
+                    // For now, just show sorted list (full group UI needs ContactRecordingsActivity)
+                    adapter.setRecordings(allRecordings);
+                } else {
+                    adapter.setRecordings(allRecordings);
+                }
+            }
+        } finally {
+            binding.swipeRefresh.setRefreshing(false);
         }
     }
 
@@ -156,8 +196,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
                     traverseDirectory(file);
                 } else {
                     String name = file.getName().toLowerCase();
-                    if (name.endsWith(".wav") || name.endsWith(".mp3") || name.endsWith(".aac")
-                            || name.endsWith(".m4a")) {
+                    if (name.endsWith(".wav") || name.endsWith(".mp3") || name.endsWith(".aac") || name.endsWith(".m4a")) {
                         allRecordings.add(new Recording(file, requireContext()));
                     }
                 }
@@ -181,7 +220,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
         popup.getMenu().add(0, 2, 0, R.string.sort_name);
         popup.getMenu().add(0, 3, 0, R.string.sort_duration);
         popup.getMenu().add(0, 4, 0, R.string.sort_contact);
-
+        
         popup.setOnMenuItemClickListener(item -> {
             currentSortType = item.getItemId();
             applySort();
@@ -207,19 +246,18 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
     @Override
     public void onDelete(Recording recording) {
-        com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showConfirmation(
-                requireContext(),
-                getString(R.string.delete_confirmation),
-                recording.getFile().getName(),
-                getString(android.R.string.yes),
-                true,
-                () -> {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.delete_confirmation)
+                .setMessage(recording.getFile().getName())
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                     if (recording.getFile().delete()) {
                         loadRecordings();
                     } else {
                         Toast.makeText(requireContext(), "Failed to delete", Toast.LENGTH_SHORT).show();
                     }
-                });
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .show();
     }
 
     @Override
@@ -231,7 +269,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
     private void shareRecording(File file) {
         try {
-            Uri uri = FileProvider.getUriForFile(requireContext(),
+            Uri uri = FileProvider.getUriForFile(requireContext(), 
                     requireContext().getPackageName() + ".fileprovider", file);
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("audio/*");
@@ -245,8 +283,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
     private void shareSelectedRecordings() {
         List<Recording> selected = adapter.getSelectedRecordings();
-        if (selected.isEmpty())
-            return;
+        if (selected.isEmpty()) return;
 
         if (selected.size() == 1) {
             shareRecording(selected.get(0).getFile());
@@ -260,8 +297,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
                 Uri uri = FileProvider.getUriForFile(requireContext(),
                         requireContext().getPackageName() + ".fileprovider", rec.getFile());
                 uris.add(uri);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
 
         if (!uris.isEmpty()) {
@@ -276,16 +312,12 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
     private void deleteSelectedRecordings() {
         List<Recording> selected = adapter.getSelectedRecordings();
-        if (selected.isEmpty())
-            return;
+        if (selected.isEmpty()) return;
 
-        com.wmods.wppenhacer.ui.helpers.BottomSheetHelper.showConfirmation(
-                requireContext(),
-                getString(R.string.delete_confirmation),
-                getString(R.string.delete_multiple_confirmation, selected.size()),
-                getString(android.R.string.yes),
-                true,
-                () -> {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.delete_confirmation)
+                .setMessage(getString(R.string.delete_multiple_confirmation, selected.size()))
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                     int deleted = 0;
                     for (Recording rec : selected) {
                         if (rec.getFile().delete()) {
@@ -295,7 +327,9 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
                     Toast.makeText(requireContext(), "Deleted " + deleted + " recordings", Toast.LENGTH_SHORT).show();
                     adapter.clearSelection();
                     loadRecordings();
-                });
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .show();
     }
 
     @Override

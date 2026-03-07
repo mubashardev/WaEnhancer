@@ -18,7 +18,6 @@ import com.wmods.wppenhacer.xposed.bridge.WaeIIFace;
 import com.wmods.wppenhacer.xposed.bridge.client.BaseClient;
 import com.wmods.wppenhacer.xposed.bridge.client.BridgeClient;
 import com.wmods.wppenhacer.xposed.bridge.client.ProviderClient;
-import com.wmods.wppenhacer.xposed.core.components.AlertDialogWpp;
 import com.wmods.wppenhacer.xposed.core.components.FMessageWpp;
 import com.wmods.wppenhacer.xposed.core.devkit.Unobfuscator;
 import com.wmods.wppenhacer.xposed.core.devkit.UnobfuscatorCache;
@@ -38,6 +37,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
@@ -52,8 +52,6 @@ public class WppCore {
     private static Class<?> mGenJidClass;
     private static Method mGenJidMethod;
     private static Class bottomDialog;
-    private static Field convChatField;
-    private static Field chatJidField;
     private static SharedPreferences privPrefs;
     private static Object mStartUpConfig;
     private static Object mActionUser;
@@ -67,6 +65,8 @@ public class WppCore {
     private static Method convertJidToLid;
     private static Class actionUser;
     private static Method cachedMessageStoreKey;
+    private static Field conversationDelegateField;
+    private static Field conversationJidField;
 
     public static void Initialize(ClassLoader loader, XSharedPreferences pref) throws Exception {
         privPrefs = Utils.getApplication().getSharedPreferences("WaGlobal", Context.MODE_PRIVATE);
@@ -83,8 +83,8 @@ public class WppCore {
         // Bottom Dialog
         bottomDialog = Unobfuscator.loadDialogViewClass(loader);
 
-        convChatField = Unobfuscator.loadAntiRevokeConvChatField(loader);
-        chatJidField = Unobfuscator.loadAntiRevokeChatJidField(loader);
+        conversationDelegateField = Unobfuscator.loadConversationDelegateField(loader);
+        conversationJidField = Unobfuscator.loadUserJidConversationDelegate(loader);
 
         // Settings notifications activity (required for
         // ActivityController.EXPORTED_ACTIVITY)
@@ -497,24 +497,26 @@ public class WppCore {
         return null;
     }
 
-    @Nullable
+    @NonNull
     public static FMessageWpp.UserJid getCurrentUserJid() {
         try {
             var conversation = getCurrentConversation();
-            if (conversation == null)
-                return null;
-            Object chatField;
+            if (conversation == null) return new FMessageWpp.UserJid();
+            Object conversationDelegate;
             if (conversation.getClass().getSimpleName().equals("HomeActivity")) {
-                // tablet mode found
                 var convFragmentMethod = Unobfuscator.loadHomeConversationFragmentMethod(conversation.getClassLoader());
                 var convFragment = convFragmentMethod.invoke(null, conversation);
                 var convField = Unobfuscator.loadAntiRevokeConvFragmentField(conversation.getClassLoader());
-                chatField = convField.get(convFragment);
+                conversationDelegate = convField.get(convFragment);
             } else {
-                chatField = convChatField.get(conversation);
+                if (conversation.getClass().isAssignableFrom(conversationDelegateField.getDeclaringClass())) {
+                    conversationDelegate = conversationDelegateField.get(conversation);
+                } else {
+                    var fieldObject = ReflectionUtils.getFieldByType(conversation.getClass(), conversationDelegateField.getDeclaringClass());
+                    conversationDelegate = conversationDelegateField.get(fieldObject.get(conversation));
+                }
             }
-            var chatJidObj = chatJidField.get(chatField);
-            return new FMessageWpp.UserJid(chatJidObj);
+            return new FMessageWpp.UserJid(conversationJidField.get(conversationDelegate));
         } catch (Exception e) {
             XposedBridge.log(e);
             return new FMessageWpp.UserJid();
@@ -694,23 +696,35 @@ public class WppCore {
     }
 
     public static WaeIIFace getClientBridge() throws Exception {
-        if (client == null || client.getService() == null || !client.getService().asBinder().isBinderAlive()
-                || !client.getService().asBinder().pingBinder()) {
-            WppCore.getCurrentActivity().runOnUiThread(() -> {
-                var dialog = new AlertDialogWpp(WppCore.getCurrentActivity());
-                dialog.setTitle("Bridge Error");
-                dialog.setMessage(
-                        "The Connection with WaEnhancer was lost, it is necessary to reconnect with WaEnhancer in order to reestablish the connection.");
-                dialog.setPositiveButton("reconnect", (dialog1, which) -> {
-                    client.tryReconnect();
-                    dialog.dismiss();
-                });
-                dialog.setNegativeButton("cancel", null);
-                dialog.show();
-            });
-            throw new Exception("Failed connect to Bridge");
+        if (!isBridgeConnected()) {
+            synchronized (WppCore.class) {
+                if (!isBridgeConnected()) {
+                    if (client == null) {
+                        throw new Exception("Bridge client not initialized");
+                    }
+                    XposedBridge.log("Bridge disconnected. Trying automatic synchronous reconnect");
+                    boolean reconnected = false;
+                    try {
+                        reconnected = Boolean.TRUE.equals(client.connect().get(4, TimeUnit.SECONDS));
+                    } catch (Throwable e) {
+                        XposedBridge.log(e);
+                    }
+                    if (!reconnected || !isBridgeConnected()) {
+                        throw new Exception("Failed connect to Bridge");
+                    }
+                }
+            }
         }
         return client.getService();
+    }
+
+    private static boolean isBridgeConnected() {
+        var currentClient = client;
+        if (currentClient == null) {
+            return false;
+        }
+        var service = currentClient.getService();
+        return service != null && service.asBinder().isBinderAlive() && service.asBinder().pingBinder();
     }
 
     public interface ActivityChangeState {

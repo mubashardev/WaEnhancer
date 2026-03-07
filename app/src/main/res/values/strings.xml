@@ -479,6 +479,6 @@
     <string name="restore_feature_title">Restore Feature</string>
     <string name="restore_feature_desc">"Coming soon!"</string>
     <string name="action_follow_developer">Coming soon!</string>
-    <string name="video_note_attachment">Video Note Attachment</string>
-    <string name="video_note_attachment_sum">Add a "Video Note" button to the chat attachment menu to send video file as video note.</string>
+    <string name="video_note_attachment">[Experimental] Video Note Attachment</string>
+    <string name="video_note_attachment_sum">Add a "Video Note" button to the chat attachment menu. Currently under development and may cause crashes.</string>
 </resources>

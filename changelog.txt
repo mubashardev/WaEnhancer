@@ -1,4 +1,5 @@
 [FIXED]
 - Fixed a bug where pinning a contact on the home screen would cause it to be unpinned after a while
 - Fixed a bug in the contact picker that was not being displayed correctly in WAE
-- Fixed a bug in the Call Recorder that was not recording correctly (WARNING: Most devices do not support internal audio call recording)
+- Fixed contact name not showing in recorded calls.
+- Fixed calls recording both sides audio (still experimental, not 100% compatible with all devices)

@@ -54,5 +54,37 @@ public class MediaFragment extends BasePreferenceFragment {
             });
             videoCallScreenRec.setOnPreferenceChangeListener((preference, newValue) -> false); // Prevent toggling
         }
+        var useRootPref = findPreference("call_recording_use_root");
+        if (useRootPref != null) {
+            useRootPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                if ((Boolean) newValue) {
+                    new Thread(() -> {
+                        try {
+                            // Request root immediately to prompt Magisk, and grant to both possible WA
+                            // packages
+                            Process process = Runtime.getRuntime().exec(new String[] { "su", "-c", "echo root_test" });
+                            int exitCode = process.waitFor();
+                            if (exitCode == 0) {
+                                String[] cmds = {
+                                        "pm grant com.whatsapp android.permission.CAPTURE_AUDIO_OUTPUT",
+                                        "pm grant com.whatsapp.w4b android.permission.CAPTURE_AUDIO_OUTPUT",
+                                        "appops set com.whatsapp RECORD_AUDIO allow",
+                                        "appops set com.whatsapp.w4b RECORD_AUDIO allow"
+                                };
+                                for (String cmd : cmds) {
+                                    Runtime.getRuntime().exec(new String[] { "su", "-c", cmd }).waitFor();
+                                }
+                            } else {
+                                requireActivity().runOnUiThread(() -> android.widget.Toast.makeText(requireContext(),
+                                        "Root Access Denied!", android.widget.Toast.LENGTH_SHORT).show());
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                }
+                return true;
+            });
+        }
     }
 }

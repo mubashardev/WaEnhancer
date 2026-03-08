@@ -441,6 +441,8 @@
     <string name="call_recording_title">Call Recording</string>
     <string name="call_recording_enable">Enable Call Recording</string>
     <string name="call_recording_enable_sum">Record incoming and outgoing calls (Voice &amp; Video) as audio.</string>
+    <string name="call_recording_use_root">Use Root (Best Quality)</string>
+    <string name="call_recording_use_root_summary">Requires Magisk/KernelSU. Bypasses Android 10+ recording limits to clearly hear the other person, by granting CAPTURE_AUDIO_OUTPUT to WhatsApp.</string>
     <string name="call_recording_path">Recordings Output Folder</string>
     <string name="video_call_screen_rec">Record Video Calls (Screen)</string>
     <string name="video_call_screen_rec_locked">Coming soon!</string>

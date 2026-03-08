@@ -88,6 +88,13 @@
             app:summary="@string/call_recording_toast_summary"
             app:title="@string/call_recording_toast_title" />
 
+        <rikka.material.preference.MaterialSwitchPreference
+            android:defaultValue="false"
+            app:dependency="call_recording_enable"
+            app:key="call_recording_use_root"
+            app:summary="@string/call_recording_use_root_summary"
+            app:title="@string/call_recording_use_root" />
+
         <ListPreference
             android:defaultValue="0"
             android:entries="@array/recording_mode_entries"

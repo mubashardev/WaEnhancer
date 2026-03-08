@@ -303,22 +303,11 @@ public class CallRecording extends Feature {
             int bufferSize = minBufferSize * 6;
             XposedBridge.log("WaEnhancer: Buffer: " + bufferSize + ", useRoot: " + useRoot);
 
-            int[] audioSources = new int[]{
-                    MediaRecorder.AudioSource.VOICE_CALL,          // 4: Both sides (Usually requires Root or System App)
-                    MediaRecorder.AudioSource.VOICE_COMMUNICATION, // 7: VoIP tuned audio (Often captures both via Acoustic Echo Canceler in software)
-                    MediaRecorder.AudioSource.VOICE_DOWNLINK,      // 3: Rx Only
-                    MediaRecorder.AudioSource.VOICE_UPLINK,        // 2: Tx Only
-                    6,                                             // 6: VOICE_RECOGNITION (often succeeds but only gets Tx)
-                    MediaRecorder.AudioSource.MIC                  // 1: Raw Mic
-            };
-            String[] sourceNames = new String[]{
-                    "VOICE_CALL",
-                    "VOICE_COMMUNICATION",
-                    "VOICE_DOWNLINK",
-                    "VOICE_UPLINK",
-                    "VOICE_RECOGNITION",
-                    "MIC"
-            };
+            int[] audioSources = new int[]{MediaRecorder.AudioSource.VOICE_CALL, MediaRecorder.AudioSource.VOICE_UPLINK,
+                    MediaRecorder.AudioSource.VOICE_DOWNLINK, 6, MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                    MediaRecorder.AudioSource.MIC};
+            String[] sourceNames = new String[]{"VOICE_CALL", "VOICE_UPLINK", "VOICE_DOWNLINK", "VOICE_RECOGNITION",
+                    "VOICE_COMMUNICATION", "MIC"};
 
             String usedSource = "none";
 

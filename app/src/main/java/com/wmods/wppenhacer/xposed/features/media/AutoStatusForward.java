@@ -77,17 +77,31 @@ public class AutoStatusForward extends Feature {
                         log("AutoStatusForward - receiptMethod invoked with param 4 = " + param.args[4]);
                     }
 
-                    if (param.args[1] == null || param.args[3] == null) {
-                        log("AutoStatusForward - param.args[1] or args[3] is null, returning.");
+                    String messageId = param.args.length > 5 && param.args[5] instanceof String ? (String) param.args[5]
+                            : null;
+                    Object remoteJidObj = param.args.length > 2 ? param.args[2] : null;
+
+                    if (messageId == null || remoteJidObj == null) {
                         return;
                     }
 
-                    Object rawKey = param.args[3];
-                    Object fMessageRaw = WppCore.getFMessageFromKey(rawKey);
-                    if (fMessageRaw != null) {
-                        handleFMessage(fMessageRaw);
-                    } else {
-                        log("AutoStatusForward - fMessageRaw is null for key: " + rawKey);
+                    try {
+                        FMessageWpp.UserJid remoteJid = new FMessageWpp.UserJid(remoteJidObj);
+                        FMessageWpp.Key key = new FMessageWpp.Key(messageId, remoteJid, false);
+                        FMessageWpp fMessage = key.getFMessage();
+
+                        if (fMessage != null) {
+                            log("AutoStatusForward - Fetched message from receipt ID: " + messageId);
+                            // Ensure the hook doesn't re-process the exact same message repeatedly
+                            String dupKey = "last_processed_" + messageId;
+                            if (prefs.getBoolean(dupKey, false))
+                                return;
+                            prefs.edit().putBoolean(dupKey, true).apply();
+
+                            handleFMessage(fMessage.getObject());
+                        }
+                    } catch (Throwable t) {
+                        log("AutoStatusForward - err reconstructing key: " + t);
                     }
 
                 } catch (Throwable t) {

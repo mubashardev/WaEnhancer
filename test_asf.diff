@@ -1,0 +1,45 @@
+--- app/src/main/java/com/wmods/wppenhacer/xposed/features/media/AutoStatusForward.java
++++ app/src/main/java/com/wmods/wppenhacer/xposed/features/media/AutoStatusForward.java
+@@ -48,22 +48,27 @@
+ 
+     @Override
+     public void doHook() throws Exception {
+-        log("AutoStatusForward – hooking all constructors of " + FMessageWpp.TYPE.getName());
+-        XposedBridge.hookAllConstructors(FMessageWpp.TYPE, new XC_MethodHook() {
++        log("AutoStatusForward – hooking loadReceiptMethod (fully populated incoming messages)");
++        Method receiptMethod = Unobfuscator.loadReceiptMethod(classLoader);
++
++        XposedBridge.hookMethod(receiptMethod, new XC_MethodHook() {
+             @Override
+-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+-                super.afterHookedMethod(param);
+-                final Object fmsg = param.thisObject;
+-                
++            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                 try {
+                     prefs.reload();
+                     if (!prefs.getBoolean("auto_status_forward", false))
+                         return;
+ 
+-                    // Delay execution to give WhatsApp time to populate the message fields (text, quoted context)
+-                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+-                        try {
+-                            handleFMessage(fmsg);
+-                        } catch (Throwable t) {
+-                            log("AutoStatusForward – delayed hook err: " + t);
+-                        }
+-                    }, 1500);
++                    if (param.args.length > 4) {
++                        log("AutoStatusForward - receipt args: " + param.args[4]);
++                    }
++                    
++                    if (param.args[1] == null || param.args[3] == null)
++                        return;
++
++                    Object rawKey = param.args[3];
++                    Object fMessageRaw = WppCore.getFMessageFromKey(rawKey);
++                    if (fMessageRaw != null) {
++                        handleFMessage(fMessageRaw);
++                    }
+ 
+                 } catch (Throwable t) {

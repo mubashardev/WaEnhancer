@@ -59,19 +59,19 @@ public class AutoStatusForward extends Feature {
                     if (!prefs.getBoolean("auto_status_forward", false))
                         return;
 
-                    if (param.args.length > 4 && param.args[4] instanceof String) {
-                        log("AutoStatusForward - receiptMethod invoked with param 4 = " + param.args[4]);
-                    }
-
+                    // Tasker's incoming-message filter (changed: we don't return on "sender")
                     if (param.args[1] == null || param.args[3] == null)
                         return;
+
+                    if ("sender".equals(param.args[4])) {
+                        log("AutoStatusForward - processing 'sender' receipt");
+                    }
 
                     Object rawKey = param.args[3];
                     Object fMessageRaw = WppCore.getFMessageFromKey(rawKey);
                     if (fMessageRaw != null) {
                         handleFMessage(fMessageRaw);
                     }
-
                 } catch (Throwable t) {
                     log("AutoStatusForward – hook err: " + t);
                 }

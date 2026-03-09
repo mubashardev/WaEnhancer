@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 
 /**
  * AutoStatusForward
@@ -88,6 +89,36 @@ public class AutoStatusForward extends Feature {
                 }, 1500); // 1.5 seconds delay allows text extraction
             }
         });
+
+        // Auto click send for media statuses
+        try {
+            XposedHelpers.findAndHookMethod("com.whatsapp.mediacomposer.ui.app.MediaComposerActivity", classLoader,
+                    "onCreate", android.os.Bundle.class, new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            android.app.Activity activity = (android.app.Activity) param.thisObject;
+                            android.content.Intent intent = activity.getIntent();
+                            if (intent != null && intent.getBooleanExtra("auto_forward_status", false)) {
+                                log("AutoStatusForward - auto_forward_status=true, will auto click send");
+                                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                    try {
+                                        int sendId = activity.getResources().getIdentifier("send", "id",
+                                                activity.getPackageName());
+                                        android.view.View sendBtn = activity.findViewById(sendId);
+                                        if (sendBtn != null) {
+                                            sendBtn.performClick();
+                                            log("AutoStatusForward - Clicked send on MediaComposerActivity");
+                                        }
+                                    } catch (Exception e) {
+                                        log("AutoStatusForward - click err: " + e);
+                                    }
+                                }, 800);
+                            }
+                        }
+                    });
+        } catch (Exception e) {
+            log("AutoStatusForward MediaComposerActivity hook failed " + e.getMessage());
+        }
     }
 
     private void handleFMessage(Object fMessageObj) {
@@ -318,19 +349,21 @@ public class AutoStatusForward extends Feature {
         if (statusMsg.isMediaFile())
             forwardMediaStatus(statusMsg, jidRaw);
         else
-            forwardTextStatus("[Status reply from " + name + "]: " + replyText, jidRaw);
+            forwardTextStatus("[Status reply from " + name + "]: " + replyText, recipientJid);
     }
 
-    private void forwardTextStatus(String text, String jidRaw) {
+    private void forwardTextStatus(String text, FMessageWpp.UserJid recipient) {
         try {
-            Class<?> cls = findMediaComposerClass();
-            Intent intent = new Intent();
-            intent.setClassName(Utils.getApplication().getPackageName(), cls.getName());
-            intent.putExtra("jids", new ArrayList<>(Collections.singleton(jidRaw)));
-            intent.putExtra(Intent.EXTRA_TEXT, text);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            Utils.getApplication().startActivity(intent);
+            String phoneNumber = recipient.getPhoneNumber();
+            if (phoneNumber != null) {
+                // WppCore.sendMessage sends silently in the background without launching any
+                // Activity
+                WppCore.sendMessage(phoneNumber, text);
+            } else {
+                log("AutoStatusForward - forwardTextStatus failed, no phone number for " + recipient);
+            }
         } catch (Exception e) {
+            log("AutoStatusForward - forwardTextStatus err: " + e);
         }
     }
 
@@ -356,6 +389,7 @@ public class AutoStatusForward extends Feature {
             String caption = status.getMessageStr();
             if (!TextUtils.isEmpty(caption))
                 intent.putExtra(Intent.EXTRA_TEXT, caption);
+            intent.putExtra("auto_forward_status", true);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
             Utils.getApplication().startActivity(intent);
         } catch (Exception e) {

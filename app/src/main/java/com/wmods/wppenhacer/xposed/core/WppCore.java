@@ -220,7 +220,18 @@ public class WppCore {
             var senderMethod = ReflectionUtils.findMethodUsingFilterIfExists(actionUser,
                     (method) -> List.class.isAssignableFrom(method.getReturnType())
                             && ReflectionUtils.findIndexOfType(method.getParameterTypes(), String.class) != -1);
-            if (senderMethod != null) {
+
+            if (senderMethod == null) {
+                XposedBridge.log("WppCore.sendMessage - senderMethod is null. Dumping actionUser methods:");
+                for (java.lang.reflect.Method m : actionUser.getDeclaredMethods()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(m.getName()).append("(");
+                    for (Class<?> p : m.getParameterTypes())
+                        sb.append(p.getSimpleName()).append(", ");
+                    sb.append(") -> ").append(m.getReturnType().getSimpleName());
+                    XposedBridge.log("   " + sb.toString());
+                }
+            } else {
                 var userJid = createUserJid(number + "@s.whatsapp.net");
                 if (userJid == null) {
                     Utils.showToast("UserJID not found", Toast.LENGTH_SHORT);
@@ -501,7 +512,8 @@ public class WppCore {
     public static FMessageWpp.UserJid getCurrentUserJid() {
         try {
             var conversation = getCurrentConversation();
-            if (conversation == null) return new FMessageWpp.UserJid();
+            if (conversation == null)
+                return new FMessageWpp.UserJid();
             Object conversationDelegate;
             if (conversation.getClass().getSimpleName().equals("HomeActivity")) {
                 var convFragmentMethod = Unobfuscator.loadHomeConversationFragmentMethod(conversation.getClassLoader());
@@ -512,7 +524,8 @@ public class WppCore {
                 if (conversation.getClass().isAssignableFrom(conversationDelegateField.getDeclaringClass())) {
                     conversationDelegate = conversationDelegateField.get(conversation);
                 } else {
-                    var fieldObject = ReflectionUtils.getFieldByType(conversation.getClass(), conversationDelegateField.getDeclaringClass());
+                    var fieldObject = ReflectionUtils.getFieldByType(conversation.getClass(),
+                            conversationDelegateField.getDeclaringClass());
                     conversationDelegate = conversationDelegateField.get(fieldObject.get(conversation));
                 }
             }

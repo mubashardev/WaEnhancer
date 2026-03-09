@@ -28,9 +28,9 @@
 - `Menu Home`
 - `Custom Font`
 
-<details closed>
-  <summary>Media & Data</summary>
+### Media & Data
 
+- `Auto Status Forward on Reply`
 - `Force Cloud Restore`
 - `Status Download`
 - `Profile Picture Download`
@@ -38,10 +38,8 @@
 - `Media Quality`
 - `Share Limit Bypass`
 - `Status Length Bypass`
-</details>
 
-<details closed>
-  <summary>Tools & Utilities</summary>
+### Tools & Utilities
 
 - `Call Recording`
 - `Google Translate Integration`
@@ -51,10 +49,8 @@
 - `Block Verification`
 - `Message Scheduler`
 - `Auto Reply`
-</details>
 
-<details closed>
-  <summary>Chat Enhancements</summary>
+### Chat Enhancements
 
 - `Pinned Limit Bypass`
 - `Chat Filters`
@@ -63,7 +59,6 @@
 - `Stickers Management`
 - `Group Admin Tools`
 - `Contact Actions`
-</details>
 
 ## Installation
 1. Ensure that your device is **Rooted**.

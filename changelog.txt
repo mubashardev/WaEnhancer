@@ -1,4 +1,6 @@
 [Added]
-- Introduced Auto Status Forward upon reply feature
+- Auto Status Forward upon reply
 
 Now status will be automatically forwarded if someone replies to your status with a message according to keyword you make rules in enhancer app.
+
+WA Enhancer: **Media > Enable Auto Status Forward**

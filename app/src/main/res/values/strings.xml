@@ -496,7 +496,7 @@
     <string name="delete_rules_confirm">Delete %d selected rules?</string>
     <string name="rules_selected">selected</string>
     <string name="rules_deleted">Rules deleted</string>
-    <string name="rule_keyword_hint">Enter keyword…</string>
+    <string name="rule_keyword_hint">Keyword</string>
     <string name="rules_summary_empty">Tap to add keyword rules (catch-all if empty)</string>
     <string name="rules_summary_count">%d rule(s) configured</string>
 </resources>

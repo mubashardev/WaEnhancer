@@ -9,9 +9,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
-import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.wmods.wppenhacer.R;
 import com.wmods.wppenhacer.model.StatusForwardRule;
+import com.google.android.material.chip.Chip;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -115,45 +116,36 @@ public class StatusForwardRulesAdapter
 
     class RuleViewHolder extends RecyclerView.ViewHolder {
         final TextInputEditText editText;
-        final Spinner spinner;
+        final AutoCompleteTextView dropdown;
         final ImageButton btnDelete;
         final CheckBox checkBox;
-        final CheckBox cbApplyText;
-        final CheckBox cbApplyMedia;
-        final CheckBox cbApplyVoice;
+        final Chip chipApplyText;
+        final Chip chipApplyMedia;
+        final Chip chipApplyVoice;
         TextWatcher currentWatcher;
 
         RuleViewHolder(@NonNull View v) {
             super(v);
             editText = v.findViewById(R.id.rule_text);
-            spinner = v.findViewById(R.id.rule_type_spinner);
+            dropdown = v.findViewById(R.id.rule_type_dropdown);
             btnDelete = v.findViewById(R.id.btn_delete_rule);
             checkBox = v.findViewById(R.id.rule_checkbox);
-            cbApplyText = v.findViewById(R.id.cb_apply_text);
-            cbApplyMedia = v.findViewById(R.id.cb_apply_media);
-            cbApplyVoice = v.findViewById(R.id.cb_apply_voice);
+            chipApplyText = v.findViewById(R.id.chip_apply_text);
+            chipApplyMedia = v.findViewById(R.id.chip_apply_media);
+            chipApplyVoice = v.findViewById(R.id.chip_apply_voice);
         }
 
         void bind(StatusForwardRule rule, int pos) {
             Context ctx = itemView.getContext();
 
-            // ---- Spinner: Contains / Equals ----
+            // ---- Dropdown: Contains / Equals ----
             ArrayAdapter<CharSequence> sa = ArrayAdapter.createFromResource(
-                    ctx, R.array.rule_type_entries, android.R.layout.simple_spinner_item);
-            sa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinner.setAdapter(sa);
-            spinner.setOnItemSelectedListener(null);
-            spinner.setSelection(StatusForwardRule.TYPE_EQUALS.equals(rule.type) ? 1 : 0, false);
-            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> p, View v, int i, long id) {
-                    rule.type = i == 1 ? StatusForwardRule.TYPE_EQUALS : StatusForwardRule.TYPE_CONTAINS;
-                    listener.onRuleChanged();
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> p) {
-                }
+                    ctx, R.array.rule_type_entries, android.R.layout.simple_dropdown_item_1line);
+            dropdown.setAdapter(sa);
+            dropdown.setText(StatusForwardRule.TYPE_EQUALS.equals(rule.type) ? sa.getItem(1) : sa.getItem(0), false);
+            dropdown.setOnItemClickListener((parent, view, position, id) -> {
+                rule.type = position == 1 ? StatusForwardRule.TYPE_EQUALS : StatusForwardRule.TYPE_CONTAINS;
+                listener.onRuleChanged();
             });
 
             // ---- EditText ----
@@ -178,24 +170,24 @@ public class StatusForwardRulesAdapter
             editText.addTextChangedListener(currentWatcher);
 
             // ---- Toggles ----
-            cbApplyText.setOnCheckedChangeListener(null);
-            cbApplyText.setChecked(rule.applyText);
-            cbApplyText.setOnCheckedChangeListener((btn, checked) -> {
+            chipApplyText.setOnCheckedChangeListener(null);
+            chipApplyText.setChecked(rule.applyText);
+            chipApplyText.setOnCheckedChangeListener((btn, checked) -> {
                 rule.applyText = checked;
                 listener.onRuleChanged();
             });
 
-            cbApplyMedia.setOnCheckedChangeListener(null);
-            cbApplyMedia.setChecked(rule.applyMedia);
-            cbApplyMedia.setOnCheckedChangeListener((btn, checked) -> {
+            chipApplyMedia.setOnCheckedChangeListener(null);
+            chipApplyMedia.setChecked(rule.applyMedia);
+            chipApplyMedia.setOnCheckedChangeListener((btn, checked) -> {
                 rule.applyMedia = checked;
                 listener.onRuleChanged();
             });
 
             // Voice is practically disabled, but sync data just in case
-            cbApplyVoice.setOnCheckedChangeListener(null);
-            cbApplyVoice.setChecked(rule.applyVoice);
-            cbApplyVoice.setOnCheckedChangeListener((btn, checked) -> {
+            chipApplyVoice.setOnCheckedChangeListener(null);
+            chipApplyVoice.setChecked(rule.applyVoice);
+            chipApplyVoice.setOnCheckedChangeListener((btn, checked) -> {
                 rule.applyVoice = checked;
                 listener.onRuleChanged();
             });
@@ -203,11 +195,11 @@ public class StatusForwardRulesAdapter
             // ---- Selection mode visibility ----
             checkBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);
             btnDelete.setVisibility(isSelectionMode ? View.GONE : View.VISIBLE);
-            spinner.setEnabled(!isSelectionMode);
+            dropdown.setEnabled(!isSelectionMode);
             editText.setEnabled(!isSelectionMode);
-            cbApplyText.setEnabled(!isSelectionMode);
-            cbApplyMedia.setEnabled(!isSelectionMode);
-            // cbApplyVoice stays disabled as it's 'coming soon' in layout XML
+            chipApplyText.setEnabled(!isSelectionMode);
+            chipApplyMedia.setEnabled(!isSelectionMode);
+            // chipApplyVoice stays disabled as it's 'coming soon' in layout XML
 
             if (isSelectionMode) {
                 checkBox.setOnCheckedChangeListener(null);

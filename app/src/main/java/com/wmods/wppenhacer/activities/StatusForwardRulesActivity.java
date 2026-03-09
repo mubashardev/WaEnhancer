@@ -18,6 +18,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.wmods.wppenhacer.R;
 import com.wmods.wppenhacer.adapter.StatusForwardRulesAdapter;
 import com.wmods.wppenhacer.model.StatusForwardRule;
+import com.wmods.wppenhacer.activities.base.BaseActivity;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -25,7 +26,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StatusForwardRulesActivity extends AppCompatActivity
+public class StatusForwardRulesActivity extends BaseActivity
         implements StatusForwardRulesAdapter.RuleChangeListener {
 
     public static final String PREF_KEY = "auto_status_forward_rules_json";

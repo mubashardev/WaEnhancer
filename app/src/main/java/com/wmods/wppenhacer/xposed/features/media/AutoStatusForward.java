@@ -60,7 +60,7 @@ public class AutoStatusForward extends Feature {
                         return;
 
                     // Tasker's incoming-message filter
-                    if (param.args[4] == "sender" || param.args[1] == null || param.args[3] == null)
+                    if ("sender".equals(param.args[4]) || param.args[1] == null || param.args[3] == null)
                         return;
 
                     Object rawKey = param.args[3];

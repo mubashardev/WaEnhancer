@@ -3,3 +3,5 @@
 - Fixed a bug in the contact picker that was not being displayed correctly in WAE
 - Fixed contact name not showing in recorded calls.
 - Fixed calls recording both sides audio (still experimental, not 100% compatible with all devices)
+- Fixed bugs that sent videos in low quality
+- Fixed bug when selecting Story styles ("Facebook table" style was removed, WhatsApp no longer supports this style)

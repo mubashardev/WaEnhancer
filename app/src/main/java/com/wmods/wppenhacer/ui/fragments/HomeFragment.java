@@ -107,6 +107,62 @@ public class HomeFragment extends BaseFragment {
             startActivity(new Intent(requireContext(), SupportedVersionsActivity.class));
         });
 
+        binding.btnReportIssue.setOnClickListener(view -> {
+            animateClick(view);
+            try {
+                String dialogDetailsHtml = "<b>Device:</b> " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + "<br>" +
+                        "<b>Android Version:</b> " + android.os.Build.VERSION.RELEASE + " (SDK " + android.os.Build.VERSION.SDK_INT + ")<br>" +
+                        "<b>Module Version:</b> " + com.wmods.wppenhacer.BuildConfig.VERSION_NAME + "<br>";
+
+                String githubDetailsMd = "**Device:** " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + "\n" +
+                        "**Android Version:** " + android.os.Build.VERSION.RELEASE + " (SDK " + android.os.Build.VERSION.SDK_INT + ")\n" +
+                        "**Module Version:** " + com.wmods.wppenhacer.BuildConfig.VERSION_NAME + "\n";
+                
+                String tempWaVersion = "Not Installed";
+                try {
+                    android.content.pm.PackageInfo pInfo = requireContext().getPackageManager().getPackageInfo(com.wmods.wppenhacer.xposed.core.FeatureLoader.PACKAGE_WPP, 0);
+                    tempWaVersion = pInfo.versionName;
+                } catch (Exception e) {}
+                final String waVersion = tempWaVersion;
+                
+                String tempWaBusinessVersion = "Not Installed";
+                try {
+                    android.content.pm.PackageInfo pInfo = requireContext().getPackageManager().getPackageInfo(com.wmods.wppenhacer.xposed.core.FeatureLoader.PACKAGE_BUSINESS, 0);
+                    tempWaBusinessVersion = pInfo.versionName;
+                } catch (Exception e) {}
+                final String waBusinessVersion = tempWaBusinessVersion;
+
+                final String finalDialogDetails = dialogDetailsHtml;
+                final String finalGithubDetails = githubDetailsMd;
+
+                String dialogMessageHtml = "This will open the WaEnhancer GitHub Discussions page to report a bug.<br><br>" +
+                        "The following information about your device and installed apps will be pre-filled in your report:<br><br>" +
+                        finalDialogDetails + "<b>WhatsApp Version:</b> " + waVersion + "<br>" +
+                        "<b>WhatsApp Business Version:</b> " + waBusinessVersion + "<br><br>" +
+                        "Do you want to proceed?";
+
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Report Issue")
+                        .setMessage(androidx.core.text.HtmlCompat.fromHtml(dialogMessageHtml, androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY))
+                        .setPositiveButton("Proceed", (dialog, which) -> {
+                            try {
+                                String body = finalGithubDetails + "**WhatsApp Version:** " + waVersion + "\n" +
+                                        "**WhatsApp Business Version:** " + waBusinessVersion + "\n\n" +
+                                        "**Describe your issue or discussion topic below:**\n";
+
+                                String url = "https://github.com/mubashardev/WaEnhancer/discussions/new?category=q-a&title=Bug+Report&body=" + java.net.URLEncoder.encode(body, "UTF-8");
+                                openUrl(requireContext(), url);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
         binding.telegramBtn.setOnClickListener(view -> {
             animateClick(view);
             openTelegramChannel(requireContext());

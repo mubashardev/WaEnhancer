@@ -91,6 +91,26 @@
                             android:textAppearance="?attr/textAppearanceBodyMedium"
                             android:textColor="?attr/colorOnSurfaceVariant" />
 
+                        <!-- Report Issue Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnReportIssue"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:minHeight="40dp"
+                            android:text="Report an issue"
+                            android:textAllCaps="false"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="13sp"
+                            app:cornerRadius="20dp"
+                            app:icon="@drawable/ic_github"
+                            app:iconTint="?attr/colorPrimary"
+                            app:iconPadding="8dp"
+                            app:iconSize="16dp"
+                            app:strokeColor="?attr/colorPrimary"
+                            app:strokeWidth="1dp" />
+
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

@@ -16,7 +16,7 @@
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:layout_width="match_parent"
-            android:layout_height="220dp"
+            android:layout_height="260dp"
             android:fitsSystemWindows="true"
             app:contentScrim="?attr/colorSurface"
             app:expandedTitleGravity="bottom|center_horizontal"
@@ -63,15 +63,56 @@
                     android:letterSpacing="-0.03"
                     android:textStyle="bold" />
 
+                <!-- Maintainer badge - mubashardev as dominant -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/maintainer_badge_bg"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="4dp">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✦ "
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="10sp" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MAINTAINER"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="10sp"
+                        android:letterSpacing="0.12"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/tvDevName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_xs"
-                    android:alpha="1.0"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/maintainer"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tvOriginalDev"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:alpha="0.55"
                     android:text="@string/developer"
                     android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="15sp" />
+                    android:textSize="12sp" />
 
             </LinearLayout>
 

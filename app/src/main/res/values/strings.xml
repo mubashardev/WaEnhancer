@@ -1,4 +1,6 @@
 <resources>
+    <string name="maintainer" translatable="false">mubashardev</string>
+    <string name="developer" translatable="false">Based on Dev4Mod</string>
     <string name="force_restore_backup">Force Restore Backup</string>
     <string name="force_restore_backup_summary">Launch the restore backup screen manually. Use this if you skipped restoration during setup.</string>
     <string name="app_name" translatable="false">Wa Enhancer</string>
@@ -298,7 +300,7 @@
     <string name="select_status_type">Select status type</string>
     <string name="open_camera">Open Camera</string>
     <string name="edit_text">Edit Text</string>
-    <string name="developer" translatable="false">Developer: Dev4Mod</string>
+
     <string name="about_info">Wa Enhancer is an Xposed module that enhances your WhatsApp experience by offering advanced privacy features, home screen customization, general tweaks, and media improvements.</string>
     <string name="installation">Installation</string>
     <string name="installation_desc">1. Ensure that your device is rooted.\n2. Install the Xposed Framework on your device.\n3. Download the Wa Enhancer from the Actions section.\n4. Install the Wa Enhancer APK.\n5. Enable the Wa Enhancer module in the Xposed Installer app.</string>

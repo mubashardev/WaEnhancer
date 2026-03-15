@@ -1,6 +1,9 @@
-[Added]
-- Auto Status Forward upon reply
+[Updated]
+- Call Recording
 
-Now status will be automatically forwarded if someone replies to your status with a message according to keyword you make rules in enhancer app.
+Status: Experimental. 
+The feature is not stable yet and may fail on some devices. I currently have limited time to actively maintain this part of the project, so feedback, testing, and pull requests from the community are highly appreciated.
+If you encounter any issues, please report them here:  
+👉 [Open an Issue](https://github.com/mubashardev/WaEnhancer/issues/new)
 
-WA Enhancer: **Media > Enable Auto Status Forward**
+Pull requests and contributions are also welcome.

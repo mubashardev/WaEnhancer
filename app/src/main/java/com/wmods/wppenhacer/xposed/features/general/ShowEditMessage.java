@@ -65,6 +65,9 @@ public class ShowEditMessage extends Feature {
                 var invoked = callerMessageEditMethod.invoke(null, param.args[0]);
                 long timestamp = XposedHelpers.getLongField(invoked, "A00");
                 var fMessage = new FMessageWpp(param.args[0]);
+                var key = fMessage.getKey();
+                if (key == null || key.messageID == null) return;
+                String messageKey = key.messageID;
                 long id = fMessage.getRowId();
                 var origMessage = MessageStore.getInstance().getCurrentMessageByID(id);
                 String newMessage = fMessage.getMessageStr();
@@ -77,11 +80,11 @@ public class ShowEditMessage extends Feature {
                     if (newMessage == null) return;
                 }
                 try {
-                    var message = MessageHistory.getInstance().getMessages(id);
+                    var message = MessageHistory.getInstance().getMessages(messageKey);
                     if (message == null) {
-                        MessageHistory.getInstance().insertMessage(id, origMessage, 0);
+                        MessageHistory.getInstance().insertMessage(messageKey, origMessage, 0);
                     }
-                    MessageHistory.getInstance().insertMessage(id, newMessage, timestamp);
+                    MessageHistory.getInstance().insertMessage(messageKey, newMessage, timestamp);
                 } catch (Exception e) {
                     logDebug(e);
                 }
@@ -96,21 +99,33 @@ public class ShowEditMessage extends Feature {
                     @Override
                     public void onItemBind(FMessageWpp fMessage, ViewGroup viewGroup) {
                         var textView = (TextView) viewGroup.findViewById(Utils.getID("edit_label", "id"));
-                        if (textView != null && !textView.getText().toString().contains(strEmoji)) {
-                            textView.getPaint().setUnderlineText(true);
-                            textView.append(strEmoji);
-                            textView.setOnClickListener((v) -> {
-                                try {
-                                    long id = fMessage.getRowId();
-                                    var messages = MessageHistory.getInstance().getMessages(id);
-                                    if (messages == null) {
-                                        messages = new ArrayList<>();
+                        if (textView != null) {
+                            if (!textView.getText().toString().contains(strEmoji)) {
+                                textView.getPaint().setUnderlineText(true);
+                                textView.append(strEmoji);
+                                // Set click listener once; it reads the message key tag at click time.
+                                textView.setOnClickListener((v) -> {
+                                    try {
+                                        Object tag = v.getTag();
+                                        if (!(tag instanceof String)) return;
+                                        String msgKey = (String) tag;
+                                        var messages = MessageHistory.getInstance().getMessages(msgKey);
+                                        if (messages == null) {
+                                            messages = new ArrayList<>();
+                                        }
+                                        showBottomDialog(messages);
+                                    } catch (Exception exception0) {
+                                        logDebug(exception0);
                                     }
-                                    showBottomDialog(messages);
-                                } catch (Exception exception0) {
-                                    logDebug(exception0);
-                                }
-                            });
+                                });
+                            }
+                            // Always stamp the current message's key onto the view.
+                            // The click listener reads this tag at the moment of the tap,
+                            // so it is immune to view recycling and async post() timing.
+                            var key = fMessage.getKey();
+                            if (key != null && key.messageID != null) {
+                                textView.setTag(key.messageID);
+                            }
                         }
                     }
                 }

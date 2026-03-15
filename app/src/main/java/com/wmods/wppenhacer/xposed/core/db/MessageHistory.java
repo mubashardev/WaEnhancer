@@ -27,7 +27,7 @@ public class MessageHistory extends SQLiteOpenHelper {
     private static final int MESSAGE_CACHE_SIZE = 100;
     private static final int SEEN_MESSAGE_CACHE_SIZE = 200;
     private static final int SEEN_MESSAGES_LIST_CACHE_SIZE = 50;
-    private final LruCache<Long, ArrayList<MessageItem>> messagesCache;
+    private final LruCache<String, ArrayList<MessageItem>> messagesCache;
     private final LruCache<String, MessageSeenItem> seenMessageCache;
     private final LruCache<String, List<MessageSeenItem>> seenMessagesListCache;
 
@@ -37,7 +37,7 @@ public class MessageHistory extends SQLiteOpenHelper {
     }
 
     public MessageHistory(Context context) {
-        super(context, "MessageHistory.db", null, 3);
+        super(context, "MessageHistory.db", null, 4);
         messagesCache = new LruCache<>(MESSAGE_CACHE_SIZE);
         seenMessageCache = new LruCache<>(SEEN_MESSAGE_CACHE_SIZE);
         seenMessagesListCache = new LruCache<>(SEEN_MESSAGES_LIST_CACHE_SIZE);
@@ -53,44 +53,44 @@ public class MessageHistory extends SQLiteOpenHelper {
         return mInstance;
     }
 
-    public final void insertMessage(long id, String message, long timestamp) {
+    public final void insertMessage(String messageKey, String message, long timestamp) {
         synchronized (this) {
             ContentValues contentValues0 = new ContentValues();
-            contentValues0.put("row_id", id);
+            contentValues0.put("message_key", messageKey);
             contentValues0.put("text_data", message);
             contentValues0.put("editTimestamp", timestamp);
             dbWrite.insert("MessageHistory", null, contentValues0);
 
-            // Invalidate cache for this message ID
-            messagesCache.remove(id);
+            // Invalidate cache for this message key
+            messagesCache.remove(messageKey);
         }
     }
 
-    public ArrayList<MessageItem> getMessages(long v) {
+    public ArrayList<MessageItem> getMessages(String messageKey) {
         // Check cache first
-        ArrayList<MessageItem> cachedMessages = messagesCache.get(v);
+        ArrayList<MessageItem> cachedMessages = messagesCache.get(messageKey);
         if (cachedMessages != null) {
             return cachedMessages;
         }
 
         // If not in cache, query database
-        Cursor history = dbWrite.query("MessageHistory", new String[]{"_id", "row_id", "text_data", "editTimestamp"}, "row_id=?", new String[]{String.valueOf(v)}, null, null, null);
+        Cursor history = dbWrite.query("MessageHistory", new String[]{"_id", "message_key", "text_data", "editTimestamp"}, "message_key=?", new String[]{messageKey}, null, null, null);
         if (!history.moveToFirst()) {
             history.close();
             return null;
         }
         ArrayList<MessageItem> messages = new ArrayList<>();
         do {
-            long id = history.getLong(history.getColumnIndexOrThrow("row_id"));
+            String key = history.getString(history.getColumnIndexOrThrow("message_key"));
             long timestamp = history.getLong(history.getColumnIndexOrThrow("editTimestamp"));
             String message = history.getString(history.getColumnIndexOrThrow("text_data"));
-            messages.add(new MessageItem(id, message, timestamp));
+            messages.add(new MessageItem(key, message, timestamp));
         }
         while (history.moveToNext());
         history.close();
 
         // Store in cache
-        messagesCache.put(v, messages);
+        messagesCache.put(messageKey, messages);
         return messages;
     }
 
@@ -191,7 +191,7 @@ public class MessageHistory extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL("create table MessageHistory(_id INTEGER PRIMARY KEY AUTOINCREMENT, row_id INTEGER NOT NULL, text_data TEXT NOT NULL, editTimestamp BIGINT DEFAULT 0 );");
+        sqLiteDatabase.execSQL("create table MessageHistory(_id INTEGER PRIMARY KEY AUTOINCREMENT, message_key TEXT NOT NULL, text_data TEXT NOT NULL, editTimestamp BIGINT DEFAULT 0 );");
         sqLiteDatabase.execSQL("create table hide_seen_messages(_id INTEGER PRIMARY KEY AUTOINCREMENT, jid TEXT NOT NULL, message_id TEXT NOT NULL,type INT NOT NULL, viewed INT DEFAULT 0);");
     }
 
@@ -199,6 +199,11 @@ public class MessageHistory extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
         if (oldVersion < 2) {
             sqLiteDatabase.execSQL("create table hide_seen_messages(_id INTEGER PRIMARY KEY AUTOINCREMENT, jid TEXT NOT NULL, message_id TEXT NOT NULL,type INT NOT NULL, viewed INT DEFAULT 0);");
+        }
+        if (oldVersion < 4) {
+            // Migrate MessageHistory to use message_key (string) instead of row_id (long)
+            sqLiteDatabase.execSQL("DROP TABLE IF EXISTS MessageHistory;");
+            sqLiteDatabase.execSQL("create table MessageHistory(_id INTEGER PRIMARY KEY AUTOINCREMENT, message_key TEXT NOT NULL, text_data TEXT NOT NULL, editTimestamp BIGINT DEFAULT 0 );");
         }
     }
 
@@ -222,12 +227,12 @@ public class MessageHistory extends SQLiteOpenHelper {
     }
 
     public static class MessageItem {
-        public long id;
+        public String messageKey;
         public String message;
         public long timestamp;
 
-        public MessageItem(long id, String message, long timestamp) {
-            this.id = id;
+        public MessageItem(String messageKey, String message, long timestamp) {
+            this.messageKey = messageKey;
             this.message = message;
             this.timestamp = timestamp;
         }

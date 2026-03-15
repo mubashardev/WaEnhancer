@@ -147,8 +147,9 @@ public class HomeFragment extends BaseFragment {
                         .setPositiveButton("Proceed", (dialog, which) -> {
                             try {
                                 String body = finalGithubDetails + "**WhatsApp Version:** " + waVersion + "\n" +
-                                        "**WhatsApp Business Version:** " + waBusinessVersion + "\n\n" +
-                                        "**Describe your issue or discussion topic below:**\n";
+                                        "**WhatsApp Business Version:** " + waBusinessVersion + "\n" +
+                                        "\n---\n" +
+                                        "[Describe here]\n";
 
                                 String url = "https://github.com/mubashardev/WaEnhancer/discussions/new?category=q-a&title=Bug+Report&body=" + java.net.URLEncoder.encode(body, "UTF-8");
                                 openUrl(requireContext(), url);

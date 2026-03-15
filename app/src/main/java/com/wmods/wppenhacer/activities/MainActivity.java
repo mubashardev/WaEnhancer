@@ -265,6 +265,12 @@ public class MainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         invalidateOptionsMenu();
+        // Re-check battery optimization each time the user returns to the app
+        // (e.g. after granting exemption from system settings)
+        var powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
+            binding.btnBattery.setVisibility(android.view.View.GONE);
+        }
     }
 
     @Override

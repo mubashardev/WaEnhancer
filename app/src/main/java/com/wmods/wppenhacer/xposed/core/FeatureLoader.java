@@ -34,7 +34,6 @@ import com.wmods.wppenhacer.xposed.features.customization.CustomToolbar;
 import com.wmods.wppenhacer.xposed.features.customization.CustomView;
 import com.wmods.wppenhacer.xposed.features.customization.FilterGroups;
 import com.wmods.wppenhacer.xposed.features.customization.HideSeenView;
-import com.wmods.wppenhacer.xposed.features.general.VideoNoteAttachment;
 import com.wmods.wppenhacer.xposed.features.customization.HideTabs;
 import com.wmods.wppenhacer.xposed.features.customization.IGStatus;
 import com.wmods.wppenhacer.xposed.features.customization.SeparateGroup;
@@ -61,7 +60,6 @@ import com.wmods.wppenhacer.xposed.features.media.DownloadViewOnce;
 import com.wmods.wppenhacer.xposed.features.media.MediaPreview;
 import com.wmods.wppenhacer.xposed.features.media.MediaQuality;
 import com.wmods.wppenhacer.xposed.features.media.StatusDownload;
-import com.wmods.wppenhacer.xposed.features.media.AutoStatusForward;
 import com.wmods.wppenhacer.xposed.features.others.ActivityController;
 import com.wmods.wppenhacer.xposed.features.others.BackupRestore;
 import com.wmods.wppenhacer.xposed.features.others.AudioTranscript;
@@ -361,7 +359,6 @@ public class FeatureLoader {
                 HideReceipt.class,
                 HideSeen.class,
                 HideSeenView.class,
-                VideoNoteAttachment.class,
                 TagMessage.class,
                 HideTabs.class,
                 IGStatus.class,
@@ -398,8 +395,7 @@ public class FeatureLoader {
                 CallRecording.class,
                 BackupRestore.class,
                 Spy.class,
-                RecoverDeleteForMe.class,
-                AutoStatusForward.class
+                RecoverDeleteForMe.class
         };
         XposedBridge.log("Loading Plugins");
         var executorService = Executors.newWorkStealingPool(Math.min(Runtime.getRuntime().availableProcessors(), 4));
@@ -445,46 +441,6 @@ public class FeatureLoader {
         private String error;
         private String moduleVersion;
         private String message;
-
-        public String getPluginName() {
-            return pluginName;
-        }
-
-        public void setPluginName(String pluginName) {
-            this.pluginName = pluginName;
-        }
-
-        public String getWhatsAppVersion() {
-            return whatsAppVersion;
-        }
-
-        public void setWhatsAppVersion(String whatsAppVersion) {
-            this.whatsAppVersion = whatsAppVersion;
-        }
-
-        public String getError() {
-            return error;
-        }
-
-        public void setError(String error) {
-            this.error = error;
-        }
-
-        public String getModuleVersion() {
-            return moduleVersion;
-        }
-
-        public void setModuleVersion(String moduleVersion) {
-            this.moduleVersion = moduleVersion;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
 
         @NonNull
         @Override

@@ -154,13 +154,6 @@
         <item>2</item>
     </string-array>
     <string-array name="supported_versions_wpp">
-        <item>2.25.34.xx</item>
-        <item>2.25.35.xx</item>
-        <item>2.25.36.xx</item>
-        <item>2.25.37.xx</item>
-        <item>2.25.38.xx</item>
-        <item>2.25.39.xx</item>
-        <item>2.25.40.xx</item>
         <item>2.26.1.xx</item>
         <item>2.26.2.xx</item>
         <item>2.26.3.xx</item>
@@ -170,17 +163,8 @@
         <item>2.26.7.xx</item>
         <item>2.26.8.xx</item>
         <item>2.26.9.xx</item>
-        <item>2.26.10.xx</item>
-        <item>2.27.1.xx</item>
     </string-array>
     <string-array name="supported_versions_business">
-        <item>2.25.34.xx</item>
-        <item>2.25.35.xx</item>
-        <item>2.25.36.xx</item>
-        <item>2.25.37.xx</item>
-        <item>2.25.38.xx</item>
-        <item>2.25.39.xx</item>
-        <item>2.25.40.xx</item>
         <item>2.26.1.xx</item>
         <item>2.26.2.xx</item>
         <item>2.26.3.xx</item>
@@ -190,8 +174,6 @@
         <item>2.26.7.xx</item>
         <item>2.26.8.xx</item>
         <item>2.26.9.xx</item>
-        <item>2.26.10.xx</item>
-        <item>2.27.1.xx</item>
     </string-array>
     <string-array name="image_picker">
         <item>image/*</item>
@@ -249,47 +231,6 @@
         <item>0</item>
         <item>1</item>
         <item>2</item>
-    </string-array>
-
-
-    <string-array name="recording_mode_entries">
-        <item>@string/recording_mode_all</item>
-        <item>@string/recording_mode_unknown</item>
-        <item>@string/recording_mode_exclude</item>
-        <item>@string/recording_mode_include</item>
-    </string-array>
-    <string-array name="recording_mode_values">
-        <item>0</item> <!-- Record All -->
-        <item>1</item> <!-- Unknown Only -->
-        <item>2</item> <!-- Exclude / Blacklist -->
-        <item>3</item> <!-- Include / Whitelist -->
-    </string-array>
-
-    <string-array name="rule_type_entries">
-        <item>Contains</item>
-        <item>Equals</item>
-    </string-array>
-
-    <!-- Call Recording Audio Sources -->
-    <string-array name="audio_sources_entries">
-        <item>@string/api_source_voice_communication</item>
-        <item>@string/api_source_microphone</item>
-        <item>@string/api_source_voice_recognition</item>
-        <item>@string/api_source_unprocessed</item>
-        <item>@string/api_source_default</item>
-        <item>@string/audio_source_caf</item>
-        <item>@string/audio_source_alsa</item>
-        <item>@string/audio_source_msm</item>
-    </string-array>
-    <string-array name="audio_sources_values">
-        <item>5</item>
-        <item>3</item>
-        <item>6</item>
-        <item>7</item>
-        <item>4</item>
-        <item>100</item>
-        <item>101</item>
-        <item>102</item>
     </string-array>
 
 </resources>

@@ -96,8 +96,6 @@
     <string name="cancel">Cancel</string>
     <string name="edited_history">Edited History</string>
     <string name="message_original">Original Message</string>
-    <string name="message_original_time">Original Time</string>
-    <string name="message_deleted_time">Deleted Time</string>
     <string name="new_chat">New Chat</string>
     <string name="number_with_country_code">Number with country code</string>
     <string name="message">Message</string>
@@ -438,14 +436,6 @@
     <string name="disable_status_in_the_profile_photo">Disable Status in the profile photo</string>
     <string name="disable_status_in_the_profile_photo_sum">Disables the circle that appears in the profile photo of each contact when there is new status</string>
     <string name="download_not_available">Download not available or media has not been fully downloaded</string>
-    <string name="call_recording_title">Call Recording</string>
-    <string name="call_recording_enable">Enable Call Recording</string>
-    <string name="call_recording_enable_sum">Record incoming and outgoing calls (Voice &amp; Video) as audio.\n ⚠️ Experimental — may not work properly. A stable version is coming very soon!</string>
-    <string name="call_recording_use_root">Use Root (Best Quality)</string>
-    <string name="call_recording_use_root_summary">Requires Magisk/KernelSU. Bypasses Android 10+ recording limits to clearly hear the other person, by granting CAPTURE_AUDIO_OUTPUT to WhatsApp.</string>
-    <string name="call_recording_path">Recordings Output Folder</string>
-    <string name="video_call_screen_rec">Record Video Calls (Screen)</string>
-    <string name="video_call_screen_rec_locked">Coming soon!</string>
     <string name="possible_block_detected">Possible block detected</string>
     <string name="block_not_detected">Block not detected</string>
     <string name="checking_if_the_contact_is_blocked">Checking if the contact is blocked...</string>
@@ -456,6 +446,13 @@
     <string name="disable_whatsapp_expiration_sum">Deactivates the expired version of WhatsApp, (Note: Manual Disable to update WhatsApp on the Play Store or mark the Play Store on LSposed)</string>
     <string name="lockedchats_enhancer">Enhanced Locked Chats</string>
     <string name="lockedchats_enhancer_sum">Improve locked chats by hiding notifications and contacts from the contact list</string>
+    <string name="call_recording_title">Call Recording</string>
+    <string name="call_recording_enable">Enable Call Recording</string>
+    <string name="call_recording_enable_sum">Record incoming and outgoing calls (Voice &amp; Video) as audio.</string>
+    <string name="call_recording_path">Recordings Output Folder</string>
+    <string name="video_call_screen_rec">Record Video Calls (Screen)</string>
+    <string name="video_call_screen_rec_locked">Coming soon!</string>
+    <string name="coming_soon">Coming soon!</string>
     <string name="recording_mode">Recording Mode</string>
     <string name="recording_mode_sum">Select which calls to record</string>
     <string name="recording_mode_all">Record All Calls</string>
@@ -470,8 +467,6 @@
     <string name="search_no_results">No features found</string>
     <string name="search_try_different_keywords">Try different keywords or browse categories</string>
     <string name="search_start_typing">Start typing to search features</string>
-    <string name="enable_spy">Enable Spy Tool</string>
-    <string name="enable_spy_sum">Logs internal events to Xposed log for debugging.</string>
     <string name="no_deleted_messages">No deleted messages found</string>
     <string name="deleted_messages_title">Deleted By Me</string>
     <string name="restore_message">Restore</string>
@@ -479,42 +474,9 @@
     <string name="restore_feature_title">Restore Feature</string>
     <string name="restore_feature_desc">"Coming soon!"</string>
     <string name="action_follow_developer">Coming soon!</string>
-    <string name="video_note_attachment">[Experimental] Video Note Attachment</string>
-    <string name="video_note_attachment_sum">Add a "Video Note" button to the chat attachment menu. Currently under development and may cause crashes.</string>
-
+    <string name="enable_spy">Enable Spy Tool</string>
+    <string name="enable_spy_sum">Logs internal events to Xposed log for debugging.</string>
     <string name="warning_restore">When restoring the backup all messages after the backup will be lost, are you sure you want to continue?</string>
     <string name="force_restore_backup_experimental">Force Restore Backup (Experimental)</string>
-
-    <!-- Auto Status Forward -->
-    <string name="auto_status_forward_title">Auto Status Forward</string>
-    <string name="auto_status_forward">Enable Auto Status Forward</string>
-    <string name="auto_status_forward_sum">Automatically forward your status to a contact when they reply to it with a matching keyword. Leave rules empty to forward on any reply.</string>
-    <string name="auto_status_forward_rules">Keyword Rules</string>
-    <string name="add_rule">Add Rule</string>
-    <string name="delete_rule">Delete Rule</string>
-    <string name="delete_rule_confirm">Delete this rule?</string>
-    <string name="delete_rules_confirm">Delete %d selected rules?</string>
-    <string name="rules_selected">selected</string>
-    <string name="rules_deleted">Rules deleted</string>
-    <string name="rule_keyword_hint">Keyword</string>
-    <string name="rules_summary_empty">Tap to add keyword rules (catch-all if empty)</string>
-    <string name="rules_summary_count">%d rule(s) configured</string>
-    <!-- Call Recording Audio Sources -->
-    <string name="api_source_uplink_downlink">Voice call uplink + downlink</string>
-    <string name="api_source_downlink">Voice call downlink</string>
-    <string name="api_source_uplink">Voice call uplink</string>
-    <string name="api_source_voice_communication">Voice communication</string>
-    <string name="api_source_microphone">Microphone</string>
-    <string name="api_source_voice_recognition">Voice recognition</string>
-    <string name="api_source_unprocessed">Unprocessed</string>
-    <string name="api_source_default">Default</string>
-    <string name="audio_source_caf">[ROOT] CAF</string>
-    <string name="audio_source_alsa">[ROOT] ALSA</string>
-    <string name="audio_source_msm">[ROOT] MSM</string>
-    <string name="device_other">Other / Default</string>
-    <string name="call_recording_experimental_title">⚠️ Experimental Feature</string>
-    <string name="call_recording_experimental_message">Call Recording is currently experimental and may not work properly on all devices.
-
-You can still try it, but please wait for a stable version — it will be launched very soon!</string>
-    <string name="call_recording_experimental_ok">I understand, enable anyway</string>
+    <string name="contact_probably_not_added">Contact probably didn\'t add you!</string>
 </resources>

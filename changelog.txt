@@ -1,3 +1,12 @@
+[ADDED]
+* Added support for WA/WB 2.26.9.xx
+* Added check to the block checker to see if the user deleted your contact.
+
+[FIXED]
+* Fixed issue when sending media in high quality.
+* Fixed issue with header transparency when Wallpaper is enabled.
+* Fixed edit history showing all messages instead of specific message history.
+
 [Updated]
 - Call Recording
 

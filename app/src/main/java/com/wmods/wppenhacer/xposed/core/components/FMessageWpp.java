@@ -38,11 +38,11 @@ public class FMessageWpp {
     private final Object fmessage;
     private Key key;
     private static final Set<String> VALID_DOMAINS = Set.of(
-            "s.whatsapp.net", "newsletter", "lid", "g.us", "broadcast", "status");
+            "s.whatsapp.net", "newsletter", "lid", "g.us", "broadcast", "status"
+    );
 
     public FMessageWpp(Object fMessage) {
-        if (fMessage == null)
-            throw new RuntimeException("Object fMessage is null");
+        if (fMessage == null) throw new RuntimeException("Object fMessage is null");
         if (!FMessageWpp.TYPE.isInstance(fMessage))
             throw new RuntimeException("Object fMessage is not a FMessage Instance");
         this.fmessage = fMessage;
@@ -51,16 +51,17 @@ public class FMessageWpp {
     public static void initialize(ClassLoader classLoader) {
         try {
             TYPE = Unobfuscator.loadFMessageClass(classLoader);
-            var userJidClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith,
-                    "jid.UserJid");
-            userJidMethod = ReflectionUtils.findMethodUsingFilter(TYPE,
-                    method -> method.getParameterCount() == 0 && method.getReturnType() == userJidClass);
+            UserJid.TYPE_USERJID = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "jid.UserJid");
+            UserJid.TYPE_JID = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "jid.Jid");
+            UserJid.TYPE_PHONEUSERJID = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "jid.PhoneUserJid");
+            UserJid.TYPE_DEVICEJID = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "jid.DeviceJid");
+            var userJidClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "jid.UserJid");
+            userJidMethod = ReflectionUtils.findMethodUsingFilter(TYPE, method -> method.getParameterCount() == 0 && method.getReturnType() == userJidClass);
             keyMessage = Unobfuscator.loadMessageKeyField(classLoader);
             Key.TYPE = keyMessage.getType();
             messageMethod = Unobfuscator.loadNewMessageMethod(classLoader);
             messageWithMediaMethod = Unobfuscator.loadNewMessageWithMediaMethod(classLoader);
-            var deviceJidClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith,
-                    "jid.DeviceJid");
+            var deviceJidClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "jid.DeviceJid");
             deviceJidField = ReflectionUtils.findFieldUsingFilter(TYPE, field -> field.getType() == deviceJidClass);
             mediaTypeField = Unobfuscator.loadMediaTypeField(classLoader);
             getOriginalMessageKey = Unobfuscator.loadOriginalMessageKey(classLoader);
@@ -74,15 +75,14 @@ public class FMessageWpp {
 
     public static boolean checkUnsafeIsFMessage(ClassLoader classLoader, Class<?> clazz) throws Exception {
         Class<?> FmessageClass = Unobfuscator.loadFMessageClass(classLoader);
-        if (FmessageClass.isAssignableFrom(clazz))
-            return true;
+        if (FmessageClass.isAssignableFrom(clazz)) return true;
         var interfaces = FmessageClass.getInterfaces();
         for (Class<?> anInterface : interfaces) {
-            if (anInterface == clazz)
-                return true;
+            if (anInterface == clazz) return true;
         }
         return false;
     }
+
 
     public UserJid getUserJid() {
         try {
@@ -111,6 +111,7 @@ public class FMessageWpp {
         return 0;
     }
 
+
     public Key getKey() {
         try {
             if (this.key == null)
@@ -124,7 +125,7 @@ public class FMessageWpp {
 
     public Key getOriginalKey() {
         try {
-            return new Key(getOriginalMessageKey.invoke(null, fmessage), this);
+            return new Key(getOriginalMessageKey.invoke(fmessage), this);
         } catch (Exception e) {
             XposedBridge.log(e);
         }
@@ -147,8 +148,7 @@ public class FMessageWpp {
     public String getMessageStr() {
         try {
             var message = (String) messageMethod.invoke(fmessage);
-            if (message != null)
-                return message;
+            if (message != null) return message;
             return (String) messageWithMediaMethod.invoke(fmessage);
         } catch (Exception e) {
             XposedBridge.log(e);
@@ -169,20 +169,16 @@ public class FMessageWpp {
 
     public File getMediaFile() {
         try {
-            if (!isMediaFile())
-                return null;
+            if (!isMediaFile()) return null;
             for (var field : abstractMediaMessageClass.getDeclaredFields()) {
-                if (field.getType().isPrimitive())
-                    continue;
+                if (field.getType().isPrimitive()) continue;
                 var fileField = ReflectionUtils.getFieldByType(field.getType(), File.class);
                 if (fileField != null) {
                     var mediaObject = ReflectionUtils.getObjectField(field, fmessage);
                     var mediaFile = (File) fileField.get(mediaObject);
-                    if (mediaFile != null)
-                        return mediaFile;
+                    if (mediaFile != null) return mediaFile;
                     var filePath = MessageStore.getInstance().getMediaFromID(getRowId());
-                    if (filePath == null)
-                        return null;
+                    if (filePath == null) return null;
                     return new File(filePath);
                 }
             }
@@ -204,8 +200,7 @@ public class FMessageWpp {
      */
     public int getMediaType() {
         try {
-            if (mediaTypeField == null)
-                return -1;
+            if (mediaTypeField == null) return -1;
             return mediaTypeField.getInt(fmessage);
         } catch (Exception e) {
             XposedBridge.log(e);
@@ -219,8 +214,7 @@ public class FMessageWpp {
     }
 
     /*
-     * Represents the key of a WhatsApp message, containing identifiers for the
-     * message.
+     * Represents the key of a WhatsApp message, containing identifiers for the message.
      */
     public static class Key {
 
@@ -251,8 +245,7 @@ public class FMessageWpp {
         public UserJid remoteJid;
 
         /**
-         * Constructs a new Key instance by wrapping the original WhatsApp message key
-         * object.
+         * Constructs a new Key instance by wrapping the original WhatsApp message key object.
          *
          * @param key The original message key object.
          */
@@ -279,51 +272,19 @@ public class FMessageWpp {
             this.messageID = messageID;
             this.isFromMe = isFromMe;
             this.remoteJid = remoteJid;
-
-            Object key = createKeyUsingReflection(remoteJid.userJid, messageID, isFromMe);
-            if (key == null && remoteJid.phoneJid != null) {
-                key = createKeyUsingReflection(remoteJid.phoneJid, messageID, isFromMe);
-            }
-
-            if (key != null) {
-                var fmessage = WppCore.getFMessageFromKey(key);
+            var key = XposedHelpers.newInstance(FMessageWpp.Key.TYPE, remoteJid.userJid, messageID, false);
+            var fmessage = WppCore.getFMessageFromKey(key);
+            if (fmessage != null) {
+                this.thisObject = key;
+                this.fmessage = new FMessageWpp(fmessage);
+            } else {
+                key = XposedHelpers.newInstance(FMessageWpp.Key.TYPE, remoteJid.phoneJid, messageID, false);
+                fmessage = WppCore.getFMessageFromKey(key);
                 if (fmessage != null) {
                     this.thisObject = key;
                     this.fmessage = new FMessageWpp(fmessage);
                 }
             }
-        }
-
-        private Object createKeyUsingReflection(Object jid, String id, boolean fromMe) {
-            if (jid == null || TYPE == null)
-                return null;
-            try {
-                for (java.lang.reflect.Constructor<?> c : TYPE.getDeclaredConstructors()) {
-                    Class<?>[] types = c.getParameterTypes();
-                    if (types.length == 3) {
-                        int strIdx = -1, boolIdx = -1, jidIdx = -1;
-                        for (int i = 0; i < 3; i++) {
-                            if (types[i] == String.class)
-                                strIdx = i;
-                            else if (types[i] == boolean.class || types[i] == Boolean.class)
-                                boolIdx = i;
-                            else if (types[i].isAssignableFrom(jid.getClass()))
-                                jidIdx = i;
-                        }
-                        if (strIdx != -1 && boolIdx != -1 && jidIdx != -1) {
-                            Object[] args = new Object[3];
-                            args[strIdx] = id;
-                            args[boolIdx] = fromMe;
-                            args[jidIdx] = jid;
-                            c.setAccessible(true);
-                            return c.newInstance(args);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                XposedBridge.log(e);
-            }
-            return null;
         }
 
         public FMessageWpp getFMessage() {
@@ -344,6 +305,11 @@ public class FMessageWpp {
 
     public static class UserJid {
 
+        public static Class<?> TYPE_DEVICEJID;
+        public static Class<?> TYPE_USERJID;
+        public static Class<?> TYPE_JID;
+        public static Class<?> TYPE_PHONEUSERJID;
+
         public Object phoneJid;
 
         public Object userJid;
@@ -353,8 +319,7 @@ public class FMessageWpp {
         }
 
         public UserJid(@Nullable String rawjid) {
-            if (isInvalidJid(rawjid))
-                return;
+            if (isInvalidJid(rawjid)) return;
             if (checkValidLID(rawjid)) {
                 this.userJid = WppCore.createUserJid(rawjid);
                 this.phoneJid = WppCore.getPhoneJidFromUserJid(this.userJid);
@@ -364,17 +329,16 @@ public class FMessageWpp {
             }
         }
 
+
         public UserJid(@Nullable Object lidOrJid) {
-            if (lidOrJid == null)
-                return;
+            if (lidOrJid == null) return;
             String raw;
             try {
                 raw = (String) XposedHelpers.callMethod(lidOrJid, "getRawString");
             } catch (Throwable ignored) {
                 return;
             }
-            if (isInvalidJid(raw))
-                return;
+            if (isInvalidJid(raw)) return;
             if (checkValidLID(raw)) {
                 this.userJid = lidOrJid;
                 this.phoneJid = WppCore.getPhoneJidFromUserJid(this.userJid);
@@ -389,23 +353,20 @@ public class FMessageWpp {
             this.phoneJid = phoneJid;
         }
 
+
         @Nullable
         public String getPhoneRawString() {
-            if (this.phoneJid == null)
-                return null;
+            if (this.phoneJid == null) return null;
             String raw = (String) XposedHelpers.callMethod(this.phoneJid, "getRawString");
-            if (raw == null)
-                return null;
+            if (raw == null) return null;
             return raw.replaceFirst("\\.[\\d:]+@", "@");
         }
 
         @Nullable
         public String getUserRawString() {
-            if (this.phoneJid == null)
-                return null;
+            if (this.phoneJid == null) return null;
             String raw = (String) XposedHelpers.callMethod(this.userJid, "getRawString");
-            if (raw == null)
-                return null;
+            if (raw == null) return null;
             return raw.replaceFirst("\\.[\\d:]+@", "@");
         }
 
@@ -413,12 +374,10 @@ public class FMessageWpp {
         public String getPhoneNumber() {
             var str = getPhoneRawString();
             try {
-                if (str == null)
-                    return null;
+                if (str == null) return null;
                 if (str.contains(".") && str.contains("@") && str.indexOf(".") < str.indexOf("@")) {
                     return str.substring(0, str.indexOf("."));
-                } else if (str.contains("@g.us") || str.contains("@s.whatsapp.net") || str.contains("@broadcast")
-                        || str.contains("@lid")) {
+                } else if (str.contains("@g.us") || str.contains("@s.whatsapp.net") || str.contains("@broadcast") || str.contains("@lid")) {
                     return str.substring(0, str.indexOf("@"));
                 }
                 return str;
@@ -429,8 +388,7 @@ public class FMessageWpp {
         }
 
         private boolean isInvalidJid(String rawjid) {
-            if (rawjid == null)
-                return false;
+            if (rawjid == null) return false;
             int atIndex = rawjid.indexOf('@');
             if (atIndex == -1 || atIndex == rawjid.length() - 1) {
                 return false;
@@ -445,26 +403,23 @@ public class FMessageWpp {
 
         public boolean isNewsletter() {
             String raw = getPhoneRawString();
-            if (raw == null)
-                return false;
+            if (raw == null) return false;
             return raw.endsWith("@newsletter");
         }
 
         public boolean isBroadcast() {
             String raw = getPhoneRawString();
-            if (raw == null)
-                return false;
+            if (raw == null) return false;
             return raw.endsWith("@broadcast");
         }
 
         public boolean isGroup() {
-            if (this.phoneJid == null)
-                return false;
+            if (this.phoneJid == null) return false;
             String str = getPhoneRawString();
-            if (str == null)
-                return false;
+            if (str == null) return false;
             return str.endsWith("@g.us");
         }
+
 
         public boolean isContact() {
             if (this.userJid != null) {
@@ -474,6 +429,7 @@ public class FMessageWpp {
             String str = getPhoneRawString();
             return str != null && str.endsWith("@s.whatsapp.net");
         }
+
 
         public boolean isNull() {
             return this.phoneJid == null && this.userJid == null;

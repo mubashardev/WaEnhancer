@@ -658,29 +658,82 @@
                             app:iconSize="18dp" />
                     </LinearLayout>
 
-                    <!-- Reset Button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/resetBtn"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/resetBtn"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:layout_marginTop="10dp"
+                            android:letterSpacing="0.02"
+                            android:text="@string/reset_settings"
+                            android:textAllCaps="false"
+                            android:textColor="?attr/colorError"
+                            android:textStyle="bold"
+                            app:cornerRadius="50dp"
+                            app:icon="@drawable/ic_delete"
+                            app:iconGravity="textStart"
+                            app:iconSize="18dp"
+                            app:iconTint="?attr/colorError"
+                            app:strokeColor="@color/status_inactive"
+                            app:strokeWidth="1dp" />
+
+                    </LinearLayout>
+
+                    <!-- ═══════════════════════════════════════════ -->
+                    <!-- SECTION 5: Community                        -->
+                    <!-- ═══════════════════════════════════════════ -->
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="10dp"
-                        android:letterSpacing="0.02"
-                        android:text="@string/reset_settings"
-                        android:textAllCaps="false"
-                        android:textColor="?attr/colorError"
-                        android:textStyle="bold"
-                        app:cornerRadius="50dp"
-                        app:icon="@drawable/ic_delete"
-                        app:iconGravity="textStart"
-                        app:iconSize="18dp"
-                        app:iconTint="?attr/colorError"
-                        app:strokeColor="@color/status_inactive"
-                        app:strokeWidth="1dp" />
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:orientation="vertical">
+
+                        <!-- Section Header -->
+                        <com.google.android.material.textview.MaterialTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="14dp"
+                            android:letterSpacing="0.08"
+                            android:text="COMMUNITY"
+                            android:textAppearance="?attr/textAppearanceLabelSmall"
+                            android:textColor="?attr/colorPrimary"
+                            android:textStyle="bold" />
+
+                        <!-- Telegram Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/telegramBtn"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:letterSpacing="0.02"
+                            android:text="@string/go_to_telegram"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            app:cornerRadius="50dp"
+                            app:icon="@drawable/ic_telegram"
+                            app:iconGravity="textStart"
+                            app:iconSize="20dp" />
+
+                        <!-- GitHub Discussions Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/githubBtn"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:layout_marginTop="10dp"
+                            android:letterSpacing="0.02"
+                            android:text="@string/go_to_github"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            app:cornerRadius="50dp"
+                            app:icon="@drawable/ic_github"
+                            app:iconGravity="textStart"
+                            app:iconSize="20dp" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-            </LinearLayout>
         </rikka.widget.borderview.BorderNestedScrollView>
     </FrameLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

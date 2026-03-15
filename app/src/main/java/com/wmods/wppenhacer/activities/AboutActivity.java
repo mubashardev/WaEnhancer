@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.wmods.wppenhacer.R;
 import com.wmods.wppenhacer.activities.base.BaseActivity;
 import com.wmods.wppenhacer.databinding.ActivityAboutBinding;
+import com.wmods.wppenhacer.xposed.utils.Utils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -56,13 +57,31 @@ public class AboutActivity extends BaseActivity {
         binding = ActivityAboutBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        binding.btnTelegram.setOnClickListener(v -> openUrl("https://t.me/waenhancer1"));
-        binding.btnGithub.setOnClickListener(view -> openUrl("https://github.com/mubashardev/WaEnhancer"));
+        binding.btnTelegram.setOnClickListener(v -> openTelegramChannel());
+        binding.btnGithub.setOnClickListener(view -> openUrl("https://github.com/mubashardev/WaEnhancer/discussions"));
 
         adapter = new ContributorAdapter();
         binding.rvContributors.setAdapter(adapter);
 
         fetchContributors();
+    }
+
+    private void openTelegramChannel() {
+        String channelUrl = "https://t.me/waenhancer1";
+        String installedPackage = Utils.getInstalledTelegramPackage(this);
+
+        if (installedPackage != null) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(channelUrl));
+            try {
+                intent.setPackage(installedPackage);
+                startActivity(intent);
+            } catch (Exception e) {
+                // Fallback to implicit intent if explicit one fails
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(channelUrl)));
+            }
+        } else {
+            Toast.makeText(this, "Telegram app is not installed", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void fetchContributors() {

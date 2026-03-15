@@ -363,6 +363,35 @@ public class Utils {
     }
 
 
+    public static String getInstalledTelegramPackage(Context context) {
+        String[] telegramPackages = {
+                "org.telegram.messenger",
+                "org.thunderdog.challegram",
+                "org.telegram.plus",
+                "app.nicegram",
+                "com.iMe.android",
+                "org.vidogram.messenger",
+                "org.telegram.BifToGram",
+                "tw.nekomimi.nekogram",
+                "org.forkgram.messenger",
+                "ir.ilmili.telegraph",
+                "org.telegram.messenger.mobogram",
+                "org.turbotel.messenger",
+                "org.bestgram.messenger",
+                "in.teleplus",
+                "it.matteocontrini.unigram"
+        };
+        PackageManager pm = context.getPackageManager();
+        for (String pkg : telegramPackages) {
+            try {
+                pm.getPackageInfo(pkg, 0);
+                return pkg;
+            } catch (Exception ignored) {
+            }
+        }
+        return null;
+    }
+
     @FunctionalInterface
     public interface BinderLocalScopeBlock<T> {
         T execute();

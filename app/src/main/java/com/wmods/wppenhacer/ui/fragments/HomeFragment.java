@@ -107,9 +107,46 @@ public class HomeFragment extends BaseFragment {
             startActivity(new Intent(requireContext(), SupportedVersionsActivity.class));
         });
 
+        binding.telegramBtn.setOnClickListener(view -> {
+            animateClick(view);
+            openTelegramChannel(requireContext());
+        });
+
+        binding.githubBtn.setOnClickListener(view -> {
+            animateClick(view);
+            openUrl(requireContext(), "https://github.com/mubashardev/WaEnhancer/discussions");
+        });
+
         startCardAnimations();
 
         return binding.getRoot();
+    }
+
+    private void openUrl(Context context, String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
+        try {
+            context.startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(context, "Could not open link", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openTelegramChannel(Context context) {
+        String channelUrl = "https://t.me/waenhancer1";
+        String installedPackage = Utils.getInstalledTelegramPackage(context);
+
+        if (installedPackage != null) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(channelUrl));
+            try {
+                intent.setPackage(installedPackage);
+                context.startActivity(intent);
+            } catch (Exception e) {
+                // Fallback to implicit intent if explicit one fails
+                context.startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(channelUrl)));
+            }
+        } else {
+            Toast.makeText(context, "Telegram app is not installed", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void startCardAnimations() {

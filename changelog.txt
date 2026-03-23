@@ -1,17 +1,9 @@
 [ADDED]
-- Added check to the block checker to see if the user deleted your contact.
+* Added support for WA/WB 2.26.10.xx
+* Added support for other architectures (x86, x86_64, armv7).
+
+[IMPROVED]
+* Improvements when using custom themes; now flashing icons and some other visual elements no longer lag
 
 [FIXED]
-- Fixed issue when sending media in high quality.
-- Fixed issue with header transparency when Wallpaper is enabled.
-- Fixed edit history showing all messages instead of specific message history.
-
-[Updated]
-- Call Recording
-
-Status: Experimental. 
-The feature is not stable yet and may fail on some devices. I currently have limited time to actively maintain this part of the project, so feedback, testing, and pull requests from the community are highly appreciated.
-If you encounter any issues, please report them here:  
-👉 [Open an Issue](https://github.com/mubashardev/WaEnhancer/issues/new)
-
-Pull requests and contributions are also welcome.
+* Fixed issue when sending media in high quality.

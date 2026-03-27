@@ -92,7 +92,7 @@ public class ReflectionUtils {
             var results = Arrays.stream(clazz.getDeclaredConstructors()).filter(predicate).findFirst();
             if (results.isPresent()) return results.get();
         } while ((clazz = clazz.getSuperclass()) != null);
-        throw new RuntimeException("Field not found");
+        throw new RuntimeException("Constructor not found");
     }
 
     /**

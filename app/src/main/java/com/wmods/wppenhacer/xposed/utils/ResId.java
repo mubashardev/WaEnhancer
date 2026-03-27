@@ -52,6 +52,9 @@ public class ResId {
         public static int no;
         public static int version_error;
         public static int copy_to_clipboard;
+        public static int check_for_latest_version;
+        public static int already_have_latest;
+        public static int contact_developer;
         public static int copied_to_clipboard;
         public static int error_detected;
         public static int rebooting;

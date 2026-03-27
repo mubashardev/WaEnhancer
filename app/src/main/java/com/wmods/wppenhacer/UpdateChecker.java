@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.wmods.wppenhacer.xposed.core.WppCore;
 import com.wmods.wppenhacer.xposed.core.components.AlertDialogWpp;
+import com.wmods.wppenhacer.xposed.utils.ResId;
 import com.wmods.wppenhacer.xposed.utils.Utils;
 
 import org.json.JSONObject;
@@ -31,9 +32,15 @@ public class UpdateChecker implements Runnable {
     private static OkHttpClient httpClient;
 
     private final Activity mActivity;
+    private boolean isManualCheck = false;
 
     public UpdateChecker(Activity activity) {
         this.mActivity = activity;
+    }
+
+    public UpdateChecker(Activity activity, boolean isManualCheck) {
+        this.mActivity = activity;
+        this.isManualCheck = isManualCheck;
     }
 
     /**
@@ -116,6 +123,10 @@ public class UpdateChecker implements Runnable {
             } else {
                 XposedBridge.log(
                         "[" + TAG + "] No update needed (isNew=" + isNewVersion + ", isIgnored=" + isIgnored + ")");
+                if (isManualCheck) {
+                    XposedBridge.log("[" + TAG + "] Manual check: Already on latest version");
+                    mActivity.runOnUiThread(this::showAlreadyLatestDialog);
+                }
             }
         } catch (java.net.SocketTimeoutException e) {
             XposedBridge.log("[" + TAG + "] Update check timeout: " + e.getMessage());
@@ -124,6 +135,25 @@ public class UpdateChecker implements Runnable {
         } catch (Exception e) {
             XposedBridge.log("[" + TAG + "] Unexpected error during update check: " + e.getMessage());
             XposedBridge.log(e);
+        }
+    }
+
+    private void showAlreadyLatestDialog() {
+        XposedBridge.log("[" + TAG + "] Attempting to show already latest dialog");
+        try {
+            var dialog = new AlertDialogWpp(mActivity);
+            dialog.setTitle(mActivity.getString(ResId.string.error_detected));
+            dialog.setMessage(mActivity.getString(ResId.string.already_have_latest));
+            dialog.setPositiveButton(mActivity.getString(ResId.string.contact_developer), (dialog1, which) -> {
+                Utils.openLink(mActivity, "https://t.me/mubashardev");
+                dialog1.dismiss();
+            });
+            dialog.setNegativeButton(mActivity.getString(ResId.string.cancel), (dialog1, which) -> dialog1.dismiss());
+            dialog.show();
+            XposedBridge.log("[" + TAG + "] Already latest dialog shown successfully");
+        } catch (Exception e) {
+            XposedBridge.log("[" + TAG + "] Error showing already latest dialog: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -150,7 +180,7 @@ public class UpdateChecker implements Runnable {
                 WppCore.setPrivString("ignored_version", hash);
                 dialog1.dismiss();
             });
-            dialog.setPositiveButton("Update Now", (dialog1, which) -> {
+            dialog.setPositiveButton("Download", (dialog1, which) -> {
                 Utils.openLink(mActivity, TELEGRAM_UPDATE_URL);
                 dialog1.dismiss();
             });

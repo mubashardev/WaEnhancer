@@ -58,6 +58,7 @@ public class Others extends Feature {
 
     @Override
     public void doHook() throws Exception {
+        XposedBridge.log("[WAE_Others] doHook() started");
 
         // receivedIncomingTimestamp
 

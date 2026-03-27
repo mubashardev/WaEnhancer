@@ -76,7 +76,7 @@ public class WppCore {
         var mSendReadClass = Unobfuscator.findFirstClassUsingName(loader, StringMatchType.EndsWith,
                 "SendReadReceiptJob");
         var subClass = ReflectionUtils
-                .findConstructorUsingFilter(mSendReadClass, (constructor) -> constructor.getParameterCount() == 8)
+                .findConstructorUsingFilter(mSendReadClass, (constructor) -> constructor.getParameterCount() == 8 || constructor.getParameterCount() == 9)
                 .getParameterTypes()[0];
         mGenJidClass = ReflectionUtils
                 .findFieldUsingFilter(subClass, (field) -> Modifier.isStatic(field.getModifiers())).getType();

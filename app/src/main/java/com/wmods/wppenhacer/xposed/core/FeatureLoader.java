@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -216,6 +217,11 @@ public class FeatureLoader {
                                                 clipboard.setPrimaryClip(clip);
                                                 Toast.makeText(mApp, ResId.string.copied_to_clipboard,
                                                         Toast.LENGTH_SHORT).show();
+                                                dialog.dismiss();
+                                            })
+                                    .setNegativeButton(activity.getString(ResId.string.check_for_latest_version),
+                                            (dialog, which) -> {
+                                                CompletableFuture.runAsync(new UpdateChecker(activity, true));
                                                 dialog.dismiss();
                                             })
                                     .show();

@@ -23,13 +23,13 @@ jobs:
         steps:
             - name: Post release to Telegram channel
               if: ${{ env.BOT_TOKEN != '' && env.CHANNEL_ID != '' }}
-              uses: appleboy/telegram-action@master
-              with:
-                  to: ${{ secrets.CHANNEL_ID }}
-                  token: ${{ secrets.BOT_TOKEN }}
-                  format: markdown
-                  disable_web_page_preview: true
-                  message: |
-                      ${{ github.event.release.body || inputs.release_body }}
-
-                      Release: ${{ github.event.release.html_url || inputs.release_url }}
+              run: |
+                BODY="${{ github.event.release.body || inputs.release_body }}"
+                URL="${{ github.event.release.html_url || inputs.release_url }}"
+                MESSAGE="$BODY"$'\n\n'"Release: $URL"
+                
+                curl -f -X POST "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage" \
+                  -d "chat_id=${{ secrets.CHANNEL_ID }}" \
+                  --data-urlencode "text=$MESSAGE" \
+                  -d "parse_mode=Markdown" \
+                  -d "disable_web_page_preview=true"

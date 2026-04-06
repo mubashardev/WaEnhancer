@@ -22,10 +22,10 @@ import okhttp3.OkHttpClient;
 public class UpdateChecker implements Runnable {
 
     private static final String TAG = "WAE_UpdateChecker";
-    private static final String LATEST_RELEASE_API = "https://api.github.com/repos/mubasharhussain/WaEnhancer/releases/latest";
+    private static final String LATEST_RELEASE_API = "https://api.github.com/repos/mubashardev/WaEnhancer/releases/latest";
 
     private static final String RELEASE_TAG_PREFIX = "debug-";
-    private static final String TELEGRAM_UPDATE_URL = "https://github.com/mubasharhussain/WaEnhancer/releases";
+    private static final String TELEGRAM_UPDATE_URL = "https://github.com/mubashardev/WaEnhancer/releases";
 
 
     // Singleton OkHttpClient - expensive to create, reuse across all checks

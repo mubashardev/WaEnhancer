@@ -41,6 +41,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Remove local properties
+        run: sed -i '/org.gradle.java.home/d' gradle.properties
+
       - name: Build all flavor variants
         run: |
           ./gradlew assembleWhatsappDebug assembleBusinessDebug -Pminify=true

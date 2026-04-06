@@ -2436,9 +2436,8 @@ public class Unobfuscator {
         });
     }
 
-    }
-
     public static Method loadMenuSearchMethod(ClassLoader classLoader) throws Exception {
+
         return UnobfuscatorCache.getInstance()
                 .getMethod(classLoader,
                         () -> dexkit

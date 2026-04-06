@@ -1,5 +1,13 @@
 [ADDED]
+- Added support for WA/WB 2.26.11.xx
+- Added support for WA/WB 2.26.12.xx
 - Added support for WA/WB 2.26.13.xx
+* Added support for other architectures (x86, x86_64, armv7).
 
 [IMPROVED]
 - Fixed SeenTick & ViewOnceDownloadMenu not working on WB 2.26.12.xx
+* Improvements when using custom themes; now flashing icons and some other visual elements no longer lag
+
+[FIXED]
+* Fixed issue when sending media in high quality.
+

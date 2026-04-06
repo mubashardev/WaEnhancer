@@ -2425,26 +2425,17 @@ public class Unobfuscator {
 
     }
 
+
     public static Method loadViewAddSearchBarMethod(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
-            XposedBridge.log("Starting search for loadViewAddSearchBarMethod...");
-            var methods = findAllMethodUsingStrings(classLoader, StringMatchType.Contains, "duplicate-item");
-            XposedBridge.log("Search for 'duplicate-item' returned " + methods.length + " methods");
-            for (var m : methods) {
-                XposedBridge.log("Found duplicate-item method: " + m.toString());
+            for (var str : List.of("HeaderFooterRecyclerViewAdapter/addHeaderViewItemIfNeeded", "HeaderFooterRecyclerViewAdapter/addFooterViewItemAtPositionIfNeeded")) {
+                var method = findFirstMethodUsingStrings(classLoader, StringMatchType.Contains, str);
+                if (method != null) return method;
             }
-            if (methods.length > 0) return methods[0];
-            
-            XposedBridge.log("Trying alternative search for search bar...");
-            var methods2 = findAllMethodUsingStrings(classLoader, StringMatchType.Contains, "addHeaderViewItemIfNeeded");
-            XposedBridge.log("Search for 'addHeaderViewItemIfNeeded' returned " + methods2.length + " methods");
-            for (var m : methods2) {
-                XposedBridge.log("Found addHeaderViewItemIfNeeded method: " + m.toString());
-            }
-            if (methods2.length > 0) return methods2[0];
-
-            return null;
+            throw new RuntimeException("ViewAddSearchBar method not found");
         });
+    }
+
     }
 
     public static Method loadMenuSearchMethod(ClassLoader classLoader) throws Exception {

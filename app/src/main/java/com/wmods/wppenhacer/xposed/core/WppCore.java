@@ -26,12 +26,10 @@ import com.wmods.wppenhacer.xposed.utils.ResId;
 import com.wmods.wppenhacer.xposed.utils.Utils;
 
 import org.json.JSONObject;
-import org.luckypray.dexkit.query.enums.StringMatchType;
 
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -49,7 +47,6 @@ public class WppCore {
     static final HashSet<ActivityChangeState> listenerAcitivity = new HashSet<>();
     @SuppressLint("StaticFieldLeak")
     static Activity mCurrentActivity;
-    private static Class<?> mGenJidClass;
     private static Method mGenJidMethod;
     private static Class bottomDialog;
     private static SharedPreferences privPrefs;
@@ -72,16 +69,12 @@ public class WppCore {
 
     public static void Initialize(ClassLoader loader, XSharedPreferences pref) throws Exception {
         privPrefs = Utils.getApplication().getSharedPreferences("WaGlobal", Context.MODE_PRIVATE);
+
+
         // init UserJID
-        var mSendReadClass = Unobfuscator.findFirstClassUsingName(loader, StringMatchType.EndsWith,
-                "SendReadReceiptJob");
-        var subClass = ReflectionUtils
-                .findConstructorUsingFilter(mSendReadClass, (constructor) -> constructor.getParameterCount() == 8 || constructor.getParameterCount() == 9)
-                .getParameterTypes()[0];
-        mGenJidClass = ReflectionUtils
-                .findFieldUsingFilter(subClass, (field) -> Modifier.isStatic(field.getModifiers())).getType();
-        mGenJidMethod = ReflectionUtils.findMethodUsingFilter(mGenJidClass,
-                (method) -> method.getParameterCount() == 1 && !Modifier.isStatic(method.getModifiers()));
+        var companionField = FMessageWpp.UserJid.TYPE_JID.getDeclaredField("Companion");
+        mGenJidMethod = ReflectionUtils.findMethodUsingFilter(companionField.getType(), m -> m.getParameterCount() == 1 && String.class.equals(m.getParameterTypes()[0]) && FMessageWpp.UserJid.TYPE_JID.equals(m.getReturnType()));
+
         // Bottom Dialog
         bottomDialog = Unobfuscator.loadDialogViewClass(loader);
 
@@ -209,7 +202,7 @@ public class WppCore {
     public static void initBridge(Context context) throws Exception {
         var prefsCacheHooks = UnobfuscatorCache.getInstance().sPrefsCacheHooks;
         int preferredOrder = prefsCacheHooks.getInt("preferredOrder", 1); // 0 for ProviderClient first, 1 for
-                                                                          // BridgeClient first
+        // BridgeClient first
 
         boolean connected = false;
         if (preferredOrder == 0) {
@@ -364,7 +357,7 @@ public class WppCore {
         try {
             var senderMethod = ReflectionUtils.findMethodUsingFilter(actionUser,
                     (method) -> method.getParameterCount() == 3 && Arrays.equals(method.getParameterTypes(),
-                            new Class[] { FMessageWpp.TYPE, String.class, boolean.class }));
+                            new Class[]{FMessageWpp.TYPE, String.class, boolean.class}));
             senderMethod.invoke(getActionUser(), objMessage, s, !TextUtils.isEmpty(s));
         } catch (Exception e) {
             Utils.showToast("Error in sending reaction:" + e.getMessage(), Toast.LENGTH_SHORT);
@@ -475,7 +468,7 @@ public class WppCore {
     }
 
     public synchronized static Class getTextStatusComposerFragmentClass(@NonNull ClassLoader loader) throws Exception {
-        var classes = new String[] {
+        var classes = new String[]{
                 "com.whatsapp.status.composer.TextStatusComposerFragment",
                 "com.whatsapp.statuscomposer.composer.TextStatusComposerFragment"
         };
@@ -488,7 +481,7 @@ public class WppCore {
     }
 
     public synchronized static Class getVoipManagerClass(@NonNull ClassLoader loader) throws Exception {
-        var classes = new String[] {
+        var classes = new String[]{
                 "com.whatsapp.voipcalling.Voip",
                 "com.whatsapp.calling.voipcalling.Voip"
         };
@@ -501,7 +494,7 @@ public class WppCore {
     }
 
     public synchronized static Class getVoipCallInfoClass(@NonNull ClassLoader loader) throws Exception {
-        var classes = new String[] {
+        var classes = new String[]{
                 "com.whatsapp.voipcalling.CallInfo",
                 "com.whatsapp.calling.infra.voipcalling.CallInfo"
         };
@@ -560,8 +553,8 @@ public class WppCore {
         }
         String name = null;
         var rawJid = userJid.getPhoneRawString();
-        var cursor = mWaDatabase.query("wa_contacts", new String[] { "display_name" }, selection,
-                new String[] { rawJid }, null, null, null);
+        var cursor = mWaDatabase.query("wa_contacts", new String[]{"display_name"}, selection,
+                new String[]{rawJid}, null, null, null);
         if (cursor.moveToFirst()) {
             name = cursor.getString(0);
             cursor.close();
@@ -576,8 +569,8 @@ public class WppCore {
             return "";
         String name = null;
         var rawJid = userJid.getPhoneRawString();
-        var cursor2 = mWaDatabase.query("wa_vnames", new String[] { "verified_name" }, "jid = ?",
-                new String[] { rawJid }, null, null, null);
+        var cursor2 = mWaDatabase.query("wa_vnames", new String[]{"verified_name"}, "jid = ?",
+                new String[]{rawJid}, null, null, null);
         if (cursor2.moveToFirst()) {
             name = cursor2.getString(0);
             cursor2.close();
@@ -604,9 +597,8 @@ public class WppCore {
     public static Object createUserJid(@Nullable String rawjid) {
         if (rawjid == null)
             return null;
-        var genInstance = XposedHelpers.newInstance(mGenJidClass);
         try {
-            return mGenJidMethod.invoke(genInstance, rawjid);
+            return mGenJidMethod.invoke(null, rawjid);
         } catch (Exception e) {
             XposedBridge.log(e);
         }

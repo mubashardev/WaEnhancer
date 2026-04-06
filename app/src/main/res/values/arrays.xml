@@ -173,6 +173,7 @@
         <item>2.26.10.xx</item>
         <item>2.26.11.xx</item>
         <item>2.26.12.xx</item>
+        <item>2.26.13.xx</item>
         <item>2.27.1.xx</item>
     </string-array>
     <string-array name="supported_versions_business">
@@ -195,6 +196,7 @@
         <item>2.26.10.xx</item>
         <item>2.26.11.xx</item>
         <item>2.26.12.xx</item>
+        <item>2.26.13.xx</item>
         <item>2.27.1.xx</item>
     </string-array>
     <string-array name="image_picker">

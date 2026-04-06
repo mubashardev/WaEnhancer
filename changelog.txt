@@ -1,6 +1,5 @@
 [ADDED]
-* Added support for WA/WB 2.26.11.xx
-* Added support for WA/WB 2.26.12.xx
+- Added support for WA/WB 2.26.13.xx
 
 [IMPROVED]
-* Improvements when using custom themes; now flashing icons and some other visual elements no longer lag
+- Fixed SeenTick & ViewOnceDownloadMenu not working on WB 2.26.12.xx

@@ -122,10 +122,6 @@ public class FeatureLoader {
 
     public static void start(@NonNull ClassLoader loader, @NonNull XSharedPreferences pref, String sourceDir) {
 
-        if (!Unobfuscator.initWithPath(sourceDir)) {
-            XposedBridge.log("Can't init dexkit");
-            return;
-        }
         Feature.DEBUG = pref.getBoolean("enablelogs", true);
         Utils.xprefs = pref;
 
@@ -154,6 +150,11 @@ public class FeatureLoader {
                         registerReceivers();
                         try {
                             var timemillis = System.currentTimeMillis();
+                            Unobfuscator.loadLibrary(mApp);
+                            if (!Unobfuscator.initWithPath(sourceDir)) {
+                                XposedBridge.log("Can't init dexkit");
+                                return;
+                            }
                             UnobfuscatorCache.init(mApp);
                             SharedPreferencesWrapper.hookInit(mApp.getClassLoader());
                             ReflectionUtils.initCache(mApp);

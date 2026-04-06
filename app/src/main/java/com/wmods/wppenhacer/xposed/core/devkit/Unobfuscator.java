@@ -67,7 +67,22 @@ public class Unobfuscator {
     public static final HashMap<String, Class<?>> cacheClasses = new HashMap<>();
 
     static {
-        System.loadLibrary("dexkit");
+        try {
+            System.loadLibrary("dexkit");
+        } catch (UnsatisfiedLinkError ignored) {
+        }
+    }
+
+    public static void loadLibrary(Context context) {
+        try {
+            var libraryPath = context.getPackageManager().getApplicationInfo(com.wmods.wppenhacer.BuildConfig.APPLICATION_ID, 0).nativeLibraryDir;
+            var file = new java.io.File(libraryPath, "libdexkit.so");
+            if (file.exists()) {
+                System.load(file.getAbsolutePath());
+            }
+        } catch (Throwable e) {
+            XposedBridge.log(e);
+        }
     }
 
     public static boolean initWithPath(String path) {
@@ -781,15 +796,42 @@ public class Unobfuscator {
     public synchronized static Method loadViewOnceDownloadMenuMethod(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
             var clazz = XposedHelpers.findClass("com.whatsapp.mediaview.MediaViewFragment", classLoader);
+
+            // Strategy 1: Original — look for (Menu, MenuInflater) declared directly on the class
             var method = Arrays.stream(clazz.getDeclaredMethods()).filter(m -> m.getParameterCount() == 2 &&
                     Objects.equals(m.getParameterTypes()[0], Menu.class) &&
                     Objects.equals(m.getParameterTypes()[1], MenuInflater.class) &&
                     m.getDeclaringClass() == clazz).findFirst();
-            if (!method.isPresent())
-                throw new Exception("ViewOnceDownloadMenu method not found");
-            return method.get();
+            if (method.isPresent())
+                return method.get();
+
+            // Strategy 2: Check entire hierarchy for (Menu, MenuInflater)
+            var methodHierarchy = Arrays.stream(clazz.getMethods()).filter(m -> m.getParameterCount() == 2 &&
+                    Objects.equals(m.getParameterTypes()[0], Menu.class) &&
+                    Objects.equals(m.getParameterTypes()[1], MenuInflater.class)).findFirst();
+            if (methodHierarchy.isPresent())
+                return methodHierarchy.get();
+
+            // Strategy 3: Look for onCreateMenu(Menu, MenuInflater) from MenuProvider interface
+            var onCreateMenu = Arrays.stream(clazz.getDeclaredMethods()).filter(m ->
+                    m.getName().equals("onCreateMenu") && m.getParameterCount() == 2 &&
+                    Objects.equals(m.getParameterTypes()[0], Menu.class)).findFirst();
+            if (onCreateMenu.isPresent())
+                return onCreateMenu.get();
+
+            // Strategy 4: Look for any declared method that takes (Menu, ...) with 1-2 params and returns void
+            var menuMethod = Arrays.stream(clazz.getDeclaredMethods()).filter(m ->
+                    m.getReturnType() == void.class &&
+                    m.getParameterCount() >= 1 && m.getParameterCount() <= 2 &&
+                    Objects.equals(m.getParameterTypes()[0], Menu.class) &&
+                    m.getDeclaringClass() == clazz).findFirst();
+            if (menuMethod.isPresent())
+                return menuMethod.get();
+
+            throw new Exception("ViewOnceDownloadMenu method not found");
         });
     }
+
 
     // TODO: Methods and Classes for Change Colors
 

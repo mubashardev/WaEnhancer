@@ -52,6 +52,7 @@ android {
         targetSdk = 34
         versionCode = 154
         versionName = "1.5.4-DEV ($gitHash)"
+        buildConfigField("String", "NOTICES_URL", "\"https://wae.mubashar.dev/notices.json\"")
         multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -110,6 +111,9 @@ android {
                     "proguard-rules.pro"
                 )
             }
+        }
+        debug {
+            // Local testing: pair with `adb reverse tcp:3000 tcp:3000`
         }
         release {
             isMinifyEnabled = false

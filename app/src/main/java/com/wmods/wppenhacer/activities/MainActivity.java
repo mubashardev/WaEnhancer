@@ -21,6 +21,7 @@ import com.wmods.wppenhacer.R;
 import com.wmods.wppenhacer.activities.base.BaseActivity;
 import com.wmods.wppenhacer.adapter.MainPagerAdapter;
 import com.wmods.wppenhacer.databinding.ActivityMainBinding;
+import com.wmods.wppenhacer.notices.NoticeCenter;
 import com.wmods.wppenhacer.ui.fragments.GeneralFragment;
 import com.wmods.wppenhacer.ui.fragments.HomeFragment;
 import com.wmods.wppenhacer.ui.fragments.base.BasePreferenceFragment;
@@ -271,6 +272,9 @@ public class MainActivity extends BaseActivity {
         if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
             binding.btnBattery.setVisibility(android.view.View.GONE);
         }
+
+        // Remote notices (cached + rate-limited)
+        binding.getRoot().post(() -> NoticeCenter.checkAndShow(this));
     }
 
     @Override

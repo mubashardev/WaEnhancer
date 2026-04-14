@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Debug-only: allow cleartext for local testing (e.g. adb reverse / localhost server). -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
+

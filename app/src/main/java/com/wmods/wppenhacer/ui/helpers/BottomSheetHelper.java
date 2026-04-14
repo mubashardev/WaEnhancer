@@ -224,7 +224,7 @@ public class BottomSheetHelper {
     /**
      * Create a styled BottomSheetDialog with transparent background.
      */
-    private static BottomSheetDialog createDialog(Context context) {
+    public static BottomSheetDialog createStyledDialog(Context context) {
         BottomSheetDialog dialog = new BottomSheetDialog(context);
         dialog.setOnShowListener(d -> {
             BottomSheetDialog bsd = (BottomSheetDialog) d;
@@ -234,6 +234,10 @@ public class BottomSheetHelper {
             }
         });
         return dialog;
+    }
+
+    private static BottomSheetDialog createDialog(Context context) {
+        return createStyledDialog(context);
     }
 
     private static final okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();

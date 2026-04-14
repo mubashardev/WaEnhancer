@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-15T00:00:00Z",
+  "notices": [
+    {
+      "id": "latest",
+      "revision": 1,
+      "enabled": true,
+      "severity": "warning",
+      "title": "Call Recorder may not work on all devices",
+      "message": "**Heads up:** Call recording is currently unreliable for some devices.\n\nThis is due to recent WhatsApp updates that changed calling code logic/strategies. I’m working on a fix and it should be working again soon.\n\nUntil then, the feature is still enabled, but it may not work for everyone.",
+      "format": "markdown",
+      "dismissible": true,
+      "targets": {
+        "channels": [
+          "dev",
+          "release"
+        ],
+        "versionCodes": {
+          "min": 1,
+          "max": 999999
+        },
+        "commitIds": []
+      },
+      "actions": [
+        {
+          "label": "Follow Dev",
+          "type": "url",
+          "url": "https://github.com/mubashardev",
+          "style": "primary"
+        },
+        {
+          "label": "Telegram Channel",
+          "type": "url",
+          "url": "https://t.me/waenhancer1",
+          "style": "secondary"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
+### Changed the app's internal ID to `com.waenhancer`
 [ADDED]
 - Added support for future 3 versions of WhatsApp.
-- Changed the app's internal ID to `com.waenhancer`
 
 [FIXED]
 - Added consolidated "Video Note Features" toggle in Media settings.

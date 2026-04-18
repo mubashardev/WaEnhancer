@@ -40,13 +40,23 @@ public class ChatFilters extends Feature {
             }
         });
         var methodSetFilter = ReflectionUtils.findMethodUsingFilter(filterAdaperClass, method -> method.getParameterCount() == 1 && method.getParameterTypes()[0].equals(int.class));
+        if (methodSetFilter == null) {
+            XposedBridge.log("ChatFilters: methodSetFilter not found, skipping index guard hook");
+            return;
+        }
+
+        var listField = ReflectionUtils.getFieldByType(methodSetFilter.getDeclaringClass(), List.class);
+        if (listField == null) {
+            XposedBridge.log("ChatFilters: list field not found, skipping index guard hook");
+            return;
+        }
+        listField.setAccessible(true);
 
         XposedBridge.hookMethod(methodSetFilter, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 var index = (int) param.args[0];
-                var field = ReflectionUtils.getFieldByType(methodSetFilter.getDeclaringClass(), List.class);
-                var list = (List) field.get(param.thisObject);
+                var list = (List) listField.get(param.thisObject);
                 if (list == null || index >= list.size()) {
                     param.setResult(null);
                 }

@@ -65,9 +65,11 @@ public class UpdateChecker implements Runnable {
 
             var request = new okhttp3.Request.Builder()
                     .url(LATEST_RELEASE_API)
+                    .header("Accept", "application/vnd.github+json")
+                    .header("User-Agent", "WaEnhancer-UpdateChecker")
                     .build();
 
-            String hash;
+                String latestVersion;
             String changelog;
             String publishedAt;
 
@@ -85,41 +87,55 @@ public class UpdateChecker implements Runnable {
 
                 var content = body.string();
                 var release = new JSONObject(content);
-                var tagName = release.optString("tag_name", "");
+                var tagName = release.optString("tag_name", "").trim();
 
                 XposedBridge.log("[" + TAG + "] Latest release tag: " + tagName);
 
-
-                if (tagName.isBlank() || !tagName.startsWith(RELEASE_TAG_PREFIX)) {
+                if (tagName.isBlank()) {
                     return;
                 }
 
-                hash = tagName.substring(RELEASE_TAG_PREFIX.length()).trim();
+                if (tagName.startsWith(RELEASE_TAG_PREFIX)) {
+                    latestVersion = tagName.substring(RELEASE_TAG_PREFIX.length()).trim();
+                } else {
+                    latestVersion = normalizeVersion(tagName);
+                }
                 changelog = release.optString("body", "No changelog available.").trim();
                 publishedAt = release.optString("published_at", "");
 
-                XposedBridge.log("[" + TAG + "] Release hash: " + hash + ", published: " + publishedAt);
+                XposedBridge.log("[" + TAG + "] Parsed latest version: " + latestVersion + ", published: " + publishedAt);
 
             }
 
-            if (hash.isBlank()) {
+            if (latestVersion == null || latestVersion.isBlank()) {
                 return;
             }
 
             var appInfo = mActivity.getPackageManager().getPackageInfo(BuildConfig.APPLICATION_ID, 0);
-            boolean isNewVersion = !appInfo.versionName.toLowerCase().contains(hash.toLowerCase().trim());
-            boolean isIgnored = Objects.equals(WppCore.getPrivString("ignored_version", ""), hash);
+            String currentVersion = normalizeVersion(appInfo.versionName);
+
+            boolean isNewVersion;
+            if (latestVersion.matches("(?i)[a-f0-9]{6,40}")) {
+                isNewVersion = !appInfo.versionName.toLowerCase().contains(latestVersion.toLowerCase().trim());
+            } else {
+                isNewVersion = compareVersions(latestVersion, currentVersion) > 0;
+            }
+
+            String ignored = WppCore.getPrivString("ignored_version", "");
+            boolean isIgnored = Objects.equals(ignored, latestVersion)
+                    || Objects.equals(ignored, appInfo.versionName)
+                    || Objects.equals(ignored, normalizeVersion(ignored));
 
             if (isNewVersion && !isIgnored) {
                 XposedBridge.log("[" + TAG + "] New version available, showing dialog");
 
 
-                final String finalHash = hash;
+                final String finalLatestVersion = latestVersion;
                 final String finalChangelog = changelog;
                 final String finalPublishedAt = publishedAt;
 
                 mActivity.runOnUiThread(() -> {
-                    showUpdateDialog(finalHash, finalChangelog, finalPublishedAt);
+                    showUpdateDialog(finalLatestVersion, finalChangelog, finalPublishedAt);
                 });
             } else {
                 XposedBridge.log(
@@ -215,5 +231,38 @@ public class UpdateChecker implements Runnable {
         }
 
         return "";
+    }
+
+    private static String normalizeVersion(String version) {
+        if (version == null) return "";
+        String normalized = version.trim();
+        if (normalized.startsWith("v") || normalized.startsWith("V")) {
+            normalized = normalized.substring(1);
+        }
+        int plusIndex = normalized.indexOf('+');
+        if (plusIndex >= 0) {
+            normalized = normalized.substring(0, plusIndex);
+        }
+        return normalized.trim();
+    }
+
+    private static int compareVersions(String v1, String v2) {
+        String[] a = normalizeVersion(v1).split("\\.");
+        String[] b = normalizeVersion(v2).split("\\.");
+        int max = Math.max(a.length, b.length);
+        for (int i = 0; i < max; i++) {
+            int ai = i < a.length ? safeParseInt(a[i]) : 0;
+            int bi = i < b.length ? safeParseInt(b[i]) : 0;
+            if (ai != bi) return Integer.compare(ai, bi);
+        }
+        return 0;
+    }
+
+    private static int safeParseInt(String s) {
+        try {
+            return Integer.parseInt(s.replaceAll("[^0-9]", ""));
+        } catch (Throwable ignored) {
+            return 0;
+        }
     }
 }

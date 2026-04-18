@@ -261,8 +261,20 @@ public class FeatureLoader {
             // Check for WAE Update
             // noinspection ConstantValue
             if (App.isOriginalPackage() && pref.getBoolean("update_check", true)) {
-                if (activity.getClass().getSimpleName().equals("HomeActivity")
-                        && state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
+                boolean isHomeActivity = false;
+                try {
+                    var homeClass = WppCore.getHomeActivityClass(activity.getClassLoader());
+                    isHomeActivity = homeClass != null && homeClass.isInstance(activity);
+                } catch (Throwable ignored) {
+                }
+
+                if (!isHomeActivity) {
+                    var simpleName = activity.getClass().getSimpleName();
+                    var fullName = activity.getClass().getName();
+                    isHomeActivity = simpleName.contains("Home") || fullName.contains("HomeActivity");
+                }
+
+                if (isHomeActivity && state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
                     // Delay to ensure smooth activity transition
                     XposedBridge.log("[WAE] Scheduling update check in 2 seconds...");
                     activity.getWindow().getDecorView().postDelayed(() -> {

@@ -82,13 +82,13 @@ jobs:
         run: |
           mkdir -p release_artifacts
           VERSION=${{ env.NEW_VERSION_NAME }}
-          cp app/build/outputs/apk/whatsapp/debug/app-whatsapp-debug.apk release_artifacts/whatsapp-app-${VERSION}.apk
+          cp app/build/outputs/apk/whatsapp/debug/app-whatsapp-debug.apk release_artifacts/WaEnhancer-v${VERSION}.apk
 
-      - name: Upload WhatsApp flavor artifacts
+      - name: Upload WhatsApp flavor artifact
         uses: actions/upload-artifact@v5
         with:
-          name: whatsapp-app-${{ env.NEW_VERSION_NAME }}
-          path: release_artifacts/whatsapp-app-${{ env.NEW_VERSION_NAME }}.apk
+          name: WaEnhancer-v${{ env.NEW_VERSION_NAME }}.apk
+          path: release_artifacts/WaEnhancer-v${{ env.NEW_VERSION_NAME }}.apk
 
 
       - name: Upload to GitHub release
@@ -99,7 +99,7 @@ jobs:
           name: WaEnhancer ${{ env.NEW_VERSION_NAME }}
           body_path: changelog.txt
           files: |
-            release_artifacts/whatsapp-app-${{ env.NEW_VERSION_NAME }}.apk
+            release_artifacts/WaEnhancer-v${{ env.NEW_VERSION_NAME }}.apk
           tag_name: ${{ env.NEW_VERSION_NAME }}
 
       - name: Read changelog

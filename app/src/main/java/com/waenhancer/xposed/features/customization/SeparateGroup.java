@@ -57,8 +57,11 @@ public class SeparateGroup extends Feature {
         if (!prefs.getBoolean("separategroups", false)) return;
 
         try {
-            // Populate the static tabs list (don't modify the actual field)
+            // Populate the static tabs list  
             hookTabList(homeActivityClass);
+
+            // Don't try to inject actual tab - just keep static list for reference
+            // hookOnResume(homeActivityClass);
 
             // Setting group icon - DISABLED for now due to crashes
             // hookTabIcon();
@@ -310,6 +313,36 @@ public class SeparateGroup extends Feature {
         return editableChatList;
     }
 
+    private void hookOnResume(@NonNull Class<?> home) throws Exception {
+        var onResumeMethod = XposedHelpers.findMethodExact(home, "onResume");
+        XposedBridge.hookMethod(onResumeMethod, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                try {
+                    if (!prefs.getBoolean("separategroups", false)) return;
+                    
+                    XposedBridge.log("SeparateGroup: onResume called, attempting to inject GROUPS tab");
+                    
+                    var fieldTabsList = ReflectionUtils.getFieldByExtendType(home, List.class);
+                    if (fieldTabsList == null) return;
+                    
+                    var listObj = fieldTabsList.get(param.thisObject);
+                    if (!(listObj instanceof ArrayList)) return;
+                    
+                    ArrayList<Integer> currentList = (ArrayList<Integer>) listObj;
+                    if (!currentList.contains(GROUPS) && currentList.contains(CHATS)) {
+                        int insertPos = currentList.indexOf(CHATS) + 1;
+                        currentList.add(insertPos, GROUPS);
+                        tabs = new ArrayList<>(currentList);
+                        XposedBridge.log("SeparateGroup: onResume injected GROUPS tab. New tabs: " + tabs);
+                    }
+                } catch (Exception e) {
+                    XposedBridge.log("SeparateGroup: Exception in onResume: " + e.getMessage());
+                }
+            }
+        });
+    }
+
     private void hookTabList(@NonNull Class<?> home) throws Exception {
         var onCreateTabList = Unobfuscator.loadTabListMethod(classLoader);
         logDebug(Unobfuscator.getMethodDescriptor(onCreateTabList));
@@ -325,32 +358,26 @@ public class SeparateGroup extends Feature {
                 try {
                     var listObj = fieldTabsList.get(param.thisObject);
                     if (!(listObj instanceof List<?> rawList)) {
-                        XposedBridge.log("SeparateGroup: Tab list field is null or not a List");
                         return;
                     }
 
-                    ArrayList<Integer> originalTabs = new ArrayList<>();
+                    ArrayList<Integer> currentTabs = new ArrayList<>();
                     for (Object item : rawList) {
                         if (item instanceof Integer tabId) {
-                            originalTabs.add(tabId);
+                            currentTabs.add(tabId);
                         }
                     }
 
-                    XposedBridge.log("SeparateGroup: Original tabs: " + originalTabs);
-                    
-                    // Populate the static tabs list with GROUPS injected
-                    if (!originalTabs.isEmpty() && originalTabs.contains(CHATS) && !originalTabs.contains(GROUPS)) {
-                        tabs = new ArrayList<>(originalTabs);
-                        int insertPos = tabs.indexOf(CHATS) + 1;
-                        tabs.add(insertPos, GROUPS);
-                        XposedBridge.log("SeparateGroup: Static tabs populated with GROUPS: " + tabs);
+                    // Populate static tabs list with GROUPS for reference
+                    if (!currentTabs.isEmpty() && currentTabs.contains(CHATS) && !currentTabs.contains(GROUPS)) {
+                        tabs = new ArrayList<>(currentTabs);
+                        tabs.add(tabs.indexOf(CHATS) + 1, GROUPS);
+                        XposedBridge.log("SeparateGroup: Tabs initialized with GROUPS: " + tabs);
                     } else {
-                        tabs = new ArrayList<>(originalTabs);
-                        XposedBridge.log("SeparateGroup: Static tabs (no GROUPS): " + tabs);
+                        tabs = new ArrayList<>(currentTabs);
                     }
                 } catch (Exception e) {
                     XposedBridge.log("SeparateGroup: Exception in hookTabList: " + e.getMessage());
-                    e.printStackTrace();
                 }
             }
         });

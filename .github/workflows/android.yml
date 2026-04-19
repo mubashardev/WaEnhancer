@@ -62,33 +62,34 @@ jobs:
           git commit -m "Bump version to $NEW_VERSION_NAME ($NEW_VERSION_CODE) [skip ci]"
           git push
 
-      - name: Build all flavor variants
+      - name: Build WhatsApp flavor
         run: |
           if [ ! -z "${{ secrets.KEY_STORE }}" ]; then
             echo "${{ secrets.KEY_STORE }}" | base64 --decode > release.jks
-            ./gradlew assembleWhatsappDebug assembleBusinessDebug -Pminify=true \
+            ./gradlew assembleWhatsappDebug -Pminify=true \
               -PandroidStoreFile=release.jks \
               -PandroidStorePassword='${{ secrets.KEY_STORE_PASSWORD }}' \
               -PandroidKeyAlias='${{ secrets.ALIAS }}' \
               -PandroidKeyPassword='${{ secrets.KEY_PASSWORD }}'
           else
-            ./gradlew assembleWhatsappDebug assembleBusinessDebug -Pminify=true
+            ./gradlew assembleWhatsappDebug -Pminify=true
           fi
 
       - name: Get short SHA
         run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
 
-      - name: Upload WhatsApp flavor artifacts
-        uses: actions/upload-artifact@v5
-        with:
-          name: whatsapp-debug-app-${{ env.NEW_VERSION_NAME }}
-          path: app/build/outputs/apk/whatsapp/debug/app-whatsapp-debug.apk
+      - name: Rename APK to versioned name
+        run: |
+          mkdir -p release_artifacts
+          VERSION=${{ env.NEW_VERSION_NAME }}
+          cp app/build/outputs/apk/whatsapp/debug/app-whatsapp-debug.apk release_artifacts/WaEnhancer-v${VERSION}.apk
 
-      - name: Upload Business flavor artifacts
+      - name: Upload WhatsApp flavor artifact
         uses: actions/upload-artifact@v5
         with:
-          name: business-debug-app-${{ env.NEW_VERSION_NAME }}
-          path: app/build/outputs/apk/business/debug/app-business-debug.apk
+          name: WaEnhancer-v${{ env.NEW_VERSION_NAME }}.apk
+          path: release_artifacts/WaEnhancer-v${{ env.NEW_VERSION_NAME }}.apk
+
 
       - name: Upload to GitHub release
         id: release
@@ -98,8 +99,7 @@ jobs:
           name: WaEnhancer ${{ env.NEW_VERSION_NAME }}
           body_path: changelog.txt
           files: |
-            app/build/outputs/apk/whatsapp/debug/app-whatsapp-debug.apk
-            app/build/outputs/apk/business/debug/app-business-debug.apk
+            release_artifacts/WaEnhancer-v${{ env.NEW_VERSION_NAME }}.apk
           tag_name: ${{ env.NEW_VERSION_NAME }}
 
       - name: Read changelog

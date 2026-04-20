@@ -119,7 +119,11 @@
             app:summary="@string/show_contact_blocked_sum"
             app:title="@string/show_contact_blocked" />
 
-
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="true"
+            app:key="go_to_first_message"
+            app:summary="@string/go_to_first_message_sum"
+            app:title="@string/go_to_first_message" />
 
     </PreferenceCategory>
 

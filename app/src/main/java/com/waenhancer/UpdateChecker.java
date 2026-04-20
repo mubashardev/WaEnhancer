@@ -9,6 +9,8 @@ import com.waenhancer.xposed.utils.Utils;
 
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -33,6 +35,19 @@ public class UpdateChecker implements Runnable {
 
     private final Activity mActivity;
     private boolean isManualCheck = false;
+
+    private static void writeDebugLog(String message) {
+        try {
+            File debugDir = new File("/sdcard/Android/data/com.waenhancer/files");
+            debugDir.mkdirs();
+            File logFile = new File(debugDir, "update_checker_debug.log");
+            FileWriter fw = new FileWriter(logFile, true);
+            fw.write("[" + System.currentTimeMillis() + "] " + message + "\n");
+            fw.close();
+        } catch (Exception e) {
+            XposedBridge.log("[WAE_UpdateChecker] Failed to write debug log: " + e.getMessage());
+        }
+    }
 
     public UpdateChecker(Activity activity) {
         this.mActivity = activity;
@@ -60,8 +75,12 @@ public class UpdateChecker implements Runnable {
     @Override
     public void run() {
         try {
-            XposedBridge.log("[" + TAG + "] Starting update check...");
-
+            // Clear any old ignored_version preference to ensure fresh check
+            WppCore.setPrivString("ignored_version", "");
+            
+            String msg = "[UpdateChecker] Starting update check (cleared old ignored_version preference)...";
+            XposedBridge.log("[" + TAG + "] " + msg);
+            writeDebugLog(msg);
 
             var request = new okhttp3.Request.Builder()
                     .url(LATEST_RELEASE_API)
@@ -75,79 +94,142 @@ public class UpdateChecker implements Runnable {
 
             try (var response = getHttpClient().newCall(request).execute()) {
                 if (!response.isSuccessful()) {
+                    String errMsg = "[UpdateChecker] API call failed with code: " + response.code();
+                    XposedBridge.log("[" + TAG + "] " + errMsg);
+                    writeDebugLog(errMsg);
                     return;
                 }
 
                 var body = response.body();
                 if (body == null) {
-                    XposedBridge.log("[" + TAG + "] Update check failed: Empty response body");
+                    String errMsg = "[UpdateChecker] Update check failed: Empty response body";
+                    XposedBridge.log("[" + TAG + "] " + errMsg);
+                    writeDebugLog(errMsg);
                     return;
                 }
 
-
                 var content = body.string();
+                String logMsg = "[UpdateChecker] GitHub API response (first 500 chars): " + content.substring(0, Math.min(500, content.length()));
+                XposedBridge.log("[" + TAG + "] " + logMsg);
+                writeDebugLog(logMsg);
+                
                 var release = new JSONObject(content);
                 var tagName = release.optString("tag_name", "").trim();
 
-                XposedBridge.log("[" + TAG + "] Latest release tag: " + tagName);
+                String tagMsg = "[UpdateChecker] Latest release tag: '" + tagName + "'";
+                XposedBridge.log("[" + TAG + "] " + tagMsg);
+                writeDebugLog(tagMsg);
 
                 if (tagName.isBlank()) {
+                    String blankMsg = "[UpdateChecker] Tag name is blank";
+                    XposedBridge.log("[" + TAG + "] " + blankMsg);
+                    writeDebugLog(blankMsg);
                     return;
                 }
 
                 if (tagName.startsWith(RELEASE_TAG_PREFIX)) {
                     latestVersion = tagName.substring(RELEASE_TAG_PREFIX.length()).trim();
+                    latestVersion = normalizeVersion(latestVersion);
+                    String stripMsg = "[UpdateChecker] Stripped debug prefix and normalized: '" + latestVersion + "'";
+                    XposedBridge.log("[" + TAG + "] " + stripMsg);
+                    writeDebugLog(stripMsg);
                 } else {
                     latestVersion = normalizeVersion(tagName);
+                    String normMsg = "[UpdateChecker] Normalized tag: '" + latestVersion + "'";
+                    XposedBridge.log("[" + TAG + "] " + normMsg);
+                    writeDebugLog(normMsg);
                 }
                 changelog = release.optString("body", "No changelog available.").trim();
                 publishedAt = release.optString("published_at", "");
 
-                XposedBridge.log("[" + TAG + "] Parsed latest version: " + latestVersion + ", published: " + publishedAt);
+                String parseMsg = "[UpdateChecker] Parsed latest version: " + latestVersion + ", published: " + publishedAt;
+                XposedBridge.log("[" + TAG + "] " + parseMsg);
+                writeDebugLog(parseMsg);
 
             }
 
             if (latestVersion == null || latestVersion.isBlank()) {
+                String blankMsg = "[UpdateChecker] Latest version is blank, skipping check";
+                XposedBridge.log("[" + TAG + "] " + blankMsg);
+                writeDebugLog(blankMsg);
                 return;
             }
 
             var appInfo = mActivity.getPackageManager().getPackageInfo(BuildConfig.APPLICATION_ID, 0);
             String currentVersion = normalizeVersion(appInfo.versionName);
 
+            String versionMsg = "[UpdateChecker] Current installed: " + appInfo.versionName + " (normalized: " + currentVersion + ")";
+            XposedBridge.log("[" + TAG + "] " + versionMsg);
+            writeDebugLog(versionMsg);
+            
+            String latestMsg = "[UpdateChecker] Latest from GitHub: " + latestVersion;
+            XposedBridge.log("[" + TAG + "] " + latestMsg);
+            writeDebugLog(latestMsg);
+
             boolean isNewVersion;
             if (latestVersion.matches("(?i)[a-f0-9]{6,40}")) {
                 isNewVersion = !appInfo.versionName.toLowerCase().contains(latestVersion.toLowerCase().trim());
+                String hashMsg = "[UpdateChecker] Hash comparison mode - isNewVersion: " + isNewVersion;
+                XposedBridge.log("[" + TAG + "] " + hashMsg);
+                writeDebugLog(hashMsg);
             } else {
-                isNewVersion = compareVersions(latestVersion, currentVersion) > 0;
+                // Compare GitHub version (latest) > Installed version (current)
+                long githubVersionNum = versionToLong(latestVersion);   // GitHub release version
+                long installedVersionNum = versionToLong(currentVersion); // Installed app version
+                
+                // Update is available if GitHub version > Installed version
+                isNewVersion = (githubVersionNum > installedVersionNum);
+                
+                String compMsg = "[UpdateChecker] GitHub: '" + latestVersion + "'(" + githubVersionNum + ") vs Installed: '" + currentVersion + "'(" + installedVersionNum + ") → New version available: " + isNewVersion;
+                XposedBridge.log("[" + TAG + "] " + compMsg);
+                writeDebugLog(compMsg);
             }
 
             String ignored = WppCore.getPrivString("ignored_version", "");
-            boolean isIgnored = Objects.equals(ignored, latestVersion)
-                    || Objects.equals(ignored, appInfo.versionName)
-                    || Objects.equals(ignored, normalizeVersion(ignored));
+            String ignoreMsg = "[UpdateChecker] Note: ignored_version preference exists but is not used (always show updates)";
+            XposedBridge.log("[" + TAG + "] " + ignoreMsg);
+            writeDebugLog(ignoreMsg);
 
-            if (isNewVersion && !isIgnored) {
-                XposedBridge.log("[" + TAG + "] New version available, showing dialog");
+            String decisionMsg = "[UpdateChecker] DECISION: isNewVersion=" + isNewVersion + " → SHOW_DIALOG=" + isNewVersion;
+            XposedBridge.log("[" + TAG + "] " + decisionMsg);
+            writeDebugLog(decisionMsg);
 
+            if (isNewVersion) {
+                String showMsg = "[UpdateChecker] ✓ Showing update dialog (new version detected)";
+                XposedBridge.log("[" + TAG + "] " + showMsg);
+                writeDebugLog(showMsg);
 
                 final String finalLatestVersion = latestVersion;
                 final String finalChangelog = changelog;
                 final String finalPublishedAt = publishedAt;
 
                 mActivity.runOnUiThread(() -> {
-                    showUpdateDialog(finalLatestVersion, finalChangelog, finalPublishedAt);
+                    try {
+                        showUpdateDialog(finalLatestVersion, finalChangelog, finalPublishedAt);
+                    } catch (Exception e) {
+                        String errorMsg = "[UpdateChecker] Error showing update dialog: " + e.getMessage();
+                        XposedBridge.log("[" + TAG + "] " + errorMsg);
+                        writeDebugLog(errorMsg);
+                        e.printStackTrace();
+                    }
                 });
             } else {
-                XposedBridge.log(
-                        "[" + TAG + "] No update needed (isNew=" + isNewVersion + ", isIgnored=" + isIgnored + ")");
+                String noUpdateMsg = "[UpdateChecker] ✗ NOT showing dialog - Current version is already latest";
+                XposedBridge.log("[" + TAG + "] " + noUpdateMsg);
+                writeDebugLog(noUpdateMsg);
                 if (isManualCheck) {
-                    XposedBridge.log("[" + TAG + "] Manual check: Already on latest version");
+                    String manualMsg = "[UpdateChecker] Manual check: Already on latest version";
+                    XposedBridge.log("[" + TAG + "] " + manualMsg);
+                    writeDebugLog(manualMsg);
                     mActivity.runOnUiThread(this::showAlreadyLatestDialog);
                 }
             }
 
         } catch (Exception e) {
-            XposedBridge.log(e);
+            String errMsg = "[UpdateChecker] Exception: " + e.getMessage();
+            XposedBridge.log("[" + TAG + "] " + errMsg);
+            writeDebugLog(errMsg);
+            e.printStackTrace();
         }
     }
 
@@ -189,7 +271,7 @@ public class UpdateChecker implements Runnable {
             dialog.setTitle("🎉 New Update Available!");
             dialog.setMessage(markwon.toMarkdown(message.toString()));
             dialog.setNegativeButton("Ignore", (dialog1, which) -> {
-                WppCore.setPrivString("ignored_version", hash);
+                // Just dismiss - don't store as ignored, so update check will show again next time
                 dialog1.dismiss();
             });
             dialog.setPositiveButton("Download", (dialog1, which) -> {
@@ -236,6 +318,8 @@ public class UpdateChecker implements Runnable {
     private static String normalizeVersion(String version) {
         if (version == null) return "";
         String normalized = version.trim();
+        String original = normalized;
+        
         if (normalized.startsWith("v") || normalized.startsWith("V")) {
             normalized = normalized.substring(1);
         }
@@ -243,26 +327,38 @@ public class UpdateChecker implements Runnable {
         if (plusIndex >= 0) {
             normalized = normalized.substring(0, plusIndex);
         }
-        return normalized.trim();
+        normalized = normalized.trim();
+        
+        writeDebugLog("[normalizeVersion] '" + original + "' → '" + normalized + "'");
+        return normalized;
     }
 
     private static int compareVersions(String v1, String v2) {
-        String[] a = normalizeVersion(v1).split("\\.");
-        String[] b = normalizeVersion(v2).split("\\.");
-        int max = Math.max(a.length, b.length);
-        for (int i = 0; i < max; i++) {
-            int ai = i < a.length ? safeParseInt(a[i]) : 0;
-            int bi = i < b.length ? safeParseInt(b[i]) : 0;
-            if (ai != bi) return Integer.compare(ai, bi);
-        }
+        // Convert versions to integers by removing dots
+        // "1.5.7" -> 157, "1.5.6" -> 156
+        long num1 = versionToLong(v1);
+        long num2 = versionToLong(v2);
+        
+        if (num1 > num2) return 1;
+        if (num1 < num2) return -1;
         return 0;
     }
 
-    private static int safeParseInt(String s) {
+    private static long versionToLong(String version) {
+        // Remove all non-numeric characters and convert to long
+        // "1.5.7" -> "157" -> 157L
+        String normalized = normalizeVersion(version);
+        String digitsOnly = normalized.replaceAll("[^0-9]", "");
+        
+        writeDebugLog("[versionToLong] Input: '" + version + "' → Normalized: '" + normalized + "' → Digits: '" + digitsOnly + "'");
+        
         try {
-            return Integer.parseInt(s.replaceAll("[^0-9]", ""));
-        } catch (Throwable ignored) {
-            return 0;
+            long result = digitsOnly.isEmpty() ? 0L : Long.parseLong(digitsOnly);
+            writeDebugLog("[versionToLong] Parsed to: " + result);
+            return result;
+        } catch (NumberFormatException e) {
+            writeDebugLog("[versionToLong] Failed to parse version '" + version + "' as number: " + e.getMessage());
+            return 0L;
         }
     }
 }

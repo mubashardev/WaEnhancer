@@ -206,28 +206,34 @@ public class FeatureLoader {
                                     list.stream().map(item -> item.getPluginName() + " - " + item.getMessage())
                                             .toArray(String[]::new));
 
-                            new AlertDialogWpp(activity)
-                                    .setTitle(activity.getString(ResId.string.error_detected))
-                                    .setMessage(activity.getString(ResId.string.version_error) + msg
-                                            + "\n\nCurrent Version: " + currentVersion + "\nSupported Versions:\n"
-                                            + String.join("\n", supportedVersions))
-                                    .setPositiveButton(activity.getString(ResId.string.copy_to_clipboard),
-                                            (dialog, which) -> {
-                                                var clipboard = (ClipboardManager) mApp
-                                                        .getSystemService(Context.CLIPBOARD_SERVICE);
-                                                ClipData clip = ClipData.newPlainText("text", String.join("\n",
-                                                        list.stream().map(ErrorItem::toString).toArray(String[]::new)));
-                                                clipboard.setPrimaryClip(clip);
-                                                Toast.makeText(mApp, ResId.string.copied_to_clipboard,
-                                                        Toast.LENGTH_SHORT).show();
-                                                dialog.dismiss();
-                                            })
-                                    .setNegativeButton(activity.getString(ResId.string.check_for_latest_version),
-                                            (dialog, which) -> {
-                                                CompletableFuture.runAsync(new UpdateChecker(activity, true));
-                                                dialog.dismiss();
-                                            })
-                                    .show();
+                            try {
+                                new AlertDialogWpp(activity)
+                                        .setTitle(activity.getString(ResId.string.error_detected))
+                                        .setMessage(activity.getString(ResId.string.version_error) + msg
+                                                + "\n\nCurrent Version: " + currentVersion + "\nSupported Versions:\n"
+                                                + String.join("\n", supportedVersions))
+                                        .setPositiveButton(activity.getString(ResId.string.copy_to_clipboard),
+                                                (dialog, which) -> {
+                                                    var clipboard = (ClipboardManager) mApp
+                                                            .getSystemService(Context.CLIPBOARD_SERVICE);
+                                                    ClipData clip = ClipData.newPlainText("text", String.join("\n",
+                                                            list.stream().map(ErrorItem::toString).toArray(String[]::new)));
+                                                    clipboard.setPrimaryClip(clip);
+                                                    Toast.makeText(mApp, ResId.string.copied_to_clipboard,
+                                                            Toast.LENGTH_SHORT).show();
+                                                    dialog.dismiss();
+                                                })
+                                        .setNegativeButton(activity.getString(ResId.string.check_for_latest_version),
+                                                (dialog, which) -> {
+                                                    CompletableFuture.runAsync(new UpdateChecker(activity, true));
+                                                    dialog.dismiss();
+                                                })
+                                        .show();
+                            } catch (Throwable e) {
+                                // Prevent error dialog from blocking UpdateChecker
+                                XposedBridge.log("[WAE] Error showing error dialog: " + e.getMessage());
+                                e.printStackTrace();
+                            }
                         }
                     }
                 });
@@ -253,35 +259,35 @@ public class FeatureLoader {
         Utils.init(loader);
         AlertDialogWpp.initDialog(loader);
         WaContactWpp.initialize(loader);
+        
+        // Track last update check time to avoid spam (check every 24 hours max)
+        final long[] lastUpdateCheckTime = {0};
+        final long UPDATE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
+
         WppCore.addListenerActivity((activity, state) -> {
 
             if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
                 checkUpdate(activity);
-            }
 
-            // Check for WAE Update
-            // noinspection ConstantValue
-            if (App.isOriginalPackage() && pref.getBoolean("update_check", true)) {
-                boolean isHomeActivity = false;
-                try {
-                    var homeClass = WppCore.getHomeActivityClass(activity.getClassLoader());
-                    isHomeActivity = homeClass != null && homeClass.isInstance(activity);
-                } catch (Throwable ignored) {
-                }
-
-                if (!isHomeActivity) {
-                    var simpleName = activity.getClass().getSimpleName();
-                    var fullName = activity.getClass().getName();
-                    isHomeActivity = simpleName.contains("Home") || fullName.contains("HomeActivity");
-                }
-
-                if (isHomeActivity && state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
-                    // Delay to ensure smooth activity transition
-                    XposedBridge.log("[WAE] Scheduling update check in 2 seconds...");
-                    activity.getWindow().getDecorView().postDelayed(() -> {
-                        XposedBridge.log("[WAE] Launching UpdateChecker now");
-                        CompletableFuture.runAsync(new UpdateChecker(activity));
-                    }, 2000); // 2 second delay
+                // Always attempt to check for updates on any activity resume (independent of errors)
+                // noinspection ConstantValue
+                if (App.isOriginalPackage() && pref.getBoolean("update_check", true)) {
+                    long currentTime = System.currentTimeMillis();
+                    // Only check if more than 24 hours have passed since last check
+                    if (currentTime - lastUpdateCheckTime[0] > UPDATE_CHECK_INTERVAL) {
+                        lastUpdateCheckTime[0] = currentTime;
+                        // Schedule update check independently on background thread to avoid blocking
+                        XposedBridge.log("[WAE] Scheduling update check...");
+                        activity.getWindow().getDecorView().postDelayed(() -> {
+                            try {
+                                XposedBridge.log("[WAE] Launching UpdateChecker from activity: " + activity.getClass().getSimpleName());
+                                CompletableFuture.runAsync(new UpdateChecker(activity));
+                            } catch (Throwable e) {
+                                XposedBridge.log("[WAE] Error launching UpdateChecker: " + e.getMessage());
+                                e.printStackTrace();
+                            }
+                        }, 1500); // 1.5 second delay for smooth transition
+                    }
                 }
             }
         });

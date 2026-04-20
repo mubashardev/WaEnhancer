@@ -25,6 +25,9 @@ public class ChatScrollButtons extends Feature {
 
     @Override
     public void doHook() throws Throwable {
+        // Check if feature is enabled
+        if (!prefs.getBoolean("go_to_first_message", true)) return;
+        
         try {
             Class<?> conversationClass = XposedHelpers.findClass("com.whatsapp.Conversation", this.classLoader);
             

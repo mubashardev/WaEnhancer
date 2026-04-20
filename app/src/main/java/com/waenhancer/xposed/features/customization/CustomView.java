@@ -165,9 +165,7 @@ public class CustomView extends Feature {
                 //noinspection unchecked
                 leafMapIds = (HashMap<Integer, ArrayList<CachedRuleItem>>) ois.readObject();
                 loaded = true;
-                log("CustomView: loaded compiled rules from disk cache");
             } catch (Exception e) {
-                log("CustomView: cache load failed – " + e.getMessage());
                 mapIds = null;
                 leafMapIds = null;
             }
@@ -194,7 +192,7 @@ public class CustomView extends Feature {
                     oos.writeObject(mCopy);
                     oos.writeObject(lCopy);
                 } catch (Exception e) {
-                    log("CustomView: cache save failed – " + e.getMessage());
+                    // Cache save failed, will be regenerated on next use
                 }
             }, "cv-cache-writer").start();
         }
@@ -891,7 +889,7 @@ public class CustomView extends Feature {
                 forcedBackgroundMap.put(view, gradientDrawable);
                 view.setBackground(gradientDrawable);
             } catch (Exception e) {
-                log("Error parsing gradient: " + e.getMessage());
+                // Failed to parse gradient, using default styling
             }
         }
     }
@@ -1086,9 +1084,8 @@ public class CustomView extends Feature {
                  ObjectOutputStream metaOut = new ObjectOutputStream(new FileOutputStream(metadataFile))) {
                 drawable.getBitmap().compress(Bitmap.CompressFormat.PNG, 80, out);
                 metaOut.writeLong(lastModified);
-                Log.d("DrawableCache", "Saved drawable to cache: " + cacheFile.getAbsolutePath());
             } catch (IOException e) {
-                Log.e("DrawableCache", "Failed to save drawable to cache", e);
+                // Failed to save to cache
             }
         }
 
@@ -1098,7 +1095,6 @@ public class CustomView extends Feature {
             File cacheFile = new File(cacheLocation, getCacheFileName(key));
             File metadataFile = new File(cacheLocation, getCacheFileName(key) + ".meta");
             if (!cacheFile.exists() || !metadataFile.exists()) {
-                log("Drawable not found in cache: " + cacheFile.getAbsolutePath());
                 return null;
             }
             try (ObjectInputStream metaIn = new ObjectInputStream(new FileInputStream(metadataFile))) {
@@ -1107,7 +1103,7 @@ public class CustomView extends Feature {
                 Bitmap bitmap = BitmapFactory.decodeFile(cacheFile.getAbsolutePath());
                 if (bitmap != null) return new BitmapDrawable(context.getResources(), bitmap);
             } catch (IOException e) {
-                Log.e("DrawableCache", "Failed to load drawable from cache", e);
+                // Failed to load from cache, will be regenerated
             }
             return null;
         }

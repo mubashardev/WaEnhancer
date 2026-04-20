@@ -51,7 +51,7 @@ public class WallpaperView extends FrameLayout {
             bgView.setImageDrawable(drawable);
             addView(bgView);
         } catch (Exception e) {
-            log("Error initializing wallpaper view: " + e.getMessage());
+            // Failed to initialize wallpaper view
         }
     }
 

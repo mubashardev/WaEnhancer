@@ -1,6 +1,6 @@
 # WaEnhancer
 <div align="center">
-  <p><strong><a href="https://waenhancer.com" target="_blank" ref="follow">WA Enhancer</a> is a powerful Xposed/LSPosed module that supercharges your WhatsApp experience with advanced privacy, customization, and utility features.</strong></p>
+  <p><strong><a href="https://waenhancer.com" target="_blank" rel="follow">WA Enhancer</a> is a powerful Xposed/LSPosed module that supercharges your WhatsApp experience with advanced privacy, customization, and utility features.</strong></p>
   <p><strong>Warning:</strong> This module is intended for educational purposes only. Providing these features may violate WhatsApp's Terms of Service. Use it at your own risk. The developer is not responsible for any bans, data loss, or other issues related to the use of this software.</p>
 </div>
 

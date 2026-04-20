@@ -39,7 +39,6 @@ public class PrivacyFragment extends BasePreferenceFragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        System.out.println("onActivityResult: " + requestCode + " " + resultCode + " " + data);
         if (requestCode == REQUEST_CONTACT_PICKER && resultCode == Activity.RESULT_OK) {
             ContactPickerPreference contactPickerPref = findPreference(data.getStringExtra("key"));
             if (contactPickerPref != null) {

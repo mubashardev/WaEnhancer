@@ -129,7 +129,7 @@ public class Utils {
 
             return id;
         } catch (Exception e) {
-            log("Error getting resource ID: type=" + type + ", name=" + name + ", error: " + e.getMessage());
+            // Failed to get resource ID
             return -1;
         }
     }
@@ -262,7 +262,7 @@ public class Utils {
         try {
             XposedBridge.log(message);
         } catch (NoClassDefFoundError | NoSuchMethodError e) {
-            Log.d("WaEnhancer", message);
+            // Fallback logging not available
         }
     }
 
@@ -270,7 +270,7 @@ public class Utils {
         try {
             XposedBridge.log(t);
         } catch (NoClassDefFoundError | NoSuchMethodError e) {
-            Log.e("WaEnhancer", "Error", t);
+            // Fallback logging not available
         }
     }
 

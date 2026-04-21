@@ -292,4 +292,13 @@
         <item>102</item>
     </string-array>
 
+    <string-array name="release_channel_entries">
+        <item>@string/release_channel_stable</item>
+        <item>@string/release_channel_beta</item>
+    </string-array>
+    <string-array name="release_channel_values">
+        <item>stable</item>
+        <item>beta</item>
+    </string-array>
+
 </resources>

@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
@@ -24,6 +25,7 @@ import com.waenhancer.App;
 import com.waenhancer.BuildConfig;
 import com.waenhancer.R;
 import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.util.Objects;
@@ -32,6 +34,8 @@ import rikka.material.preference.MaterialSwitchPreference;
 
 public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         implements SharedPreferences.OnSharedPreferenceChangeListener {
+    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
+    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
     protected SharedPreferences mPrefs;
 
     @Override
@@ -63,6 +67,8 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     public void onResume() {
         super.onResume();
         setDisplayHomeAsUpEnabled(true);
+        initializeReleaseChannelPreference();
+        setupReleaseChannelPreference();
     }
 
     @Override
@@ -118,6 +124,10 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String s) {
+        if (Objects.equals(s, "release_channel")) {
+            String channel = mPrefs.getString("release_channel", "stable");
+            WppCore.setPrivString("release_channel", channel);
+        }
         Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
         App.getInstance().sendBroadcast(intent);
         chanceStates(s);
@@ -502,5 +512,75 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                 view.setBackgroundColor(android.graphics.Color.TRANSPARENT);
             }
         }, 1500);
+    }
+
+    private void initializeReleaseChannelPreference() {
+        try {
+            var pref = findPreference("release_channel");
+            if (pref == null) return;
+
+            String installedVersion = "";
+            try {
+                var pkgInfo = requireContext().getPackageManager().getPackageInfo(BuildConfig.APPLICATION_ID, 0);
+                installedVersion = pkgInfo.versionName != null ? pkgInfo.versionName : "";
+            } catch (Exception ignored) {
+            }
+
+            boolean installedIsBeta = installedVersion.contains("-beta-");
+            String installedChannel = installedIsBeta ? "beta" : "stable";
+
+            if (pref instanceof ListPreference) {
+                ((ListPreference) pref).setValue(installedChannel);
+            }
+            mPrefs.edit().putString("release_channel", installedChannel).apply();
+            WppCore.setPrivString("release_channel", installedChannel);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void setupReleaseChannelPreference() {
+        var preference = findPreference("release_channel");
+        if (!(preference instanceof ListPreference)) return;
+
+        ListPreference releaseChannelPreference = (ListPreference) preference;
+        releaseChannelPreference.setOnPreferenceChangeListener((pref, newValue) -> {
+            if (!(newValue instanceof String)) return false;
+
+            String selectedChannel = (String) newValue;
+            String installedChannel = getInstalledReleaseChannel();
+            if (selectedChannel.equals(installedChannel)) {
+                return true;
+            }
+
+            showReleaseInstallPrompt(selectedChannel);
+            return false;
+        });
+    }
+
+    private String getInstalledReleaseChannel() {
+        try {
+            var pkgInfo = requireContext().getPackageManager().getPackageInfo(BuildConfig.APPLICATION_ID, 0);
+            String installedVersion = pkgInfo.versionName != null ? pkgInfo.versionName : "";
+            return installedVersion.contains("-beta-") ? "beta" : "stable";
+        } catch (Exception ignored) {
+            return "stable";
+        }
+    }
+
+    private void showReleaseInstallPrompt(String selectedChannel) {
+        boolean isBeta = "beta".equals(selectedChannel);
+        String title = getString(isBeta ? R.string.release_channel_beta_install_title : R.string.release_channel_stable_install_title);
+        String message = getString(isBeta ? R.string.release_channel_beta_install_message : R.string.release_channel_stable_install_message);
+        String url = isBeta ? RELEASES_URL : LATEST_STABLE_URL;
+
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.download, (dialog, which) -> {
+                    Utils.openLink(requireActivity(), url);
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
+                .show();
     }
 }

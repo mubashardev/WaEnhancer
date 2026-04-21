@@ -29,6 +29,7 @@ import com.waenhancer.databinding.FragmentHomeBinding;
 import com.waenhancer.ui.fragments.base.BaseFragment;
 import com.waenhancer.utils.FilePicker;
 import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.UnobfuscatorCache;
 import com.waenhancer.xposed.utils.Utils;
 
@@ -47,6 +48,9 @@ import java.util.Objects;
 import rikka.core.util.IOUtils;
 
 public class HomeFragment extends BaseFragment {
+    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
+    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
+    private static final String PREF_MODULE_HEARTBEAT = "module_heartbeat";
 
     private FragmentHomeBinding binding;
 
@@ -192,6 +196,7 @@ public class HomeFragment extends BaseFragment {
             showClearCacheConfirmation();
         });
 
+        setupReleaseChannelSelector();
         startCardAnimations();
 
         return binding.getRoot();
@@ -254,10 +259,13 @@ public class HomeFragment extends BaseFragment {
     public void onResume() {
         super.onResume();
         setDisplayHomeAsUpEnabled(false);
+        syncReleaseChannelToInstalled();
     }
 
     @SuppressLint("StringFormatInvalid")
     private void receiverBroadcastBusiness(Context context, Intent intent) {
+        markModuleActive();
+        setModuleActiveState(true);
         binding.statusTitle3.setText(R.string.business_in_background);
         var version = intent.getStringExtra("VERSION");
         var supported_list = Arrays.asList(context.getResources().getStringArray(R.array.supported_versions_business));
@@ -274,6 +282,8 @@ public class HomeFragment extends BaseFragment {
 
     @SuppressLint("StringFormatInvalid")
     private void receiverBroadcastWpp(Context context, Intent intent) {
+        markModuleActive();
+        setModuleActiveState(true);
         binding.statusTitle2.setText(R.string.whatsapp_in_background);
         var version = intent.getStringExtra("VERSION");
         var supported_list = Arrays.asList(context.getResources().getStringArray(R.array.supported_versions_wpp));
@@ -408,20 +418,8 @@ public class HomeFragment extends BaseFragment {
 
     @SuppressLint("StringFormatInvalid")
     private void checkStateWpp(FragmentActivity activity) {
-
-        if (MainActivity.isXposedEnabled()) {
-            binding.statusIcon.setImageResource(R.drawable.ic_round_check_circle_24);
-            binding.statusTitle.setText(R.string.module_enabled);
-            binding.statusSummary.setText(String.format(getString(R.string.version_s), BuildConfig.VERSION_NAME));
-            // Use hero glow enabled drawable
-            binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_enabled);
-        } else {
-            binding.statusIcon.setImageResource(R.drawable.ic_round_error_outline_24);
-            binding.statusTitle.setText(R.string.module_disabled);
-            // Use hero glow disabled drawable
-            binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_disabled);
-            binding.statusSummary.setVisibility(View.GONE);
-        }
+        boolean enabled = MainActivity.isXposedEnabled() || hasRecentModuleHeartbeat();
+        setModuleActiveState(enabled);
         if (isInstalled(FeatureLoader.PACKAGE_WPP) && App.isOriginalPackage()) {
             disableWpp(activity);
         } else {
@@ -538,6 +536,87 @@ public class HomeFragment extends BaseFragment {
     private static void checkWpp(FragmentActivity activity) {
         Intent checkWpp = new Intent(BuildConfig.APPLICATION_ID + ".CHECK_WPP");
         activity.sendBroadcast(checkWpp);
+    }
+
+    private void setupReleaseChannelSelector() {
+        syncReleaseChannelToInstalled();
+        binding.releaseChannelGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            String selectedChannel = checkedId == R.id.release_channel_beta_btn ? "beta" : "stable";
+            String installedChannel = getInstalledReleaseChannel();
+            if (!selectedChannel.equals(installedChannel)) {
+                updateReleaseChannelUi(installedChannel);
+                showReleaseInstallPrompt(selectedChannel);
+                return;
+            }
+            setReleaseChannel(selectedChannel);
+        });
+    }
+
+    private void syncReleaseChannelToInstalled() {
+        String installedChannel = getInstalledReleaseChannel();
+        setReleaseChannel(installedChannel);
+        updateReleaseChannelUi(installedChannel);
+    }
+
+    private String getInstalledReleaseChannel() {
+        return BuildConfig.VERSION_NAME != null && BuildConfig.VERSION_NAME.contains("-beta-") ? "beta" : "stable";
+    }
+
+    private void setReleaseChannel(String channel) {
+        var prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        prefs.edit().putString("release_channel", channel).apply();
+        WppCore.setPrivString("release_channel", channel);
+    }
+
+    private void updateReleaseChannelUi(String channel) {
+        if ("beta".equals(channel)) {
+            binding.releaseChannelGroup.check(R.id.release_channel_beta_btn);
+        } else {
+            binding.releaseChannelGroup.check(R.id.release_channel_stable_btn);
+        }
+    }
+
+    private void showReleaseInstallPrompt(String selectedChannel) {
+        boolean isBeta = "beta".equals(selectedChannel);
+        String title = getString(isBeta ? R.string.release_channel_beta_install_title : R.string.release_channel_stable_install_title);
+        String message = getString(isBeta ? R.string.release_channel_beta_install_message : R.string.release_channel_stable_install_message);
+        String url = isBeta ? RELEASES_URL : LATEST_STABLE_URL;
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.download, (dialog, which) -> {
+                    openUrl(requireContext(), url);
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private void setModuleActiveState(boolean enabled) {
+        if (enabled) {
+            binding.statusIcon.setImageResource(R.drawable.ic_round_check_circle_24);
+            binding.statusTitle.setText(R.string.module_enabled);
+            binding.statusSummary.setText(String.format(getString(R.string.version_s), BuildConfig.VERSION_NAME));
+            binding.statusSummary.setVisibility(View.VISIBLE);
+            binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_enabled);
+        } else {
+            binding.statusIcon.setImageResource(R.drawable.ic_round_error_outline_24);
+            binding.statusTitle.setText(R.string.module_disabled);
+            binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_disabled);
+            binding.statusSummary.setVisibility(View.GONE);
+        }
+    }
+
+    private void markModuleActive() {
+        var prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        prefs.edit().putLong(PREF_MODULE_HEARTBEAT, System.currentTimeMillis()).apply();
+    }
+
+    private boolean hasRecentModuleHeartbeat() {
+        var prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        long lastSeen = prefs.getLong(PREF_MODULE_HEARTBEAT, 0L);
+        return lastSeen > 0L && (System.currentTimeMillis() - lastSeen) < 6 * 60 * 60 * 1000L;
     }
 
     private void showClearCacheConfirmation() {

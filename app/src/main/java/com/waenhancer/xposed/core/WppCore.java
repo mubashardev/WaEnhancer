@@ -763,10 +763,12 @@ public class WppCore {
 
     @SuppressLint("ApplySharedPref")
     public static void setPrivString(String key, String value) {
+        if (privPrefs == null) return;
         privPrefs.edit().putString(key, value).commit();
     }
 
     public static String getPrivString(String key, String defaultValue) {
+        if (privPrefs == null) return defaultValue;
         return privPrefs.getString(key, defaultValue);
     }
 
@@ -783,21 +785,25 @@ public class WppCore {
 
     @SuppressLint("ApplySharedPref")
     public static void setPrivJSON(String key, JSONObject value) {
+        if (privPrefs == null) return;
         privPrefs.edit().putString(key, value == null ? null : value.toString()).commit();
     }
 
     @SuppressLint("ApplySharedPref")
     public static void removePrivKey(String s) {
+        if (privPrefs == null) return;
         if (s != null && privPrefs.contains(s))
             privPrefs.edit().remove(s).commit();
     }
 
     @SuppressLint("ApplySharedPref")
     public static void setPrivBoolean(String key, boolean value) {
+        if (privPrefs == null) return;
         privPrefs.edit().putBoolean(key, value).commit();
     }
 
     public static boolean getPrivBoolean(String key, boolean defaultValue) {
+        if (privPrefs == null) return defaultValue;
         return privPrefs.getBoolean(key, defaultValue);
     }
 

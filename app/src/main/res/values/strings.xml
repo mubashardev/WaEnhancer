@@ -534,4 +534,11 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="clear_obfuscate_cache">Clear Obfuscate Cache</string>
     <string name="obfuscate_cache_cleared">Obfuscate cache cleared</string>
     <string name="clear_cache_confirmation">Are you sure you want to clear the obfuscate cache? This will force a new scan for WhatsApp methods on the next launch.</string>
+    <string name="release_channel_title">Update Channel</string>
+    <string name="release_channel_stable">Stable</string>
+    <string name="release_channel_beta">Beta</string>
+    <string name="release_channel_beta_install_title">Install beta build required</string>
+    <string name="release_channel_beta_install_message">To receive beta/pre-release update dialogs, install the latest beta build first.</string>
+    <string name="release_channel_stable_install_title">Install stable build required</string>
+    <string name="release_channel_stable_install_message">To switch back to stable updates, install the latest stable release build first.</string>
 </resources>

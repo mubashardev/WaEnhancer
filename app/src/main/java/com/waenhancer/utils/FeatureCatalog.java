@@ -751,29 +751,7 @@ public class FeatureCatalog {
                                 null,
                                 Arrays.asList("video", "60fps", "fps")));
 
-                catalog.add(new SearchableFeature("call_recording_enable",
-                                context.getString(R.string.call_recording_enable),
-                                context.getString(R.string.call_recording_enable_sum),
-                                SearchableFeature.Category.MEDIA,
-                                SearchableFeature.FragmentType.MEDIA,
-                                null,
-                                Arrays.asList("call", "recording", "record")));
 
-                catalog.add(new SearchableFeature("call_recording_path",
-                                context.getString(R.string.call_recording_path),
-                                null,
-                                SearchableFeature.Category.MEDIA,
-                                SearchableFeature.FragmentType.MEDIA,
-                                null,
-                                Arrays.asList("recording", "path", "folder")));
-
-                catalog.add(new SearchableFeature("call_recording_toast",
-                                context.getString(R.string.call_recording_toast_title),
-                                context.getString(R.string.call_recording_toast_summary),
-                                SearchableFeature.Category.MEDIA,
-                                SearchableFeature.FragmentType.MEDIA,
-                                null,
-                                Arrays.asList("recording", "toast", "notification", "show", "hide")));
 
                 catalog.add(new SearchableFeature("disable_sensor_proximity",
                                 context.getString(R.string.disable_the_proximity_sensor),

@@ -85,10 +85,7 @@
             android:name=".activities.TextEditorActivity"
             android:theme="@style/AppTheme" />
 
-        <activity
-            android:name=".activities.CallRecordingSettingsActivity"
-            android:theme="@style/Theme.Material3.DynamicColors.DayNight.NoActionBar"
-            android:parentActivityName=".activities.MainActivity" />
+
 
         <activity
             android:name=".activities.StatusForwardRulesActivity"

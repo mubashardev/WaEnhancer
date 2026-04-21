@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.waenhancer.R;
-import com.waenhancer.activities.CallRecordingSettingsActivity;
+
 import com.waenhancer.ui.fragments.base.BasePreferenceFragment;
 
 public class MediaFragment extends BasePreferenceFragment {
@@ -29,35 +29,9 @@ public class MediaFragment extends BasePreferenceFragment {
         super.onCreatePreferences(savedInstanceState, rootKey);
         setPreferencesFromResource(R.xml.fragment_media, rootKey);
 
-        // Show experimental warning when enabling Call Recording
-        var callRecordingEnable = findPreference("call_recording_enable");
-        if (callRecordingEnable != null) {
-            callRecordingEnable.setOnPreferenceChangeListener((preference, newValue) -> {
-                boolean enabling = (Boolean) newValue;
-                if (enabling) {
-                    new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                            .setTitle(R.string.call_recording_experimental_title)
-                            .setMessage(R.string.call_recording_experimental_message)
-                            .setPositiveButton(R.string.call_recording_experimental_ok, (dialog, which) -> {
-                                ((androidx.preference.TwoStatePreference) preference).setChecked(true);
-                            })
-                            .setNegativeButton(android.R.string.cancel, null)
-                            .show();
-                    return false; // Prevent automatic toggle; dialog handles it
-                }
-                return true; // Allow disabling freely
-            });
-        }
 
-        // Call Recording Settings preference
-        var callRecordingSettings = findPreference("call_recording_settings");
-        if (callRecordingSettings != null) {
-            callRecordingSettings.setOnPreferenceClickListener(preference -> {
-                Intent intent = new Intent(requireContext(), CallRecordingSettingsActivity.class);
-                startActivity(intent);
-                return true;
-            });
-        }
+
+
 
         var videoCallScreenRec = findPreference("video_call_screen_rec");
         if (videoCallScreenRec != null) {
@@ -74,37 +48,6 @@ public class MediaFragment extends BasePreferenceFragment {
             });
             videoCallScreenRec.setOnPreferenceChangeListener((preference, newValue) -> false); // Prevent toggling
         }
-        var useRootPref = findPreference("call_recording_use_root");
-        if (useRootPref != null) {
-            useRootPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                if ((Boolean) newValue) {
-                    new Thread(() -> {
-                        try {
-                            // Request root immediately to prompt Magisk, and grant to both possible WA
-                            // packages
-                            Process process = Runtime.getRuntime().exec(new String[] { "su", "-c", "echo root_test" });
-                            int exitCode = process.waitFor();
-                            if (exitCode == 0) {
-                                String[] cmds = {
-                                        "pm grant com.whatsapp android.permission.CAPTURE_AUDIO_OUTPUT",
-                                        "pm grant com.whatsapp.w4b android.permission.CAPTURE_AUDIO_OUTPUT",
-                                        "appops set com.whatsapp RECORD_AUDIO allow",
-                                        "appops set com.whatsapp.w4b RECORD_AUDIO allow"
-                                };
-                                for (String cmd : cmds) {
-                                    Runtime.getRuntime().exec(new String[] { "su", "-c", cmd }).waitFor();
-                                }
-                            } else {
-                                requireActivity().runOnUiThread(() -> android.widget.Toast.makeText(requireContext(),
-                                        "Root Access Denied!", android.widget.Toast.LENGTH_SHORT).show());
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }).start();
-                }
-                return true;
-            });
-        }
+
     }
 }

@@ -1,9 +1,5 @@
 [Added]
-- Added Go to first message in chat (enabled by deault)
+- Implemented release channel preference [stable/beta]
 
-[FIXED]
-- Fixed double-click to react feature with proper touch listener implementation
+[Fixes]
 - Fixed update checker
-
-[IMPROVED]
-- Removed unnecessary logs and debug output for cleaner codebase

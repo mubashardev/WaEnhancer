@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
@@ -112,6 +113,12 @@
             android:name=".activities.MessageListActivity"
             android:theme="@style/AppTheme"
             android:parentActivityName=".activities.DeletedMessagesActivity" />
+
+        <activity
+            android:name=".activities.ChangelogActivity"
+            android:theme="@style/AppTheme"
+            android:label="@string/changelog_title"
+            android:parentActivityName=".activities.MainActivity" />
 
         <activity
             android:name=".ui.fragments.SupportedVersionsActivity"

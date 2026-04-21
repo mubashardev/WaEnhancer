@@ -1,0 +1,94 @@
+
+> Configure project :app
+WARNING: BuildType 'debug' is both debuggable and has 'isMinifyEnabled' set to true.
+All code optimizations and obfuscation are disabled for debuggable builds.
+WARNING: BuildType 'debug' is both debuggable and has 'isMinifyEnabled' set to true.
+All code optimizations and obfuscation are disabled for debuggable builds.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preWhatsappDebugBuild UP-TO-DATE
+> Task :app:compileWhatsappDebugAidl UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:dataBindingMergeDependencyArtifactsWhatsappDebug UP-TO-DATE
+> Task :app:generateWhatsappDebugMaterialThemeBuilderRes
+> Task :app:generateWhatsappDebugResValues UP-TO-DATE
+> Task :app:generateWhatsappDebugResources UP-TO-DATE
+> Task :app:mergeWhatsappDebugResources UP-TO-DATE
+> Task :app:packageWhatsappDebugResources UP-TO-DATE
+> Task :app:processWhatsappDebugNavigationResources UP-TO-DATE
+> Task :app:parseWhatsappDebugLocalResources UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesWhatsappDebug UP-TO-DATE
+> Task :app:generateWhatsappDebugBuildConfig UP-TO-DATE
+> Task :app:generateWhatsappDebugMaterialThemeBuilderSource
+> Task :app:checkWhatsappDebugAarMetadata UP-TO-DATE
+> Task :app:compileWhatsappDebugNavigationResources UP-TO-DATE
+> Task :app:mapWhatsappDebugSourceSetPaths UP-TO-DATE
+> Task :app:createWhatsappDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksWhatsappDebug UP-TO-DATE
+> Task :app:processWhatsappDebugMainManifest UP-TO-DATE
+> Task :app:processWhatsappDebugManifest UP-TO-DATE
+> Task :app:processWhatsappDebugManifestForPackage UP-TO-DATE
+> Task :app:processWhatsappDebugResources UP-TO-DATE
+> Task :app:compileWhatsappDebugKotlin NO-SOURCE
+> Task :app:javaPreCompileWhatsappDebug UP-TO-DATE
+
+> Task :app:compileWhatsappDebugJavaWithJavac
+/Users/mubasharhussain/Developer/Android Projects/WaEnhancer.worktrees/agents-beta-release-management-updates/app/src/main/java/com/waenhancer/UpdateChecker.java:213: error: cannot find symbol
+            dialog.setNeutralButton("View Changelog", (dialog1, which) -> {
+                  ^
+  symbol:   method setNeutralButton(String,(dialog1,w[...](); })
+  location: variable dialog of type AlertDialogWpp
+/Users/mubasharhussain/Developer/Android Projects/WaEnhancer.worktrees/agents-beta-release-management-updates/app/src/main/java/com/waenhancer/UpdateChecker.java:214: error: cannot find symbol
+                Constants.startChangelogActivity(mActivity);
+                ^
+  symbol:   variable Constants
+  location: class UpdateChecker
+/Users/mubasharhussain/Developer/Android Projects/WaEnhancer.worktrees/agents-beta-release-management-updates/app/src/main/java/com/waenhancer/xposed/features/others/GroupAdmin.java:269: warning: non-varargs call of varargs method with inexact argument type for last parameter;
+                if (!looksLikeBind && XposedHelpers.findMethodExactIfExists(method.getDeclaringClass(), "setFMessage", method.getParameterTypes()) != null) {
+                                                                                                                                               ^
+  cast to Object for a varargs call
+  cast to Object[] for a non-varargs call and to suppress this warning
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+2 errors
+1 warning
+
+> Task :app:compileWhatsappDebugJavaWithJavac FAILED
+
+[Incubating] Problems report is available at: file:///Users/mubasharhussain/Developer/Android%20Projects/WaEnhancer.worktrees/agents-beta-release-management-updates/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileWhatsappDebugJavaWithJavac'.
+> Compilation failed; see the compiler output below.
+  /Users/mubasharhussain/Developer/Android Projects/WaEnhancer.worktrees/agents-beta-release-management-updates/app/src/main/java/com/waenhancer/UpdateChecker.java:213: error: cannot find symbol
+              dialog.setNeutralButton("View Changelog", (dialog1, which) -> {
+                    ^
+    symbol:   method setNeutralButton(String,(dialog1,w[...](); })
+    location: variable dialog of type AlertDialogWpp
+  /Users/mubasharhussain/Developer/Android Projects/WaEnhancer.worktrees/agents-beta-release-management-updates/app/src/main/java/com/waenhancer/UpdateChecker.java:214: error: cannot find symbol
+                  Constants.startChangelogActivity(mActivity);
+                  ^
+    symbol:   variable Constants
+    location: class UpdateChecker
+  /Users/mubasharhussain/Developer/Android Projects/WaEnhancer.worktrees/agents-beta-release-management-updates/app/src/main/java/com/waenhancer/xposed/features/others/GroupAdmin.java:269: warning: non-varargs call of varargs method with inexact argument type for last parameter;
+                  if (!looksLikeBind && XposedHelpers.findMethodExactIfExists(method.getDeclaringClass(), "setFMessage", method.getParameterTypes()) != null) {
+                                                                                                                                                 ^
+    cast to Object for a varargs call
+    cast to Object[] for a non-varargs call and to suppress this warning
+  Note: Some input files use or override a deprecated API.
+  Note: Recompile with -Xlint:deprecation for details.
+  Note: Some input files use unchecked or unsafe operations.
+  Note: Recompile with -Xlint:unchecked for details.
+  2 errors
+  1 warning
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 5s
+23 actionable tasks: 3 executed, 20 up-to-date

@@ -24,7 +24,10 @@ import androidx.preference.PreferenceManager;
 import com.waenhancer.App;
 import com.waenhancer.BuildConfig;
 import com.waenhancer.R;
+import com.waenhancer.UpdateChecker;
+import com.waenhancer.UpdateDownloader;
 import com.waenhancer.activities.MainActivity;
+import com.waenhancer.activities.ChangelogActivity;
 import com.waenhancer.databinding.FragmentHomeBinding;
 import com.waenhancer.ui.fragments.base.BaseFragment;
 import com.waenhancer.utils.FilePicker;
@@ -47,12 +50,16 @@ import java.util.Objects;
 
 import rikka.core.util.IOUtils;
 
+import java.io.File;
+
 public class HomeFragment extends BaseFragment {
     private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
     private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
     private static final String PREF_MODULE_HEARTBEAT = "module_heartbeat";
 
     private FragmentHomeBinding binding;
+    private String pendingUpdateUrl;
+    private String pendingUpdateVersion;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -196,7 +203,14 @@ public class HomeFragment extends BaseFragment {
             showClearCacheConfirmation();
         });
 
+        binding.statusSummary.setOnClickListener(v -> {
+            animateClick(v);
+            Intent intent = new Intent(requireContext(), ChangelogActivity.class);
+            startActivity(intent);
+        });
+
         setupReleaseChannelSelector();
+        setupUpdateBanner();
         startCardAnimations();
 
         return binding.getRoot();
@@ -260,6 +274,7 @@ public class HomeFragment extends BaseFragment {
         super.onResume();
         setDisplayHomeAsUpEnabled(false);
         syncReleaseChannelToInstalled();
+        checkForUpdates();
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -609,7 +624,8 @@ public class HomeFragment extends BaseFragment {
             binding.statusIcon.setImageResource(R.drawable.ic_round_error_outline_24);
             binding.statusTitle.setText(R.string.module_disabled);
             binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_disabled);
-            binding.statusSummary.setVisibility(View.GONE);
+            binding.statusSummary.setText(String.format(getString(R.string.version_s), BuildConfig.VERSION_NAME));
+            binding.statusSummary.setVisibility(View.VISIBLE);
         }
     }
 
@@ -640,6 +656,48 @@ public class HomeFragment extends BaseFragment {
                 })
                 .setNegativeButton(R.string.no, null)
                 .show();
+    }
+
+    private void setupUpdateBanner() {
+        binding.dismissUpdateBtn.setOnClickListener(v -> {
+            animateClick(v);
+            binding.updateNotificationCard.setVisibility(View.GONE);
+            // Optionally store ignored version in prefs
+        });
+
+        binding.viewChangelogBtn.setOnClickListener(v -> {
+            animateClick(v);
+            Intent intent = new Intent(requireContext(), ChangelogActivity.class);
+            startActivity(intent);
+        });
+
+        binding.updateNowBtn.setOnClickListener(v -> {
+            animateClick(v);
+            if (pendingUpdateUrl != null && !pendingUpdateUrl.isEmpty()) {
+                UpdateDownloader.showDownloadDialog(requireContext(), pendingUpdateUrl, pendingUpdateVersion);
+            } else {
+                openUrl(requireContext(), RELEASES_URL);
+            }
+        });
+    }
+
+    private void checkForUpdates() {
+        var updateChecker = new UpdateChecker(requireActivity());
+        updateChecker.setSilent(true);
+        updateChecker.setOnUpdateFoundListener((version, tagName, changelog, publishedAt, downloadUrl) -> {
+            if (binding == null) return;
+            this.pendingUpdateUrl = downloadUrl;
+            this.pendingUpdateVersion = version;
+
+            binding.updateNotificationTitle.setText(getString(R.string.new_update_available, version));
+            binding.updateNotificationChangelog.setText(changelog);
+            binding.updateNotificationCard.setVisibility(View.VISIBLE);
+            
+            // Animation for the banner
+            var anim = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
+            binding.updateNotificationCard.startAnimation(anim);
+        });
+        java.util.concurrent.CompletableFuture.runAsync(updateChecker);
     }
 
     @Override

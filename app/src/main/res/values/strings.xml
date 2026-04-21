@@ -541,4 +541,9 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="release_channel_beta_install_message">To receive beta/pre-release update dialogs, install the latest beta build first.</string>
     <string name="release_channel_stable_install_title">Install stable build required</string>
     <string name="release_channel_stable_install_message">To switch back to stable updates, install the latest stable release build first.</string>
+    <string name="new_update_available">New Update Available: v%s</string>
+    <string name="changelog_title">Changelog</string>
+    <string name="view_changelog">View Changelog</string>
+    <string name="update_now">Update Now</string>
+    <string name="dismiss">Dismiss</string>
 </resources>

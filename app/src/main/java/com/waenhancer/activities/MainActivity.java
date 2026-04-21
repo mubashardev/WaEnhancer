@@ -3,6 +3,7 @@ package com.waenhancer.activities;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
@@ -138,6 +139,14 @@ public class MainActivity extends BaseActivity {
 
         // Handle incoming navigation from search
         handleIncomingIntent(getIntent());
+
+        // Request notification permission if needed (Android 13+)
+        if (Build.VERSION.SDK_INT >= 33) {
+            String permission = "android.permission.POST_NOTIFICATIONS";
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, permission) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{permission}, 101);
+            }
+        }
     }
 
     private void createMainDir() {

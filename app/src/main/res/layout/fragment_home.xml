@@ -81,15 +81,21 @@
                             android:textColor="?attr/colorOnSurface"
                             android:textStyle="bold" />
 
-                        <!-- Version Info -->
+                        <!-- Version Info (Clickable Badge) -->
                         <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/status_summary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:alpha="0.7"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
+                            android:background="@drawable/version_badge_bg"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingHorizontal="16dp"
+                            android:paddingVertical="6dp"
+                            android:textAppearance="?attr/textAppearanceLabelLarge"
+                            android:textColor="?attr/colorPrimary"
+                            android:textStyle="bold"
+                            tools:text="v3.1.2" />
 
                         <!-- Report Issue Button -->
                         <com.google.android.material.button.MaterialButton
@@ -147,6 +153,96 @@
                                 android:textAllCaps="false" />
                         </com.google.android.material.button.MaterialButtonToggleGroup>
 
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- SECTION: Update Notification (Dynamic) -->
+                <!-- ═══════════════════════════════════════════ -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/update_notification_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:visibility="gone"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="?attr/colorPrimary">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <com.google.android.material.imageview.ShapeableImageView
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:src="@drawable/ic_round_update_24"
+                                app:contentPadding="4dp"
+                                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Small"
+                                app:tint="?attr/colorPrimary" />
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/update_notification_title"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="12dp"
+                                android:textAppearance="?attr/textAppearanceTitleMedium"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/dismiss_update_btn"
+                                style="@style/Widget.Material3.Button.IconButton"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                app:icon="@drawable/ic_close"
+                                app:iconSize="20dp"
+                                app:iconTint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/update_notification_changelog"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:gravity="end"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/view_changelog_btn"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/view_changelog"
+                                android:textAllCaps="false" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/update_now_btn"
+                                style="@style/Widget.Material3.Button.TonalButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="@string/update_now"
+                                android:textAllCaps="false" />
+                        </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -650,6 +746,7 @@
                             android:layout_marginTop="8dp"
                             android:text="View All Supported Versions →"
                             android:textColor="?attr/colorPrimary" />
+
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>

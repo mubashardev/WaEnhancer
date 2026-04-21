@@ -35,6 +35,20 @@ public class UpdateChecker implements Runnable {
 
     private final Activity mActivity;
     private final boolean isManualCheck;
+    private OnUpdateFoundListener mListener;
+    private boolean mSilent = false;
+
+    public interface OnUpdateFoundListener {
+        void onUpdateFound(String version, String tagName, String changelog, String publishedAt, String downloadUrl);
+    }
+
+    public void setOnUpdateFoundListener(OnUpdateFoundListener listener) {
+        this.mListener = listener;
+    }
+
+    public void setSilent(boolean silent) {
+        this.mSilent = silent;
+    }
 
     private static void writeDebugLog(String message) {
         try {
@@ -85,15 +99,17 @@ public class UpdateChecker implements Runnable {
             boolean installedIsBeta = isInstalledVersionBeta(installedVersion);
             String userChannel = getReleaseChannelPreference();
 
-            // Stable installs should never receive beta dialogs.
-            String effectiveChannel = installedIsBeta ? userChannel : "stable";
+            // Use the user's selected channel as the effective channel.
+            String effectiveChannel = userChannel;
 
             String selectedVersion = null;
             String selectedTagName = null;
             String selectedChangelog = null;
             String selectedPublishedAt = null;
+            String selectedDownloadUrl = null;
 
             try (var response = getHttpClient().newCall(request).execute()) {
+                writeDebugLog("[UpdateChecker] Checking for updates... Installed: " + installedVersion + ", Channel: " + effectiveChannel);
                 if (!response.isSuccessful()) {
                     writeDebugLog("[UpdateChecker] API call failed with code: " + response.code());
                     return;
@@ -125,8 +141,6 @@ public class UpdateChecker implements Runnable {
                     if (parsedVersion.isEmpty()) continue;
                     if (!VERSION_PATTERN.matcher(parsedVersion).matches()) continue;
                     if (!shouldShowReleaseType(parsedVersion, effectiveChannel)) continue;
-                    if (installedIsBeta && !"beta".equals(effectiveChannel)) continue;
-                    if (installedIsBeta && !isExactBetaTagFormat(parsedVersion)) continue;
 
                     long releaseVersionNum = versionToLong(parsedVersion);
                     if (releaseVersionNum > installedVersionNum) {
@@ -134,6 +148,21 @@ public class UpdateChecker implements Runnable {
                         selectedTagName = tagName;
                         selectedChangelog = release.optString("body", "No changelog available.").trim();
                         selectedPublishedAt = release.optString("published_at", "");
+                        
+                        // Extract APK download URL
+                        JSONArray assets = release.optJSONArray("assets");
+                        if (assets != null) {
+                            for (int j = 0; j < assets.length(); j++) {
+                                JSONObject asset = assets.optJSONObject(j);
+                                if (asset != null) {
+                                    String assetName = asset.optString("name", "");
+                                    if (assetName.endsWith(".apk")) {
+                                        selectedDownloadUrl = asset.optString("browser_download_url", "");
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         break;
                     }
                 }
@@ -144,7 +173,15 @@ public class UpdateChecker implements Runnable {
                 final String finalTagName = selectedTagName;
                 final String finalChangelog = selectedChangelog;
                 final String finalPublishedAt = selectedPublishedAt;
-                mActivity.runOnUiThread(() -> showUpdateDialog(finalVersion, finalTagName, finalChangelog, finalPublishedAt));
+                final String finalDownloadUrl = selectedDownloadUrl;
+
+                if (mListener != null) {
+                    mActivity.runOnUiThread(() -> mListener.onUpdateFound(finalVersion, finalTagName, finalChangelog, finalPublishedAt, finalDownloadUrl));
+                }
+
+                if (!mSilent) {
+                    mActivity.runOnUiThread(() -> showUpdateDialog(finalVersion, finalTagName, finalChangelog, finalPublishedAt, finalDownloadUrl));
+                }
             } else if (isManualCheck) {
                 mActivity.runOnUiThread(this::showAlreadyLatestDialog);
             }
@@ -171,7 +208,7 @@ public class UpdateChecker implements Runnable {
         }
     }
 
-    private void showUpdateDialog(String version, String tagName, String changelog, String publishedAt) {
+    private void showUpdateDialog(String version, String tagName, String changelog, String publishedAt, String downloadUrl) {
         try {
             var markwon = Markwon.create(mActivity);
             var dialog = new AlertDialogWpp(mActivity);
@@ -189,8 +226,18 @@ public class UpdateChecker implements Runnable {
             dialog.setTitle(releaseTypeBadge + " New Update Available!");
             dialog.setMessage(markwon.toMarkdown(message.toString()));
             dialog.setNegativeButton("Ignore", (dialog1, which) -> dialog1.dismiss());
+            dialog.setNeutralButton("View Changelog", (dialog1, which) -> {
+                android.content.Intent intent = new android.content.Intent(mActivity, com.waenhancer.activities.ChangelogActivity.class);
+                mActivity.startActivity(intent);
+                dialog1.dismiss();
+            });
             dialog.setPositiveButton("Download", (dialog1, which) -> {
-                Utils.openLink(mActivity, TELEGRAM_UPDATE_URL);
+                if (downloadUrl != null && !downloadUrl.isEmpty()) {
+                    // Start in-app download
+                    UpdateDownloader.showDownloadDialog(mActivity, downloadUrl, version);
+                } else {
+                    Utils.openLink(mActivity, TELEGRAM_UPDATE_URL);
+                }
                 dialog1.dismiss();
             });
             dialog.show();
@@ -274,7 +321,12 @@ public class UpdateChecker implements Runnable {
     }
 
     private String getReleaseChannelPreference() {
-        String channel = WppCore.getPrivString("release_channel", "stable");
+        String channel = WppCore.getPrivString("release_channel", null);
+        if (channel == null) {
+            // Fallback to standard app preferences if WppCore is not initialized (e.g. running in Enhancer App)
+            android.content.SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(mActivity);
+            channel = prefs.getString("release_channel", "stable");
+        }
         return "beta".equals(channel) ? "beta" : "stable";
     }
 

@@ -25,6 +25,7 @@ public class AlertDialogWpp {
     private static boolean isAvailable;
     private static Method setMessageMethod;
     private static Method setNegativeButtonMethod;
+    private static Method setNeutralButtonMethod;
     private static Method setPositiveButtonMethod;
     private static Method setMultiChoiceItemsMethod;
     private final Context mContext;
@@ -41,6 +42,7 @@ public class AlertDialogWpp {
             setMessageMethod = ReflectionUtils.findMethodUsingFilter(alertDialogClass, method -> method.getParameterCount() == 1 && method.getParameterTypes()[0].equals(CharSequence.class));
             var buttons = ReflectionUtils.findAllMethodsUsingFilter(alertDialogClass, method -> method.getParameterCount() == 2 && method.getParameterTypes()[0].equals(DialogInterface.OnClickListener.class) && method.getParameterTypes()[1].equals(CharSequence.class));
             setNegativeButtonMethod = buttons[0];
+            setNeutralButtonMethod = buttons[1];
             setPositiveButtonMethod = buttons[2];
             isAvailable = true;
         } catch (Throwable e) {
@@ -136,6 +138,18 @@ public class AlertDialogWpp {
         }
         try {
             setNegativeButtonMethod.invoke(mAlertDialogWpp, listener, text);
+        } catch (Exception ignored) {
+        }
+        return this;
+    }
+
+    public AlertDialogWpp setNeutralButton(CharSequence text, DialogInterface.OnClickListener listener) {
+        if (isSystemDialog()) {
+            mAlertDialog.setNeutralButton(text, listener);
+            return this;
+        }
+        try {
+            setNeutralButtonMethod.invoke(mAlertDialogWpp, listener, text);
         } catch (Exception ignored) {
         }
         return this;

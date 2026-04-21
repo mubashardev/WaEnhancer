@@ -260,33 +260,24 @@ public class FeatureLoader {
         AlertDialogWpp.initDialog(loader);
         WaContactWpp.initialize(loader);
         
-        // Track last update check time to avoid spam (check every 24 hours max)
-        final long[] lastUpdateCheckTime = {0};
-        final long UPDATE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
+        // Track update check per session
+        final boolean[] hasCheckedThisSession = {false};
 
         WppCore.addListenerActivity((activity, state) -> {
-
             if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
                 checkUpdate(activity);
 
-                // Always attempt to check for updates on any activity resume (independent of errors)
-                // noinspection ConstantValue
                 if (App.isOriginalPackage() && pref.getBoolean("update_check", true)) {
-                    long currentTime = System.currentTimeMillis();
-                    // Only check if more than 24 hours have passed since last check
-                    if (currentTime - lastUpdateCheckTime[0] > UPDATE_CHECK_INTERVAL) {
-                        lastUpdateCheckTime[0] = currentTime;
-                        // Schedule update check independently on background thread to avoid blocking
-                        XposedBridge.log("[WAE] Scheduling update check...");
+                    if (!hasCheckedThisSession[0]) {
+                        hasCheckedThisSession[0] = true;
+                        XposedBridge.log("[WAE] Scheduling startup update check...");
                         activity.getWindow().getDecorView().postDelayed(() -> {
                             try {
-                                XposedBridge.log("[WAE] Launching UpdateChecker from activity: " + activity.getClass().getSimpleName());
                                 CompletableFuture.runAsync(new UpdateChecker(activity));
                             } catch (Throwable e) {
                                 XposedBridge.log("[WAE] Error launching UpdateChecker: " + e.getMessage());
-                                e.printStackTrace();
                             }
-                        }, 1500); // 1.5 second delay for smooth transition
+                        }, 2000);
                     }
                 }
             }

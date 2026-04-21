@@ -208,15 +208,22 @@ jobs:
           echo "$EOF" >> "$GITHUB_OUTPUT"
 
       - name: Post release to Telegram
-        if: env.RELEASE_PRERELEASE == 'false' && secrets.BOT_TOKEN != '' && secrets.CHANNEL_ID != ''
+        if: env.RELEASE_PRERELEASE == 'false'
         env:
           CHANGELOG_BODY: ${{ steps.changelog.outputs.body }}
           RELEASE_URL: ${{ steps.release.outputs.url }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
         run: |
+          if [ -z "$BOT_TOKEN" ] || [ -z "$CHANNEL_ID" ]; then
+            echo "Telegram credentials missing. Skipping notification."
+            exit 0
+          fi
+          
           CLEAN_BODY=$(printf '%s' "$CHANGELOG_BODY" | sed '/./,$!d' | cut -c 1-4000)
           FULL_MESSAGE="$(printf 'STABLE %s\n\n%s\n\nRelease: %s' "${{ env.NEW_VERSION_NAME }}" "$CLEAN_BODY" "$RELEASE_URL")"
 
-          curl -f -X POST "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage" \
-            -d "chat_id=${{ secrets.CHANNEL_ID }}" \
+          curl -f -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${CHANNEL_ID}" \
             --data-urlencode "text=$FULL_MESSAGE" \
             -d "disable_web_page_preview=true"

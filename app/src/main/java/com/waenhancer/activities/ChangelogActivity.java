@@ -18,6 +18,8 @@ import com.waenhancer.R;
 import com.waenhancer.UpdateDownloader;
 import com.waenhancer.activities.base.BaseActivity;
 import com.waenhancer.UpdateChecker;
+import com.google.android.material.tabs.TabLayout;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,8 +39,11 @@ import okhttp3.Response;
 public class ChangelogActivity extends BaseActivity {
 
     private RecyclerView recyclerView;
-    private ProgressBar progressBar;
+    private ShimmerFrameLayout shimmerFrameLayout;
+    private TabLayout tabLayout;
     private ChangelogAdapter adapter;
+    private final List<JSONObject> stableReleases = new ArrayList<>();
+    private final List<JSONObject> betaReleases = new ArrayList<>();
     private static final String RELEASES_API = "https://api.github.com/repos/mubashardev/WaEnhancer/releases";
 
     @Override
@@ -54,7 +59,24 @@ public class ChangelogActivity extends BaseActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         recyclerView = findViewById(R.id.changelog_recycler);
-        progressBar = findViewById(R.id.loading_progress);
+        shimmerFrameLayout = findViewById(R.id.shimmer_view_container);
+        tabLayout = findViewById(R.id.tabs);
+
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.release_channel_stable));
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.release_channel_beta));
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                updateList(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ChangelogAdapter(getCurrentVersion());
@@ -63,8 +85,19 @@ public class ChangelogActivity extends BaseActivity {
         fetchChangelog();
     }
 
+    private void updateList(int position) {
+        if (position == 0) {
+            adapter.setReleases(stableReleases);
+        } else {
+            adapter.setReleases(betaReleases);
+        }
+    }
+
     private void fetchChangelog() {
-        progressBar.setVisibility(View.VISIBLE);
+        shimmerFrameLayout.setVisibility(View.VISIBLE);
+        shimmerFrameLayout.startShimmer();
+        tabLayout.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
         
         CompletableFuture.runAsync(() -> {
             OkHttpClient client = new OkHttpClient.Builder()
@@ -82,43 +115,49 @@ public class ChangelogActivity extends BaseActivity {
                     String jsonData = response.body().string();
                     JSONArray releases = new JSONArray(jsonData);
                     
-                    List<JSONObject> filteredReleases = filterReleases(releases);
+                    categorizeReleases(releases);
                     
                     runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
-                        adapter.setReleases(filteredReleases);
+                        shimmerFrameLayout.stopShimmer();
+                        shimmerFrameLayout.setVisibility(View.GONE);
+                        tabLayout.setVisibility(View.VISIBLE);
+                        recyclerView.setVisibility(View.VISIBLE);
+                        
+                        String userChannel = PreferenceManager.getDefaultSharedPreferences(this).getString("release_channel", "stable");
+                        int defaultTab = "beta".equals(userChannel) ? 1 : 0;
+                        if (tabLayout.getTabAt(defaultTab) != null) {
+                            tabLayout.getTabAt(defaultTab).select();
+                        }
+                        updateList(defaultTab);
                     });
                 } else {
                     throw new IOException("Unexpected code " + response);
                 }
             } catch (Exception e) {
                 runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
+                    shimmerFrameLayout.stopShimmer();
+                    shimmerFrameLayout.setVisibility(View.GONE);
                     Toast.makeText(this, "Failed to load changelog: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         });
     }
 
-    private List<JSONObject> filterReleases(JSONArray releases) throws JSONException {
-        List<JSONObject> list = new ArrayList<>();
-        String userChannel = PreferenceManager.getDefaultSharedPreferences(this).getString("release_channel", "stable");
-        boolean wantBeta = "beta".equals(userChannel);
+    private void categorizeReleases(JSONArray releases) throws JSONException {
+        stableReleases.clear();
+        betaReleases.clear();
 
         for (int i = 0; i < releases.length(); i++) {
             JSONObject release = releases.getJSONObject(i);
             String tagName = release.optString("tag_name", "");
             boolean isBeta = tagName.contains("-beta-");
 
-            if (wantBeta) {
-                // If user is on Beta channel, show only beta versions
-                if (isBeta) list.add(release);
+            if (isBeta) {
+                betaReleases.add(release);
             } else {
-                // If user is on Stable channel, show only stable versions
-                if (!isBeta) list.add(release);
+                stableReleases.add(release);
             }
         }
-        return list;
     }
 
     private class ChangelogAdapter extends RecyclerView.Adapter<ChangelogViewHolder> {
@@ -192,8 +231,24 @@ public class ChangelogActivity extends BaseActivity {
 
             tvVersion.setText(tagName);
             tvDate.setText(formatDate(publishedAt));
-            tvBadge.setVisibility(isBeta ? View.VISIBLE : View.GONE);
+            tvBadge.setVisibility(View.VISIBLE);
             tvBadge.setText(isBeta ? "BETA" : "STABLE");
+            
+            android.util.TypedValue typedValue = new android.util.TypedValue();
+            android.content.res.Resources.Theme theme = itemView.getContext().getTheme();
+            
+            if (isBeta) {
+                // For beta, try to find a tertiary-like color or default to accent
+                if (!itemView.getContext().getTheme().resolveAttribute(android.R.attr.colorAccent, typedValue, true)) {
+                    typedValue.data = itemView.getContext().getColor(R.color.md_theme_light_tertiary);
+                }
+                tvBadge.setTextColor(typedValue.data);
+                tvBadge.setBackgroundResource(R.drawable.installed_badge_background);
+            } else {
+                itemView.getContext().getTheme().resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
+                tvBadge.setTextColor(typedValue.data);
+                tvBadge.setBackgroundResource(R.drawable.version_badge_background);
+            }
             tvInstalledBadge.setVisibility(isInstalled ? View.VISIBLE : View.GONE);
             markwon.setMarkdown(tvBody, body.trim());
 

@@ -93,7 +93,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="UPDATE NOW"
+            android:text="@string/update"
             android:visibility="gone"
             app:icon="@drawable/ic_round_update_24" />
 

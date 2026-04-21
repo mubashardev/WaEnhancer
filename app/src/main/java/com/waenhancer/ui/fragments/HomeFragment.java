@@ -673,11 +673,8 @@ public class HomeFragment extends BaseFragment {
 
         binding.updateNowBtn.setOnClickListener(v -> {
             animateClick(v);
-            if (pendingUpdateUrl != null && !pendingUpdateUrl.isEmpty()) {
-                UpdateDownloader.showDownloadDialog(requireContext(), pendingUpdateUrl, pendingUpdateVersion);
-            } else {
-                openUrl(requireContext(), RELEASES_URL);
-            }
+            Intent intent = new Intent(requireContext(), ChangelogActivity.class);
+            startActivity(intent);
         });
     }
 
@@ -689,7 +686,9 @@ public class HomeFragment extends BaseFragment {
             this.pendingUpdateUrl = downloadUrl;
             this.pendingUpdateVersion = version;
 
-            binding.updateNotificationTitle.setText(getString(R.string.new_update_available, version));
+            boolean isBeta = tagName != null && tagName.contains("-beta-");
+            int titleResId = isBeta ? R.string.new_beta_update_available : R.string.new_stable_update_available;
+            binding.updateNotificationTitle.setText(getString(titleResId, version));
             binding.updateNotificationChangelog.setText(changelog);
             binding.updateNotificationCard.setVisibility(View.VISIBLE);
             

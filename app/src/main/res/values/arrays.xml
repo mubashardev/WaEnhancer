@@ -3,8 +3,6 @@
     <string-array name="scope">
         <item>com.whatsapp</item>
         <item>com.whatsapp.w4b</item>
-        <item>com.waenhancer</item>
-        <item>com.waenhancer.w4b</item>
         <item>android</item>
     </string-array>
 
@@ -176,7 +174,7 @@
     </string-array>
 
     <string-array name="supported_versions_business">
-        <item>2.26.1.xx</item>
+        <!-- <item>2.26.1.xx</item>
         <item>2.26.2.xx</item>
         <item>2.26.3.xx</item>
         <item>2.26.4.xx</item>
@@ -192,7 +190,7 @@
         <item>2.26.14.xx</item>
         <item>2.26.15.xx</item>
         <item>2.26.16.xx</item>
-        <item>2.26.17.xx</item>
+        <item>2.26.17.xx</item> -->
     </string-array>
 
     <string-array name="image_picker">

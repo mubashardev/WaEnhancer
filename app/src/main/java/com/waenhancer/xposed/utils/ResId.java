@@ -129,4 +129,21 @@ public class ResId {
         public static int fragment_media;
         public static int fragment_customization;
     }
+
+    public static class style {
+        public static int Theme;
+        public static int Theme_Light;
+    }
+
+    public static class attr {
+    }
+
+    public static class layout {
+    }
+
+    public static class color {
+    }
+
+    public static class dimen {
+    }
 }

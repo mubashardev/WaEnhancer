@@ -533,19 +533,6 @@ public class WppCore {
     // return null;
     // }
 
-    public static int getDefaultTheme() {
-        if (mStartUpConfig != null) {
-            var result = ReflectionUtils.findMethodUsingFilterIfExists(mStartUpConfig.getClass(),
-                    (method) -> method.getParameterCount() == 0 && method.getReturnType() == int.class);
-            if (result != null) {
-                var value = ReflectionUtils.callMethod(result, mStartUpConfig);
-                if (value != null)
-                    return (int) value;
-            }
-        }
-        var startup_prefs = Utils.getApplication().getSharedPreferences("startup_prefs", Context.MODE_PRIVATE);
-        return startup_prefs.getInt("night_mode", 0);
-    }
 
     @NonNull
     public static String getContactName(FMessageWpp.UserJid userJid) {
@@ -819,6 +806,7 @@ public class WppCore {
         if (privPrefs == null) return;
         privPrefs.edit().putBoolean(key, value).commit();
     }
+
 
     public static boolean getPrivBoolean(String key, boolean defaultValue) {
         if (privPrefs == null) return defaultValue;

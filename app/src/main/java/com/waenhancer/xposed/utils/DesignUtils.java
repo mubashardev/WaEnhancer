@@ -193,7 +193,7 @@ public class DesignUtils {
     }
 
     public static boolean isNightMode() {
-        return WppCore.getDefaultTheme() <= 0 ? isNightModeBySystem() : WppCore.getDefaultTheme() == 2;
+        return Utils.getDefaultTheme() <= 0 ? isNightModeBySystem() : Utils.getDefaultTheme() == 2;
     }
 
     public static boolean isNightModeBySystem() {

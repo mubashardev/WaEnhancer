@@ -2,10 +2,18 @@ package com.waenhancer.xposed.bridge.client;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.net.Uri;
+import android.os.Bundle;
+
 import androidx.annotation.Nullable;
+
+import com.waenhancer.BuildConfig;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -16,11 +24,12 @@ public class ProviderSharedPreferences implements SharedPreferences {
 
     private final Context context;
     private final SharedPreferences localPrefs;
-    private final String authority = "com.waenhancer.provider";
+    private final String authority = BuildConfig.APPLICATION_ID + ".provider";
 
     public ProviderSharedPreferences(Context context, SharedPreferences localPrefs) {
         this.context = context;
         this.localPrefs = localPrefs;
+        hydrateFromProvider();
     }
 
     @Override
@@ -64,6 +73,57 @@ public class ProviderSharedPreferences implements SharedPreferences {
         localPrefs.unregisterOnSharedPreferenceChangeListener(listener);
     }
 
+    @SuppressWarnings("unchecked")
+    private void hydrateFromProvider() {
+        try {
+            Bundle result = context.getContentResolver().call(
+                    Uri.parse("content://" + authority),
+                    "get_all_preferences",
+                    null,
+                    null);
+            if (result == null) {
+                return;
+            }
+            Serializable serializable = result.getSerializable("prefs");
+            if (!(serializable instanceof Map<?, ?> rawMap)) {
+                return;
+            }
+            var editor = localPrefs.edit().clear();
+            for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                if (!(entry.getKey() instanceof String key)) {
+                    continue;
+                }
+                Object value = entry.getValue();
+                if (value instanceof String stringValue) {
+                    editor.putString(key, stringValue);
+                } else if (value instanceof Boolean booleanValue) {
+                    editor.putBoolean(key, booleanValue);
+                } else if (value instanceof Integer intValue) {
+                    editor.putInt(key, intValue);
+                } else if (value instanceof Long longValue) {
+                    editor.putLong(key, longValue);
+                } else if (value instanceof Float floatValue) {
+                    editor.putFloat(key, floatValue);
+                } else if (value instanceof Set<?> setValue) {
+                    var strings = new java.util.HashSet<String>();
+                    boolean allStrings = true;
+                    for (Object item : setValue) {
+                        if (!(item instanceof String stringItem)) {
+                            allStrings = false;
+                            break;
+                        }
+                        strings.add(stringItem);
+                    }
+                    if (allStrings) {
+                        editor.putStringSet(key, strings);
+                    }
+                }
+            }
+            editor.apply();
+        } catch (Exception ignored) {
+        }
+    }
+
     private class ProviderEditor implements Editor {
         private final Editor localEditor;
 
@@ -75,13 +135,39 @@ public class ProviderSharedPreferences implements SharedPreferences {
             try {
                 Bundle extras = new Bundle();
                 extras.putString("key", key);
-                if (value instanceof String) extras.putString("value", (String) value);
-                else if (value instanceof Boolean) extras.putBoolean("value", (Boolean) value);
-                else if (value instanceof Integer) extras.putInt("value", (Integer) value);
-                else if (value instanceof Long) extras.putLong("value", (Long) value);
-                else if (value instanceof Float) extras.putFloat("value", (Float) value);
-                
-                context.getContentResolver().call(Uri.parse("content://" + authority), "put_preference", null, extras);
+                if (value instanceof String stringValue) {
+                    extras.putString("type", "string");
+                    extras.putString("value", stringValue);
+                } else if (value instanceof Boolean booleanValue) {
+                    extras.putString("type", "boolean");
+                    extras.putBoolean("value", booleanValue);
+                } else if (value instanceof Integer intValue) {
+                    extras.putString("type", "int");
+                    extras.putInt("value", intValue);
+                } else if (value instanceof Long longValue) {
+                    extras.putString("type", "long");
+                    extras.putLong("value", longValue);
+                } else if (value instanceof Float floatValue) {
+                    extras.putString("type", "float");
+                    extras.putFloat("value", floatValue);
+                } else if (value instanceof Set<?> setValue) {
+                    extras.putString("type", "string_set");
+                    var list = new ArrayList<String>();
+                    for (Object item : setValue) {
+                        if (item instanceof String stringItem) {
+                            list.add(stringItem);
+                        }
+                    }
+                    extras.putStringArrayList("value", list);
+                } else {
+                    return;
+                }
+
+                context.getContentResolver().call(
+                        Uri.parse("content://" + authority),
+                        "put_preference",
+                        null,
+                        extras);
             } catch (Exception e) {
                 // Log error
             }
@@ -97,7 +183,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
         @Override
         public Editor putStringSet(String key, @Nullable Set<String> values) {
             localEditor.putStringSet(key, values);
-            // Sets are harder to sync via Bundle, ignoring for now if not used
+            syncToProvider(key, values);
             return this;
         }
 
@@ -132,13 +218,30 @@ public class ProviderSharedPreferences implements SharedPreferences {
         @Override
         public Editor remove(String key) {
             localEditor.remove(key);
-            // Could add remove to provider too
+            try {
+                Bundle extras = new Bundle();
+                extras.putString("key", key);
+                context.getContentResolver().call(
+                        Uri.parse("content://" + authority),
+                        "remove_preference",
+                        null,
+                        extras);
+            } catch (Exception ignored) {
+            }
             return this;
         }
 
         @Override
         public Editor clear() {
             localEditor.clear();
+            try {
+                context.getContentResolver().call(
+                        Uri.parse("content://" + authority),
+                        "clear_preferences",
+                        null,
+                        null);
+            } catch (Exception ignored) {
+            }
             return this;
         }
 

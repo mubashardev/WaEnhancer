@@ -15,6 +15,8 @@ import com.waenhancer.xposed.bridge.ScopeHook;
 import com.waenhancer.xposed.core.FeatureLoader;
 import com.waenhancer.xposed.downgrade.Patch;
 import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.xposed.utils.XResManager;
+import com.waenhancer.xposed.utils.Utils;
 
 import de.robv.android.xposed.IXposedHookInitPackageResources;
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -32,6 +34,8 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
     private static XSharedPreferences pref;
     private String MODULE_PATH;
     public static XC_InitPackageResources.InitPackageResourcesParam ResParam;
+
+
 
     @NonNull
     public static XSharedPreferences getPref() {
@@ -79,29 +83,89 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
         if (!packageName.equals(FeatureLoader.PACKAGE_WPP) && !packageName.equals(FeatureLoader.PACKAGE_BUSINESS))
             return;
 
-        XModuleResources modRes = XModuleResources.createInstance(MODULE_PATH, resparam.res);
+        XResManager.moduleResources = XModuleResources.createInstance(MODULE_PATH, resparam.res);
         ResParam = resparam;
 
         for (var field : ResId.string.class.getFields()) {
             var field1 = R.string.class.getField(field.getName());
-            field.set(null, resparam.res.addResource(modRes, field1.getInt(null)));
+            field.set(null, resparam.res.addResource(XResManager.moduleResources, field1.getInt(null)));
         }
 
         for (var field : ResId.array.class.getFields()) {
             var field1 = R.array.class.getField(field.getName());
-            field.set(null, resparam.res.addResource(modRes, field1.getInt(null)));
+            field.set(null, resparam.res.addResource(XResManager.moduleResources, field1.getInt(null)));
         }
 
         for (var field : ResId.drawable.class.getFields()) {
             var field1 = R.drawable.class.getField(field.getName());
-            field.set(null, resparam.res.addResource(modRes, field1.getInt(null)));
+            field.set(null, resparam.res.addResource(XResManager.moduleResources, field1.getInt(null)));
         }
 
         for (var field : ResId.xml.class.getFields()) {
             var field1 = R.xml.class.getField(field.getName());
-            field.set(null, resparam.res.addResource(modRes, field1.getInt(null)));
+            field.set(null, resparam.res.addResource(XResManager.moduleResources, field1.getInt(null)));
         }
 
+        for (var field : R.style.class.getFields()) {
+            try {
+                int id = resparam.res.addResource(XResManager.moduleResources, field.getInt(null));
+                try {
+                    var resIdField = ResId.style.class.getField(field.getName());
+                    resIdField.set(null, id);
+                } catch (NoSuchFieldException ignored) {
+                }
+            } catch (Exception e) {
+                // XposedBridge.log("[WaEnhancer] Failed to inject style " + field.getName() + ": " + e.getMessage());
+            }
+        }
+
+        for (var field : R.attr.class.getFields()) {
+            try {
+                int id = resparam.res.addResource(XResManager.moduleResources, field.getInt(null));
+                try {
+                    var resIdField = ResId.attr.class.getField(field.getName());
+                    resIdField.set(null, id);
+                } catch (NoSuchFieldException ignored) {
+                }
+            } catch (Exception e) {
+            }
+        }
+
+        for (var field : R.layout.class.getFields()) {
+            try {
+                int id = resparam.res.addResource(XResManager.moduleResources, field.getInt(null));
+                try {
+                    var resIdField = ResId.layout.class.getField(field.getName());
+                    resIdField.set(null, id);
+                } catch (NoSuchFieldException ignored) {
+                }
+            } catch (Exception e) {
+            }
+        }
+
+        for (var field : R.color.class.getFields()) {
+            try {
+                int id = resparam.res.addResource(XResManager.moduleResources, field.getInt(null));
+                try {
+                    var resIdField = ResId.color.class.getField(field.getName());
+                    resIdField.set(null, id);
+                } catch (NoSuchFieldException ignored) {
+                }
+            } catch (Exception e) {
+            }
+        }
+
+        for (var field : R.dimen.class.getFields()) {
+            try {
+                int id = resparam.res.addResource(XResManager.moduleResources, field.getInt(null));
+                try {
+                    var resIdField = ResId.dimen.class.getField(field.getName());
+                    resIdField.set(null, id);
+                } catch (NoSuchFieldException ignored) {
+                }
+            } catch (Exception e) {
+            }
+        }
     }
 
     @Override

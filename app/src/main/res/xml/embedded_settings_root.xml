@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$GeneralScreen"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_general"
+        app:title="@string/general" />
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$HomeScreenSettings"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_home_screen"
+        app:title="@string/home_screen" />
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$ConversationSettings"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_conversation"
+        app:title="@string/conversation" />
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$PrivacySettings"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_privacy"
+        app:title="@string/privacy" />
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$StatusSettings"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_status"
+        app:title="@string/status" />
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$CallsSettings"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_calls"
+        app:title="@string/calls" />
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$MediaSettings"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_media"
+        app:title="@string/embedded_media_downloads" />
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$AudioSettings"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_audio"
+        app:title="@string/title_audio" />
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$AppearanceSettings"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_appearance"
+        app:title="@string/embedded_appearance" />
+
+    <Preference
+        app:fragment="com.waenhancer.xposed.features.others.EmbeddedSettingsFragment$AdvancedSettings"
+        app:iconSpaceReserved="false"
+        app:summary="@string/embedded_summary_advanced"
+        app:title="@string/embedded_advanced" />
+
+</PreferenceScreen>

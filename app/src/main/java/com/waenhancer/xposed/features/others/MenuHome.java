@@ -2,13 +2,13 @@ package com.waenhancer.xposed.features.others;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
-import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
 
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
@@ -76,35 +76,31 @@ public class MenuHome extends Feature {
      */
     public static void showWaeSettingsDialog(Activity activity) {
         try {
-            // Pick the right fullscreen theme based on WhatsApp's dark mode
-            int themeRes = DesignUtils.isNightMode()
-                    ? android.R.style.Theme_DeviceDefault_NoActionBar_Fullscreen
-                    : android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen;
+            Object fm = null;
+            try {
+                fm = XposedHelpers.callMethod(activity, "getSupportFragmentManager");
+            } catch (Throwable ignored) {}
 
-            Dialog dialog = new Dialog(activity, themeRes);
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            dialog.setContentView(SettingsViewBuilder.buildFullScreen(activity, dialog));
-            dialog.setCancelable(true);
-
-            Window window = dialog.getWindow();
-            if (window != null) {
-                window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-                window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-
-                // Resolve status bar color from WhatsApp's colorPrimaryDark
-                int statusBarColor;
+            if (fm != null) {
+                XposedBridge.log("[WaEnhancer] Showing settings dialog within host process via reflection.");
+                EmbeddedSettingsDialogFragment dialog = new EmbeddedSettingsDialogFragment();
                 try {
-                    android.content.res.Resources res = activity.getResources();
-                    int id = res.getIdentifier("colorPrimaryDark", "color", activity.getPackageName());
-                    statusBarColor = id != 0 ? res.getColor(id, activity.getTheme())
-                            : (DesignUtils.isNightMode() ? 0xff0b141a : 0xff00695c);
-                } catch (Throwable ignored) {
-                    statusBarColor = DesignUtils.isNightMode() ? 0xff0b141a : 0xff00695c;
+                    XposedHelpers.callMethod(dialog, "show", fm, "wae_embedded_settings_dialog");
+                    return;
+                } catch (Throwable t) {
+                    XposedBridge.log("[WaEnhancer] Failed to show dialog via reflection: " + t.getMessage());
                 }
-                window.setStatusBarColor(statusBarColor);
             }
 
-            dialog.show();
+            XposedBridge.log("[WaEnhancer] Host activity " + activity.getClass().getName() + " does not support FragmentManager or reflection failed, using activity fallback.");
+            Intent intent = new Intent();
+            intent.setComponent(new ComponentName(com.waenhancer.BuildConfig.APPLICATION_ID,
+                    EmbeddedSettingsActivity.class.getName()));
+            // Only add NEW_TASK if we don't have a valid activity context (though we should have one here)
+            if (!(activity instanceof Activity)) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            }
+            activity.startActivity(intent);
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancer] Failed to show settings dialog: " + t.getMessage());
             Utils.showToast("Could not open WaEnhancer Settings", android.widget.Toast.LENGTH_SHORT);

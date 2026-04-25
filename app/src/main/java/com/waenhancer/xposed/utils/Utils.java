@@ -135,12 +135,12 @@ public class Utils {
     }
 
     public static int dipToPixels(float dipValue) {
-        DisplayMetrics metrics = FeatureLoader.mApp.getResources().getDisplayMetrics();
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, getApplication().getResources().getDisplayMetrics());
     }
 
     public static String getMyNumber() {
-        return FeatureLoader.mApp.getSharedPreferences(FeatureLoader.mApp.getPackageName() + "_preferences_light", Context.MODE_PRIVATE).getString("ph", "");
+        Application app = getApplication();
+        return app.getSharedPreferences(app.getPackageName() + "_preferences_light", Context.MODE_PRIVATE).getString("ph", "");
     }
 
     public static String getDateTimeFromMillis(long timestamp) {
@@ -454,5 +454,10 @@ public class Utils {
     @FunctionalInterface
     public interface BinderLocalScopeBlock<T> {
         T execute();
+    }
+
+    public static int getDefaultTheme() {
+        var startup_prefs = getApplication().getSharedPreferences("startup_prefs", android.content.Context.MODE_PRIVATE);
+        return startup_prefs.getInt("night_mode", 0);
     }
 }

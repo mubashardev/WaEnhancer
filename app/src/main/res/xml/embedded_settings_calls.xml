@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/calls">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="call_info"
+            app:summary="@string/additional_call_information_sum"
+            app:title="@string/additional_call_information" />
+
+        <ListPreference
+            app:entries="@array/call_blocker_buttons"
+            app:entryValues="@array/call_blocker_values"
+            app:key="call_privacy"
+            app:summary="@string/call_blocker_sum"
+            app:title="@string/call_blocker" />
+
+        <ListPreference
+            app:entries="@array/call_type_buttons"
+            app:entryValues="@array/call_type_values"
+            app:key="call_type"
+            app:summary="@string/call_blocking_type_sum"
+            app:title="@string/call_blocking_type" />
+
+        <com.waenhancer.preference.ContactPickerPreference
+            android:key="call_block_contacts"
+            android:title="@string/contact_block_list"
+            app:summaryOff="@string/no_contacts_selected"
+            app:summaryOn="@string/contact_were_selected" />
+
+        <com.waenhancer.preference.ContactPickerPreference
+            android:key="call_white_contacts"
+            android:title="@string/contact_white_list"
+            app:summaryOff="@string/no_contacts_selected"
+            app:summaryOn="@string/contact_were_selected" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

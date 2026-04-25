@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/embedded_advanced">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="disable_expiration"
+            app:summary="@string/disable_whatsapp_expiration_sum"
+            app:title="@string/disable_whatsapp_expiration" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="force_restore_backup_feature"
+            app:summary="@string/force_restore_backup_summary"
+            app:title="@string/force_restore_backup" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="bypass_version_check"
+            app:summary="@string/disable_version_check_sum"
+            app:title="@string/disable_version_check" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            android:summary="@string/bootloader_spoofer_sum"
+            android:title="@string/bootloader_spoofer"
+            app:key="bootloader_spoofer" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            android:summary="@string/bootloader_spoofer_sum"
+            android:title="Enable Custom KeyBox"
+            app:key="bootloader_spoofer_custom" />
+
+        <com.waenhancer.preference.FileReaderPreference
+            android:dependency="bootloader_spoofer_custom"
+            android:key="bootloader_spoofer_xml"
+            android:summary="No file selected"
+            android:title="Use Custom keybox.xml file" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="ampm"
+            app:title="@string/ampm" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="segundos"
+            app:summary="@string/segundosnahora_sum"
+            app:title="@string/segundosnahora" />
+
+        <EditTextPreference
+            app:key="secondstotime"
+            app:summary="@string/textonahora_sum"
+            app:title="@string/textonahora" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="tasker"
+            app:summary="@string/enable_tasker_automation_sum"
+            app:title="@string/enable_tasker_automation" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            android:defaultValue="true"
+            android:summary="@string/custom_filters_sum"
+            app:key="custom_filters"
+            app:title="@string/custom_appearance" />
+
+        <EditTextPreference
+            android:summary="@string/filter_items_by_id_sum"
+            app:dependency="custom_filters"
+            app:key="filter_items"
+            app:title="@string/filter_items_by_id" />
+
+        <EditTextPreference
+            android:summary="@string/custom_theme_css_sum"
+            app:dependency="custom_filters"
+            app:key="css_theme"
+            app:title="@string/custom_theme_css" />
+
+        <EditTextPreference
+            android:summary="@string/change_default_dpi_sum"
+            app:defaultValue="0"
+            app:dependency="custom_filters"
+            app:key="change_dpi"
+            app:title="@string/change_default_dpi" />
+
+        <com.waenhancer.preference.ThemePreference
+            android:key="folder_theme"
+            android:summary="@string/manage_theme_sum"
+            android:title="@string/theme_manager"
+            app:dependency="custom_filters" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

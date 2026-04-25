@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/title_audio">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="disable_sensor_proximity"
+            app:summary="@string/disable_the_proximity_sensor_sum"
+            app:title="@string/disable_the_proximity_sensor" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="proximity_audios"
+            app:summary="@string/disable_audio_sensor_sum"
+            app:title="@string/disable_audio_sensor" />
+
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/audio_type_buttons"
+            android:entryValues="@array/audio_type_values"
+            android:summary="@string/send_audio_as_voice_audio_note_sum"
+            app:key="audio_type"
+            app:title="@string/send_audio_as_voice_audio_note" />
+
+        <com.waenhancer.preference.FloatSeekBarPreference
+            android:defaultValue="2"
+            app:key="voicenote_speed"
+            app:maxValue="5"
+            app:minValue="0.1"
+            app:title="@string/voice_note_speed" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="audio_transcription"
+            app:summary="@string/audio_transcription_sum"
+            app:title="@string/audio_transcription" />
+
+        <ListPreference
+            android:defaultValue="assemblyai"
+            android:dependency="audio_transcription"
+            android:entries="@array/transcription_provider_entries"
+            android:entryValues="@array/transcription_provider_values"
+            app:key="transcription_provider"
+            app:summary="@string/transcription_provider_sum"
+            app:title="@string/transcription_provider" />
+
+        <EditTextPreference
+            android:dependency="audio_transcription"
+            app:key="assemblyai_key"
+            app:summary="@string/assemblyai_key_sum"
+            app:title="@string/assemblyai_key" />
+
+        <EditTextPreference
+            android:dependency="audio_transcription"
+            app:key="groq_api_key"
+            app:summary="@string/groq_api_key_sum"
+            app:title="@string/groq_api_key" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/status">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="autonext_status"
+            app:summary="@string/disable_auto_status_sum"
+            app:title="@string/disable_auto_status" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="copystatus"
+            app:summary="@string/enable_copy_status_sum"
+            app:title="@string/enable_copy_status" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="toast_viewed_status"
+            app:summary="@string/toast_on_viewed_status_sum"
+            app:title="@string/toast_on_viewed_status" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="enable_spy"
+            app:summary="@string/enable_spy_sum"
+            app:title="@string/enable_spy" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="igstatus"
+            app:summary="@string/igstatus_on_home_screen_sum"
+            app:title="@string/igstatus_on_home_screen" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="channels"
+            app:summary="@string/disable_channels_sum"
+            app:title="@string/disable_channels" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="removechannel_rec"
+            app:summary="@string/remove_channel_recomendations_sum"
+            app:title="@string/remove_channel_recomendations" />
+
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/status_style_entries"
+            android:entryValues="@array/status_style_values"
+            app:key="status_style"
+            app:summary="@string/style_of_stories_status_sum"
+            app:title="@string/style_of_stories_status" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="oldstatus"
+            app:summary="@string/old_statuses_sum"
+            app:title="@string/old_statuses" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="statuscomposer"
+            app:summary="@string/custom_colors_for_text_status_sum"
+            app:title="@string/custom_colors_for_text_status" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="auto_status_forward"
+            app:summary="@string/auto_status_forward_sum"
+            app:title="@string/auto_status_forward" />
+
+        <com.waenhancer.preference.StatusForwardRulesPreference
+            app:dependency="auto_status_forward"
+            app:key="auto_status_forward_rules_pref"
+            app:title="@string/auto_status_forward_rules" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

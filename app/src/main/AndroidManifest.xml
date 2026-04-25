@@ -69,6 +69,8 @@
         <activity
             android:name=".xposed.features.others.EmbeddedSettingsActivity"
             android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity="com.whatsapp"
             android:theme="@style/Theme.AppCompat.DayNight" />
 
         <activity

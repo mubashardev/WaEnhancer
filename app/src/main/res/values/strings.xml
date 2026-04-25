@@ -548,4 +548,17 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="update">Update</string>
     <string name="update_now">Update Now</string>
     <string name="dismiss">Dismiss</string>
+    <string name="embedded_media_downloads">Media &amp; downloads</string>
+    <string name="embedded_appearance">Appearance</string>
+    <string name="embedded_advanced">Advanced</string>
+    <string name="embedded_summary_general">Core app behavior, theme mode, language, and logs</string>
+    <string name="embedded_summary_home_screen">Toolbar actions, filters, tabs, and home shortcuts</string>
+    <string name="embedded_summary_conversation">Chat actions, anti-revoke, reactions, and message tools</string>
+    <string name="embedded_summary_privacy">Read receipts, ghost mode, locked chats, and privacy actions</string>
+    <string name="embedded_summary_status">Status viewer, channels, spy tools, and auto forwarding</string>
+    <string name="embedded_summary_calls">Call privacy, call info, and contact-based call rules</string>
+    <string name="embedded_summary_media">Images, videos, downloads, and media preview options</string>
+    <string name="embedded_summary_audio">Voice notes, proximity behavior, and transcription</string>
+    <string name="embedded_summary_appearance">Colors, wallpaper, bubbles, tabs, and list animation</string>
+    <string name="embedded_summary_advanced">Version checks, backup restore, tasker, CSS, and theme files</string>
 </resources>

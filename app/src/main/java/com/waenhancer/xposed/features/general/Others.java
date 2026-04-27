@@ -68,7 +68,7 @@ public class Others extends Feature {
         var newSettings = prefs.getBoolean("novaconfig", false);
         var filterChats = prefs.getString("chatfilter", "2");
         var filterSeen = prefs.getBoolean("filterseen", false);
-        var status_style = Integer.parseInt(prefs.getString("status_style", "0"));
+        var status_style = Integer.parseInt(prefs.getString("status_style", "1"));
         var disableMetaAI = prefs.getBoolean("metaai", false);
         var disable_sensor_proximity = prefs.getBoolean("disable_sensor_proximity", false);
         var proximity_audios = prefs.getBoolean("proximity_audios", false);

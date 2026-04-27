@@ -325,15 +325,19 @@ public class ReflectionUtils {
 
     public static boolean isCalledFromString(String contains) {
         var trace = Thread.currentThread().getStackTrace();
-        var text = Arrays.toString(trace);
-        return text.contains(contains);
+        for (var element : trace) {
+            if (element.toString().contains(contains)) return true;
+        }
+        return false;
     }
 
     public static boolean isCalledFromStrings(String... contains) {
         var trace = Thread.currentThread().getStackTrace();
-        var text = Arrays.toString(trace);
-        for (String s : contains) {
-            if (text.contains(s)) return true;
+        for (var element : trace) {
+            var s = element.toString();
+            for (String c : contains) {
+                if (s.contains(c)) return true;
+            }
         }
         return false;
     }

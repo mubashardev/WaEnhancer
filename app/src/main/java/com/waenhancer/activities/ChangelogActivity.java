@@ -1,5 +1,6 @@
 package com.waenhancer.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,7 +58,7 @@ public class ChangelogActivity extends BaseActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-        toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setNavigationOnClickListener(v -> navigateToHome());
 
         recyclerView = findViewById(R.id.changelog_recycler);
         shimmerFrameLayout = findViewById(R.id.shimmer_view_container);
@@ -84,6 +85,27 @@ public class ChangelogActivity extends BaseActivity {
         recyclerView.setAdapter(adapter);
 
         fetchChangelog();
+    }
+
+    @Override
+    public void onBackPressed() {
+        navigateToHome();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            navigateToHome();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void navigateToHome() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
     }
 
     private void updateList(int position) {

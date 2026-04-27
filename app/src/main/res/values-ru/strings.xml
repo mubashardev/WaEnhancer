@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_desc">WaEnhancer Plus: An independent, enhanced fork with modern UI and advanced privacy tools.</string>
+    <string name="app_desc">An independent, enhanced fork with modern UI and advanced privacy tools.</string>
     <string name="antirevoke">Защита от удаления сообщений</string>
     <string name="antirevoke_sum">Активирован, удаленные сообщения останутся у вас</string>
     <string name="ghostmode">Скрыть ввод</string>

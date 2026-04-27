@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_desc">WaEnhancer Plus: An independent, enhanced fork with modern UI and advanced privacy tools.</string>
+    <string name="app_desc">An independent, enhanced fork with modern UI and advanced privacy tools.</string>
     <string name="antirevoke">Anti deletar mensagens</string>
     <string name="antirevoke_sum">Quando ativo, as mensagens não serão apagadas para você.</string>
     <string name="ghostmode">Ocultar digitando</string>

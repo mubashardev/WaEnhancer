@@ -3,14 +3,13 @@ package com.waenhancer.preference;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.preference.Preference;
 import androidx.preference.PreferenceViewHolder;
 
 import com.waenhancer.R;
-import com.google.android.material.slider.Slider;
-
 public class FloatSeekBarPreference extends Preference {
 
     private float minValue;
@@ -18,7 +17,8 @@ public class FloatSeekBarPreference extends Preference {
     private float valueSpacing;
     private String format;
 
-    private Slider slider;
+    private com.google.android.material.slider.Slider slider;
+    private SeekBar seekBar;
     private TextView textView;
 
     private float defaultValue = 0F;
@@ -79,30 +79,22 @@ public class FloatSeekBarPreference extends Preference {
         super.onBindViewHolder(holder);
 
         holder.itemView.setClickable(false);
-        slider = (Slider) holder.findViewById(R.id.seekbar);
+        slider = null;
+        seekBar = null;
+
+        var seekbarView = holder.findViewById(R.id.seekbar);
+        if (seekbarView instanceof com.google.android.material.slider.Slider materialSlider) {
+            slider = materialSlider;
+        } else if (seekbarView instanceof SeekBar legacySeekBar) {
+            seekBar = legacySeekBar;
+        }
         textView = (TextView) holder.findViewById(R.id.seekbar_value);
 
-        slider.setValueFrom(minValue);
-        slider.setValueTo(maxValue);
-        slider.setStepSize(valueSpacing);
-        slider.setValue(newValue);
-        slider.setEnabled(isEnabled());
-
-        slider.addOnChangeListener((slider, value, fromUser) -> {
-            textView.setText(String.format(format, value));
-        });
-
-        slider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
-            @Override
-            public void onStartTrackingTouch(Slider slider) {}
-
-            @Override
-            public void onStopTrackingTouch(Slider slider) {
-                persistFloat(slider.getValue());
-            }
-        });
-
-        textView.setText(String.format(format, newValue));
+        if (slider != null) {
+            bindMaterialSlider();
+        } else if (seekBar != null) {
+            bindLegacySeekBar();
+        }
     }
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -120,12 +112,74 @@ public class FloatSeekBarPreference extends Preference {
     }
 
     public float getValue() {
-        return (slider != null) ? slider.getValue() : 0F;
+        if (slider != null) {
+            return slider.getValue();
+        }
+        if (seekBar != null) {
+            return progressToValue(seekBar.getProgress());
+        }
+        return 0F;
     }
 
     public void setValue(float value) {
         newValue = value;
         persistFloat(value);
         notifyChanged();
+    }
+
+    private void bindMaterialSlider() {
+        slider.setValueFrom(minValue);
+        slider.setValueTo(maxValue);
+        slider.setStepSize(valueSpacing);
+        slider.setValue(newValue);
+        slider.setEnabled(isEnabled());
+        slider.clearOnChangeListeners();
+        slider.clearOnSliderTouchListeners();
+
+        slider.addOnChangeListener((slider, value, fromUser) -> textView.setText(String.format(format, value)));
+        slider.addOnSliderTouchListener(new com.google.android.material.slider.Slider.OnSliderTouchListener() {
+            @Override
+            public void onStartTrackingTouch(com.google.android.material.slider.Slider slider) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(com.google.android.material.slider.Slider slider) {
+                persistFloat(slider.getValue());
+            }
+        });
+
+        textView.setText(String.format(format, newValue));
+    }
+
+    private void bindLegacySeekBar() {
+        int maxSteps = Math.max(1, Math.round((maxValue - minValue) / valueSpacing));
+        seekBar.setMax(maxSteps);
+        seekBar.setProgress(valueToProgress(newValue));
+        seekBar.setEnabled(isEnabled());
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                textView.setText(String.format(format, progressToValue(progress)));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                persistFloat(progressToValue(seekBar.getProgress()));
+            }
+        });
+
+        textView.setText(String.format(format, newValue));
+    }
+
+    private int valueToProgress(float value) {
+        return Math.round((value - minValue) / valueSpacing);
+    }
+
+    private float progressToValue(int progress) {
+        return minValue + (progress * valueSpacing);
     }
 }

@@ -2,6 +2,7 @@ package com.waenhancer.preference;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -23,16 +24,11 @@ import androidx.core.content.ContextCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceManager;
 
-import com.developer.filepicker.model.DialogConfigs;
-import com.developer.filepicker.model.DialogProperties;
-import com.developer.filepicker.view.FilePickerDialog;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.waenhancer.App;
 import com.waenhancer.R;
 import com.waenhancer.utils.FilePicker;
 import com.waenhancer.utils.RealPathUtil;
 import com.waenhancer.xposed.features.general.LiteMode;
-import com.waenhancer.xposed.features.others.ActivityController;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.io.File;
@@ -82,8 +78,9 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
 
     @Override
     public boolean onPreferenceClick(@NonNull Preference preference) {
+        var prefs = getSafeSharedPreferences();
 
-        if (getSharedPreferences().getBoolean("lite_mode", false)) {
+        if (prefs.getBoolean("lite_mode", false)) {
             String packageName = "";
             PackageInfo packageInfo = null;
             for (var possiblePackage : new String[] { "com.whatsapp", "com.whatsapp.w4b" }) {
@@ -96,29 +93,50 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
                 }
             }
             if (packageInfo == null) {
-                Utils.showToast("Unable to find WhatsApp package, please select the folder manually in the next screen",
+                Utils.showToast("Unable to find WhatsApp package. Using the system folder picker instead.",
                         Toast.LENGTH_LONG);
+                if (selectDirectory) {
+                    launchModernDirectoryPicker();
+                }
                 return true;
             }
 
             String className = null;
-            for (var activity : packageInfo.activities) {
-                if (activity.name.endsWith("SettingsNotifications")) {
-                    className = activity.name;
-                    break;
+            if (packageInfo.activities != null) {
+                for (var activity : packageInfo.activities) {
+                    if (activity.name.endsWith("SettingsNotifications")) {
+                        className = activity.name;
+                        break;
+                    }
                 }
             }
             if (className == null) {
                 Utils.showToast(
-                        "Unable to find the activity to select folder, please select it manually in the next screen",
+                        "Unable to find WhatsApp's folder picker activity. Using the system folder picker instead.",
                         Toast.LENGTH_LONG);
+                if (selectDirectory) {
+                    launchModernDirectoryPicker();
+                }
                 return true;
             }
-            Intent intent = new Intent();
-            intent.setClassName(packageName, className);
-            intent.putExtra("key", getKey());
-            intent.putExtra("download_mode", true);
-            ((Activity) getContext()).startActivityForResult(intent, LiteMode.REQUEST_FOLDER);
+            try {
+                Intent intent = new Intent();
+                intent.setClassName(packageName, className);
+                intent.putExtra("key", getKey());
+                intent.putExtra("download_mode", true);
+                ((Activity) getContext()).startActivityForResult(intent, LiteMode.REQUEST_FOLDER);
+            } catch (ActivityNotFoundException | SecurityException e) {
+                Utils.showToast("Folder picker unavailable in WhatsApp. Using the system folder picker instead.",
+                        Toast.LENGTH_LONG);
+                if (selectDirectory) {
+                    launchModernDirectoryPicker();
+                }
+            }
+            return true;
+        }
+
+        if (selectDirectory) {
+            launchModernDirectoryPicker();
             return true;
         }
 
@@ -140,10 +158,6 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
         }
 
         FilePicker.setOnFilePickedListener(this);
-        if (selectDirectory) {
-            showSelectDirectoryDialog();
-            return true;
-        }
 
         if (mineTypes.length == 1 && mineTypes[0].contains("image")) {
             FilePicker.setOnUriPickedListener(this);
@@ -155,22 +169,28 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
         return false;
     }
 
-    private void showSelectDirectoryDialog() {
+    private void launchModernDirectoryPicker() {
+        String currentFolder = getSafeSharedPreferences().getString(getKey(), "/sdcard/Download");
+        String message = getContext().getString(R.string.folder_picker_description) + "\n\n"
+                + getContext().getString(R.string.folder_picker_current, currentFolder);
 
-        DialogProperties properties = new DialogProperties();
-        properties.selection_mode = DialogConfigs.SINGLE_MODE;
-        properties.selection_type = DialogConfigs.DIR_SELECT;
-        properties.root = new File(DialogConfigs.DEFAULT_DIR);
-        properties.error_dir = new File(DialogConfigs.DEFAULT_DIR);
-        properties.offset = new File(DialogConfigs.DEFAULT_DIR);
-        FilePickerDialog dialog = new FilePickerDialog(getContext(), properties);
-        dialog.setTitle("Select a local to download");
-        dialog.setDialogSelectionListener((selectionPaths) -> {
-            getSharedPreferences().edit().putString(getKey(), selectionPaths[0]).apply();
-            setSummary(selectionPaths[0]);
-        });
-        dialog.show();
-        Utils.showToast("Select a local to download", Toast.LENGTH_SHORT);
+        com.waenhancer.ui.helpers.BottomSheetHelper.showConfirmation(
+                getContext(),
+                getContext().getString(R.string.folder_picker_title),
+                message,
+                getContext().getString(R.string.folder_picker_action),
+                false,
+                () -> {
+                    FilePicker.setOnUriPickedListener(this);
+                    try {
+                        if (FilePicker.directoryCapture == null) {
+                            throw new IllegalStateException("Directory picker not available");
+                        }
+                        FilePicker.directoryCapture.launch(null);
+                    } catch (Throwable throwable) {
+                        Toast.makeText(getContext(), R.string.failed_open_folder_picker, Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @Override
@@ -188,7 +208,7 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
             return;
 
         }
-        getSharedPreferences().edit().putString(getKey(), file.getAbsolutePath()).apply();
+        getSafeSharedPreferences().edit().putString(getKey(), file.getAbsolutePath()).apply();
         setSummary(file.getAbsolutePath());
     }
 
@@ -211,6 +231,11 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
 
     @Override
     public void onUriPicked(Uri uri) {
+        if (selectDirectory) {
+            handleDirectoryUri(uri);
+            return;
+        }
+
         ContentResolver contentResolver = getContext().getContentResolver();
         var type = Objects.requireNonNull(contentResolver.getType(uri));
         var extension = type.split("/")[1];
@@ -219,7 +244,7 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
             folder.mkdirs();
         }
         var outFile = new File(folder, this.getKey() + "." + extension);
-        var editor = getSharedPreferences().edit();
+        var editor = getSafeSharedPreferences().edit();
         editor.putString(getKey(), "").commit();
         setSummary(outFile.getAbsolutePath());
         CompletableFuture.runAsync(() -> {
@@ -233,17 +258,60 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
 
     }
 
+    private void handleDirectoryUri(@NonNull Uri uri) {
+        try {
+            getContext().getContentResolver().takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            );
+        } catch (Exception ignored) {
+        }
+
+        try {
+            String realPath = RealPathUtil.getRealFolderPath(getContext(), uri);
+            if (realPath == null || realPath.isEmpty()) {
+                throw new IllegalStateException("Could not resolve folder path");
+            }
+            getSafeSharedPreferences().edit().putString(getKey(), realPath).apply();
+            setSummary(realPath);
+            notifyChanged();
+        } catch (Exception e) {
+            Toast.makeText(getContext(), R.string.failed_save_directory, Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public void handleActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == LiteMode.REQUEST_FOLDER && resultCode == Activity.RESULT_OK) {
-            var uri = Uri.parse(data.getStringExtra("path"));
-            try {
-                var realPath = RealPathUtil.getRealFolderPath(getContext(), uri);
-                getSharedPreferences().edit().putString(getKey(), realPath).apply();
-                setSummary(realPath);
-            } catch (Exception ignored) {
-                setSummary(uri.toString());
+            String storedPath = data.getStringExtra("path");
+            if (storedPath == null || storedPath.trim().isEmpty()) {
+                Toast.makeText(getContext(), R.string.failed_save_directory, Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            String resolvedPath = storedPath;
+            try {
+                Uri uri = Uri.parse(storedPath);
+                if (uri != null) {
+                    String realPath = RealPathUtil.getRealFolderPath(getContext(), uri);
+                    if (realPath != null && !realPath.isEmpty()) {
+                        resolvedPath = realPath;
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+            getSafeSharedPreferences().edit().putString(getKey(), resolvedPath).apply();
+            setSummary(resolvedPath);
+            notifyChanged();
         }
+    }
+
+    @NonNull
+    private android.content.SharedPreferences getSafeSharedPreferences() {
+        android.content.SharedPreferences prefs = getSharedPreferences();
+        if (prefs != null) {
+            return prefs;
+        }
+        return PreferenceManager.getDefaultSharedPreferences(getContext());
     }
 
 }

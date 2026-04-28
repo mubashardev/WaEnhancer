@@ -3,7 +3,6 @@ package com.waenhancer.preference;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
@@ -11,11 +10,10 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceManager;
 
 import com.waenhancer.R;
-import com.waenhancer.xposed.utils.Utils;
+import com.waenhancer.activities.ContactPickerActivity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class ContactPickerPreference extends Preference implements Preference.OnPreferenceClickListener {
@@ -43,43 +41,15 @@ public class ContactPickerPreference extends Preference implements Preference.On
 
     @Override
     public boolean onPreferenceClick(@NonNull Preference preference) {
-        PackageManager pm = getContext().getPackageManager();
-        for (var pkg : List.of("com.whatsapp", "com.whatsapp.w4b")) {
-            try {
-                if (pm.getPackageInfo(pkg, 0) != null) {
-                    startSelectContacts(pkg);
-                    break;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (!(getContext() instanceof Activity activity)) {
+            return true;
         }
+        Intent intent = new Intent(getContext(), ContactPickerActivity.class);
+        intent.putExtra(ContactPickerActivity.EXTRA_KEY, getKey());
+        intent.putStringArrayListExtra(ContactPickerActivity.EXTRA_SELECTED_CONTACTS,
+                mContacts != null ? new ArrayList<>(mContacts) : new ArrayList<>());
+        activity.startActivityForResult(intent, REQUEST_CONTACT_PICKER);
         return true;
-    }
-
-    private void startSelectContacts(String packageName) {
-        try {
-            Intent intent = new Intent();
-            var pInfo = getContext().getApplicationContext().getPackageManager().getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
-            assert pInfo.activities != null;
-            String className = null;
-            for (var activity : pInfo.activities) {
-                if (activity.name.endsWith("SettingsNotifications")) {
-                    className = activity.name;
-                    break;
-                }
-            }
-            if (className == null) {
-                throw new Exception("Class SettingsNotifications not found");
-            }
-            intent.setClassName(packageName, className);
-            intent.putExtra("key", getKey());
-            intent.putExtra("contact_mode", true);
-            intent.putStringArrayListExtra("contacts", mContacts);
-            ((Activity) getContext()).startActivityForResult(intent, REQUEST_CONTACT_PICKER);
-        } catch (Exception e) {
-            Utils.showToast(e.getMessage(), 1);
-        }
     }
 
     private void init(Context context, AttributeSet attrs) {
@@ -105,7 +75,10 @@ public class ContactPickerPreference extends Preference implements Preference.On
     public void handleActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CONTACT_PICKER && resultCode == Activity.RESULT_OK) {
             mContacts = data.getStringArrayListExtra("contacts");
-            getSharedPreferences().edit().putString(getKey(), mContacts.toString()).apply();
+            var prefs = getSharedPreferences() != null
+                    ? getSharedPreferences()
+                    : PreferenceManager.getDefaultSharedPreferences(getContext());
+            prefs.edit().putString(getKey(), String.valueOf(mContacts)).apply();
             if (mContacts != null && !mContacts.isEmpty()) {
                 setSummary(String.format(String.valueOf(summaryOn), mContacts.size()));
             } else {

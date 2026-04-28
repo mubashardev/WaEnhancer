@@ -37,6 +37,60 @@
             app:summaryOff="@string/no_contacts_selected"
             app:summaryOn="@string/contact_were_selected" />
 
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="call_recording_enable"
+            app:summary="@string/call_recording_enable_summary_latest"
+            app:title="@string/call_recording_enable" />
+
+        <com.waenhancer.preference.FileSelectPreference
+            android:defaultValue="/sdcard/Download"
+            app:dependency="call_recording_enable"
+            app:directory="true"
+            app:key="call_recording_path"
+            app:title="@string/call_recording_path" />
+
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/recording_mode_entries"
+            android:entryValues="@array/recording_mode_values"
+            app:dependency="call_recording_enable"
+            app:key="call_recording_mode"
+            app:title="@string/recording_mode"
+            app:useSimpleSummaryProvider="true" />
+
+        <com.waenhancer.preference.ContactPickerPreference
+            app:dependency="call_recording_enable"
+            app:key="call_recording_whitelist"
+            app:summaryOff="@string/recording_included_contacts_summary_off"
+            app:summaryOn="@string/recording_included_contacts_summary_on"
+            app:title="@string/recording_included_contacts" />
+
+        <com.waenhancer.preference.ContactPickerPreference
+            app:dependency="call_recording_enable"
+            app:key="call_recording_blacklist"
+            app:summaryOff="@string/recording_excluded_contacts_summary_off"
+            app:summaryOn="@string/recording_excluded_contacts_summary_on"
+            app:title="@string/recording_excluded_contacts" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            android:defaultValue="false"
+            app:dependency="call_recording_enable"
+            app:key="call_recording_toast"
+            app:summary="@string/call_recording_toast_summary"
+            app:title="@string/call_recording_toast_title" />
+
+        <Preference
+            app:dependency="call_recording_enable"
+            app:key="call_recording_settings"
+            app:summary="@string/recording_mode_description"
+            app:title="@string/call_recording_settings" />
+
+        <Preference
+            app:dependency="call_recording_enable"
+            app:key="call_recording_manage"
+            app:summary="@string/call_recording_manage_summary"
+            app:title="@string/call_recording_manage" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -4,8 +4,6 @@
 - Users can now directly switch/install beta channel from the app.
 
 [Fixed]
-- Fixed Home Screen crashing in WA Enhancer General Section
-- Fixed slow scrolling in individual chats
-
-[Improved]
-- Optimized startup performance 
+- Crash on Status 
+- Video Note improved (A crash on video sent is required to make the patch work to act like a video note)
+- Stability Improvements

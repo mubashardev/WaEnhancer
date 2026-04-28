@@ -3,8 +3,6 @@
     <color name="primary_text_material_inverse">@color/abc_primary_text_material_dark</color>
     <color name="primary_text_material">@color/abc_primary_text_material_light</color>
 
-    <color name="ic_launcher_foreground">#FFFFFF</color>
-    <color name="ic_launcher_background">#0F172A</color>
 
     <color name="material_state_yellow">#F59E0B</color>
     <color name="material_state_green">#10B981</color>
@@ -20,6 +18,7 @@
     <color name="codeview_css_properties">#FBBF24</color>
     <color name="codeview_nth_child">#34D399</color>
     <color name="primary_background">@color/background_light</color>
+    <color name="splash_background">#414E5A</color>
     <color name="codeview_strings">#10B981</color>
 
     <color name="md_theme_light_primary">#008069</color> <!-- WhatsApp Teal -->

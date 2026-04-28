@@ -60,6 +60,7 @@ import com.waenhancer.xposed.features.listeners.MenuStatusListener;
 
 import com.waenhancer.xposed.features.media.DownloadProfile;
 import com.waenhancer.xposed.features.media.DownloadViewOnce;
+import com.waenhancer.xposed.features.media.CallRecording;
 import com.waenhancer.xposed.features.media.MediaPreview;
 import com.waenhancer.xposed.features.media.MediaQuality;
 import com.waenhancer.xposed.features.media.StatusDownload;
@@ -452,7 +453,7 @@ public class FeatureLoader {
                 GoogleTranslate.class,
                 ContactBlockedVerify.class,
                 LockedChatsEnhancer.class,
-
+                CallRecording.class,
                 BackupRestore.class,
                 Spy.class,
                 RecoverDeleteForMe.class,

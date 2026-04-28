@@ -91,7 +91,7 @@ public class UpdateChecker implements Runnable {
             var request = new okhttp3.Request.Builder()
                     .url(RELEASES_API)
                     .header("Accept", "application/vnd.github+json")
-                    .header("User-Agent", "WaEnhancer-UpdateChecker")
+                    .header("User-Agent", "WaEnhancer Plus-UpdateChecker")
                     .build();
 
             String installedVersion = normalizeVersion(com.waenhancer.BuildConfig.VERSION_NAME);

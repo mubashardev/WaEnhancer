@@ -70,6 +70,7 @@ public class WppCore {
     private static Field conversationJidField;
     private static Field meManagerPhoneJidField;
     private static Object meManagerInstance;
+    private static Object mConversationDelegate;
 
     public static void Initialize(ClassLoader loader, de.robv.android.xposed.XSharedPreferences pref) throws Exception {
         waePrefs = pref;
@@ -129,6 +130,16 @@ public class WppCore {
                 meManagerInstance = param.thisObject;
             }
         });
+
+        if (conversationJidField != null) {
+            XposedBridge.hookAllConstructors(conversationJidField.getDeclaringClass(), new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    mConversationDelegate = param.thisObject;
+                    XposedBridge.log("WAE: Captured conversation delegate: " + mConversationDelegate.getClass().getName());
+                }
+            });
+        }
 
 
         // Load wa database
@@ -647,15 +658,38 @@ public class WppCore {
         return null;
     }
 
+    private static FMessageWpp.UserJid cachedUserJid;
+    private static int cachedActivityHash;
+
     @NonNull
     public static FMessageWpp.UserJid getCurrentUserJid() {
+        var currentActivity = getCurrentActivity();
+        if (currentActivity == null) return new FMessageWpp.UserJid();
+
+        int currentHash = System.identityHashCode(currentActivity);
+        if (cachedUserJid != null && cachedActivityHash == currentHash) {
+            return cachedUserJid;
+        }
+
+        long start = System.currentTimeMillis();
         try {
             var conversation = getCurrentConversation();
             if (conversation == null)
                 return new FMessageWpp.UserJid();
             ensureConversationJidResolvers(conversation.getClassLoader());
 
-            Object jidObject = resolveJidFromObjectMethods(conversation);
+            Object jidObject = null;
+            
+            // Try using the captured delegate (Upstream optimization)
+            if (mConversationDelegate != null && conversationJidField != null) {
+                try {
+                    jidObject = conversationJidField.get(mConversationDelegate);
+                } catch (Exception ignored) {}
+            }
+
+            if (jidObject == null) {
+                jidObject = resolveJidFromObjectMethods(conversation);
+            }
             if (conversation.getClass().getSimpleName().equals("HomeActivity")) {
                 try {
                     var convFragmentMethod = Unobfuscator.loadHomeConversationFragmentMethod(conversation.getClassLoader());
@@ -683,13 +717,17 @@ public class WppCore {
                     jidObject = findJidObjectInGraph(conversation);
                 }
             }
-            if (jidObject == null)
-                return new FMessageWpp.UserJid();
-            return new FMessageWpp.UserJid(jidObject);
+            if (jidObject != null) {
+                var jid = new FMessageWpp.UserJid(jidObject);
+                cachedUserJid = jid;
+                cachedActivityHash = currentHash;
+                XposedBridge.log("WAE: Resolved JID " + jid.getPhoneNumber() + " in " + (System.currentTimeMillis() - start) + "ms");
+                return jid;
+            }
         } catch (Exception e) {
             XposedBridge.log(e);
-            return new FMessageWpp.UserJid();
         }
+        return new FMessageWpp.UserJid();
     }
 
     private static synchronized void ensureConversationJidResolvers(ClassLoader loader) {
@@ -972,10 +1010,9 @@ public class WppCore {
         return privPrefs;
     }
 
-    @SuppressLint("ApplySharedPref")
     public static void setPrivString(String key, String value) {
         if (privPrefs == null) return;
-        privPrefs.edit().putString(key, value).commit();
+        privPrefs.edit().putString(key, value).apply();
     }
 
     public static String getPrivString(String key, String defaultValue) {
@@ -994,23 +1031,20 @@ public class WppCore {
         }
     }
 
-    @SuppressLint("ApplySharedPref")
     public static void setPrivJSON(String key, JSONObject value) {
         if (privPrefs == null) return;
-        privPrefs.edit().putString(key, value == null ? null : value.toString()).commit();
+        privPrefs.edit().putString(key, value == null ? null : value.toString()).apply();
     }
 
-    @SuppressLint("ApplySharedPref")
     public static void removePrivKey(String s) {
         if (privPrefs == null) return;
         if (s != null && privPrefs.contains(s))
-            privPrefs.edit().remove(s).commit();
+            privPrefs.edit().remove(s).apply();
     }
 
-    @SuppressLint("ApplySharedPref")
     public static void setPrivBoolean(String key, boolean value) {
         if (privPrefs == null) return;
-        privPrefs.edit().putBoolean(key, value).commit();
+        privPrefs.edit().putBoolean(key, value).apply();
     }
 
 

@@ -155,7 +155,7 @@ public class HomeFragment extends BaseFragment {
                 final String finalDialogDetails = dialogDetailsHtml;
                 final String finalGithubDetails = githubDetailsMd;
 
-                String dialogMessageHtml = "This will open the WaEnhancer GitHub Issues page to report a bug.<br><br>"
+                String dialogMessageHtml = "This will open the WaEnhancer Plus GitHub Issues page to report a bug.<br><br>"
                         +
                         "The following information about your device and installed apps will be pre-filled in your report:<br><br>"
                         +
@@ -513,7 +513,7 @@ public class HomeFragment extends BaseFragment {
                     com.waenhancer.ui.helpers.BottomSheetHelper.showInfo(
                             activity,
                             "Unsupported Version",
-                            "The installed WaEnhancer has no support for your installed version of WhatsApp. It may not work as expected. Please either update WaEnhancer, install a supported version of WhatsApp, or open an issue on GitHub.");
+                            "The installed WaEnhancer Plus has no support for your installed version of WhatsApp. It may not work as expected. Please either update WaEnhancer Plus, install a supported version of WhatsApp, or open an issue on GitHub.");
                 });
             }
 

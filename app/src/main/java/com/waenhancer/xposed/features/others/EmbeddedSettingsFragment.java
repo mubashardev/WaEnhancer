@@ -7,8 +7,11 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
+import androidx.preference.Preference;
 
 import com.waenhancer.R;
+import com.waenhancer.activities.CallRecordingSettingsActivity;
+import com.waenhancer.activities.RecordingsActivity;
 import com.waenhancer.preference.ContactPickerPreference;
 import com.waenhancer.preference.FileSelectPreference;
 import com.waenhancer.xposed.features.general.LiteMode;
@@ -75,6 +78,32 @@ public class EmbeddedSettingsFragment extends EmbeddedBasePreferenceFragment {
         public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
             super.onCreatePreferences(savedInstanceState, rootKey);
             setPreferencesFromResource(ResId.xml.embedded_settings_calls, rootKey);
+
+            var callRecordingSettings = findPreference("call_recording_settings");
+            if (callRecordingSettings != null) {
+                callRecordingSettings.setOnPreferenceClickListener(preference -> {
+                    startActivity(new Intent(requireContext(), CallRecordingSettingsActivity.class));
+                    return true;
+                });
+            }
+
+            var callRecordingManager = findPreference("call_recording_manage");
+            if (callRecordingManager != null) {
+                callRecordingManager.setOnPreferenceClickListener(preference -> {
+                    startActivity(new Intent(requireContext(), RecordingsActivity.class));
+                    return true;
+                });
+            }
+
+            updateCallRecordingPreferenceState();
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(android.content.SharedPreferences sharedPreferences, @Nullable String key) {
+            super.onSharedPreferenceChanged(sharedPreferences, key);
+            if (key == null || "call_recording_enable".equals(key) || "call_recording_mode".equals(key)) {
+                updateCallRecordingPreferenceState();
+            }
         }
 
         @Override
@@ -93,6 +122,31 @@ public class EmbeddedSettingsFragment extends EmbeddedBasePreferenceFragment {
                 if (fileSelectPreference != null) {
                     fileSelectPreference.handleActivityResult(requestCode, resultCode, data);
                 }
+            }
+        }
+
+        private void updateCallRecordingPreferenceState() {
+            boolean enabled = mPrefs.getBoolean("call_recording_enable", false);
+            String mode = mPrefs.getString("call_recording_mode", "0");
+
+            Preference includeContacts = findPreference("call_recording_whitelist");
+            Preference excludeContacts = findPreference("call_recording_blacklist");
+            Preference settings = findPreference("call_recording_settings");
+            Preference manager = findPreference("call_recording_manage");
+
+            if (includeContacts != null) {
+                includeContacts.setVisible(enabled && "3".equals(mode));
+                includeContacts.setEnabled(enabled && "3".equals(mode));
+            }
+            if (excludeContacts != null) {
+                excludeContacts.setVisible(enabled && "2".equals(mode));
+                excludeContacts.setEnabled(enabled && "2".equals(mode));
+            }
+            if (settings != null) {
+                settings.setEnabled(enabled);
+            }
+            if (manager != null) {
+                manager.setEnabled(enabled);
             }
         }
     }

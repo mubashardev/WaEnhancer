@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import androidx.annotation.Nullable;
 
 import java.util.Map;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class SafeSharedPreferences implements SharedPreferences {
@@ -41,9 +42,40 @@ public class SafeSharedPreferences implements SharedPreferences {
     @Override
     public Set<String> getStringSet(String key, @Nullable Set<String> defValues) {
         try {
-            return delegate.getStringSet(key, defValues);
+            Set<String> value = delegate.getStringSet(key, defValues);
+            return value != null ? value : (defValues != null ? defValues : new LinkedHashSet<>());
         } catch (Exception e) {
-            return defValues;
+            try {
+                Object val = delegate.getAll().get(key);
+                if (val instanceof Set<?>) {
+                    LinkedHashSet<String> result = new LinkedHashSet<>();
+                    for (Object item : (Set<?>) val) {
+                        if (item != null) {
+                            result.add(String.valueOf(item));
+                        }
+                    }
+                    return result;
+                }
+                if (val instanceof String s) {
+                    LinkedHashSet<String> result = new LinkedHashSet<>();
+                    String trimmed = s.trim();
+                    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                        String body = trimmed.substring(1, trimmed.length() - 1).trim();
+                        if (!body.isEmpty()) {
+                            for (String item : body.split(",")) {
+                                String normalized = item.trim();
+                                if (!normalized.isEmpty()) {
+                                    result.add(normalized);
+                                }
+                            }
+                        }
+                    } else if (!trimmed.isEmpty()) {
+                        result.add(trimmed);
+                    }
+                    return result;
+                }
+            } catch (Exception ignored) {}
+            return defValues != null ? defValues : new LinkedHashSet<>();
         }
     }
 

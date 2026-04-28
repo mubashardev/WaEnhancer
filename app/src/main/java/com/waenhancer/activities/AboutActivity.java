@@ -97,7 +97,7 @@ public class AboutActivity extends BaseActivity {
 
         Request request = new Request.Builder()
                 .url(API_URL)
-                .header("User-Agent", "WaEnhancer-App")
+                .header("User-Agent", "WaEnhancer Plus-App")
                 .header("Accept", "application/vnd.github.v3+json")
                 .build();
 
@@ -200,7 +200,7 @@ public class AboutActivity extends BaseActivity {
             com.bumptech.glide.Glide.with(holder.itemView.getContext())
                     .load(new com.bumptech.glide.load.model.GlideUrl(c.avatarUrl,
                             new com.bumptech.glide.load.model.LazyHeaders.Builder()
-                                    .addHeader("User-Agent", "WaEnhancer-App")
+                                    .addHeader("User-Agent", "WaEnhancer Plus-App")
                                     .build()))
                     .placeholder(R.drawable.ic_github)
                     .into(holder.ivAvatar);

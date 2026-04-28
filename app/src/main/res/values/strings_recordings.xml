@@ -1,0 +1,55 @@
+<resources>
+    <string name="call_recording_enable_summary_latest">Record incoming and outgoing calls (Voice &amp; Video) as audio.</string>
+    <string name="call_recording_manage">Manage Recordings</string>
+    <string name="call_recording_manage_summary">Browse, play, share and delete saved call recordings.</string>
+    <string name="call_recording_toast_title">Show Recording Notifications</string>
+    <string name="call_recording_toast_summary">Show a toast when recording starts or stops.</string>
+
+    <string name="recordings_manager">Recordings</string>
+    <string name="no_recordings_found">No recordings found</string>
+    <string name="delete_confirmation">Delete this recording?</string>
+    <string name="delete_multiple_confirmation">Delete %d recordings?</string>
+    <string name="share_recording">Share Recording</string>
+    <string name="share_recordings">Share Recordings</string>
+    <string name="sort_by">Sort By</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_date">Date</string>
+    <string name="sort_duration">Duration</string>
+    <string name="sort_contact">Contact</string>
+    <string name="selected_count">%d selected</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="play_pause">Play or pause</string>
+    <string name="close">Close</string>
+    <string name="share">Share</string>
+    <string name="delete">Delete</string>
+    <string name="recording_delete_failed">Failed to delete recording</string>
+    <string name="recording_share_failed">Could not share recording: %1$s</string>
+    <string name="recording_deleted_count">Deleted %d recordings</string>
+
+    <string name="call_recording_settings">Recording Settings</string>
+    <string name="select_recording_mode">Select Recording Mode</string>
+    <string name="recording_mode_description">Choose how call audio is captured. Root mode provides better quality but requires a rooted device.</string>
+    <string name="recording_included_contacts_summary_off">No included contacts selected</string>
+    <string name="recording_included_contacts_summary_on">%d included contacts</string>
+    <string name="recording_excluded_contacts_summary_off">No excluded contacts selected</string>
+    <string name="recording_excluded_contacts_summary_on">%d excluded contacts</string>
+
+    <string name="root_mode">Root Mode</string>
+    <string name="root_mode_description">Uses system-level audio capture for the best recording quality.</string>
+    <string name="root_advantage_1">Captures both sides of the call when the device allows it.</string>
+    <string name="root_advantage_2">Delivers clearer audio on supported rooted setups.</string>
+    <string name="root_advantage_3">Matches the latest upstream recording behavior.</string>
+    <string name="root_requirement">Requires working root access and may still be limited by device-specific Android restrictions.</string>
+
+    <string name="non_root_mode">Non-root Mode</string>
+    <string name="non_root_mode_description">Uses standard Android audio APIs and works on more devices.</string>
+    <string name="non_root_advantage_1">No root required.</string>
+    <string name="non_root_advantage_2">Falls back gracefully when deeper capture is unavailable.</string>
+    <string name="non_root_limitation_1">Some devices may only capture your microphone instead of both sides.</string>
+    <string name="recording_mode_info">Changes apply on the next call. Restart WhatsApp after changing recording mode for the most reliable behavior.</string>
+    <string name="call_recording_root_checking">Checking root access…</string>
+    <string name="root_access_granted">Root access granted. Root mode enabled.</string>
+    <string name="root_access_denied">Root access denied. Switched back to non-root mode.</string>
+    <string name="non_root_mode_enabled">Non-root mode enabled.</string>
+</resources>

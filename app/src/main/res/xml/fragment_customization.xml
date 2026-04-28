@@ -209,7 +209,7 @@
             app:title="@string/remove_channel_recomendations" />
 
         <ListPreference
-            android:defaultValue="0"
+            android:defaultValue="1"
             android:entries="@array/status_style_entries"
             android:entryValues="@array/status_style_values"
             app:key="status_style"

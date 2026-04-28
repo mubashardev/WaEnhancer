@@ -29,6 +29,8 @@ import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.util.Objects;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import rikka.material.preference.MaterialSwitchPreference;
 
@@ -66,6 +68,16 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             public void putLong(String key, long value) { mPrefs.edit().putLong(key, value).apply(); }
             @Override
             public long getLong(String key, long defValue) { return mPrefs.getLong(key, defValue); }
+            @Override
+            public void putStringSet(String key, @Nullable Set<String> values) {
+                mPrefs.edit().putStringSet(key, values).apply();
+            }
+            @Override
+            @Nullable
+            public Set<String> getStringSet(String key, @Nullable Set<String> defValues) {
+                Set<String> value = mPrefs.getStringSet(key, defValues);
+                return value != null ? value : (defValues != null ? defValues : new LinkedHashSet<>());
+            }
         });
 
         mPrefs.registerOnSharedPreferenceChangeListener(this);

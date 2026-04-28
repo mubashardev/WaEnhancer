@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.waenhancer.utils.RealPathUtil;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
@@ -28,7 +30,17 @@ import de.robv.android.xposed.XposedHelpers;
 public class VideoNoteAttachment extends Feature {
 
     public static final int REQUEST_PICK_VIDEO_NOTE = 0x8891;
+    private static final long PENDING_VIDEO_NOTE_TTL_MS = 120_000L;
     private static final java.util.WeakHashMap<Object, Boolean> fakeVideoNotes = new java.util.WeakHashMap<>();
+    private static final java.util.Map<String, Long> pendingVideoNoteMarkers = java.util.Collections
+            .synchronizedMap(new java.util.LinkedHashMap<>());
+    private static volatile boolean FORCE_NEXT_VIDEO_AS_PTV = false;
+    private static volatile long pendingVideoNoteRequestAt = 0L;
+    private static volatile String pendingVideoNoteJid = null;
+
+    private static void logVideoNote(String message) {
+        XposedBridge.log("WAE_VideoNote: " + message);
+    }
 
     public VideoNoteAttachment(ClassLoader loader, XSharedPreferences preferences) {
         super(loader, preferences);
@@ -39,7 +51,6 @@ public class VideoNoteAttachment extends Feature {
         prefs.reload();
         boolean enabled = prefs.getBoolean("send_video_as_video_note", false);
         boolean showButton = enabled;
-        boolean forceGlobal = enabled;
 
         if (!enabled)
             return;
@@ -145,19 +156,35 @@ public class VideoNoteAttachment extends Feature {
                         // we'll check if it's meant to be a Video Note (e.g. via our "Video Note"
                         // button or the global preference)
                         if (mediaType == 3) {
-                            java.io.File mediaFile = wrappedMsg.getMediaFile();
-                            boolean forceGlobal = prefs.getBoolean("send_video_as_video_note", false);
+                            com.waenhancer.xposed.core.components.FMessageWpp.Key messageKey = wrappedMsg.getKey();
+                            logVideoNote("constructor video messageKey="
+                                    + (messageKey != null ? messageKey.toString() : "null")
+                                    + ", mediaFile="
+                                    + (wrappedMsg.getMediaFile() != null ? wrappedMsg.getMediaFile().getAbsolutePath()
+                                            : "null")
+                                    + ", forceNext=" + FORCE_NEXT_VIDEO_AS_PTV
+                                    + ", pendingJid=" + pendingVideoNoteJid);
 
-                            if (forceGlobal || (mediaFile != null
-                                    && mediaFile.getAbsolutePath().toLowerCase().contains("whatsapp video notes"))
-                                    || VideoNoteAttachment.FORCE_NEXT_VIDEO_AS_PTV) {
+                            if (isStatusVideoMessage(messageKey)) {
+                                logVideoNote("constructor skipped: status video");
+                                return;
+                            }
+
+                            java.io.File mediaFile = wrappedMsg.getMediaFile();
+                            boolean matchedByFile = shouldForceVideoNote(mediaFile, messageKey);
+                            boolean matchedByFlag = false;
+                            if (!matchedByFile) {
+                                matchedByFlag = shouldForceNextVideoAsPtv();
+                            }
+                            if (matchedByFile || matchedByFlag) {
                                 java.lang.reflect.Field mediaTypeField = Unobfuscator.loadMediaTypeField(classLoader);
                                 mediaTypeField.setAccessible(true);
                                 mediaTypeField.setInt(fMessage, 81);
                                 fakeVideoNotes.put(fMessage, true);
-
-                                // Reset the flag after consuming it
-                                VideoNoteAttachment.FORCE_NEXT_VIDEO_AS_PTV = false;
+                                logVideoNote("mediaType forced to 81 via "
+                                        + (matchedByFile ? "file/request match" : "one-shot flag"));
+                            } else {
+                                logVideoNote("constructor saw video but no PTV match");
                             }
                         }
                     }
@@ -306,6 +333,7 @@ public class VideoNoteAttachment extends Feature {
                             Activity activity = (Activity) param.thisObject;
                             Intent intent = activity.getIntent();
                             if (intent != null && intent.getBooleanExtra("is_media_ptv", false)) {
+                                logVideoNote("MediaComposerActivity opened with is_media_ptv=true");
                                 new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
                                     try {
                                         int sendId = activity.getResources().getIdentifier("send", "id",
@@ -500,9 +528,6 @@ public class VideoNoteAttachment extends Feature {
 
     private static de.robv.android.xposed.XC_MethodHook.Unhook crashPreventHook;
     private static Class<?> targetVideoNoteClass = null;
-    // A flag to communicate between the picker result and the message builder
-    public static boolean FORCE_NEXT_VIDEO_AS_PTV = false;
-
     // ── Inject our item into the last row ──────────────────────────────────────
     private void injectVideoNoteItem(ViewGroup row, int btnW, int btnH) {
         Activity activity = WppCore.getCurrentActivity();
@@ -602,8 +627,8 @@ public class VideoNoteAttachment extends Feature {
                     ? conversationIntent.getStringExtra("jid")
                     : null;
 
-            // Arm the PTV override hook!
-            VideoNoteAttachment.FORCE_NEXT_VIDEO_AS_PTV = true;
+            rememberPendingVideoNote(activity, videoUri, jid);
+            logVideoNote("sendVideoToConversation uri=" + videoUri + ", jid=" + jid);
 
             if (jid != null) {
                 // We're in a conversation - share the video directly to this chat.
@@ -649,6 +674,240 @@ public class VideoNoteAttachment extends Feature {
         Activity activity = WppCore.getCurrentActivity();
         if (activity != null)
             sendVideoToConversation(activity, videoUri);
+    }
+
+    private static boolean shouldForceVideoNote(java.io.File mediaFile,
+            com.waenhancer.xposed.core.components.FMessageWpp.Key messageKey) {
+        pruneExpiredPendingMarkers();
+        if (mediaFile != null) {
+            String fullPath = normalizeMarker(mediaFile.getAbsolutePath());
+            String fileName = normalizeMarker(mediaFile.getName());
+            String parentPath = mediaFile.getParentFile() != null
+                    ? normalizeMarker(mediaFile.getParentFile().getAbsolutePath())
+                    : null;
+
+            synchronized (pendingVideoNoteMarkers) {
+                java.util.Iterator<java.util.Map.Entry<String, Long>> iterator = pendingVideoNoteMarkers.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    java.util.Map.Entry<String, Long> entry = iterator.next();
+                    String marker = entry.getKey();
+                    if (matchesMarker(marker, fullPath, fileName, parentPath)) {
+                        iterator.remove();
+                        clearPendingVideoNoteRequest();
+                        logVideoNote("matched pending marker " + marker + " for " + fullPath);
+                        return true;
+                    }
+                }
+            }
+
+            if (parentPath != null && parentPath.contains("whatsapp video notes")) {
+                clearPendingVideoNoteRequest();
+                logVideoNote("matched WhatsApp video notes folder for " + parentPath);
+                return true;
+            }
+        }
+
+        if (hasActivePendingVideoNoteRequest(messageKey)) {
+            clearPendingVideoNoteRequest();
+            logVideoNote("matched active pending request for key="
+                    + (messageKey != null ? messageKey.toString() : "null"));
+            return true;
+        }
+
+        return false;
+    }
+
+    private static boolean matchesMarker(String marker, String fullPath, String fileName, String parentPath) {
+        if (TextUtils.isEmpty(marker)) {
+            return false;
+        }
+        return marker.equals(fullPath)
+                || marker.equals(fileName)
+                || (!TextUtils.isEmpty(fullPath) && fullPath.contains(marker))
+                || (!TextUtils.isEmpty(parentPath) && parentPath.contains(marker));
+    }
+
+    private static void rememberPendingVideoNote(Activity activity, Uri videoUri, String jid) {
+        FORCE_NEXT_VIDEO_AS_PTV = true;
+        pendingVideoNoteRequestAt = android.os.SystemClock.elapsedRealtime();
+        pendingVideoNoteJid = normalizeMarker(jid);
+        logVideoNote("armed request uri=" + videoUri + ", jid=" + pendingVideoNoteJid);
+        addPendingMarker(videoUri != null ? videoUri.toString() : null);
+        addPendingMarker(videoUri != null ? videoUri.getLastPathSegment() : null);
+
+        try {
+            String realPath = RealPathUtil.getRealFilePath(activity, videoUri);
+            addPendingMarker(realPath);
+            if (!TextUtils.isEmpty(realPath)) {
+                addPendingMarker(new java.io.File(realPath).getName());
+            }
+            logVideoNote("resolved realPath=" + realPath);
+        } catch (Throwable ignored) {
+            logVideoNote("failed to resolve real path for uri=" + videoUri);
+        }
+    }
+
+    private static void addPendingMarker(String marker) {
+        String normalized = normalizeMarker(marker);
+        if (TextUtils.isEmpty(normalized)) {
+            return;
+        }
+        pendingVideoNoteMarkers.put(normalized, android.os.SystemClock.elapsedRealtime());
+        logVideoNote("added pending marker=" + normalized);
+    }
+
+    private static void pruneExpiredPendingMarkers() {
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (pendingVideoNoteRequestAt > 0 && now - pendingVideoNoteRequestAt > PENDING_VIDEO_NOTE_TTL_MS) {
+            clearPendingVideoNoteRequest();
+        }
+        synchronized (pendingVideoNoteMarkers) {
+            java.util.Iterator<java.util.Map.Entry<String, Long>> iterator = pendingVideoNoteMarkers.entrySet().iterator();
+            while (iterator.hasNext()) {
+                java.util.Map.Entry<String, Long> entry = iterator.next();
+                if (now - entry.getValue() > PENDING_VIDEO_NOTE_TTL_MS) {
+                    iterator.remove();
+                }
+            }
+        }
+    }
+
+    private static boolean hasActivePendingVideoNoteRequest(
+            com.waenhancer.xposed.core.components.FMessageWpp.Key messageKey) {
+        long requestAt = pendingVideoNoteRequestAt;
+        if (requestAt <= 0) {
+            return false;
+        }
+        long ageMs = android.os.SystemClock.elapsedRealtime() - requestAt;
+        if (ageMs > PENDING_VIDEO_NOTE_TTL_MS) {
+            clearPendingVideoNoteRequest();
+            return false;
+        }
+
+        String expectedJid = pendingVideoNoteJid;
+        if (TextUtils.isEmpty(expectedJid)) {
+            return true;
+        }
+        return TextUtils.equals(expectedJid, normalizeMessageJid(messageKey));
+    }
+
+    private static boolean shouldForceNextVideoAsPtv() {
+        if (!FORCE_NEXT_VIDEO_AS_PTV) {
+            return false;
+        }
+        if (!hasAnyPendingVideoNoteRequest()) {
+            FORCE_NEXT_VIDEO_AS_PTV = false;
+            logVideoNote("one-shot flag cleared because request expired");
+            return false;
+        }
+
+        if (isCurrentContextStatus()) {
+            logVideoNote("one-shot flag blocked in status context");
+            return false;
+        }
+
+        FORCE_NEXT_VIDEO_AS_PTV = false;
+        clearPendingVideoNoteRequest();
+        logVideoNote("one-shot flag matched and consumed");
+        return true;
+    }
+
+    private static boolean isCurrentContextStatus() {
+        Activity currentActivity = WppCore.getCurrentActivity();
+        if (currentActivity == null) {
+            return false;
+        }
+
+        Intent currentIntent = currentActivity.getIntent();
+        if (currentIntent == null) {
+            return false;
+        }
+
+        return isStatusIntent(currentIntent);
+    }
+
+    private static boolean isStatusIntent(Intent intent) {
+        if (intent == null) {
+            return false;
+        }
+
+        if ("status@broadcast".equals(normalizeMarker(intent.getStringExtra("jid")))) {
+            return true;
+        }
+
+        try {
+            java.util.ArrayList<String> jids = intent.getStringArrayListExtra("jids");
+            if (jids != null) {
+                for (String jid : jids) {
+                    if ("status@broadcast".equals(normalizeMarker(jid))) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            Object rawExtra = intent.getExtras() != null ? intent.getExtras().get("jids") : null;
+            if (rawExtra instanceof java.util.ArrayList<?>) {
+                for (Object item : (java.util.ArrayList<?>) rawExtra) {
+                    if (item instanceof String && "status@broadcast".equals(normalizeMarker((String) item))) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+
+        return false;
+    }
+
+    private static boolean hasAnyPendingVideoNoteRequest() {
+        long requestAt = pendingVideoNoteRequestAt;
+        if (requestAt <= 0) {
+            return false;
+        }
+        if (android.os.SystemClock.elapsedRealtime() - requestAt > PENDING_VIDEO_NOTE_TTL_MS) {
+            clearPendingVideoNoteRequest();
+            return false;
+        }
+        return true;
+    }
+
+    private static String normalizeMessageJid(com.waenhancer.xposed.core.components.FMessageWpp.Key messageKey) {
+        if (messageKey == null || messageKey.remoteJid == null) {
+            return null;
+        }
+        String raw = messageKey.remoteJid.getPhoneRawString();
+        if (TextUtils.isEmpty(raw)) {
+            raw = messageKey.remoteJid.getUserRawString();
+        }
+        return normalizeMarker(raw);
+    }
+
+    private static boolean isStatusVideoMessage(com.waenhancer.xposed.core.components.FMessageWpp.Key messageKey) {
+        if (messageKey != null && messageKey.remoteJid != null && messageKey.remoteJid.isStatus()) {
+            return true;
+        }
+        return isCurrentContextStatus() && !FORCE_NEXT_VIDEO_AS_PTV;
+    }
+
+    private static void clearPendingVideoNoteRequest() {
+        logVideoNote("clearing pending request");
+        FORCE_NEXT_VIDEO_AS_PTV = false;
+        pendingVideoNoteRequestAt = 0L;
+        pendingVideoNoteJid = null;
+    }
+
+    private static boolean isExplicitPtvComposerIntent(Intent intent) {
+        return intent != null && intent.getBooleanExtra("is_media_ptv", false);
+    }
+
+    private static String normalizeMarker(String value) {
+        if (TextUtils.isEmpty(value)) {
+            return null;
+        }
+        return value.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
     @NonNull

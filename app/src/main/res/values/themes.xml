@@ -123,7 +123,7 @@
     </style>
 
     <style name="BottomNavStyle" parent="Widget.Material3.BottomNavigationView">
-        <item name="labelVisibilityMode">labeled</item>
+        <item name="labelVisibilityMode">selected</item>
         <item name="android:minHeight">64dp</item>
         <item name="elevation">0dp</item>
         <item name="android:background">@android:color/transparent</item>

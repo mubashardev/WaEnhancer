@@ -36,6 +36,7 @@ public class LogsActivity extends BaseActivity {
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
         binding.toolbar.setNavigationOnClickListener(v -> onBackPressed());

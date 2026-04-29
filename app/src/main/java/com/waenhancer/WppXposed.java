@@ -79,10 +79,13 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
     }
 
     private void setupLogging(XC_LoadPackage.LoadPackageParam lpparam) {
+        // Initial log to confirm hook is active
+        com.waenhancer.utils.LogManager.addLogViaProvider(com.waenhancer.xposed.utils.Utils.getApplication(), lpparam.packageName, "Logging initialized for " + lpparam.packageName);
+
         XposedHelpers.findAndHookMethod(XposedBridge.class, "log", String.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (getPref().getBoolean("logging_enabled", false)) {
+                if (com.waenhancer.utils.LogManager.isLoggingEnabledViaProvider(com.waenhancer.xposed.utils.Utils.getApplication())) {
                     com.waenhancer.utils.LogManager.addLogViaProvider(com.waenhancer.xposed.utils.Utils.getApplication(), lpparam.packageName, (String) param.args[0]);
                 }
             }
@@ -91,7 +94,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
         XposedHelpers.findAndHookMethod(XposedBridge.class, "log", Throwable.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (getPref().getBoolean("logging_enabled", false)) {
+                if (com.waenhancer.utils.LogManager.isLoggingEnabledViaProvider(com.waenhancer.xposed.utils.Utils.getApplication())) {
                     Throwable t = (Throwable) param.args[0];
                     com.waenhancer.utils.LogManager.addLogViaProvider(com.waenhancer.xposed.utils.Utils.getApplication(), lpparam.packageName, android.util.Log.getStackTraceString(t));
                 }

@@ -41,11 +41,24 @@ public class HookProvider extends ContentProvider {
             String pkg = extras.getString("package");
             String msg = extras.getString("message");
             if (pkg != null && msg != null) {
-                com.waenhancer.utils.LogManager.addLog(pkg, msg);
+                com.waenhancer.utils.LogManager.addLog(context, pkg, msg);
             }
             return Bundle.EMPTY;
         }
         var prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        if ("get_preference".equals(method) && extras != null) {
+            String key = extras.getString("key");
+            Bundle result = new Bundle();
+            if (key != null) {
+                Object value = prefs.getAll().get(key);
+                if (value instanceof Boolean) result.putBoolean("value", (Boolean) value);
+                else if (value instanceof String) result.putString("value", (String) value);
+                else if (value instanceof Integer) result.putInt("value", (Integer) value);
+                else if (value instanceof Long) result.putLong("value", (Long) value);
+                else if (value instanceof Float) result.putFloat("value", (Float) value);
+            }
+            return result;
+        }
         if ("get_all_preferences".equals(method)) {
             Bundle result = new Bundle();
             result.putSerializable("prefs", new HashMap<>(prefs.getAll()));

@@ -29,7 +29,14 @@ public class LogManager {
     }
 
     public static void addLog(String packageName, String message) {
-        File logFolder = new File(App.getInstance().getCacheDir(), "logs");
+        addLog(null, packageName, message);
+    }
+
+    public static void addLog(Context context, String packageName, String message) {
+        File cacheDir = (context != null) ? context.getCacheDir() : (App.getInstance() != null ? App.getInstance().getCacheDir() : null);
+        if (cacheDir == null) return;
+
+        File logFolder = new File(cacheDir, "logs");
         if (!logFolder.exists()) {
             logFolder.mkdirs();
         }
@@ -47,12 +54,25 @@ public class LogManager {
         }
     }
 
+    public static boolean isLoggingEnabledViaProvider(Context context) {
+        if (context == null) return false;
+        try {
+            android.os.Bundle extras = new android.os.Bundle();
+            extras.putString("key", PREF_LOGGING_ENABLED);
+            android.os.Bundle result = context.getContentResolver().call(android.net.Uri.parse("content://com.waenhancer.hookprovider"), "get_preference", null, extras);
+            return result != null && result.getBoolean("value", false);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public static void addLogViaProvider(Context context, String packageName, String message) {
+        if (context == null) return;
         try {
             android.os.Bundle extras = new android.os.Bundle();
             extras.putString("package", packageName);
             extras.putString("message", message);
-            context.getContentResolver().call(android.net.Uri.parse("content://" + context.getPackageName() + ".hookprovider"), "add_log", null, extras);
+            context.getContentResolver().call(android.net.Uri.parse("content://com.waenhancer.hookprovider"), "add_log", null, extras);
         } catch (Exception e) {
             // Silently fail
         }

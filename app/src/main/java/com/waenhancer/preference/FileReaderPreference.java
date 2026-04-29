@@ -161,7 +161,7 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
         this.filePath = filePath;
 
         // Save the XML content in the preference
-        getSharedPreferences().edit()
+        getSafeSharedPreferences().edit()
                 .putString(getKey(), xmlContent)
                 .apply();
 
@@ -179,5 +179,14 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
             this.xmlContent = savedXml;
             setSummary(this.filePath != null ? this.filePath : "XML content loaded");
         }
+    }
+
+    @androidx.annotation.NonNull
+    private android.content.SharedPreferences getSafeSharedPreferences() {
+        android.content.SharedPreferences prefs = getSharedPreferences();
+        if (prefs != null) {
+            return prefs;
+        }
+        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
     }
 }

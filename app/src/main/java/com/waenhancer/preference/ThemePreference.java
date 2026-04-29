@@ -71,7 +71,8 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
         List<String> folders = getFolders();
         folders.add(0, "Default Theme");
 
-        var folder_name = getSharedPreferences().getString(getKey(), null);
+        var sharedPreferences = getSafeSharedPreferences();
+        var folder_name = sharedPreferences.getString(getKey(), null);
 
         com.google.android.material.bottomsheet.BottomSheetDialog builder = new com.google.android.material.bottomsheet.BottomSheetDialog(
                 context);
@@ -117,13 +118,12 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
                 }
             }
             itemView.setOnClickListener(v -> {
-                var sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-                sharedPreferences.edit().putString(getKey(), folder).commit();
+                getSafeSharedPreferences().edit().putString(getKey(), folder).commit();
                 if (cssFile.exists()) {
                     var code = FilesKt.readText(cssFile, Charset.defaultCharset());
-                    sharedPreferences.edit().putString("custom_css", code).commit();
+                    getSafeSharedPreferences().edit().putString("custom_css", code).commit();
                 } else {
-                    sharedPreferences.edit().putString("custom_css", "").commit();
+                    getSafeSharedPreferences().edit().putString("custom_css", "").commit();
                 }
                 mainDialog.dismiss();
             });
@@ -171,7 +171,6 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
     }
 
     private void createNewFolder(String folderName) {
-        File rootDirectory = new File(Environment.getExternalStorageDirectory(), "Download/WaEnhancer/themes");
         File newFolder = new File(rootDirectory, folderName);
         if (!newFolder.exists()) {
             if (newFolder.mkdirs()) {
@@ -196,8 +195,6 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
 
                 while ((zipEntry = zipInputStream.getNextEntry()) != null) {
                     var entryName = zipEntry.getName();
-                    var rootDirectory = new File(Environment.getExternalStorageDirectory(),
-                            "Download/WaEnhancer/themes");
 
                     String folderName;
                     String targetPath;
@@ -258,5 +255,14 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
         }
 
         return fileName;
+    }
+
+    @androidx.annotation.NonNull
+    private android.content.SharedPreferences getSafeSharedPreferences() {
+        android.content.SharedPreferences prefs = getSharedPreferences();
+        if (prefs != null) {
+            return prefs;
+        }
+        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
     }
 }

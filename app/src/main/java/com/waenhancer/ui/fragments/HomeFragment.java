@@ -188,6 +188,11 @@ public class HomeFragment extends BaseFragment {
             }
         });
 
+        binding.btnLogs.setOnClickListener(view -> {
+            animateClick(view);
+            startActivity(new Intent(requireContext(), com.waenhancer.activities.LogsActivity.class));
+        });
+
         binding.telegramBtn.setOnClickListener(view -> {
             animateClick(view);
             openTelegramChannel(requireContext());

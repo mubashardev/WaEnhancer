@@ -574,5 +574,14 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="entry_point_wa_settings">WhatsApp Settings (Coming Soon)</string>
     <string name="entry_point_none">Disabled</string>
     <string name="disable_ads">Disable Ads</string>
-    <string name="disable_ads_sum">Blocks ads from appearing in WhatsApp</string>
+    <string name="logs">Logs</string>
+    <string name="start_logging">Start Logging</string>
+    <string name="stop_logging">Stop Logging</string>
+    <string name="clear_logs">Clear Logs</string>
+    <string name="copy_logs">Copy Logs</string>
+    <string name="no_logs_found">No logs found yet.</string>
+    <string name="whatsapp_logs">WhatsApp</string>
+    <string name="whatsapp_business_logs">WA Business</string>
+    <string name="logging_started">Logging started</string>
+    <string name="logging_stopped">Logging stopped</string>
 </resources>

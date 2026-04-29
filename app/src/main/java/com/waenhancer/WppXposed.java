@@ -69,11 +69,34 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
         if ((packageName.equals(FeatureLoader.PACKAGE_WPP) && App.isOriginalPackage()) || packageName.equals(FeatureLoader.PACKAGE_BUSINESS)) {
             XposedBridge.log("[•] This package: " + lpparam.packageName);
 
+            setupLogging(lpparam);
+
             // Load features
             FeatureLoader.start(classLoader, getPref(), lpparam.appInfo.sourceDir);
 
             disableSecureFlag();
         }
+    }
+
+    private void setupLogging(XC_LoadPackage.LoadPackageParam lpparam) {
+        XposedHelpers.findAndHookMethod(XposedBridge.class, "log", String.class, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                if (getPref().getBoolean("logging_enabled", false)) {
+                    com.waenhancer.utils.LogManager.addLogViaProvider(com.waenhancer.xposed.utils.Utils.getApplication(), lpparam.packageName, (String) param.args[0]);
+                }
+            }
+        });
+
+        XposedHelpers.findAndHookMethod(XposedBridge.class, "log", Throwable.class, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                if (getPref().getBoolean("logging_enabled", false)) {
+                    Throwable t = (Throwable) param.args[0];
+                    com.waenhancer.utils.LogManager.addLogViaProvider(com.waenhancer.xposed.utils.Utils.getApplication(), lpparam.packageName, android.util.Log.getStackTraceString(t));
+                }
+            }
+        });
     }
 
     @Override

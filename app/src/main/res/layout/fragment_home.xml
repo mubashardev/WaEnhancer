@@ -50,110 +50,130 @@
                     app:cardPreventCornerOverlap="false"
                     app:strokeWidth="0dp">
 
-                    <LinearLayout
+                    <RelativeLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/hero_glow_enabled"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingHorizontal="24dp"
-                        android:paddingTop="32dp"
-                        android:paddingBottom="28dp">
+                        android:layout_height="wrap_content">
 
-                        <!-- Status Icon -->
-                        <ImageView
-                            android:id="@+id/status_icon"
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            android:layout_marginBottom="16dp"
-                            app:srcCompat="@drawable/ic_round_check_circle_24"
-                            app:tint="?attr/colorPrimary"
-                            tools:ignore="ContentDescription" />
-
-                        <!-- Module Status Title -->
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/status_title"
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:letterSpacing="-0.03"
-                            android:text="@string/module_enabled"
-                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textStyle="bold" />
+                            android:background="@drawable/hero_glow_enabled"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:paddingHorizontal="24dp"
+                            android:paddingTop="32dp"
+                            android:paddingBottom="28dp">
 
-                        <!-- Version Info (Clickable Badge) -->
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/status_summary"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/version_badge_bg"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:paddingHorizontal="16dp"
-                            android:paddingVertical="6dp"
-                            android:textAppearance="?attr/textAppearanceLabelLarge"
-                            android:textColor="?attr/colorPrimary"
-                            android:textStyle="bold"
-                            tools:text="v3.1.2" />
+                            <!-- Status Icon -->
+                            <ImageView
+                                android:id="@+id/status_icon"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:layout_marginBottom="16dp"
+                                app:srcCompat="@drawable/ic_round_check_circle_24"
+                                app:tint="?attr/colorPrimary"
+                                tools:ignore="ContentDescription" />
 
-                        <!-- Report Issue Button -->
+                            <!-- Module Status Title -->
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/status_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:letterSpacing="-0.03"
+                                android:text="@string/module_enabled"
+                                android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textStyle="bold" />
+
+                            <!-- Version Info (Clickable Badge) -->
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/status_summary"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:background="@drawable/version_badge_bg"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:paddingHorizontal="16dp"
+                                android:paddingVertical="6dp"
+                                android:textAppearance="?attr/textAppearanceLabelLarge"
+                                android:textColor="?attr/colorPrimary"
+                                android:textStyle="bold"
+                                tools:text="v3.1.2" />
+
+                            <!-- Report Issue Button -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnReportIssue"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:minHeight="40dp"
+                                android:text="Report an issue"
+                                android:textAllCaps="false"
+                                android:textColor="?attr/colorPrimary"
+                                android:textSize="13sp"
+                                app:cornerRadius="20dp"
+                                app:icon="@drawable/ic_github"
+                                app:iconTint="?attr/colorPrimary"
+                                app:iconPadding="8dp"
+                                app:iconSize="16dp"
+                                app:strokeColor="?attr/colorPrimary"
+                                app:strokeWidth="1dp" />
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/release_channel_label"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="14dp"
+                                android:text="@string/release_channel_title"
+                                android:textAppearance="?attr/textAppearanceLabelLarge"
+                                android:textColor="?attr/colorOnSurface" />
+
+                            <com.google.android.material.button.MaterialButtonToggleGroup
+                                android:id="@+id/release_channel_group"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                app:selectionRequired="true"
+                                app:singleSelection="true">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/release_channel_stable_btn"
+                                    style="@style/Widget.Material3.Button.OutlinedButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:minHeight="40dp"
+                                    android:text="@string/release_channel_stable"
+                                    android:textAllCaps="false" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/release_channel_beta_btn"
+                                    style="@style/Widget.Material3.Button.OutlinedButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:minHeight="40dp"
+                                    android:text="@string/release_channel_beta"
+                                    android:textAllCaps="false" />
+                            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                        </LinearLayout>
+
+                        <!-- Logs Button (Top Right) -->
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnReportIssue"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:minHeight="40dp"
-                            android:text="Report an issue"
-                            android:textAllCaps="false"
-                            android:textColor="?attr/colorPrimary"
-                            android:textSize="13sp"
-                            app:cornerRadius="20dp"
-                            app:icon="@drawable/ic_github"
-                            app:iconTint="?attr/colorPrimary"
-                            app:iconPadding="8dp"
-                            app:iconSize="16dp"
-                            app:strokeColor="?attr/colorPrimary"
-                            app:strokeWidth="1dp" />
+                            android:id="@+id/btnLogs"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_alignParentTop="true"
+                            android:layout_margin="12dp"
+                            app:icon="@drawable/ic_logs"
+                            app:iconSize="24dp"
+                            app:iconTint="?attr/colorOnSurfaceVariant" />
 
-                        <com.google.android.material.textview.MaterialTextView
-                            android:id="@+id/release_channel_label"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="14dp"
-                            android:text="@string/release_channel_title"
-                            android:textAppearance="?attr/textAppearanceLabelLarge"
-                            android:textColor="?attr/colorOnSurface" />
+                    </RelativeLayout>
 
-                        <com.google.android.material.button.MaterialButtonToggleGroup
-                            android:id="@+id/release_channel_group"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            app:selectionRequired="true"
-                            app:singleSelection="true">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/release_channel_stable_btn"
-                                style="@style/Widget.Material3.Button.OutlinedButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:minHeight="40dp"
-                                android:text="@string/release_channel_stable"
-                                android:textAllCaps="false" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/release_channel_beta_btn"
-                                style="@style/Widget.Material3.Button.OutlinedButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:minHeight="40dp"
-                                android:text="@string/release_channel_beta"
-                                android:textAllCaps="false" />
-                        </com.google.android.material.button.MaterialButtonToggleGroup>
-
-                    </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- ═══════════════════════════════════════════ -->

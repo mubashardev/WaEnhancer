@@ -37,6 +37,14 @@ public class HookProvider extends ContentProvider {
         if (context == null) {
             return null;
         }
+        if ("add_log".equals(method) && extras != null) {
+            String pkg = extras.getString("package");
+            String msg = extras.getString("message");
+            if (pkg != null && msg != null) {
+                com.waenhancer.utils.LogManager.addLog(pkg, msg);
+            }
+            return Bundle.EMPTY;
+        }
         var prefs = PreferenceManager.getDefaultSharedPreferences(context);
         if ("get_all_preferences".equals(method)) {
             Bundle result = new Bundle();

@@ -146,6 +146,11 @@
             android:parentActivityName=".activities.MainActivity" />
 
         <activity
+            android:name=".activities.LogsActivity"
+            android:theme="@style/AppTheme"
+            android:parentActivityName=".activities.MainActivity" />
+
+        <activity
             android:name=".ui.fragments.SupportedVersionsActivity"
             android:theme="@style/AppTheme"
             android:exported="true"

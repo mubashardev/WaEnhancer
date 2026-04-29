@@ -119,7 +119,7 @@
     <string name="whatsapp_in_background">WhatsApp activo en segundo plano</string>
     <string name="whatsapp_is_not_running_or_has_not_been_activated_in_lsposed">WhatsApp no esta abierto o no se ha activado en LSPosed</string>
     <string name="business_is_not_running_or_has_not_been_activated_in_lsposed">Business no está abierto o no se ha activado en Lsposed</string>
-    <string name="restart_wpp">Es necesario reiniciar WhatsApp para que los cambios de WaEnhancer Plus hagan efecto.\n\n¿Quieres reiniciar?</string>
+    <string name="restart_wpp">Es necesario reiniciar WhatsApp para que los cambios de WaEnhancer X hagan efecto.\n\n¿Quieres reiniciar?</string>
     <string name="version_s_not_listed">¡La versión %s no aparece en las versiones compatibles!\n¡Por favor, usa una versión de WhatsApp compatible para evitar errores!</string>
     <string name="media">Multimedia</string>
     <string name="show_button_to_send_blue_tick">Mostrar botón para enviar el tick azul</string>
@@ -223,7 +223,7 @@
     <string name="message_removed_on">Este mensaje fue eliminado el %s.</string>
     <string name="disable_default_emojis">Desactivar Emojis por Defecto</string>
     <string name="theme_mode">Tema Oscuro</string>
-    <string name="theme_mode_sum">Forzar color de la interfaz en WaEnhancer Plus</string>
+    <string name="theme_mode_sum">Forzar color de la interfaz en WaEnhancer X</string>
     <string name="disable_default_emojis_sum">Desactiva los emojis predeterminados de Whatsapp y usa emojis del sistema\n(NOTA: Los emojis de Whatsapp desaparecerán del selector, usa el teclado para insertar).</string>
     <string name="other">Otros</string>
     <string name="enable_media_preview">Activar vista previa de multimedia</string>
@@ -277,15 +277,15 @@
     <string name="select_status_type">Seleccionar tipo de estado</string>
     <string name="open_camera">Abrir cámara</string>
     <string name="edit_text">Editar texto</string>
-    <string name="about_info">WaEnhancer Plus es un módulo Xposed que mejora tu experiencia de WhatsApp al ofrecer características avanzadas de privacidad, personalización de la pantalla de inicio, ajustes generales y mejoras en multimedia.</string>
+    <string name="about_info">WaEnhancer X es un módulo Xposed que mejora tu experiencia de WhatsApp al ofrecer características avanzadas de privacidad, personalización de la pantalla de inicio, ajustes generales y mejoras en multimedia.</string>
     <string name="installation">Instalación</string>
-    <string name="installation_desc">1. Asegúrese de que su dispositivo está rooteado.\n2. Instale el Xposed Framework en su dispositivo.\n3. Descarga el WaEnhancer Plus desde la sección Acciones.\n4. Instala el APK de WaEnhancer Plus.\n5. Activa el módulo WaEnhancer Plus en la aplicación Xposed Installer.</string>
+    <string name="installation_desc">1. Asegúrese de que su dispositivo está rooteado.\n2. Instale el Xposed Framework en su dispositivo.\n3. Descarga el WaEnhancer X desde la sección Acciones.\n4. Instala el APK de WaEnhancer X.\n5. Activa el módulo WaEnhancer X en la aplicación Xposed Installer.</string>
     <string name="go_to_telegram">Ir a Telegram</string>
     <string name="go_to_github">Ir a GitHub</string>
     <string name="support">Soporte</string>
-    <string name="support_desc">Si encuentras algún problema o tienes preguntas sobre WaEnhancer Plus, por favor visita Telegram.</string>
+    <string name="support_desc">Si encuentras algún problema o tienes preguntas sobre WaEnhancer X, por favor visita Telegram.</string>
     <string name="license">Licencia</string>
-    <string name="license_desc">Este proyecto está licenciado bajo la Licencia GNU - vea el archivo LICENSE para más detalles.\n\nNota: Por favor, utilice WaEnhancer Plus de forma responsable y de acuerdo con los términos y condiciones de las aplicaciones que está modificando. La falta de esta herramienta puede tener consecuencias jurídicas.</string>
+    <string name="license_desc">Este proyecto está licenciado bajo la Licencia GNU - vea el archivo LICENSE para más detalles.\n\nNota: Por favor, utilice WaEnhancer X de forma responsable y de acuerdo con los términos y condiciones de las aplicaciones que está modificando. La falta de esta herramienta puede tener consecuencias jurídicas.</string>
     <string name="select_a_color">Seleccione un color</string>
     <string name="custom_appearance">Apariencia personalizada</string>
     <string name="custom_filters_sum">Activar filtros por ID y CSS personalizado</string>
@@ -305,7 +305,7 @@
     <string name="new_theme_name">Nuevo nombre del tema</string>
     <string name="create">Crear</string>
     <string name="storage_permission">Permiso de almacenamiento</string>
-    <string name="permission_storage">¿Permitir que WaEnhancer Plus acceda a su almacenamiento externo?</string>
+    <string name="permission_storage">¿Permitir que WaEnhancer X acceda a su almacenamiento externo?</string>
     <string name="allow">Permitir</string>
     <string name="deny">Denegar</string>
     <string name="saved">Guardado</string>
@@ -331,8 +331,8 @@
     <string name="list_animations_home_screen_sum">Añadir animaciones al deslizar la lista de chat</string>
     <string name="stamp_copied_messages">Eliminar sello de los mensajes copiados</string>
     <string name="stamp_copied_messages_sum">Elimina nombre y fecha al copiar más de un mensaje</string>
-    <string name="invalid_folder">La carpeta no válida ha sido seleccionada. Por favor, elija la carpeta WaEnhancer Plus</string>
-    <string name="uri_permission">Para utilizar temas personalizados necesitas seleccionar la carpeta \"WaEnhancer Plus\" en \"Download\"</string>
+    <string name="invalid_folder">La carpeta no válida ha sido seleccionada. Por favor, elija la carpeta WaEnhancer X</string>
+    <string name="uri_permission">Para utilizar temas personalizados necesitas seleccionar la carpeta \"WaEnhancer X\" en \"Download\"</string>
     <string name="double_click_to_react">Habilitar Doble Clic para Reaccionar</string>
     <string name="double_click_to_like_sum">Activa la posibilidad de hacer doble clic en el mensaje para reaccionarlo</string>
     <string name="custom_reaction">Reacción personalizada</string>
@@ -346,7 +346,7 @@
     <string name="ghost_mode_s">Modo fantasma [%s]</string>
     <string name="ghost_mode_title">Modo Fantasma</string>
     <string name="ghost_mode_sum">Mostrar un botón del Modo Fantasma en la barra de herramientas de la pantalla de inicio</string>
-    <string name="grant_permissions">Para usar WaEnhancer Plus es necesario conceder algunos permisos para usar las funciones.</string>
+    <string name="grant_permissions">Para usar WaEnhancer X es necesario conceder algunos permisos para usar las funciones.</string>
     <string name="grant_manage_storage">Conceder permiso de almacenamiento</string>
     <string name="grant_media_read">Conceder permiso para leer multimedia</string>
     <string name="grant_reading_of_contacts">Conceder permiso para la lectura de contactos</string>
@@ -362,8 +362,8 @@
     <string name="select_all">Seleccionar Todo</string>
     <string name="custom_colors_for_text_status">Personalizar colores de los textos en los estados</string>
     <string name="custom_colors_for_text_status_sum">Mantén pulsado el selector de color en el estado para personalizar los colores</string>
-    <string name="enable_wa_enhancer_button">Habilitar botón WaEnhancer Plus</string>
-    <string name="enable_wa_enhancer_button_sum">Añadir botón en la pantalla de inicio para abrir WaEnhancer Plus</string>
+    <string name="enable_wa_enhancer_button">Habilitar botón WaEnhancer X</string>
+    <string name="enable_wa_enhancer_button_sum">Añadir botón en la pantalla de inicio para abrir WaEnhancer X</string>
     <string name="custom_privacy">Privacidad personalizada</string>
     <string name="custom_privacy_sum">Habilitar/deshabilitar privacidad personalizada</string>
     <string name="custom_privacy_per_contact">Privacidad personalizada por contacto</string>

@@ -48,11 +48,11 @@ public class ScopeHook {
                 try {
                     String method = (String) param.args[0];
                     String arg = (String) param.args[1];
-                    if ("WaEnhancer Plus".equals(method)) {
+                    if ("WaEnhancer X".equals(method)) {
                         if ("getHookBinder".equals(arg)) {
                             Method mGetContext = param.thisObject.getClass().getMethod("getContext");
                             Context context = (Context) mGetContext.invoke(param.thisObject);
-                            XposedBridge.log("WaEnhancer Plus: Trying to allow blocking ");
+                            XposedBridge.log("WaEnhancer X: Trying to allow blocking ");
                             try {
                                 XposedHelpers.callStaticMethod(Binder.class, "allowBlockingForCurrentThread");
                             } catch (Throwable ignored) {
@@ -66,7 +66,7 @@ public class ScopeHook {
                                 XposedHelpers.callStaticMethod(Binder.class, "defaultBlockingForCurrentThread");
                             } catch (Throwable ignored) {
                             }
-                            XposedBridge.log("WaEnhancer Plus: Bypass Scope using Provider Settings");
+                            XposedBridge.log("WaEnhancer X: Bypass Scope using Provider Settings");
                         }
                     }
                 } catch (Throwable ex) {

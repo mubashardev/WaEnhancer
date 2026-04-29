@@ -123,7 +123,7 @@
     <string name="whatsapp_in_background">WhatsApp berjalan dilatar belakang</string>
     <string name="whatsapp_is_not_running_or_has_not_been_activated_in_lsposed">WhatsApp tidak berjalan atau belum diaktifkan di LSPosed</string>
     <string name="business_is_not_running_or_has_not_been_activated_in_lsposed">WhatsApp Bisnis tidak berjalan atau belum diaktifkan di LSPosed</string>
-    <string name="restart_wpp">WhatsApp harus dimulai ulang agar perubahan di WaEnhancer Plus dapat diterapkan.
+    <string name="restart_wpp">WhatsApp harus dimulai ulang agar perubahan di WaEnhancer X dapat diterapkan.
 
 Apakah Anda ingin mulai ulang WhatsApp?</string>
     <string name="version_s_not_listed">Versi %s tidak terdaftar dalam versi yang didukung!
@@ -232,8 +232,8 @@ Saat Anda mengaktifkan bekukan \"terakhir dilihat dan online\", Anda tidak dapat
     <string name="android_version">Android SDK</string>
     <string name="message_removed_on">Pesan ini dihapus pada %s</string>
     <string name="disable_default_emojis">Nonaktifkan Emoji Bawaan</string>
-    <string name="theme_mode">Tema Gelap WaEnhancer Plus</string>
-    <string name="theme_mode_sum">Pilih tema WaEnhancer Plus</string>
+    <string name="theme_mode">Tema Gelap WaEnhancer X</string>
+    <string name="theme_mode_sum">Pilih tema WaEnhancer X</string>
     <string name="disable_default_emojis_sum">Nonaktifkan emoji bawaan WhatsApp dan gunakan emoji sistem
 (CATATAN: Emoji WhatsApp akan hilang dari pilihan, gunakan keyboard untuk menyisipkan)</string>
     <string name="other">Lainnya</string>
@@ -285,19 +285,19 @@ Saat Anda mengaktifkan bekukan \"terakhir dilihat dan online\", Anda tidak dapat
     <string name="old_statuses">Status Lama</string>
     <string name="old_statuses_sum">Ubah ke halaman status lama secara vertikal dan tanpa saluran
 (CATATAN: Dapat menyebabkan kelambatan pada antarmuka)</string>
-    <string name="force_english">Paksa WaEnhancer Plus Bahasa Inggris</string>
+    <string name="force_english">Paksa WaEnhancer X Bahasa Inggris</string>
     <string name="select_status_type">Pilih jenis status</string>
     <string name="open_camera">Buka Kamera</string>
     <string name="edit_text">Edit Teks</string>
-    <string name="about_info">WaEnhancer Plus adalah modul Xposed yang meningkatkan pengalaman WhatsApp Anda dengan menawarkan fitur privasi tingkat lanjut, kustomisasi layar beranda, penyesuaian umum, dan peningkatan media.</string>
+    <string name="about_info">WaEnhancer X adalah modul Xposed yang meningkatkan pengalaman WhatsApp Anda dengan menawarkan fitur privasi tingkat lanjut, kustomisasi layar beranda, penyesuaian umum, dan peningkatan media.</string>
     <string name="installation">Instalasi</string>
-    <string name="installation_desc">1. Pastikan perangkat Anda telah di-root.\n2. Instal Xposed Framework di perangkat Anda.\n3. Unduh WaEnhancer Plus dari bagian Actions.\n4. Instal APK WaEnhancer Plus.\n5. Aktifkan modul WaEnhancer Plus di aplikasi Xposed Installer.</string>
+    <string name="installation_desc">1. Pastikan perangkat Anda telah di-root.\n2. Instal Xposed Framework di perangkat Anda.\n3. Unduh WaEnhancer X dari bagian Actions.\n4. Instal APK WaEnhancer X.\n5. Aktifkan modul WaEnhancer X di aplikasi Xposed Installer.</string>
     <string name="go_to_telegram">Pergi ke Telegram</string>
     <string name="go_to_github">Kunjungi GitHub</string>
     <string name="support">Dukungan</string>
-    <string name="support_desc">Jika Anda mengalami masalah atau memiliki pertanyaan tentang WaEnhancer Plus, silakan kunjungi Telegram.</string>
+    <string name="support_desc">Jika Anda mengalami masalah atau memiliki pertanyaan tentang WaEnhancer X, silakan kunjungi Telegram.</string>
     <string name="license">Lisensi</string>
-    <string name="license_desc">Proyek ini dilisensikan berdasarkan Lisensi GNU - lihat berkas LICENSE untuk detailnya.\n\nCatatan: Harap gunakan WaEnhancer Plus secara bertanggung jawab dan sesuai dengan syarat dan ketentuan aplikasi yang Anda modifikasi. Penyalahgunaan alat ini dapat mengakibatkan konsekuensi hukum.</string>
+    <string name="license_desc">Proyek ini dilisensikan berdasarkan Lisensi GNU - lihat berkas LICENSE untuk detailnya.\n\nCatatan: Harap gunakan WaEnhancer X secara bertanggung jawab dan sesuai dengan syarat dan ketentuan aplikasi yang Anda modifikasi. Penyalahgunaan alat ini dapat mengakibatkan konsekuensi hukum.</string>
     <string name="select_a_color">Pilih warna</string>
     <string name="custom_appearance">Penampilan Kustom</string>
     <string name="custom_filters_sum">Aktifkan filter berdasarkan ID dan CSS Kustom</string>
@@ -317,7 +317,7 @@ Saat Anda mengaktifkan bekukan \"terakhir dilihat dan online\", Anda tidak dapat
     <string name="new_theme_name">Nama Tema Baru</string>
     <string name="create">Buat</string>
     <string name="storage_permission">Izin Penyimpanan</string>
-    <string name="permission_storage">Izinkan WaEnhancer Plus mengakses penyimpanan eksternal Anda?</string>
+    <string name="permission_storage">Izinkan WaEnhancer X mengakses penyimpanan eksternal Anda?</string>
     <string name="allow">Izinkan</string>
     <string name="deny">Tolak</string>
     <string name="saved">Disimpan</string>
@@ -343,8 +343,8 @@ Saat Anda mengaktifkan bekukan \"terakhir dilihat dan online\", Anda tidak dapat
     <string name="list_animations_home_screen_sum">Tambahkan animasi saat menggeser daftar obrolan</string>
     <string name="stamp_copied_messages">Hapus Stempel dari Pesan yang Disalin</string>
     <string name="stamp_copied_messages_sum">Menghapus nama dan tanggal saat menyalin lebih dari satu pesan</string>
-    <string name="invalid_folder">Folder yang tidak valid telah dipilih. Silakan pilih folder WaEnhancer Plus</string>
-    <string name="uri_permission">Untuk menggunakan tema khusus, Anda perlu memilih folder \"WaEnhancer Plus\" di \"Unduh\"</string>
+    <string name="invalid_folder">Folder yang tidak valid telah dipilih. Silakan pilih folder WaEnhancer X</string>
+    <string name="uri_permission">Untuk menggunakan tema khusus, Anda perlu memilih folder \"WaEnhancer X\" di \"Unduh\"</string>
     <string name="double_click_to_react">Aktifkan Klik Ganda untuk Bereaksi</string>
     <string name="double_click_to_like_sum">Activates the possibility of double-clicking on the message to react it</string>
     <string name="custom_reaction">Custom Reaction</string>
@@ -358,7 +358,7 @@ Saat Anda mengaktifkan bekukan \"terakhir dilihat dan online\", Anda tidak dapat
     <string name="ghost_mode_s">Ghost Mode [%s]</string>
     <string name="ghost_mode_title">Show Ghost Mode Button</string>
     <string name="ghost_mode_sum">Show a Ghost Mode button on the home screen toolbar</string>
-    <string name="grant_permissions">To use WaEnhancer Plus it is necessary to grant some permissions to use the functions.</string>
+    <string name="grant_permissions">To use WaEnhancer X it is necessary to grant some permissions to use the functions.</string>
     <string name="grant_manage_storage">Grant manage storage</string>
     <string name="grant_media_read">Grant Media Read</string>
     <string name="grant_reading_of_contacts">Grant reading of Contacts</string>
@@ -374,8 +374,8 @@ Saat Anda mengaktifkan bekukan \"terakhir dilihat dan online\", Anda tidak dapat
     <string name="select_all">Pilih Semua</string>
     <string name="custom_colors_for_text_status">Custom colors for text status</string>
     <string name="custom_colors_for_text_status_sum">Press and hold on the color selector in the status to customize it</string>
-    <string name="enable_wa_enhancer_button">Enable WaEnhancer Plus Button</string>
-    <string name="enable_wa_enhancer_button_sum">Add button in Home Screen to open WaEnhancer Plus</string>
+    <string name="enable_wa_enhancer_button">Enable WaEnhancer X Button</string>
+    <string name="enable_wa_enhancer_button_sum">Add button in Home Screen to open WaEnhancer X</string>
     <string name="custom_privacy">Custom Privacy</string>
     <string name="custom_privacy_sum">Enable/Disable Custom Privacy</string>
     <string name="custom_privacy_per_contact">Custom Privacy per contact</string>

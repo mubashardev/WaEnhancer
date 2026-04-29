@@ -53,8 +53,8 @@ import rikka.core.util.IOUtils;
 import java.io.File;
 
 public class HomeFragment extends BaseFragment {
-    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
-    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
+    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancerX/releases";
+    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancerX/releases/latest";
     private static final String PREF_MODULE_HEARTBEAT = "module_heartbeat";
 
     private FragmentHomeBinding binding;
@@ -155,7 +155,7 @@ public class HomeFragment extends BaseFragment {
                 final String finalDialogDetails = dialogDetailsHtml;
                 final String finalGithubDetails = githubDetailsMd;
 
-                String dialogMessageHtml = "This will open the WaEnhancer Plus GitHub Issues page to report a bug.<br><br>"
+                String dialogMessageHtml = "This will open the WaEnhancer X GitHub Issues page to report a bug.<br><br>"
                         +
                         "The following information about your device and installed apps will be pre-filled in your report:<br><br>"
                         +
@@ -174,7 +174,7 @@ public class HomeFragment extends BaseFragment {
                                         "\n---\n" +
                                         "[Describe here]\n";
 
-                                String url = "https://github.com/mubashardev/WaEnhancer/issues/new?title=Bug+Report&body="
+                                String url = "https://github.com/mubashardev/WaEnhancerX/issues/new?title=Bug+Report&body="
                                         + java.net.URLEncoder.encode(body, "UTF-8");
                                 openUrl(requireContext(), url);
                             } catch (Exception e) {
@@ -195,7 +195,7 @@ public class HomeFragment extends BaseFragment {
 
         binding.githubBtn.setOnClickListener(view -> {
             animateClick(view);
-            openUrl(requireContext(), "https://github.com/mubashardev/WaEnhancer/issues");
+            openUrl(requireContext(), "https://github.com/mubashardev/WaEnhancerX/issues");
         });
 
         binding.clearCacheBtn.setOnClickListener(view -> {
@@ -226,7 +226,7 @@ public class HomeFragment extends BaseFragment {
     }
 
     private void openTelegramChannel(Context context) {
-        String channelUrl = "https://t.me/WaEnhancerApp";
+        String channelUrl = "https://t.me/WaEnhancerX";
         String installedPackage = Utils.getInstalledTelegramPackage(context);
 
         if (installedPackage != null) {
@@ -513,7 +513,7 @@ public class HomeFragment extends BaseFragment {
                     com.waenhancer.ui.helpers.BottomSheetHelper.showInfo(
                             activity,
                             "Unsupported Version",
-                            "The installed WaEnhancer Plus has no support for your installed version of WhatsApp. It may not work as expected. Please either update WaEnhancer Plus, install a supported version of WhatsApp, or open an issue on GitHub.");
+                            "The installed WaEnhancer X has no support for your installed version of WhatsApp. It may not work as expected. Please either update WaEnhancer X, install a supported version of WhatsApp, or open an issue on GitHub.");
                 });
             }
 

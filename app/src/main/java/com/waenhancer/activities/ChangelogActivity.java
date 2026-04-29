@@ -302,7 +302,7 @@ public class ChangelogActivity extends BaseActivity {
                     try {
                         android.content.Context context = v.getContext();
                         android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, 
-                                android.net.Uri.parse("https://github.com/mubashardev/WaEnhancer/releases"));
+                                android.net.Uri.parse("https://github.com/mubashardev/WaEnhancerX/releases"));
                         context.startActivity(intent);
                     } catch (Exception ignored) {}
                 }

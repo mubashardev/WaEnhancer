@@ -186,23 +186,23 @@ jobs:
       - name: Rename APK to versioned name
         run: |
           mkdir -p release_artifacts
-          cp app/build/outputs/apk/whatsapp/release/app-whatsapp-release.apk "release_artifacts/WaEnhancer-Plus-v${{ env.NEW_VERSION_NAME }}.apk"
+          cp app/build/outputs/apk/whatsapp/release/app-whatsapp-release.apk "release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk"
 
       - name: Upload WhatsApp flavor artifact
         uses: actions/upload-artifact@v5
         with:
-          name: WaEnhancer-Plus-v${{ env.NEW_VERSION_NAME }}.apk
-          path: release_artifacts/WaEnhancer-Plus-v${{ env.NEW_VERSION_NAME }}.apk
+          name: WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
+          path: release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
 
       - name: Upload to GitHub release
         id: release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: WaEnhancer Plus ${{ env.NEW_VERSION_NAME }}
+          name: WaEnhancerX v${{ env.NEW_VERSION_NAME }}
           body_path: changelog.txt
           files: |
-            release_artifacts/WaEnhancer-Plus-v${{ env.NEW_VERSION_NAME }}.apk
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
           tag_name: ${{ env.NEW_VERSION_NAME }}
           prerelease: ${{ env.RELEASE_PRERELEASE }}
 
@@ -211,10 +211,10 @@ jobs:
         with:
           repository: Xposed-Modules-Repo/com.waenhancer
           token: ${{ secrets.XPOSED_REPO_TOKEN }}
-          name: WaEnhancer Plus ${{ env.NEW_VERSION_NAME }}
+          name: WaEnhancerX v${{ env.NEW_VERSION_NAME }}
           body_path: changelog.txt
           files: |
-            release_artifacts/WaEnhancer-Plus-v${{ env.NEW_VERSION_NAME }}.apk
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
           tag_name: ${{ env.NEW_VERSION_NAME }}
           prerelease: ${{ env.RELEASE_PRERELEASE }}
 

@@ -58,7 +58,7 @@ public class AboutActivity extends BaseActivity {
         setContentView(binding.getRoot());
 
         binding.btnTelegram.setOnClickListener(v -> openTelegramChannel());
-        binding.btnGithub.setOnClickListener(view -> openUrl("https://github.com/mubashardev/WaEnhancer/issues"));
+        binding.btnGithub.setOnClickListener(view -> openUrl("https://github.com/mubashardev/WaEnhancerX/issues"));
 
         adapter = new ContributorAdapter();
         binding.rvContributors.setAdapter(adapter);
@@ -67,7 +67,7 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void openTelegramChannel() {
-        String channelUrl = "https://t.me/WaEnhancerApp";
+        String channelUrl = "https://t.me/WaEnhancerX";
         String installedPackage = Utils.getInstalledTelegramPackage(this);
 
         if (installedPackage != null) {
@@ -97,7 +97,7 @@ public class AboutActivity extends BaseActivity {
 
         Request request = new Request.Builder()
                 .url(API_URL)
-                .header("User-Agent", "WaEnhancer Plus-App")
+                .header("User-Agent", "WaEnhancer X-App")
                 .header("Accept", "application/vnd.github.v3+json")
                 .build();
 
@@ -200,7 +200,7 @@ public class AboutActivity extends BaseActivity {
             com.bumptech.glide.Glide.with(holder.itemView.getContext())
                     .load(new com.bumptech.glide.load.model.GlideUrl(c.avatarUrl,
                             new com.bumptech.glide.load.model.LazyHeaders.Builder()
-                                    .addHeader("User-Agent", "WaEnhancer Plus-App")
+                                    .addHeader("User-Agent", "WaEnhancer X-App")
                                     .build()))
                     .placeholder(R.drawable.ic_github)
                     .into(holder.ivAvatar);

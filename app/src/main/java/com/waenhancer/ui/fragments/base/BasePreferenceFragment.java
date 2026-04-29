@@ -36,8 +36,8 @@ import rikka.material.preference.MaterialSwitchPreference;
 
 public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         implements SharedPreferences.OnSharedPreferenceChangeListener {
-    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
-    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
+    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancerX/releases";
+    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancerX/releases/latest";
     protected SharedPreferences mPrefs;
     private boolean suppressRestartBroadcast;
 

@@ -122,7 +122,7 @@
     <string name="whatsapp_in_background">WhatsApp berjalan dilatar belakang</string>
     <string name="whatsapp_is_not_running_or_has_not_been_activated_in_lsposed">WhatsApp tidak berjalan atau belum diaktifkan di LSPosed</string>
     <string name="business_is_not_running_or_has_not_been_activated_in_lsposed">WhatsApp Bisnis tidak berjalan atau belum diaktifkan di LSPosed</string>
-    <string name="restart_wpp">WhatsApp harus dimulai ulang agar perubahan di WaEnhancer Plus dapat diterapkan.
+    <string name="restart_wpp">WhatsApp harus dimulai ulang agar perubahan di WaEnhancer X dapat diterapkan.
 
 Apakah Anda ingin mulai ulang WhatsApp?</string>
     <string name="version_s_not_listed">Versi %s tidak terdaftar dalam versi yang didukung!
@@ -229,8 +229,8 @@ Harap gunakan versi WhatsApp yang didukung!</string>
     <string name="android_version">Android SDK</string>
     <string name="message_removed_on">Pesan ini dihapus pada %s</string>
     <string name="disable_default_emojis">Nonaktifkan Emoji Bawaan</string>
-    <string name="theme_mode">Tema Gelap WaEnhancer Plus</string>
-    <string name="theme_mode_sum">Pilih tema WaEnhancer Plus</string>
+    <string name="theme_mode">Tema Gelap WaEnhancer X</string>
+    <string name="theme_mode_sum">Pilih tema WaEnhancer X</string>
     <string name="disable_default_emojis_sum">Nonaktifkan emoji bawaan WhatsApp dan gunakan emoji sistem
 (CATATAN: Emoji WhatsApp akan hilang dari pilihan, gunakan keyboard untuk menyisipkan)</string>
     <string name="other">Lainnya</string>
@@ -282,19 +282,19 @@ Harap gunakan versi WhatsApp yang didukung!</string>
     <string name="old_statuses">Status Lama</string>
     <string name="old_statuses_sum">Ubah ke halaman status lama secara vertikal dan tanpa saluran
 (CATATAN: Dapat menyebabkan kelambatan pada antarmuka)</string>
-    <string name="force_english">Paksa WaEnhancer Plus Bahasa Inggris</string>
+    <string name="force_english">Paksa WaEnhancer X Bahasa Inggris</string>
     <string name="select_status_type">Pilih jenis status</string>
     <string name="open_camera">Buka Kamera</string>
     <string name="edit_text">Edit Teks</string>
-    <string name="about_info">WaEnhancer Plus adalah modul Xposed yang meningkatkan pengalaman WhatsApp Anda dengan menawarkan fitur privasi tingkat lanjut, penyesuaian layar beranda, penyesuaian umum, dan peningkatan media.</string>
+    <string name="about_info">WaEnhancer X adalah modul Xposed yang meningkatkan pengalaman WhatsApp Anda dengan menawarkan fitur privasi tingkat lanjut, penyesuaian layar beranda, penyesuaian umum, dan peningkatan media.</string>
     <string name="installation">Panduan Instal</string>
-    <string name="installation_desc">1. Pastikan perangkat Anda telah di-root.\n2. Instal Xposed Framework di perangkat Anda.\n3. Unduh WaEnhancer Plus dari bagian Tindakan.\n4. Instal APK WaEnhancer Plus.\n5. Aktifkan modul WaEnhancer Plus di aplikasi Xpose Installer.</string>
+    <string name="installation_desc">1. Pastikan perangkat Anda telah di-root.\n2. Instal Xposed Framework di perangkat Anda.\n3. Unduh WaEnhancer X dari bagian Tindakan.\n4. Instal APK WaEnhancer X.\n5. Aktifkan modul WaEnhancer X di aplikasi Xpose Installer.</string>
     <string name="go_to_telegram">Buka Telegram</string>
     <string name="go_to_github">Buka GitHub</string>
     <string name="support">Dukungan</string>
-    <string name="support_desc">Jika Anda mengalami masalah apa pun atau memiliki pertanyaan tentang WaEnhancer Plus, silahkan kunjungi Telegram.</string>
+    <string name="support_desc">Jika Anda mengalami masalah apa pun atau memiliki pertanyaan tentang WaEnhancer X, silahkan kunjungi Telegram.</string>
     <string name="license">Lisensi</string>
-    <string name="license_desc">Proyek ini dilisensikan di bawah Lisensi GNU - lihat file LISENSI untuk detailnya.\n\nCatatan: Silahkan gunakan WaEnhancer Plus secara bertanggung jawab dan sesuai dengan syarat dan ketentuan aplikasi yang Anda modifikasi. Penyalahgunaan alat ini dapat menimbulkan konsekuensi hukum.</string>
+    <string name="license_desc">Proyek ini dilisensikan di bawah Lisensi GNU - lihat file LISENSI untuk detailnya.\n\nCatatan: Silahkan gunakan WaEnhancer X secara bertanggung jawab dan sesuai dengan syarat dan ketentuan aplikasi yang Anda modifikasi. Penyalahgunaan alat ini dapat menimbulkan konsekuensi hukum.</string>
     <string name="select_a_color">Pilih warna</string>
     <string name="custom_appearance">Tampilan Kustom</string>
     <string name="custom_filters_sum">Aktifkan filter berdasarkan ID dan CSS Khusus</string>
@@ -314,7 +314,7 @@ Harap gunakan versi WhatsApp yang didukung!</string>
     <string name="new_theme_name">Nama Tema Baru</string>
     <string name="create">Buat</string>
     <string name="storage_permission">Izin Penyimpanan</string>
-    <string name="permission_storage">Izinkan WaEnhancer Plus mengakses penyimpanan eksternal Anda?</string>
+    <string name="permission_storage">Izinkan WaEnhancer X mengakses penyimpanan eksternal Anda?</string>
     <string name="allow">Izinkan</string>
     <string name="deny">Tolak</string>
     <string name="saved">Disimpan</string>
@@ -340,8 +340,8 @@ Harap gunakan versi WhatsApp yang didukung!</string>
     <string name="list_animations_home_screen_sum">Aktifkan animasi saat menggulir daftar obrolan</string>
     <string name="stamp_copied_messages">Hapus Nama dan Tanggal</string>
     <string name="stamp_copied_messages_sum">Hapus nama dan tanggal saat menyalin lebih dari satu pesan</string>
-    <string name="invalid_folder">Folder yang dipilih tidak valid. Silahkan pilih folder \"WaEnhancer Plus\"</string>
-    <string name="uri_permission">Untuk menggunakan tema khusus Anda perlu memilih folder \"Download/WaEnhancer Plus\"</string>
+    <string name="invalid_folder">Folder yang dipilih tidak valid. Silahkan pilih folder \"WaEnhancer X\"</string>
+    <string name="uri_permission">Untuk menggunakan tema khusus Anda perlu memilih folder \"Download/WaEnhancer X\"</string>
     <string name="double_click_to_react">Klik Dua Kali untuk Reaksi</string>
     <string name="double_click_to_like_sum">Aktifkan klik dua kali untuk reaksi pada pesan</string>
     <string name="custom_reaction">Reaksi Kustom</string>
@@ -355,7 +355,7 @@ Harap gunakan versi WhatsApp yang didukung!</string>
     <string name="ghost_mode_s">Mode Hantu [%s]</string>
     <string name="ghost_mode_title">Tampilkan Tombol Mode Hantu</string>
     <string name="ghost_mode_sum">Tampilkan tombol mode hantu di toolbar layar beranda</string>
-    <string name="grant_permissions">Untuk menggunakan WaEnhancer Plus, Anda perlu memberikan beberapa izin untuk menggunakan fungsi tersebut</string>
+    <string name="grant_permissions">Untuk menggunakan WaEnhancer X, Anda perlu memberikan beberapa izin untuk menggunakan fungsi tersebut</string>
     <string name="grant_manage_storage">Kelola penyimpanan</string>
     <string name="grant_media_read">Akses media</string>
     <string name="grant_reading_of_contacts">Akses kontak</string>
@@ -371,8 +371,8 @@ Harap gunakan versi WhatsApp yang didukung!</string>
     <string name="select_all">Pilih semua</string>
     <string name="custom_colors_for_text_status">Warna Khusus Untuk Status Teks</string>
     <string name="custom_colors_for_text_status_sum">Tekan dan tahan pemilih warna dalam status untuk menyesuaikannya</string>
-    <string name="enable_wa_enhancer_button">Tombol WaEnhancer Plus</string>
-    <string name="enable_wa_enhancer_button_sum">Tampilkan tombol di Layar Beranda untuk membuka WaEnhancer Plus</string>
+    <string name="enable_wa_enhancer_button">Tombol WaEnhancer X</string>
+    <string name="enable_wa_enhancer_button_sum">Tampilkan tombol di Layar Beranda untuk membuka WaEnhancer X</string>
     <string name="custom_privacy">Privasi Kustom</string>
     <string name="custom_privacy_sum">Aktifkan/Nonaktifkan Privasi Kustom</string>
     <string name="custom_privacy_per_contact">Privasi Khusus per Kontak</string>
@@ -402,7 +402,7 @@ Harap gunakan versi WhatsApp yang didukung!</string>
     <string name="platform_s">Platform: %s</string>
     <string name="wpp_version_s">Versi WhatsApp: %s</string>
     <string name="call_information">Informasi Panggilan</string>
-    <string name="ask_download_folder">Untuk menggunakan fungsi pengunduhan WaEnhancer Plus, Anda harus memilih folder untuk menyimpan file yang diunduh.</string>
+    <string name="ask_download_folder">Untuk menggunakan fungsi pengunduhan WaEnhancer X, Anda harus memilih folder untuk menyimpan file yang diunduh.</string>
     <string name="download_folder_permission">Izin Folder Unduhan</string>
     <string name="lite_mode">Mode Ringan</string>
     <string name="lite_mode_sum">Mode Ringan menonaktifkan sebagian besar fitur tema dan jembatan koneksi yang membuat WhatsApp selalu aktif dimatikan.</string>

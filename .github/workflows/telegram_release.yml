@@ -12,7 +12,7 @@ on:
             release_url:
                 description: "URL of the release to link"
                 required: true
-                default: "https://github.com/mubashardev/WaEnhancer/releases/latest"
+                default: "https://github.com/mubashardev/WaEnhancerX/releases/latest"
 
 jobs:
     telegram-notify:

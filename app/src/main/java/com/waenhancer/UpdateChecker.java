@@ -27,7 +27,7 @@ public class UpdateChecker implements Runnable {
     private static final String TAG = "WAE_UpdateChecker";
     private static final String RELEASES_API = "https://api.github.com/repos/mubashardev/WaEnhancer/releases";
     private static final String RELEASE_TAG_PREFIX = "debug-";
-    private static final String TELEGRAM_UPDATE_URL = "https://github.com/mubashardev/WaEnhancer/releases";
+    private static final String TELEGRAM_UPDATE_URL = "https://github.com/mubashardev/WaEnhancerX/releases";
     private static final Pattern BETA_TAG_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+-beta-\\d+$");
     private static final Pattern VERSION_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+(-beta-\\d+)?$");
 
@@ -91,7 +91,7 @@ public class UpdateChecker implements Runnable {
             var request = new okhttp3.Request.Builder()
                     .url(RELEASES_API)
                     .header("Accept", "application/vnd.github+json")
-                    .header("User-Agent", "WaEnhancer Plus-UpdateChecker")
+                    .header("User-Agent", "WaEnhancer X-UpdateChecker")
                     .build();
 
             String installedVersion = normalizeVersion(com.waenhancer.BuildConfig.VERSION_NAME);

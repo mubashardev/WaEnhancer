@@ -3,7 +3,7 @@
     <string name="developer" translatable="false">Based on Dev4Mod</string>
     <string name="force_restore_backup">Force Restore Backup</string>
     <string name="force_restore_backup_summary">Launch the restore backup screen manually. Use this if you skipped restoration during setup.</string>
-    <string name="app_name" translatable="false">WaEnhancer Plus</string>
+    <string name="app_name" translatable="false">WaEnhancer X</string>
     <string name="app_desc">An independent, enhanced fork with modern UI and advanced privacy tools.</string>
     <string name="antirevoke">Anti-Revoke Messages</string>
     <string name="antirevoke_sum">Messages will not be deleted for you</string>
@@ -136,7 +136,7 @@
     <string name="whatsapp_in_background">WhatsApp in background</string>
     <string name="whatsapp_is_not_running_or_has_not_been_activated_in_lsposed">WhatsApp is not running or has not been activated in Lsposed</string>
     <string name="business_is_not_running_or_has_not_been_activated_in_lsposed">WA Business is not running or has not been activated in Lsposed</string>
-    <string name="restart_wpp">It is necessary to restart WhatsApp for the changes in WaEnhancer Plus to take effect.\n\nDo you want to restart?</string>
+    <string name="restart_wpp">It is necessary to restart WhatsApp for the changes in WaEnhancer X to take effect.\n\nDo you want to restart?</string>
     <string name="version_s_not_listed">Version %s not listed in supported versions!\nPlease use supported WhatsApp version!</string>
     <string name="media">Media</string>
     <string name="show_button_to_send_blue_tick">Show Button to send blue tick</string>
@@ -210,7 +210,7 @@
     <string name="version_error">The version of WhatsApp you are using is not compatible and is throwing an error in the following features:\n\n</string>
     <string name="copy_to_clipboard">Copy to clipboard</string>
     <string name="check_for_latest_version">Check for latest version</string>
-    <string name="already_have_latest">Latest WaEnhancer Plus version is not compatible with your WhatsApp. Contact developer.</string>
+    <string name="already_have_latest">Latest WaEnhancer X version is not compatible with your WhatsApp. Contact developer.</string>
     <string name="contact_developer">Contact Developer</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="error_detected">Error detected</string>
@@ -242,8 +242,8 @@
     <string name="android_version">Android SDK</string>
     <string name="message_removed_on">This message was removed on %s.</string>
     <string name="disable_default_emojis">Disable Default Emojis</string>
-    <string name="theme_mode">Dark Theme WaEnhancer Plus</string>
-    <string name="theme_mode_sum">Force a theme mode in the WaEnhancer Plus</string>
+    <string name="theme_mode">Dark Theme WaEnhancer X</string>
+    <string name="theme_mode_sum">Force a theme mode in the WaEnhancer X</string>
     <string name="wae_color_mode">WAE color mode</string>
     <string name="wae_color_preset">Preset color</string>
     <string name="wae_color_mode_preset">Preset</string>
@@ -309,21 +309,21 @@
     <string name="viewed_your_message">%s viewed your message</string>
     <string name="old_statuses">Old Statuses</string>
     <string name="old_statuses_sum">Change to the old statuses page vertically and without channels (NOTE: May cause lag in the interface)</string>
-    <string name="force_english">Force English WaEnhancer Plus</string>
+    <string name="force_english">Force English WaEnhancer X</string>
     <string name="select_status_type">Select status type</string>
     <string name="open_camera">Open Camera</string>
     <string name="edit_text">Edit Text</string>
 
-    <string name="about_info">WaEnhancer Plus is an Xposed module that enhances your WhatsApp experience by offering advanced privacy features, home screen customization, general tweaks, and media improvements.</string>
+    <string name="about_info">WaEnhancer X is an Xposed module that enhances your WhatsApp experience by offering advanced privacy features, home screen customization, general tweaks, and media improvements.</string>
     <string name="installation">Installation</string>
-    <string name="installation_desc">1. Ensure that your device is rooted.\n2. Install the Xposed Framework on your device.\n3. Download the WaEnhancer Plus from the Actions section.\n4. Install the WaEnhancer Plus APK.\n5. Enable the WaEnhancer Plus module in the Xposed Installer app.</string>
+    <string name="installation_desc">1. Ensure that your device is rooted.\n2. Install the Xposed Framework on your device.\n3. Download the WaEnhancer X from the Actions section.\n4. Install the WaEnhancer X APK.\n5. Enable the WaEnhancer X module in the Xposed Installer app.</string>
     <string name="go_to_telegram">Telegram Channel</string>
     <string name="go_to_github">GitHub Issues</string>
     <string name="contributors">Contributors</string>
     <string name="support">Support</string>
-    <string name="support_desc">If you encounter any issues or have questions about WaEnhancer Plus, please visit Telegram.</string>
+    <string name="support_desc">If you encounter any issues or have questions about WaEnhancer X, please visit Telegram.</string>
     <string name="license">License</string>
-    <string name="license_desc">This project is licensed under the GNU License - see the LICENSE file for details.\n\nWaEnhancer Plus is a community-driven, independent fork. It is not affiliated with, endorsed by, or in any way associated with WhatsApp Inc. or Meta Platforms, Inc. This project is provided \"as is\" for research and educational purposes. Use at your own risk. Misuse of this tool may lead to legal consequences.</string>
+    <string name="license_desc">This project is licensed under the GNU License - see the LICENSE file for details.\n\nWaEnhancer X is a community-driven, independent fork. It is not affiliated with, endorsed by, or in any way associated with WhatsApp Inc. or Meta Platforms, Inc. This project is provided \"as is\" for research and educational purposes. Use at your own risk. Misuse of this tool may lead to legal consequences.</string>
     <string name="select_a_color">Select a color</string>
     <string name="custom_appearance">Custom Appearance</string>
     <string name="custom_filters_sum">Activate filters by ID and Custom CSS</string>
@@ -343,7 +343,7 @@
     <string name="new_theme_name">New Theme Name</string>
     <string name="create">Create</string>
     <string name="storage_permission">Storage Permission</string>
-    <string name="permission_storage">Allow WaEnhancer Plus to access your external storage?</string>
+    <string name="permission_storage">Allow WaEnhancer X to access your external storage?</string>
     <string name="allow">Allow</string>
     <string name="deny">Deny</string>
     <string name="saved">Saved</string>
@@ -371,8 +371,8 @@
     <string name="list_animations_home_screen_sum">Add animations when swiping the chat list</string>
     <string name="stamp_copied_messages">Remove Stamp from Copied Messages</string>
     <string name="stamp_copied_messages_sum">Removes name and date when copying more than one message</string>
-    <string name="invalid_folder">The invalid folder has been selected. Please choose the WaEnhancer Plus folder</string>
-    <string name="uri_permission">To use custom themes you need to select the \"WaEnhancer Plus\" folder in \"Download\"</string>
+    <string name="invalid_folder">The invalid folder has been selected. Please choose the WaEnhancer X folder</string>
+    <string name="uri_permission">To use custom themes you need to select the \"WaEnhancer X\" folder in \"Download\"</string>
     <string name="double_click_to_react">Enable Double Click to React</string>
     <string name="double_click_to_like_sum">Activates the possibility of double-clicking on the message to react it</string>
     <string name="custom_reaction">Custom Reaction</string>
@@ -386,7 +386,7 @@
     <string name="ghost_mode_s">Ghost Mode [%s]</string>
     <string name="ghost_mode_title">Show Ghost Mode Button</string>
     <string name="ghost_mode_sum">Show a Ghost Mode button on the home screen toolbar</string>
-    <string name="grant_permissions">To use WaEnhancer Plus it is necessary to grant some permissions to use the functions.</string>
+    <string name="grant_permissions">To use WaEnhancer X it is necessary to grant some permissions to use the functions.</string>
     <string name="grant_manage_storage">Grant manage storage</string>
     <string name="grant_media_read">Grant Media Read</string>
     <string name="grant_reading_of_contacts">Grant reading of Contacts</string>
@@ -402,8 +402,8 @@
     <string name="select_all">Select All</string>
     <string name="custom_colors_for_text_status">Custom colors for text status</string>
     <string name="custom_colors_for_text_status_sum">Press and hold on the color selector in the status to customize it</string>
-    <string name="enable_wa_enhancer_button">Enable WaEnhancer Plus Button</string>
-    <string name="enable_wa_enhancer_button_sum">Add button in Home Screen to open WaEnhancer Plus</string>
+    <string name="enable_wa_enhancer_button">Enable WaEnhancer X Button</string>
+    <string name="enable_wa_enhancer_button_sum">Add button in Home Screen to open WaEnhancer X</string>
     <string name="custom_privacy">Custom Privacy</string>
     <string name="custom_privacy_sum">Enable/Disable Custom Privacy</string>
     <string name="custom_privacy_per_contact">Custom Privacy per contact</string>
@@ -568,8 +568,8 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="embedded_summary_audio">Voice notes, proximity behavior, and transcription</string>
     <string name="embedded_summary_appearance">Colors, wallpaper, bubbles, tabs, and list animation</string>
     <string name="embedded_summary_advanced">Version checks, backup restore, tasker, CSS, and theme files</string>
-    <string name="wa_enhancer_embedded_settings">WaEnhancer Plus Embedded Settings</string>
-    <string name="wa_enhancer_embedded_settings_sum">Choose where to show the WaEnhancer Plus entry point</string>
+    <string name="wa_enhancer_embedded_settings">WaEnhancer X Embedded Settings</string>
+    <string name="wa_enhancer_embedded_settings_sum">Choose where to show the WaEnhancer X entry point</string>
     <string name="entry_point_home_menu">Home Screen Menu</string>
     <string name="entry_point_wa_settings">WhatsApp Settings (Coming Soon)</string>
     <string name="entry_point_none">Disabled</string>

@@ -42,7 +42,7 @@ public class UpdateDownloader {
     public static Call downloadApk(Context context, String url, String versionName, DownloadCallback callback) {
         String safeVersion = versionName.replaceAll("[^a-zA-Z0-9.-]", "_");
         File cacheDir = context.getCacheDir();
-        File apkFile = new File(cacheDir, "WaEnhancer Plus_" + safeVersion + ".apk");
+        File apkFile = new File(cacheDir, "WaEnhancer X_" + safeVersion + ".apk");
 
         if (apkFile.exists()) {
             callback.onSuccess(apkFile);
@@ -114,7 +114,7 @@ public class UpdateDownloader {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
                 intent.setData(Uri.parse("package:" + activity.getPackageName()));
                 activity.startActivity(intent);
-                Toast.makeText(activity, "Please allow WaEnhancer Plus to install apps", Toast.LENGTH_LONG).show();
+                Toast.makeText(activity, "Please allow WaEnhancer X to install apps", Toast.LENGTH_LONG).show();
                 return;
             }
         }

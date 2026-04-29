@@ -1,4 +1,3 @@
-[Fixed]
-- Crash on Status 
-- Video Note improved (A crash on video sent is required to make the patch work to act like a video note)
-- Stability Improvements
+[Improvements]
+- Updated app icon
+- Fixed names across the app

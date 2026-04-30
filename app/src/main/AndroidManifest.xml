@@ -148,6 +148,7 @@
         <activity
             android:name=".activities.LogsActivity"
             android:label="@string/logs"
+            android:enabled="false"
             android:theme="@style/AppTheme"
             android:parentActivityName=".activities.MainActivity" />
 

@@ -159,7 +159,7 @@
 
                         </LinearLayout>
 
-                        <!-- Logs Button (Top Right) -->
+                        <!-- Logs Button (Top Right) - Hidden for now -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnLogs"
                             style="@style/Widget.Material3.Button.IconButton"
@@ -168,12 +168,12 @@
                             android:layout_alignParentEnd="true"
                             android:layout_alignParentTop="true"
                             android:layout_margin="12dp"
+                            android:visibility="gone"
                             app:icon="@drawable/ic_logs"
                             app:iconSize="24dp"
                             app:iconTint="?attr/colorOnSurfaceVariant" />
 
                     </RelativeLayout>
-
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- ═══════════════════════════════════════════ -->

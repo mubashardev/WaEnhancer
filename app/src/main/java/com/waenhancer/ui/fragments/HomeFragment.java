@@ -188,9 +188,10 @@ public class HomeFragment extends BaseFragment {
             }
         });
 
+        binding.btnLogs.setVisibility(View.GONE);
         binding.btnLogs.setOnClickListener(view -> {
             animateClick(view);
-            startActivity(new Intent(requireContext(), com.waenhancer.activities.LogsActivity.class));
+            Toast.makeText(requireContext(), "Logs are disabled temporarily", Toast.LENGTH_SHORT).show();
         });
 
         binding.telegramBtn.setOnClickListener(view -> {

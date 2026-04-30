@@ -4,9 +4,11 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Handler;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Looper;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -44,6 +46,13 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
 
     protected ProviderSharedPreferences mPrefs;
     private boolean suppressRestartBroadcast;
+    private final Handler restartBroadcastHandler = new Handler(Looper.getMainLooper());
+    private final Runnable restartBroadcastRunnable = () -> {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        requireContext().sendBroadcast(new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART"));
+    };
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
@@ -84,7 +93,6 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
             }
         });
 
-        mPrefs.registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -114,6 +122,7 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
     @Override
     public void onDestroy() {
         super.onDestroy();
+        restartBroadcastHandler.removeCallbacks(restartBroadcastRunnable);
         if (mPrefs != null) {
             mPrefs.unregisterOnSharedPreferenceChangeListener(this);
         }
@@ -122,8 +131,20 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
     @Override
     public void onResume() {
         super.onResume();
+        if (mPrefs != null) {
+            mPrefs.registerOnSharedPreferenceChangeListener(this);
+        }
         runWithoutRestartBroadcast(() -> applyDynamicStates(null));
         refreshSpecialSummaries();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        restartBroadcastHandler.removeCallbacks(restartBroadcastRunnable);
+        if (mPrefs != null) {
+            mPrefs.unregisterOnSharedPreferenceChangeListener(this);
+        }
     }
 
     @Override
@@ -192,11 +213,16 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
         runWithoutRestartBroadcast(() -> applyDynamicStates(key));
         refreshSpecialSummaries();
         if (!suppressRestartBroadcast) {
-            try {
-                requireContext().sendBroadcast(new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART"));
-            } catch (Exception ignored) {
-            }
+            scheduleRestartBroadcast();
         }
+    }
+
+    private void scheduleRestartBroadcast() {
+        if (!isResumed()) {
+            return;
+        }
+        restartBroadcastHandler.removeCallbacks(restartBroadcastRunnable);
+        restartBroadcastHandler.postDelayed(restartBroadcastRunnable, 250);
     }
 
     protected void setToolbarTitle(CharSequence title) {

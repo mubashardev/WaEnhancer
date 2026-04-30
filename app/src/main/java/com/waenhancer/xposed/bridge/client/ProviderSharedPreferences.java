@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.waenhancer.BuildConfig;
@@ -24,7 +25,10 @@ public class ProviderSharedPreferences implements SharedPreferences {
 
     private final Context context;
     private final SharedPreferences localPrefs;
-    private final String authority = BuildConfig.APPLICATION_ID + ".provider";
+    private static final String[] AUTHORITIES = new String[] {
+            BuildConfig.APPLICATION_ID + ".hookprovider",
+            BuildConfig.APPLICATION_ID + ".provider"
+    };
 
     public ProviderSharedPreferences(Context context, SharedPreferences localPrefs) {
         this.context = context;
@@ -103,11 +107,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
     @SuppressWarnings("unchecked")
     private void hydrateFromProvider() {
         try {
-            Bundle result = context.getContentResolver().call(
-                    Uri.parse("content://" + authority),
-                    "get_all_preferences",
-                    null,
-                    null);
+            Bundle result = callProvider("get_all_preferences", null);
             if (result == null) {
                 return;
             }
@@ -174,45 +174,36 @@ public class ProviderSharedPreferences implements SharedPreferences {
         }
 
         private void syncToProvider(String key, Object value) {
-            try {
-                Bundle extras = new Bundle();
-                extras.putString("key", key);
-                if (value instanceof String) {
-                    extras.putString("type", "string");
-                    extras.putString("value", (String) value);
-                } else if (value instanceof Boolean) {
-                    extras.putString("type", "boolean");
-                    extras.putBoolean("value", (Boolean) value);
-                } else if (value instanceof Integer) {
-                    extras.putString("type", "int");
-                    extras.putInt("value", (Integer) value);
-                } else if (value instanceof Long) {
-                    extras.putString("type", "long");
-                    extras.putLong("value", (Long) value);
-                } else if (value instanceof Float) {
-                    extras.putString("type", "float");
-                    extras.putFloat("value", (Float) value);
-                } else if (value instanceof Set<?>) {
-                    extras.putString("type", "string_set");
-                    var list = new ArrayList<String>();
-                    for (Object item : (Set<?>) value) {
-                        if (item instanceof String) {
-                            list.add((String) item);
-                        }
+            Bundle extras = new Bundle();
+            extras.putString("key", key);
+            if (value instanceof String) {
+                extras.putString("type", "string");
+                extras.putString("value", (String) value);
+            } else if (value instanceof Boolean) {
+                extras.putString("type", "boolean");
+                extras.putBoolean("value", (Boolean) value);
+            } else if (value instanceof Integer) {
+                extras.putString("type", "int");
+                extras.putInt("value", (Integer) value);
+            } else if (value instanceof Long) {
+                extras.putString("type", "long");
+                extras.putLong("value", (Long) value);
+            } else if (value instanceof Float) {
+                extras.putString("type", "float");
+                extras.putFloat("value", (Float) value);
+            } else if (value instanceof Set<?>) {
+                extras.putString("type", "string_set");
+                var list = new ArrayList<String>();
+                for (Object item : (Set<?>) value) {
+                    if (item instanceof String) {
+                        list.add((String) item);
                     }
-                    extras.putStringArrayList("value", list);
-                } else {
-                    return;
                 }
-
-                context.getContentResolver().call(
-                        Uri.parse("content://" + authority),
-                        "put_preference",
-                        null,
-                        extras);
-            } catch (Exception e) {
-                // Log error
+                extras.putStringArrayList("value", list);
+            } else {
+                return;
             }
+            callProvider("put_preference", extras);
         }
 
         @Override
@@ -263,11 +254,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
             try {
                 Bundle extras = new Bundle();
                 extras.putString("key", key);
-                context.getContentResolver().call(
-                        Uri.parse("content://" + authority),
-                        "remove_preference",
-                        null,
-                        extras);
+                callProvider("remove_preference", extras);
             } catch (Exception ignored) {
             }
             return this;
@@ -277,11 +264,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
         public Editor clear() {
             localEditor.clear();
             try {
-                context.getContentResolver().call(
-                        Uri.parse("content://" + authority),
-                        "clear_preferences",
-                        null,
-                        null);
+                callProvider("clear_preferences", null);
             } catch (Exception ignored) {
             }
             return this;
@@ -292,5 +275,23 @@ public class ProviderSharedPreferences implements SharedPreferences {
 
         @Override
         public void apply() { localEditor.apply(); }
+    }
+
+    @Nullable
+    private Bundle callProvider(@NonNull String method, @Nullable Bundle extras) {
+        for (String authority : AUTHORITIES) {
+            try {
+                Bundle result = context.getContentResolver().call(
+                        Uri.parse("content://" + authority),
+                        method,
+                        null,
+                        extras);
+                if (result != null) {
+                    return result;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return null;
     }
 }

@@ -5,9 +5,11 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Handler;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +42,14 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancerX/releases/latest";
     protected SharedPreferences mPrefs;
     private boolean suppressRestartBroadcast;
+    private final Handler restartBroadcastHandler = new Handler(Looper.getMainLooper());
+    private final Runnable restartBroadcastRunnable = () -> {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
+        App.getInstance().sendBroadcast(intent);
+    };
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
@@ -80,7 +90,6 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             }
         });
 
-        mPrefs.registerOnSharedPreferenceChangeListener(this);
         requireActivity().getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -105,14 +114,27 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     @Override
     public void onResume() {
         super.onResume();
+        if (mPrefs != null) {
+            mPrefs.registerOnSharedPreferenceChangeListener(this);
+        }
         setDisplayHomeAsUpEnabled(true);
         initializeReleaseChannelPreference();
         setupReleaseChannelPreference();
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        restartBroadcastHandler.removeCallbacks(restartBroadcastRunnable);
+        if (mPrefs != null) {
+            mPrefs.unregisterOnSharedPreferenceChangeListener(this);
+        }
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
+        restartBroadcastHandler.removeCallbacks(restartBroadcastRunnable);
         if (mPrefs != null) {
             mPrefs.unregisterOnSharedPreferenceChangeListener(this);
         }
@@ -177,9 +199,16 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         }
         runWithoutRestartBroadcast(() -> chanceStates(s));
         if (!suppressRestartBroadcast) {
-            Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
-            App.getInstance().sendBroadcast(intent);
+            scheduleRestartBroadcast();
         }
+    }
+
+    private void scheduleRestartBroadcast() {
+        if (!isResumed()) {
+            return;
+        }
+        restartBroadcastHandler.removeCallbacks(restartBroadcastRunnable);
+        restartBroadcastHandler.postDelayed(restartBroadcastRunnable, 250);
     }
 
     private void setPreferenceState(String key, boolean enabled) {

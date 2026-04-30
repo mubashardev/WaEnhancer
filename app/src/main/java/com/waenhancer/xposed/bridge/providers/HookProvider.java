@@ -37,7 +37,11 @@ public class HookProvider extends ContentProvider {
         if (context == null) {
             return null;
         }
+        var prefs = PreferenceManager.getDefaultSharedPreferences(context);
         if ("add_log".equals(method) && extras != null) {
+            if (!prefs.getBoolean("logging_enabled", false)) {
+                return Bundle.EMPTY;
+            }
             String pkg = extras.getString("package");
             String msg = extras.getString("message");
             if (pkg != null && msg != null) {
@@ -45,7 +49,6 @@ public class HookProvider extends ContentProvider {
             }
             return Bundle.EMPTY;
         }
-        var prefs = PreferenceManager.getDefaultSharedPreferences(context);
         if ("get_preference".equals(method) && extras != null) {
             String key = extras.getString("key");
             Bundle result = new Bundle();

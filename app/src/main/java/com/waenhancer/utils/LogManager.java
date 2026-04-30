@@ -46,6 +46,14 @@ public class LogManager {
         }
     }
 
+    public static void startService(Context context) {
+        Intent intent = new Intent(context, LogService.class);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
+    }
 
 
     public static void stopService(Context context) {
@@ -161,7 +169,7 @@ public class LogManager {
         return logFolder;
     }
 
-    private static String runRootCommand(String command) {
+    public static String runRootCommand(String command) {
         Process process = null;
         try {
             process = new ProcessBuilder("su", "-c", command).redirectErrorStream(true).start();

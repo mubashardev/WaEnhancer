@@ -88,11 +88,16 @@ public class UpdateChecker implements Runnable {
         try {
             WppCore.setPrivString("ignored_version", "");
 
-            var request = new okhttp3.Request.Builder()
+            var requestBuilder = new okhttp3.Request.Builder()
                     .url(RELEASES_API)
                     .header("Accept", "application/vnd.github+json")
-                    .header("User-Agent", "WaEnhancer X-UpdateChecker")
-                    .build();
+                    .header("User-Agent", "WaEnhancer X-UpdateChecker");
+
+            if (BuildConfig.GH_PUBLIC_TOKEN != null && !BuildConfig.GH_PUBLIC_TOKEN.isEmpty()) {
+                requestBuilder.header("Authorization", "Bearer " + BuildConfig.GH_PUBLIC_TOKEN);
+            }
+
+            var request = requestBuilder.build();
 
             String installedVersion = normalizeVersion(com.waenhancer.BuildConfig.VERSION_NAME);
             writeDebugLog("[UpdateChecker] run() - Installed Version: " + installedVersion);

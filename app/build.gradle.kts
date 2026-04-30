@@ -45,6 +45,15 @@ android {
         targetSdk = 34
         versionCode = project.findProperty("VERSION_CODE")?.toString()?.toInt() ?: 1
         versionName = project.findProperty("VERSION_NAME")?.toString() ?: "1.0.0"
+
+        val env = Properties()
+        val envFile = rootProject.file(".env")
+        if (envFile.exists()) {
+            runCatching { env.load(FileInputStream(envFile)) }
+        }
+        val githubToken = (project.findProperty("GH_PUBLIC_TOKEN")?.toString() ?: env.getProperty("GH_PUBLIC_TOKEN") ?: "").trim()
+        buildConfigField("String", "GH_PUBLIC_TOKEN", "\"$githubToken\"")
+
         buildConfigField("String", "NOTICES_URL", "\"https://waenhancer.com/notices.json\"")
         multiDexEnabled = true
 

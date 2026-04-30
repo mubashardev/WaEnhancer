@@ -1,2 +1,8 @@
 [Fixes]
 - Fixed: Module not starting
+- Temporarily disabled logs
+
+[Enhancements]
+- Added option to downgrade to any version of WAE!
+
+Note: You can downgrade to any version in case of any bug or issue in latest update.

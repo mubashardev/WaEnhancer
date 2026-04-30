@@ -16,3 +16,4 @@ key_base64.txt
 ref
 .planning
 .kotlin
+.env

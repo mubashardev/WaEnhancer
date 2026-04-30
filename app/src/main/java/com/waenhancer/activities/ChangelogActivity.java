@@ -1,9 +1,13 @@
 package com.waenhancer.activities;
 
+import com.waenhancer.BuildConfig;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -48,6 +52,7 @@ public class ChangelogActivity extends BaseActivity {
     private ChangelogAdapter adapter;
     private final List<JSONObject> stableReleases = new ArrayList<>();
     private final List<JSONObject> betaReleases = new ArrayList<>();
+    private boolean downgradesEnabled = false;
     private static final String RELEASES_API = "https://api.github.com/repos/mubashardev/WaEnhancer/releases";
 
     @Override
@@ -91,6 +96,15 @@ public class ChangelogActivity extends BaseActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuItem item = menu.add(0, 1001, 0, R.string.enable_downgrades);
+        item.setCheckable(true);
+        item.setChecked(downgradesEnabled);
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        return true;
+    }
+
+    @Override
     public void onBackPressed() {
         navigateToHome();
     }
@@ -101,7 +115,34 @@ public class ChangelogActivity extends BaseActivity {
             navigateToHome();
             return true;
         }
+        if (item.getItemId() == 1001) {
+            toggleDowngrades(item);
+            return true;
+        }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void toggleDowngrades(MenuItem item) {
+        if (!item.isChecked()) {
+            // Request root
+            new Thread(() -> {
+                boolean granted = com.waenhancer.utils.LogManager.hasRootAccess();
+                runOnUiThread(() -> {
+                    if (granted) {
+                        downgradesEnabled = true;
+                        item.setChecked(true);
+                        adapter.setDowngradesEnabled(true);
+                    } else {
+                        item.setChecked(false);
+                        Toast.makeText(this, R.string.root_required_downgrade, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }).start();
+        } else {
+            downgradesEnabled = false;
+            item.setChecked(false);
+            adapter.setDowngradesEnabled(false);
+        }
     }
 
     private void navigateToHome() {
@@ -131,11 +172,16 @@ public class ChangelogActivity extends BaseActivity {
                     .connectTimeout(15, TimeUnit.SECONDS)
                     .build();
 
-            Request request = new Request.Builder()
+            var requestBuilder = new Request.Builder()
                     .url(RELEASES_API)
                     .header("Accept", "application/vnd.github+json")
-                    .header("User-Agent", "WaEnhancer-ChangelogViewer")
-                    .build();
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
+            if (BuildConfig.GH_PUBLIC_TOKEN != null && !BuildConfig.GH_PUBLIC_TOKEN.isEmpty()) {
+                requestBuilder.header("Authorization", "Bearer " + BuildConfig.GH_PUBLIC_TOKEN);
+            }
+
+            Request request = requestBuilder.build();
 
             try (Response response = client.newCall(request).execute()) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -163,6 +209,9 @@ public class ChangelogActivity extends BaseActivity {
                         updateList(defaultTab);
                     });
                 } else {
+                    if (response.code() == 403) {
+                        throw new IOException("GitHub rate limit exceeded. Please try again in 1 hour.");
+                    }
                     throw new IOException("Unexpected code " + response);
                 }
             } catch (Exception e) {
@@ -196,10 +245,16 @@ public class ChangelogActivity extends BaseActivity {
     private class ChangelogAdapter extends RecyclerView.Adapter<ChangelogViewHolder> {
         private final List<JSONObject> releases = new ArrayList<>();
         private final String currentVersion;
+        private boolean downgradesEnabled = false;
         private Markwon markwon;
 
         public ChangelogAdapter(String currentVersion) {
             this.currentVersion = currentVersion;
+        }
+
+        public void setDowngradesEnabled(boolean enabled) {
+            this.downgradesEnabled = enabled;
+            notifyDataSetChanged();
         }
 
         public void setReleases(List<JSONObject> newReleases) {
@@ -218,7 +273,7 @@ public class ChangelogActivity extends BaseActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ChangelogViewHolder holder, int position) {
-            holder.bind(releases.get(position));
+            holder.bind(releases.get(position), downgradesEnabled);
         }
 
         @Override
@@ -250,6 +305,10 @@ public class ChangelogActivity extends BaseActivity {
         }
 
         public void bind(JSONObject release) {
+            bind(release, false);
+        }
+
+        public void bind(JSONObject release, boolean downgradesEnabled) {
             String tagName = release.optString("tag_name", "Unknown");
             String publishedAt = release.optString("published_at", "");
             String body = release.optString("body", "No description available.");
@@ -285,7 +344,14 @@ public class ChangelogActivity extends BaseActivity {
             tvInstalledBadge.setVisibility(isInstalled ? View.VISIBLE : View.GONE);
             markwon.setMarkdown(tvBody, body.trim());
 
-            btnUpdate.setVisibility(isNewer ? View.VISIBLE : View.GONE);
+            boolean showUpdateButton = isNewer || (downgradesEnabled && !isInstalled);
+            btnUpdate.setVisibility(showUpdateButton ? View.VISIBLE : View.GONE);
+            if (showUpdateButton && !isNewer) {
+                btnUpdate.setText(R.string.downgrade);
+            } else {
+                btnUpdate.setText(R.string.update);
+            }
+            
             btnUpdate.setOnClickListener(v -> {
                 String downloadUrl = null;
                 JSONArray assets = release.optJSONArray("assets");
@@ -303,7 +369,7 @@ public class ChangelogActivity extends BaseActivity {
                 }
 
                 if (downloadUrl != null) {
-                    UpdateDownloader.showDownloadDialog(v.getContext(), downloadUrl, tagName);
+                    UpdateDownloader.showDownloadDialog(v.getContext(), downloadUrl, tagName, downgradesEnabled);
                 } else {
                     try {
                         android.content.Context context = v.getContext();

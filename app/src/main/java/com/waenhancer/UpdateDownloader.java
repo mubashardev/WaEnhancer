@@ -127,7 +127,49 @@ public class UpdateDownloader {
         activity.startActivity(intent);
     }
 
+    public static void installApkWithRoot(Context context, File apkFile) {
+        Activity activity = getActivity(context);
+        if (activity == null) return;
+
+        new Thread(() -> {
+            String apkPath = apkFile.getAbsolutePath();
+            String tmpPath = "/data/local/tmp/wa_update.apk";
+            
+            // Copy to /data/local/tmp first to ensure pm can read it
+            String copyCmd = "cp \"" + apkPath + "\" " + tmpPath + " && chmod 666 " + tmpPath;
+            com.waenhancer.utils.LogManager.runRootCommand(copyCmd);
+
+            // -r: replace existing application
+            // -d: allow version code downgrade
+            // --user 0: install for owner (common on most devices)
+            String cmd = "pm install -r -d --user 0 " + tmpPath;
+            String result = com.waenhancer.utils.LogManager.runRootCommand(cmd);
+            
+            // Cleanup
+            com.waenhancer.utils.LogManager.runRootCommand("rm " + tmpPath);
+
+            boolean success = result != null && (result.toLowerCase().contains("success") || result.toLowerCase().contains("pkg:"));
+            
+            activity.runOnUiThread(() -> {
+                if (success) {
+                    Toast.makeText(activity, "Installation successful. Restarting...", Toast.LENGTH_LONG).show();
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        android.os.Process.killProcess(android.os.Process.myPid());
+                        System.exit(0);
+                    }, 2000);
+                } else {
+                    String error = (result != null && !result.isEmpty()) ? result.trim() : "Unknown error";
+                    Toast.makeText(activity, "Root installation failed: " + error, Toast.LENGTH_LONG).show();
+                }
+            });
+        }).start();
+    }
+
     public static void showDownloadDialog(Context context, String url, String version) {
+        showDownloadDialog(context, url, version, false);
+    }
+
+    public static void showDownloadDialog(Context context, String url, String version, boolean useRoot) {
         Activity activity = getActivity(context);
         if (activity == null) return;
 
@@ -187,7 +229,11 @@ public class UpdateDownloader {
             public void onSuccess(File apkFile) {
                 activity.runOnUiThread(() -> {
                     if (dialog.isShowing()) dialog.dismiss();
-                    installApk(activity, apkFile);
+                    if (useRoot) {
+                        installApkWithRoot(activity, apkFile);
+                    } else {
+                        installApk(activity, apkFile);
+                    }
                 });
             }
 

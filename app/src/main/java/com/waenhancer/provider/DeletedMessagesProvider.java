@@ -89,11 +89,44 @@ public class DeletedMessagesProvider extends ContentProvider {
     @Nullable
     @Override
     public android.os.Bundle call(@NonNull String method, @Nullable String arg, @Nullable android.os.Bundle extras) {
+        var context = getContext();
+        if (context == null) {
+            return super.call(method, arg, extras);
+        }
+
+        var prefs = context.getSharedPreferences(context.getPackageName() + "_preferences",
+                android.content.Context.MODE_PRIVATE);
+
+        if ("get_preference".equals(method) && extras != null) {
+            String key = extras.getString("key");
+            android.os.Bundle result = new android.os.Bundle();
+            if (key != null) {
+                Object value = prefs.getAll().get(key);
+                if (value instanceof Boolean) result.putBoolean("value", (Boolean) value);
+                else if (value instanceof String) result.putString("value", (String) value);
+                else if (value instanceof Integer) result.putInt("value", (Integer) value);
+                else if (value instanceof Long) result.putLong("value", (Long) value);
+                else if (value instanceof Float) result.putFloat("value", (Float) value);
+            }
+            return result;
+        }
+
+        if ("add_log".equals(method) && extras != null) {
+            if (!prefs.getBoolean("logging_enabled", false)) {
+                return android.os.Bundle.EMPTY;
+            }
+            String pkg = extras.getString("package");
+            String msg = extras.getString("message");
+            if (pkg != null && msg != null) {
+                com.waenhancer.utils.LogManager.addLog(context, pkg, msg);
+            }
+            return android.os.Bundle.EMPTY;
+        }
+
         if ("put_preference".equals(method) && extras != null) {
             String key = extras.getString("key");
             Object value = extras.get("value");
             if (key != null) {
-                var prefs = getContext().getSharedPreferences(getContext().getPackageName() + "_preferences", android.content.Context.MODE_PRIVATE);
                 var editor = prefs.edit();
                 if (value instanceof Boolean) editor.putBoolean(key, (Boolean) value);
                 else if (value instanceof String) editor.putString(key, (String) value);

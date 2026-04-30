@@ -135,22 +135,25 @@ public class FeatureLoader {
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         mApp = (Application) param.args[0];
                         String processName = Application.getProcessName();
+                        XposedBridge.log("[WAE] callApplicationOnCreate for: " + mApp.getPackageName() + " (process: " + processName + ")");
+
+                        if (!Objects.equals(processName, mApp.getPackageName())) {
+                            XposedBridge.log("[WAE] Skipping secondary process: " + processName);
+                            return;
+                        }
 
                         // Inject Booloader Spoofer
                         if (pref.getBoolean("bootloader_spoofer", false)) {
                             HookBL.hook(loader, pref);
-                            XposedBridge.log("Bootloader Spoofer is Injected");
+                            XposedBridge.log("[WAE] Bootloader Spoofer Injected");
                         }
 
                         PackageManager packageManager = mApp.getPackageManager();
                         pref.registerOnSharedPreferenceChangeListener((sharedPreferences, s) -> pref.reload());
                         PackageInfo packageInfo = packageManager.getPackageInfo(mApp.getPackageName(), 0);
+
                         XposedBridge.log(packageInfo.versionName);
                         currentVersion = packageInfo.versionName;
-                        if (!Objects.equals(processName, mApp.getPackageName())) {
-                            XposedBridge.log("[WAE] Skipping heavy hook initialization in secondary process: " + processName);
-                            return;
-                        }
 
                         // Diagnostic: Log theme-related preferences from multiple common files
                         try {
@@ -186,8 +189,10 @@ public class FeatureLoader {
                             UnobfuscatorCache.init(mApp);
                             SharedPreferencesWrapper.hookInit(mApp.getClassLoader());
                             ReflectionUtils.initCache(mApp);
+                            XposedBridge.log("[WAE] Supported versions list: " + supportedVersions);
                             boolean isSupported = supportedVersions.stream()
                                     .anyMatch(s -> packageInfo.versionName.startsWith(s.replace(".xx", "")));
+                            XposedBridge.log("[WAE] Version verification result for " + packageInfo.versionName + ": isSupported=" + isSupported);
                             if (!isSupported) {
                                 disableExpirationVersion(mApp.getClassLoader());
                                 if (!pref.getBoolean("bypass_version_check", false)) {
@@ -198,13 +203,14 @@ public class FeatureLoader {
                                     throw new Exception(sb);
                                 }
                             }
+                            XposedBridge.log("[WAE] Initializing components and plugins...");
                             initComponents(loader, pref);
                             plugins(loader, pref, packageInfo.versionName);
                             sendEnabledBroadcast(mApp);
                             // XposedHelpers.setStaticIntField(XposedHelpers.findClass("com.whatsapp.infra.logging.Log",
                             // loader), "level", 5);
                             var timemillis2 = System.currentTimeMillis() - timemillis;
-                            XposedBridge.log("Loaded Hooks in " + timemillis2 + "ms");
+                            XposedBridge.log("[WAE] Loaded Hooks in " + timemillis2 + "ms");
                         } catch (Throwable e) {
                             XposedBridge.log(e);
                             var error = new ErrorItem();

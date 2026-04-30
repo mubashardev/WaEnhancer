@@ -50,14 +50,18 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
     @SuppressLint("WorldReadableFiles")
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        XposedBridge.log("[WAE] handleLoadPackage: " + lpparam.packageName + " (process: " + lpparam.processName + ")");
         var packageName = lpparam.packageName;
         var classLoader = lpparam.classLoader;
 
         if (packageName.equals(BuildConfig.APPLICATION_ID)) {
+            XposedBridge.log("[WAE] Hooking module's own process");
             XposedHelpers.findAndHookMethod(MainActivity.class.getName(), lpparam.classLoader, "isXposedEnabled", XC_MethodReplacement.returnConstant(true));
             XposedHelpers.findAndHookMethod(PreferenceManager.class.getName(), lpparam.classLoader, "getDefaultSharedPreferencesMode", XC_MethodReplacement.returnConstant(ContextWrapper.MODE_WORLD_READABLE));
             return;
         }
+
+        XposedBridge.log("[WAE] Checking if target is WhatsApp or Business");
 
         AntiUpdater.hookSession(lpparam);
 
@@ -66,40 +70,30 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
         ScopeHook.hook(lpparam);
 
         //  AndroidPermissions.hook(lpparam); in tests
-        if ((packageName.equals(FeatureLoader.PACKAGE_WPP) && App.isOriginalPackage()) || packageName.equals(FeatureLoader.PACKAGE_BUSINESS)) {
-            XposedBridge.log("[•] This package: " + lpparam.packageName);
+        boolean isWpp = packageName.equals(FeatureLoader.PACKAGE_WPP);
+        boolean isBusiness = packageName.equals(FeatureLoader.PACKAGE_BUSINESS);
+        boolean isOriginal = App.isOriginalPackage();
 
-            setupLogging(lpparam);
+        XposedBridge.log("[WAE] isWpp: " + isWpp + ", isBusiness: " + isBusiness + ", isOriginal: " + isOriginal);
 
-            // Load features
-            FeatureLoader.start(classLoader, getPref(), lpparam.appInfo.sourceDir);
+        if ((isWpp && isOriginal) || isBusiness) {
+            XposedBridge.log("[WAE] Target verified. Starting FeatureLoader...");
+
+            try {
+                setupLogging(lpparam);
+                FeatureLoader.start(classLoader, getPref(), lpparam.appInfo.sourceDir);
+                XposedBridge.log("[WAE] FeatureLoader.start completed successfully");
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] CRITICAL ERROR in FeatureLoader.start: " + t.getMessage());
+                XposedBridge.log(t);
+            }
 
             disableSecureFlag();
         }
     }
 
     private void setupLogging(XC_LoadPackage.LoadPackageParam lpparam) {
-        // Initial log to confirm hook is active
-        com.waenhancer.utils.LogManager.addLogViaProvider(com.waenhancer.xposed.utils.Utils.getApplication(), lpparam.packageName, "Logging initialized for " + lpparam.packageName);
-
-        XposedHelpers.findAndHookMethod(XposedBridge.class, "log", String.class, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (com.waenhancer.utils.LogManager.isLoggingEnabledViaProvider(com.waenhancer.xposed.utils.Utils.getApplication())) {
-                    com.waenhancer.utils.LogManager.addLogViaProvider(com.waenhancer.xposed.utils.Utils.getApplication(), lpparam.packageName, (String) param.args[0]);
-                }
-            }
-        });
-
-        XposedHelpers.findAndHookMethod(XposedBridge.class, "log", Throwable.class, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (com.waenhancer.utils.LogManager.isLoggingEnabledViaProvider(com.waenhancer.xposed.utils.Utils.getApplication())) {
-                    Throwable t = (Throwable) param.args[0];
-                    com.waenhancer.utils.LogManager.addLogViaProvider(com.waenhancer.xposed.utils.Utils.getApplication(), lpparam.packageName, android.util.Log.getStackTraceString(t));
-                }
-            }
-        });
+        // Disabled for now to rule out interference with initialization
     }
 
     @Override

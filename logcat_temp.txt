@@ -1,0 +1,1000 @@
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.046 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.046 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:46.481     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.483     1     1 E (2)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.047   490 13723 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.047   490 13723 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.048   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.049 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.049 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.049 21412 23367 D BiometricScheduler: [Client finished] {[14360075] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.049   490 13724 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.049 21412 23367 D BiometricScheduler: [Starting User] {[14360076] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.049   490 13724 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.050 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:46.486     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.051   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.052 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.052 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.052   490 13725 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.052   490 13725 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.052   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:46.489     1     1 E (2)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.053 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.053 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.054 21412 23367 D BiometricScheduler: [Client finished] {[14360076] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.054 21412 23367 D BiometricScheduler: [Starting User] {[14360077] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.054 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.054   490 13726 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.054   490 13726 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.054   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:46.490     1     1 E (2)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.055 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.056   490 13727 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.056 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.056 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.056   490 13727 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.056   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.057 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.057 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.058 21412 23367 D BiometricScheduler: [Client finished] {[14360077] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.058 21412 23367 D BiometricScheduler: [Starting User] {[14360078] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.058 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.058   490 13728 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.058   490 13728 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.058 10379 10379 D fingerprint: [silead_dev]V[silfp_dev_init:178] init
+04-30 00:29:48.058 10379 10379 D fingerprint: [silead_dev]E[_dev_stub_init:154] open dev:/dev/silead_stub fail (No such file or directory), directly use silead_fp dev
+04-30 00:29:46.493     1     1 E (5)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.494     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.496 10379 10379 W         : (1)[10379:android.hardwar][+silead_fp-] [silfp_ioctl] chip reset
+04-30 00:29:46.496 10379 10379 W         : -(1)[10379:android.hardwar][+silead_fp-] [silfp_irq_enable] irq enabled
+04-30 00:29:46.496 10379 10379 W         : (1)[10379:android.hardwar][+silead_fp-] [silfp_hw_reset] enter, port=-1
+04-30 00:29:48.059   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.060   490 13729 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.060 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.060   490 13729 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.060 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.060   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.061 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.061 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.061 21412 23367 D BiometricScheduler: [Client finished] {[14360078] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.062 21412 23367 D BiometricScheduler: [Starting User] {[14360079] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.062   490 13730 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.062 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.062   490 13730 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:46.497     1     1 E (5)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.498     1     1 E (2)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.062   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.064 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.064 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.064   490 13731 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.064   490 13731 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.064   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.065 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.065 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.066 21412 23367 D BiometricScheduler: [Client finished] {[14360079] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.066 21412 23367 D BiometricScheduler: [Starting User] {[14360080] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.066   490 13732 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.066 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.066   490 13732 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:46.501     1     1 E (2)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.502     1     1 E (3)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.504 10379 10379 W         : -(1)[10379:android.hardwar][+silead_fp-] [silfp_irq_disable] irq disabled
+04-30 00:29:46.504 10379 10379 W         : (1)[10379:android.hardwar][+silead_fp-] [silfp_ioctl] acq spi
+04-30 00:29:46.504 10379 10379 W         : (1)[10379:android.hardwar][+silead_fp-] [silfp_set_spi] done (0).
+04-30 00:29:48.066   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.067 10379 10379 D fingerprint: [silead_dev]V[silfp_dev_enable:86] acq spi
+04-30 00:29:48.067 10379 10379 D fingerprint: [silead_ca_entry]D[silfp_ca_send_modified_command:102] > 0x20 (SET_SPI_DEV) [14 0 0x0:0x0]
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.068 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.068 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.068   490 13733 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.068   490 13733 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:46.505     1     1 E (3)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.069   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.071 10379 10379 D fingerprint: [silead_ca_entry]D[silfp_ca_send_modified_command:106] < 0x20 0 (SUCCESS) [0x0:0x0]
+04-30 00:29:48.071 10379 10379 D fingerprint: [silead_ca_entry]D[silfp_ca_send_normal_command:123] > 0xe (INIT) [0x80064:0x7a1200:0x1000:0x0]
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.072   490 13734 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.072 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.072 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.072   490 13734 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.072 21412 23367 D BiometricScheduler: [Client finished] {[14360080] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.072 21412 23367 D BiometricScheduler: [Starting User] {[14360081] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.072 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.073   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.073 10379 10379 D fingerprint: [silead_ca_entry]D[silfp_ca_send_normal_command:127] < 0xe -1007(CONFIG_INVALID) [0x0:0x0:0x80000000]
+04-30 00:29:48.073 10379 10379 D fingerprint: [silead_dev]V[silfp_dev_disable:114] release spi
+04-30 00:29:48.073 10379 10379 D fingerprint: [silead_impl]I[_impl_init:851] chipid=0,0,0 0 (-1007)
+04-30 00:29:48.074 10379 10379 D fingerprint: [silead_impl]E[_impl_init:853] chipid=0,0,0 0 (-1007)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.074 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.074 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:46.509     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.511 10379 10379 W         : (3)[10379:android.hardwar][+silead_fp-] [silfp_ioctl] release spi
+04-30 00:29:46.511 10379 10379 W         : (3)[10379:android.hardwar][+silead_fp-] [silfp_set_spi] done (0).
+04-30 00:29:46.511     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.074   490 13735 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.075   490 13735 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.075   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.076   490 13736 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.076 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.076 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.076   490 13736 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.076 21412 23367 D BiometricScheduler: [Client finished] {[14360081] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.076 21412 23367 D BiometricScheduler: [Starting User] {[14360082] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.076 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.077   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:46.513     1     1 E (1)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.515     1     1 E (1)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.078 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.079 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.079 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.079   490 13737 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.079   490 13737 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.079   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.082 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.082 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.082   490 13738 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.082   490 13738 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.082 21412 23367 D BiometricScheduler: [Client finished] {[14360082] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.082 21412 23367 D BiometricScheduler: [Starting User] {[14360083] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.082 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:46.519     1     1 E (2)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.083   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.084 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.084 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.084   490 13739 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.085   490 13739 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.085   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.086 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.086 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.086 21412 23367 D BiometricScheduler: [Client finished] {[14360083] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:46.521     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.087 21412 23367 D BiometricScheduler: [Starting User] {[14360084] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.087   490 13740 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:46.523     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.087 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.087   490 13740 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.087   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.089 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.089 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.089   490 13741 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.089   490 13741 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.090   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:46.526     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.091 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.091 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.091 21412 23367 D BiometricScheduler: [Client finished] {[14360084] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.091 21412 23367 D BiometricScheduler: [Starting User] {[14360085] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.091 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.091   490 13742 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.091   490 13742 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.092   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.093 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.093 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.094   490 13743 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.094   490 13743 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:46.528     1     1 E (1)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.530     1     1 E (3)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [silead_ta_entry.c:66/ut_pf_fp_invoke_command]<err>[fp-beanpod][fp][VRB][ut_pf_fp_invoke_command:66] cmd=0x20, head->len=38, param_length=38
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:30/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][VRB][fp_ta_main_entry_point:30] cmd=0x20, cmd_ptr: data=0, data2=0, offset=0, len=14, v_addr=0x963050
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:31/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][VRB][fp_ta_main_entry_point:31] cmd=0x20, ..., [0x2F:0x64:0x65:0x76]
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:33/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][DBG][fp_ta_main_entry_point:33] > SET_SPI_DEV(0x20)
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:37/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][VRB][fp_ta_main_entry_point:37] cmd=0x20, rsp_ptr: data=0, data2=0, data3=0, status=0]
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:40/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][DBG][fp_ta_main_entry_point:40] < 0x20 (0)
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [silead_ta_entry.c:91/ut_pf_fp_invoke_command]<err>[fp-beanpod][fp][VRB][ut_pf_fp_invoke_command:91] cmd=0x20, ret=0, head->len=38
+04-30 00:29:48.095   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [silead_ta_entry.c:66/ut_pf_fp_invoke_command]<err>[fp-beanpod][fp][VRB][ut_pf_fp_invoke_command:66] cmd=0x0E, head->len=28, param_length=28
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:30/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][VRB][fp_ta_main_entry_point:30] cmd=0x0E, cmd_ptr: data=524388, data2=8000000, offset=0, len=0, v_addr=0x963050
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:31/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][VRB][fp_ta_main_entry_point:31] cmd=0x0E, ..., [0x00:0x00:0x00:0x00]
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:33/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][DBG][fp_ta_main_entry_point:33] > INIT(0x0E)
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_impl.c:865/fp_impl_init]<err>[fp-beanpod][FP_IMP][VRB][fp_impl_init:865] init
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_impl.c:800/_fp_impl_init]<err>[fp-beanpod][FP_IMP][VRB][_fp_impl_init:800] m_spi_dev=/dev/spidev1.0
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [silead_config.c:354/silfp_cfg_init]<err>[fp-beanpod][fp_config][VRB][silfp_cfg_init:354] init
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_spi.c:337/fp_spi_dev_read_reg]<err>[fp-beanpod][fp_spi][VRB][fp_spi_dev_read_reg:337] read reg 0xFC = 0x00000000, ret = 4
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_spi.c:466/fp_spi_dev_write_reg]<err>[fp-beanpod][fp_spi][VRB][fp_spi_dev_write_reg:466] write reg 0x000000A0 = 0x00000001, ret = 6
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_spi.c:337/fp_spi_dev_read_reg]<err>[fp-beanpod][fp_spi][VRB][fp_spi_dev_read_reg:337] read reg 0xFC = 0x00000000, ret = 4
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_spi.c:466/fp_spi_dev_write_reg]<err>[fp-beanpod][fp_spi][VRB][fp_spi_dev_write_reg:466] write reg 0x000000A0 = 0x00000000, ret = 6
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_spi.c:968/fp_spi_read_chipid]<err>[fp-beanpod][fp_spi][INFO][fp_spi_read_chipid:968] ChipID=0x00000000, SubChipID=0x00000000, virtualid=0x00000000
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_impl.c:817/_fp_impl_init]<err>[fp-beanpod][FP_IMP][ERR][_fp_impl_init:817] chipid not correct, can't get default config
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [silead_fp_util.c:238/silfp_util_sync_fp_version]<err>[fp-beanpod][util_beanpod][DBG][silfp_util_sync_fp_version:238] [Pay] current_fid_info.version = 530
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.096 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.096 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [silead_config_cust_param.c:148/silfp_cfg_cust_param_init]<err>[fp-beanpod][cfg_cust_param][ERR][silfp_cfg_cust_param_init:148] cfg invalid
+04-30 00:29:48.096 21412 23367 D BiometricScheduler: [Client finished] {[14360085] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.096 21412 23367 D BiometricScheduler: [Starting User] {[14360086] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.096 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.096   490 13744 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.096   490 13744 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.097   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:37/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][VRB][fp_ta_main_entry_point:37] cmd=0x0E, rsp_ptr: data=0, data2=0, data3=-2147483648, status=-1007]
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [fp_ta_entry_def.c:40/fp_ta_main_entry_point]<err>[fp-beanpod][beanpod-entry][DBG][fp_ta_main_entry_point:40] < 0x0E (-1007)
+04-30 00:29:46.532   317   317 I         : (4)[317:teei_log_thread][TZ_LOG] silead  | [silead_ta_entry.c:91/ut_pf_fp_invoke_command]<err>[fp-beanpod][fp][VRB][ut_pf_fp_invoke_command:91] cmd=0x0E, ret=0, head->len=28
+04-30 00:29:46.533     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.535     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.098 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.098   490 13745 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.098 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.098   490 13745 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.099   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.100 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.100 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.100 21412 23367 D BiometricScheduler: [Client finished] {[14360086] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.100   490 13746 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.100 21412 23367 D BiometricScheduler: [Starting User] {[14360087] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.100   490 13746 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.100 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.101   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.102   490 13747 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.102 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.102   490 13747 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.102 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:46.537     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.539     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.103   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.104 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.104 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.104 21412 23367 D BiometricScheduler: [Client finished] {[14360087] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.104 21412 23367 D BiometricScheduler: [Starting User] {[14360088] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.104   490 13748 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.104 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.104   490 13748 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.105   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.106 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.106 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.106   490 13749 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.106   490 13749 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:46.541     1     1 E (2)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.543     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.107   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.107 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.107 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.108 21412 23367 D BiometricScheduler: [Client finished] {[14360088] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.108   490 13750 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.108 21412 23367 D BiometricScheduler: [Starting User] {[14360089] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.108   490 13750 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.108 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.108   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.setCallback(HidlToAidlSessionAdapter.java:227)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.<init>(HidlToAidlSessionAdapter.java:58)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.aidl.AidlSession.<init>(AidlSession.java:48)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getSession(HidlToAidlSensorAdapter.java:182)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.lambda$getFingerprintUpdateActiveUserClient$3(HidlToAidlSensorAdapter.java:273)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.$r8$lambda$hzKCz0gy8JwjgnnYzUAAoIgGgh4(HidlToAidlSensorAdapter.java:0)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda6.get(R8$$SyntheticClass:0)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.HalClientMonitor.getFreshDaemon(HalClientMonitor.java:71)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:123)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.109 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.110 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.110 21412 23367 E HidlToAidlSessionAdapter: Unable to set HIDL callback. HIDL daemon is null.
+04-30 00:29:48.110   490 13751 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.110   490 13751 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.
+04-30 00:29:48.110   490   490 I hwservicemanager: Since android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default is not registered, trying to start it as a lazy HAL (if it's not configured to be a lazy HAL, it may be stuck starting or still starting).
+04-30 00:29:46.544     1     1 E (0)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:46.546     1     1 E (2)[1:init]: Control message: Could not find 'android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default' for ctl.interface_start from pid: 490 (/system/system_ext/bin/hwservicemanager)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: NoSuchElementException
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: java.util.NoSuchElementException
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(Native Method)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HwBinder.getService(HwBinder.java:93)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:74)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.hardware.biometrics.fingerprint.V2_1.IBiometricsFingerprint.getService(IBiometricsFingerprint.java:84)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter.getIBiometricsFingerprint(HidlToAidlSensorAdapter.java:210)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSensorAdapter$$ExternalSyntheticLambda5.get(R8$$SyntheticClass:0)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.HidlToAidlSessionAdapter.getIBiometricsFingerprint(HidlToAidlSessionAdapter.java:213)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.startHalOperation(FingerprintUpdateActiveUserClient.java:124)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient.start(FingerprintUpdateActiveUserClient.java:110)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler.checkCurrentUserAndStartNextOperation(BiometricScheduler.java:332)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.lambda$onClientFinished$0(BiometricScheduler.java:177)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback.$r8$lambda$9uToF41kHgR_T4eWN0T0wXyfa5w(BiometricScheduler.java:0)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at com.android.server.biometrics.sensors.BiometricScheduler$UserSwitchClientCallback$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.handleCallback(Handler.java:1070)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loopOnce(Looper.java:263)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.Looper.loop(Looper.java:367)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-30 00:29:48.111 21412 23367 W HidlToAidlSensorAdapter: Fingerprint HAL not available
+04-30 00:29:48.111 21412 23367 E FingerprintUpdateActiveUserClient: Failed to setActiveGroup: HIDL daemon is null.
+04-30 00:29:48.111 21412 23367 D BiometricScheduler: [Client finished] {[14360089] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}, success: false
+04-30 00:29:48.111 21412 23367 D BiometricScheduler: [Starting User] {[14360090] com.android.server.biometrics.sensors.fingerprint.hidl.FingerprintUpdateActiveUserClient, proto=1, owner=android, cookie=0, requestId=-1, userId=0}
+04-30 00:29:48.112 21412 23367 D FingerprintUpdateActiveUserClient: Setting active user: 0
+04-30 00:29:48.112   490 13752 W libc    : Unable to set property "ctl.interface_start" to "android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default": PROP_ERROR_HANDLE_CONTROL_MESSAGE (0x20)
+04-30 00:29:48.112   490 13752 I hwservicemanager: Tried to start android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint/default as a lazy service, but was unable to. Usually this happens when a service is not installed, but if the service is intended to be used as a lazy service, then it may be configured incorrectly.

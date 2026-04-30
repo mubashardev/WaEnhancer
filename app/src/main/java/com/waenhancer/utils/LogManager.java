@@ -59,7 +59,7 @@ public class LogManager {
         try {
             android.os.Bundle extras = new android.os.Bundle();
             extras.putString("key", PREF_LOGGING_ENABLED);
-            android.os.Bundle result = context.getContentResolver().call(android.net.Uri.parse("content://com.waenhancer.hookprovider"), "get_preference", null, extras);
+            android.os.Bundle result = context.getContentResolver().call(android.net.Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider"), "get_preference", null, extras);
             return result != null && result.getBoolean("value", false);
         } catch (Exception e) {
             return false;
@@ -72,7 +72,7 @@ public class LogManager {
             android.os.Bundle extras = new android.os.Bundle();
             extras.putString("package", packageName);
             extras.putString("message", message);
-            context.getContentResolver().call(android.net.Uri.parse("content://com.waenhancer.hookprovider"), "add_log", null, extras);
+            context.getContentResolver().call(android.net.Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider"), "add_log", null, extras);
         } catch (Exception e) {
             // Silently fail
         }

@@ -2,7 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/temp_xposed_repo" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/upstream_temp" vcs="Git" />
   </component>
 </project>

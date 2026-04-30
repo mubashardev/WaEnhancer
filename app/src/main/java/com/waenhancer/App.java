@@ -116,8 +116,8 @@ public class App extends Application {
     }
 
     public static boolean isOriginalPackage() {
-        // noinspection ConstantValue
-        return BuildConfig.APPLICATION_ID.equals("com.waenhancer");
+        // Allow the official package and any debug build
+        return BuildConfig.APPLICATION_ID.equals("com.waenhancer") || BuildConfig.DEBUG;
     }
 
 }

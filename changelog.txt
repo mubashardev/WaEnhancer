@@ -1,2 +1,2 @@
-[Added]
-- Crashlytics: To track crashes based on user reports for better future updates
+[Fixed]
+Auto forward status on reply

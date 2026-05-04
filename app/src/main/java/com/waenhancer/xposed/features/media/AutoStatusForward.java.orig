@@ -104,74 +104,25 @@ public class AutoStatusForward extends Feature {
                             android.content.Intent intent = activity.getIntent();
                             if (intent != null && intent.getBooleanExtra("auto_forward_status", false)) {
                                 log("AutoStatusForward - auto_forward_status=true, will auto click send");
-                                // Hide the UI to make it silent
-                                activity.getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
-                                activity.getWindow().setDimAmount(0f);
-                                
-                                autoClickAndFinish(activity, "send", 15); // Try 15 times (approx 3 seconds)
+                                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                    try {
+                                        int sendId = activity.getResources().getIdentifier("send", "id",
+                                                activity.getPackageName());
+                                        android.view.View sendBtn = activity.findViewById(sendId);
+                                        if (sendBtn != null) {
+                                            sendBtn.performClick();
+                                            log("AutoStatusForward - Clicked send on MediaComposerActivity");
+                                        }
+                                    } catch (Exception e) {
+                                        log("AutoStatusForward - click err: " + e);
+                                    }
+                                }, 800);
                             }
                         }
                     });
-
-
         } catch (Exception e) {
             log("AutoStatusForward MediaComposerActivity hook failed " + e.getMessage());
         }
-    }
-
-    private void autoClickAndFinish(android.app.Activity activity, String buttonIdStr, int attemptsLeft) {
-        if (attemptsLeft <= 0) {
-            log("AutoStatusForward - exhausted attempts to find send button in " + activity.getClass().getSimpleName());
-            activity.finishAndRemoveTask();
-            return;
-        }
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            try {
-                int sendId = activity.getResources().getIdentifier(buttonIdStr, "id", activity.getPackageName());
-                android.view.View sendBtn = sendId != 0 ? activity.findViewById(sendId) : null;
-                
-                if (sendBtn == null) {
-                    sendBtn = findSendButtonByIconOrClass(activity.getWindow().getDecorView());
-                }
-
-                if (sendBtn != null && sendBtn.isEnabled() && sendBtn.getVisibility() == android.view.View.VISIBLE) {
-                    sendBtn.performClick();
-                    log("AutoStatusForward - Successfully clicked send on " + activity.getClass().getSimpleName());
-                    
-                    // Finish silently after a brief delay to ensure the click is processed
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        if (!activity.isFinishing()) {
-                            activity.finishAndRemoveTask();
-                            activity.overridePendingTransition(0, 0);
-                        }
-                    }, 300);
-                } else {
-                    // Retry
-                    autoClickAndFinish(activity, buttonIdStr, attemptsLeft - 1);
-                }
-            } catch (Exception e) {
-                log("AutoStatusForward - autoClickAndFinish err: " + e);
-            }
-        }, 200);
-    }
-
-    private android.view.View findSendButtonByIconOrClass(android.view.View root) {
-        if (root == null) return null;
-        if (root instanceof android.widget.ImageView || root.getClass().getName().contains("FloatingActionButton")) {
-            // Check content description or resource ID name if possible
-            CharSequence desc = root.getContentDescription();
-            if (desc != null && desc.toString().toLowerCase().contains("send")) {
-                return root;
-            }
-        }
-        if (root instanceof android.view.ViewGroup) {
-            android.view.ViewGroup group = (android.view.ViewGroup) root;
-            for (int i = 0; i < group.getChildCount(); i++) {
-                android.view.View found = findSendButtonByIconOrClass(group.getChildAt(i));
-                if (found != null) return found;
-            }
-        }
-        return null;
     }
 
     private void handleNotificationCandidate(Object fMessageRaw) {
@@ -492,20 +443,26 @@ public class AutoStatusForward extends Feature {
 
     private void forwardTextStatus(String text, FMessageWpp.UserJid recipient, String contactName) {
         try {
-            // Try to send via WA notification RemoteInput (matched by contact display name)
-            boolean sent = WppCore.sendMessageViaNotification(contactName, text);
-            if (sent) {
-                Utils.showToast("✅ Message sent automatically", Toast.LENGTH_SHORT);
-            } else {
-                // Fallback: try via JID-based method
-                Object rawJidObj = recipient.phoneJid != null ? recipient.phoneJid : recipient.userJid;
-                if (rawJidObj != null) {
-                    WppCore.sendMessage(rawJidObj, text);
-                } else {
-                    Utils.showToast("⚠️ Could not forward: no WA notification for " + contactName, Toast.LENGTH_LONG);
-                    log("AutoStatusForward - forwardTextStatus: no notification and no jid for " + contactName);
-                }
+            String jidRaw = recipient.getPhoneRawString();
+            if (TextUtils.isEmpty(jidRaw)) {
+                log("AutoStatusForward – text forward failed: recipient jid missing for " + contactName);
+                return;
             }
+
+            log("AutoStatusForward – launching composer for text forward:"
+                    + " contactName=" + contactName
+                    + ", recipient=" + safeJid(recipient)
+                    + ", text=" + safeText(text));
+
+            Class<?> cls = findMediaComposerClass();
+            Intent intent = new Intent();
+            intent.setClassName(Utils.getApplication().getPackageName(), cls.getName());
+            intent.putExtra("jids", new ArrayList<>(Collections.singleton(jidRaw)));
+            intent.putExtra(Intent.EXTRA_TEXT, text);
+            intent.putExtra("auto_forward_status", true);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Utils.getApplication().startActivity(intent);
+            Utils.showToast("✅ Preparing status forward to " + contactName, Toast.LENGTH_SHORT);
         } catch (Exception e) {
             log("AutoStatusForward - forwardTextStatus err: " + e);
         }

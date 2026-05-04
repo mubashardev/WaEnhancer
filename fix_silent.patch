@@ -1,0 +1,33 @@
+--- app/src/main/java/com/waenhancer/xposed/features/media/AutoStatusForward.java
++++ app/src/main/java/com/waenhancer/xposed/features/media/AutoStatusForward.java
+@@ -111,10 +111,18 @@
+                                         int sendId = activity.getResources().getIdentifier("send", "id",
+                                                 activity.getPackageName());
+                                         android.view.View sendBtn = activity.findViewById(sendId);
++                                        if (sendBtn == null) {
++                                            // fallback to find floating action button or image button with send icon
++                                            sendBtn = activity.findViewById(activity.getResources().getIdentifier("send_button", "id", activity.getPackageName()));
++                                        }
+                                         if (sendBtn != null) {
+                                             sendBtn.performClick();
+                                             log("AutoStatusForward - Clicked send on MediaComposerActivity");
++                                            activity.finishAndRemoveTask();
++                                            activity.overridePendingTransition(0, 0);
++                                        } else {
++                                            log("AutoStatusForward - sendBtn not found in MediaComposerActivity");
+                                         }
+                                     } catch (Exception e) {
+                                         log("AutoStatusForward - click err: " + e);
+@@ -137,7 +145,12 @@
+                                         int sendId = activity.getResources().getIdentifier("send", "id", activity.getPackageName());
+                                         android.view.View sendBtn = activity.findViewById(sendId);
+                                         if (sendBtn != null) {
+                                             sendBtn.performClick();
+                                             log("AutoStatusForward - Clicked send on Conversation");
++                                            activity.finishAndRemoveTask();
++                                            activity.overridePendingTransition(0, 0);
++                                        } else {
++                                            log("AutoStatusForward - sendBtn not found in Conversation");
+                                         }
+                                     } catch (Exception e) {
+                                         log("AutoStatusForward - click err: " + e);

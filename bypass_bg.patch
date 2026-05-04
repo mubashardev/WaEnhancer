@@ -1,0 +1,29 @@
+--- app/src/main/java/com/waenhancer/xposed/features/media/AutoStatusForward.java
++++ app/src/main/java/com/waenhancer/xposed/features/media/AutoStatusForward.java
+@@ -461,6 +461,12 @@
+             intent.putExtra(Intent.EXTRA_TEXT, text);
+             intent.putExtra("auto_forward_status", true);
+             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
++            
++            if (prefs.getBoolean("auto_status_forward_root", false) || com.waenhancer.utils.LogManager.hasRootAccess()) {
++                com.waenhancer.utils.LogManager.runRootCommand("dumpsys deviceidle tempwhitelist -d 10000 " + Utils.getApplication().getPackageName());
++                com.waenhancer.utils.LogManager.runRootCommand("cmd appops set " + Utils.getApplication().getPackageName() + " SYSTEM_ALERT_WINDOW allow");
++            }
++            
+             Utils.getApplication().startActivity(intent);
+             Utils.showToast("✅ Preparing status forward to " + contactName, Toast.LENGTH_SHORT);
+         } catch (Exception e) {
+@@ -500,6 +506,12 @@
+             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+             log("AutoStatusForward – launching MediaComposerActivity for media forward:"
+                     + " recipient=" + jidRaw
+                     + ", file=" + file.getAbsolutePath()
+                     + ", caption=" + safeText(caption));
++                    
++            if (prefs.getBoolean("auto_status_forward_root", false) || com.waenhancer.utils.LogManager.hasRootAccess()) {
++                com.waenhancer.utils.LogManager.runRootCommand("dumpsys deviceidle tempwhitelist -d 10000 " + Utils.getApplication().getPackageName());
++                com.waenhancer.utils.LogManager.runRootCommand("cmd appops set " + Utils.getApplication().getPackageName() + " SYSTEM_ALERT_WINDOW allow");
++            }
++            
+             Utils.getApplication().startActivity(intent);
+         } catch (Exception e) {

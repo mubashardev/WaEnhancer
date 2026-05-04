@@ -1,2 +1,11 @@
-[Fixed]
-Auto forward status on reply
+[Added]
+- Added option to downgrade to any version of WAE (via Root)!
+
+[Improvements]
+- Improved the UI and performance
+- Enhanced XposedBridge compatibility by including context information when logging, resolving potential NullPointerExceptions
+
+[Fixes]
+- Fixed: Theme Prefs - Crashes and errors
+- Fixed Error: CustomView - No RuleFactory implementation registered!
+- Fixed Auto forward status on reply

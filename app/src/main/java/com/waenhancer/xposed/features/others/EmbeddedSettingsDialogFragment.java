@@ -4,7 +4,7 @@ import android.app.Dialog;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
-import de.robv.android.xposed.XposedBridge;
+import com.waenhancer.xposed.utils.Utils;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
@@ -17,7 +17,7 @@ import androidx.fragment.app.Fragment;
 
 import com.waenhancer.R;
 import com.waenhancer.utils.FilePicker;
-import com.waenhancer.xposed.utils.DesignUtils;
+import com.waenhancer.xposed.utils.ThemeUtils;
 import com.waenhancer.xposed.utils.ResId;
 
 public class EmbeddedSettingsDialogFragment extends DialogFragment {
@@ -28,15 +28,15 @@ public class EmbeddedSettingsDialogFragment extends DialogFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            int themeRes = DesignUtils.isNightMode() ? ResId.style.Theme : ResId.style.Theme_Light;
+            int themeRes = ThemeUtils.isNightMode(getContext()) ? ResId.style.Theme : ResId.style.Theme_Light;
             if (themeRes == 0) {
-                themeRes = DesignUtils.isNightMode()
+                themeRes = ThemeUtils.isNightMode(getContext())
                         ? android.R.style.Theme_DeviceDefault_NoActionBar_Fullscreen
                         : android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen;
             }
             setStyle(STYLE_NORMAL, themeRes);
         } catch (Throwable t) {
-            XposedBridge.log("[WaEnhancer] EmbeddedSettingsDialogFragment: Error in onCreate: " + t.getMessage());
+            Utils.log("[WaEnhancer] EmbeddedSettingsDialogFragment: Error in onCreate: " + t.getMessage());
             t.printStackTrace();
         }
     }
@@ -45,7 +45,7 @@ public class EmbeddedSettingsDialogFragment extends DialogFragment {
     public android.content.Context getContext() {
         android.content.Context context = super.getContext();
         if (context == null) return null;
-        int themeRes = DesignUtils.isNightMode() ? ResId.style.Theme : ResId.style.Theme_Light;
+        int themeRes = ThemeUtils.isNightMode(context) ? ResId.style.Theme : ResId.style.Theme_Light;
         return new android.view.ContextThemeWrapper(context, themeRes) {
             @Override
             public android.content.res.Resources getResources() {
@@ -74,7 +74,7 @@ public class EmbeddedSettingsDialogFragment extends DialogFragment {
             host = SettingsViewBuilder.buildHost(getContext());
             return host.root;
         } catch (Throwable t) {
-            XposedBridge.log("[WaEnhancer] EmbeddedSettingsDialogFragment: Error in onCreateView: " + t.getMessage());
+            Utils.log("[WaEnhancer] EmbeddedSettingsDialogFragment: Error in onCreateView: " + t.getMessage());
             t.printStackTrace();
             return new View(getContext());
         }
@@ -120,10 +120,10 @@ public class EmbeddedSettingsDialogFragment extends DialogFragment {
                             }
                         });
             } catch (Throwable t) {
-                XposedBridge.log("[WaEnhancer] EmbeddedSettingsDialogFragment: OnBackPressedDispatcher not supported fallback used.");
+                Utils.log("[WaEnhancer] EmbeddedSettingsDialogFragment: OnBackPressedDispatcher not supported fallback used.");
             }
         } catch (Throwable t) {
-            XposedBridge.log("[WaEnhancer] EmbeddedSettingsDialogFragment: Error in onViewCreated: " + t.getMessage());
+            Utils.log("[WaEnhancer] EmbeddedSettingsDialogFragment: Error in onViewCreated: " + t.getMessage());
             t.printStackTrace();
         }
     }
@@ -166,6 +166,6 @@ public class EmbeddedSettingsDialogFragment extends DialogFragment {
             }
         } catch (Throwable ignored) {
         }
-        return DesignUtils.isNightMode() ? 0xff121b22 : 0xff00695c;
+        return ThemeUtils.isNightMode(requireActivity()) ? 0xff121b22 : 0xff00695c;
     }
 }

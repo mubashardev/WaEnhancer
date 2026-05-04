@@ -23,8 +23,7 @@ import com.waenhancer.R;
 import com.waenhancer.preference.StatusForwardRulesPreference;
 import com.waenhancer.ui.helpers.BottomSheetHelper;
 import com.waenhancer.xposed.bridge.client.ProviderSharedPreferences;
-import com.waenhancer.xposed.core.FeatureLoader;
-import com.waenhancer.xposed.utils.DesignUtils;
+import com.waenhancer.xposed.utils.ThemeUtils;
 import com.waenhancer.xposed.utils.ResId;
 import com.waenhancer.xposed.utils.Utils;
 
@@ -57,7 +56,7 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         var localPrefs = requireContext().getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE);
-        mPrefs = new ProviderSharedPreferences(requireContext(), localPrefs, com.waenhancer.WppXposed.getPref());
+        mPrefs = new ProviderSharedPreferences(requireContext(), localPrefs, getModuleSharedPreferences(requireContext()));
 
         getPreferenceManager().setPreferenceDataStore(new androidx.preference.PreferenceDataStore() {
             @Override
@@ -99,7 +98,7 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
     public android.content.Context getContext() {
         android.content.Context context = super.getContext();
         if (context == null) return null;
-        int themeRes = DesignUtils.isNightMode() ? com.waenhancer.xposed.utils.ResId.style.Theme : com.waenhancer.xposed.utils.ResId.style.Theme_Light;
+        int themeRes = ThemeUtils.isNightMode(context) ? com.waenhancer.xposed.utils.ResId.style.Theme : com.waenhancer.xposed.utils.ResId.style.Theme_Light;
         return new android.view.ContextThemeWrapper(context, themeRes) {
             @Override
             public android.content.res.Resources getResources() {
@@ -391,7 +390,7 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
 
     private boolean isSeparateGroupSupported() {
         try {
-            var packageInfo = requireContext().getPackageManager().getPackageInfo(FeatureLoader.PACKAGE_WPP, 0);
+            var packageInfo = requireContext().getPackageManager().getPackageInfo("com.whatsapp", 0);
             return isVersionAtMost(packageInfo.versionName, 2, 26, 12);
         } catch (Exception ignored) {
             return true;
@@ -436,5 +435,18 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
             }
         }
         return true;
+    }
+
+    private SharedPreferences getModuleSharedPreferences(android.content.Context context) {
+        if (context.getPackageName().equals(BuildConfig.APPLICATION_ID)) {
+            return androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        }
+        try {
+            // Use reflection to avoid direct dependency on WppXposed/XSharedPreferences in module process
+            Class<?> clazz = Class.forName("com.waenhancer.WppXposed");
+            return (SharedPreferences) clazz.getMethod("getPref").invoke(null);
+        } catch (Throwable t) {
+            return context.getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", android.content.Context.MODE_PRIVATE);
+        }
     }
 }

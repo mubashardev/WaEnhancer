@@ -334,6 +334,7 @@ public class HomeFragment extends BaseFragment {
         setDisplayHomeAsUpEnabled(false);
         syncReleaseChannelToInstalled();
         checkForUpdates();
+        checkStateWpp(requireActivity());
     }
 
     @SuppressLint("StringFormatInvalid")

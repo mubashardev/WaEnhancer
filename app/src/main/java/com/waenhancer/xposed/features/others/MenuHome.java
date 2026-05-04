@@ -111,10 +111,7 @@ public class MenuHome extends Feature {
             Intent intent = new Intent();
             intent.setComponent(new ComponentName(com.waenhancer.BuildConfig.APPLICATION_ID,
                     EmbeddedSettingsActivity.class.getName()));
-            // Only add NEW_TASK if we don't have a valid activity context (though we should have one here)
-            if (!(activity instanceof Activity)) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            }
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             activity.startActivity(intent);
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancer] Failed to show settings dialog: " + t.getMessage());

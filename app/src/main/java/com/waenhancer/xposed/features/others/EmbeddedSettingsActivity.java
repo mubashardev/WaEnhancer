@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment;
 
 import com.waenhancer.R;
 import com.waenhancer.utils.FilePicker;
+import com.waenhancer.xposed.utils.ThemeUtils;
 import com.waenhancer.xposed.utils.ResId;
 
 /**
@@ -21,7 +22,7 @@ public class EmbeddedSettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         ResId.initLocal(this);
-        boolean isDark = com.waenhancer.xposed.utils.DesignUtils.isNightMode(this);
+        boolean isDark = ThemeUtils.isNightMode(this);
         android.util.Log.i("WAE", "EmbeddedSettingsActivity: Setting theme, isDark=" + isDark);
         setTheme((int) (isDark ? ResId.style.Theme : ResId.style.Theme_Light));
         super.onCreate(savedInstanceState);

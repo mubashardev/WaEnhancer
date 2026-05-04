@@ -14,7 +14,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.waenhancer.xposed.utils.DesignUtils;
+import com.waenhancer.xposed.utils.ThemeUtils;
 
 public final class SettingsViewBuilder {
 
@@ -36,11 +36,9 @@ public final class SettingsViewBuilder {
     }
 
     public static Host buildHost(Context context) {
-        boolean isDark = DesignUtils.isNightMode(context);
-        int colorPrimary = getHostColor(context, "colorPrimary",
-                isDark ? 0xff00a884 : 0xff008069);
-        int windowBg = getHostColor(context, "windowBackground",
-                isDark ? 0xff121b22 : 0xffffffff);
+        boolean isDark = ThemeUtils.isNightMode(context);
+        int colorPrimary = ThemeUtils.getThemeAccentColor(context);
+        int windowBg = ThemeUtils.getThemeBackgroundColor(context, isDark);
 
         // Try to resolve from theme attributes directly
         try {

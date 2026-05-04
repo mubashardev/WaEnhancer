@@ -22,13 +22,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
-import com.waenhancer.WppXposed;
 import com.waenhancer.xposed.core.WppCore;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import de.robv.android.xposed.XposedBridge;
 
 public class DesignUtils {
 
@@ -195,15 +192,8 @@ public class DesignUtils {
     }
 
     public static void setReplacementDrawable(String name, Drawable replacement) {
-        if (WppXposed.ResParam == null)
-            return;
-        WppXposed.ResParam.res.setReplacement(Utils.getApplication().getPackageName(), "drawable", name,
-                new XResources.DrawableLoader() {
-                    @Override
-                    public Drawable newDrawable(XResources res, int id) throws Throwable {
-                        return replacement;
-                    }
-                });
+        // This is only supported in host process via Xposed
+        return;
     }
 
     public static boolean isNightMode() {
@@ -272,7 +262,7 @@ public class DesignUtils {
                 }
             }
         } catch (Exception e) {
-            XposedBridge.log("Error: " + e);
+            Utils.log("Error: " + e);
         }
         return "0";
     }

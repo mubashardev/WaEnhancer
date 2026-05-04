@@ -14,7 +14,6 @@ import com.waenhancer.activities.CallRecordingSettingsActivity;
 import com.waenhancer.activities.RecordingsActivity;
 import com.waenhancer.preference.ContactPickerPreference;
 import com.waenhancer.preference.FileSelectPreference;
-import com.waenhancer.xposed.features.general.LiteMode;
 import com.waenhancer.xposed.utils.ResId;
 
 public class EmbeddedSettingsFragment extends EmbeddedBasePreferenceFragment {
@@ -117,7 +116,7 @@ public class EmbeddedSettingsFragment extends EmbeddedBasePreferenceFragment {
                 if (contactPickerPref != null) {
                     contactPickerPref.handleActivityResult(requestCode, resultCode, data);
                 }
-            } else if (requestCode == LiteMode.REQUEST_FOLDER && resultCode == Activity.RESULT_OK) {
+            } else if (requestCode == 852583 && resultCode == Activity.RESULT_OK) {
                 FileSelectPreference fileSelectPreference = findPreference(data.getStringExtra("key"));
                 if (fileSelectPreference != null) {
                     fileSelectPreference.handleActivityResult(requestCode, resultCode, data);
@@ -173,7 +172,7 @@ public class EmbeddedSettingsFragment extends EmbeddedBasePreferenceFragment {
             if (data == null) {
                 return;
             }
-            if (requestCode == LiteMode.REQUEST_FOLDER && resultCode == Activity.RESULT_OK) {
+            if (requestCode == 852583 && resultCode == Activity.RESULT_OK) {
                 FileSelectPreference fileSelectPreference = findPreference(data.getStringExtra("key"));
                 if (fileSelectPreference != null) {
                     fileSelectPreference.handleActivityResult(requestCode, resultCode, data);

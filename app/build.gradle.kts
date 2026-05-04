@@ -11,6 +11,12 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+val hasGoogleServices = file("google-services.json").exists()
+if (hasGoogleServices) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 kotlin {
     jvmToolchain(17)
 }
@@ -211,6 +217,12 @@ dependencies {
     implementation(libs.androidx.savedstate.ktx)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.activity.compose)
+
+    if (hasGoogleServices) {
+        implementation(platform(libs.firebase.bom))
+        implementation(libs.firebase.analytics)
+        implementation(libs.firebase.crashlytics)
+    }
 }
 
 configurations.all {

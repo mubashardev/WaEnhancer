@@ -121,6 +121,12 @@ jobs:
           git commit -m "chore(release): bump to ${NEW_VERSION_NAME} (${NEW_VERSION_CODE}) [skip ci]"
           git push
 
+      - name: Setup Google Services
+        run: |
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
+          fi
+
       - name: Build WhatsApp flavor
         run: |
           if [ -n "${{ secrets.KEY_STORE }}" ]; then

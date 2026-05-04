@@ -16,6 +16,8 @@ nav = "2.9.6"
 kotlin = "2.2.21"
 markwon = "4.6.2"
 compose-bom = "2025.02.00"
+google-services = "4.4.2"
+firebase-crashlytics-plugin = "3.0.2"
 
 [libraries]
 androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
@@ -52,8 +54,14 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version = "2.8.7" }
 androidx-savedstate-ktx = { group = "androidx.savedstate", name = "savedstate-ktx", version = "1.2.1" }
 
+firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.7.0" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 materialthemebuilder = { id = "dev.rikka.tools.materialthemebuilder", version = "1.5.1" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-plugin" }

@@ -70,7 +70,7 @@
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
                                 android:layout_marginBottom="16dp"
-                                app:srcCompat="@drawable/ic_round_check_circle_24"
+                                app:srcCompat="@drawable/ic_round_error_outline_24"
                                 app:tint="?attr/colorPrimary"
                                 tools:ignore="ContentDescription" />
 
@@ -80,7 +80,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:letterSpacing="-0.03"
-                                android:text="@string/module_enabled"
+                                android:text="@string/module_disabled"
                                 android:textAppearance="?attr/textAppearanceHeadlineMedium"
                                 android:textColor="?attr/colorOnSurface"
                                 android:textStyle="bold" />

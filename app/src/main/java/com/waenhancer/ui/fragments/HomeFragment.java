@@ -160,29 +160,83 @@ public class HomeFragment extends BaseFragment {
                         "The following information about your device and installed apps will be pre-filled in your report:<br><br>"
                         +
                         finalDialogDetails + "<b>WhatsApp Version:</b> " + waVersion + "<br>" +
-                        "<b>WhatsApp Business Version:</b> " + waBusinessVersion + "<br><br>" +
-                        "Do you want to proceed?";
+                        "<b>WhatsApp Business Version:</b> " + waBusinessVersion + "<br>";
 
-                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Report Issue")
-                        .setMessage(androidx.core.text.HtmlCompat.fromHtml(dialogMessageHtml,
-                                androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY))
-                        .setPositiveButton("Proceed", (dialog, which) -> {
-                            try {
-                                String body = finalGithubDetails + "**WhatsApp Version:** " + waVersion + "\n" +
-                                        "**WhatsApp Business Version:** " + waBusinessVersion + "\n" +
-                                        "\n---\n" +
-                                        "[Describe here]\n";
+                var bottomSheetDialog = new com.google.android.material.bottomsheet.BottomSheetDialog(requireContext());
+                var sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_report_issue, null);
+                bottomSheetDialog.setContentView(sheetView);
 
-                                String url = "https://github.com/mubashardev/WaEnhancerX/issues/new?title=Bug+Report&body="
-                                        + java.net.URLEncoder.encode(body, "UTF-8");
-                                openUrl(requireContext(), url);
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                var bottomSheet = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+                if (bottomSheet != null) {
+                    bottomSheet.setBackgroundResource(android.R.color.transparent);
+                }
+
+                android.widget.TextView deviceDetailsText = sheetView.findViewById(R.id.device_details);
+                deviceDetailsText.setText(androidx.core.text.HtmlCompat.fromHtml(dialogMessageHtml,
+                        androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY));
+
+                com.google.android.material.progressindicator.LinearProgressIndicator progressBar = sheetView.findViewById(R.id.progress_bar);
+                progressBar.setMax(100);
+                progressBar.setProgressCompat(50, true);
+
+                android.widget.ViewFlipper viewFlipper = sheetView.findViewById(R.id.view_flipper);
+                viewFlipper.setInAnimation(requireContext(), android.R.anim.fade_in);
+                viewFlipper.setOutAnimation(requireContext(), android.R.anim.fade_out);
+
+                com.google.android.material.textfield.TextInputEditText issueInput = sheetView.findViewById(R.id.issue_input);
+                com.google.android.material.textfield.TextInputLayout inputLayout = sheetView.findViewById(R.id.input_layout);
+
+                com.google.android.material.button.MaterialButton btnCancel = sheetView.findViewById(R.id.btn_cancel);
+                com.google.android.material.button.MaterialButton btnNext = sheetView.findViewById(R.id.btn_next);
+
+                btnCancel.setOnClickListener(v -> bottomSheetDialog.dismiss());
+
+                btnNext.setOnClickListener(v -> {
+                    if (viewFlipper.getDisplayedChild() == 0) {
+                        viewFlipper.showNext();
+                        progressBar.setProgressCompat(100, true);
+                        btnNext.setText("Continue");
+                        btnCancel.setVisibility(View.GONE);
+                        btnNext.setEnabled(false);
+
+                        // Expand button to full width with margins
+                        android.widget.LinearLayout.LayoutParams params = (android.widget.LinearLayout.LayoutParams) btnNext.getLayoutParams();
+                        params.width = android.widget.LinearLayout.LayoutParams.MATCH_PARENT;
+                        params.weight = 0;
+                        int hMargin = (int) (16 * getResources().getDisplayMetrics().density);
+                        params.setMarginStart(hMargin);
+                        params.setMarginEnd(hMargin);
+                        btnNext.setLayoutParams(params);
+
+                        issueInput.addTextChangedListener(new android.text.TextWatcher() {
+                            @Override
+                            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                            @Override
+                            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                                btnNext.setEnabled(s != null && s.toString().trim().length() >= 15);
                             }
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                            @Override
+                            public void afterTextChanged(android.text.Editable s) {}
+                        });
+                    } else {
+                        String description = issueInput.getText() != null ? issueInput.getText().toString().trim() : "";
+                        try {
+                            String body = finalGithubDetails + "**WhatsApp Version:** " + waVersion + "\n" +
+                                    "**WhatsApp Business Version:** " + waBusinessVersion + "\n" +
+                                    "\n---\n" +
+                                    description + "\n";
+
+                            String url = "https://github.com/mubashardev/WaEnhancerX/issues/new?title=Bug+Report&body="
+                                    + java.net.URLEncoder.encode(body, "UTF-8");
+                            openUrl(requireContext(), url);
+                            bottomSheetDialog.dismiss();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+
+                bottomSheetDialog.show();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -436,10 +490,29 @@ public class HomeFragment extends BaseFragment {
         FilePicker.fileCapture.launch(new String[] { "application/json" });
     }
 
+    private boolean isInitialCheck = true;
+
     @SuppressLint("StringFormatInvalid")
     private void checkStateWpp(FragmentActivity activity) {
         boolean enabled = MainActivity.isXposedEnabled() || hasRecentModuleHeartbeat();
-        setModuleActiveState(enabled);
+        
+        if (enabled) {
+            setModuleActiveState(true);
+            isInitialCheck = false;
+        } else {
+            if (isInitialCheck) {
+                // Wait briefly for WhatsApp broadcast response to prevent flapping
+                binding.getRoot().postDelayed(() -> {
+                    if (!MainActivity.isXposedEnabled() && !hasRecentModuleHeartbeat()) {
+                        setModuleActiveState(false);
+                    }
+                }, 2500);
+                isInitialCheck = false;
+            } else {
+                setModuleActiveState(false);
+            }
+        }
+        
         if (isInstalled(FeatureLoader.PACKAGE_WPP) && App.isOriginalPackage()) {
             disableWpp(activity);
         } else {

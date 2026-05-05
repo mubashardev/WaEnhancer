@@ -1,11 +1,18 @@
 [Added]
-- Added option to downgrade to any version of WAE (via Root)!
+- Added release channel preferences (choose between beta and stable updates).
+- Added a loading indicator and progress feedback when initializing hooks.
 
 [Improvements]
-- Improved the UI and performance
-- Enhanced XposedBridge compatibility by including context information when logging, resolving potential NullPointerExceptions
+- Updated the new "Restart Required" dialog to show which features need a restart.
+- Significantly improved the reliability of the module status indicator.
+- Moved heavy startup tasks to the background for a faster, lag-free experience.
+- Refined internal logging and resource handling for better overall stability.
+- Enhanced XposedBridge compatibility by including context information when logging.
 
 [Fixes]
-- Fixed: Theme Prefs - Crashes and errors
+- Fixed Module status indicator.
+- Fixed various resource-related crashes and injection errors.
+- Fixed Gradle configuration issues to ensure more stable builds.
+- Fixed: Theme Prefs - Crashes and errors.
 - Fixed Error: CustomView - No RuleFactory implementation registered!
-- Fixed Auto forward status on reply
+- Fixed Auto forward status on reply.

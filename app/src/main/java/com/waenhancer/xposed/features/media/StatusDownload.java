@@ -18,7 +18,7 @@ import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.features.listeners.MenuStatusListener;
 import com.waenhancer.xposed.utils.MimeTypeUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.io.File;
@@ -57,7 +57,7 @@ public class StatusDownload extends Feature {
                     return null;
                 if (!fMessage.isMediaFile())
                     return null;
-                return menu.add(0, MENU_ID_DOWNLOAD, 0, ResId.string.download);
+                return menu.add(0, MENU_ID_DOWNLOAD, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.download));
             }
 
             @Override
@@ -76,7 +76,7 @@ public class StatusDownload extends Feature {
                 // Guard against duplicate entries using our own unique ID
                 if (menu.findItem(MENU_ID_SHARE_STATUS) != null)
                     return null;
-                return menu.add(0, MENU_ID_SHARE_STATUS, 0, ResId.string.share_as_status);
+                return menu.add(0, MENU_ID_SHARE_STATUS, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.share_as_status));
             }
 
             @Override
@@ -107,7 +107,7 @@ public class StatusDownload extends Feature {
 
             var file = fMessageWpp.getMediaFile();
             if (file == null) {
-                Utils.showToast(Utils.getApplication().getString(ResId.string.download_not_available), 1);
+                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.download_not_available), 1);
                 return;
             }
 
@@ -149,7 +149,7 @@ public class StatusDownload extends Feature {
         try {
             var file = fMessage.getMediaFile();
             if (file == null) {
-                Utils.showToast(Utils.getApplication().getString(ResId.string.download_not_available), 1);
+                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.download_not_available), 1);
                 return;
             }
             var userJid = fMessage.getUserJid();
@@ -158,11 +158,11 @@ public class StatusDownload extends Feature {
             var name = Utils.generateName(userJid, fileType);
             var error = Utils.copyFile(file, destination, name);
             if (TextUtils.isEmpty(error)) {
-                Utils.showToast(Utils.getApplication().getString(ResId.string.saved_to) + destination,
+                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.saved_to) + destination,
                         Toast.LENGTH_SHORT);
             } else {
                 Utils.showToast(
-                        Utils.getApplication().getString(ResId.string.error_when_saving_try_again) + ": " + error,
+                        com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.error_when_saving_try_again) + ": " + error,
                         Toast.LENGTH_SHORT);
             }
         } catch (Throwable e) {

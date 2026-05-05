@@ -21,7 +21,7 @@ import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.core.devkit.UnobfuscatorCache;
 import com.waenhancer.xposed.features.listeners.ContactItemListener;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.lang.reflect.Method;
@@ -125,7 +125,7 @@ public class ShowOnline extends Feature {
                         params2.addRule(isLeftToRight ? RelativeLayout.ALIGN_RIGHT : RelativeLayout.ALIGN_LEFT, photoView.getId());
                         params2.topMargin = Utils.dipToPixels(5);
                         imageView.setLayoutParams(params2);
-                        imageView.setImageResource(ResId.drawable.online);
+                        imageView.setImageResource(R.drawable.online);
                         imageView.setAdjustViewBounds(true);
                         imageView.setScaleType(ImageView.ScaleType.FIT_XY);
                         imageView.setVisibility(View.INVISIBLE);
@@ -145,7 +145,7 @@ public class ShowOnline extends Feature {
                         params2.addRule(isLeftToRight ? RelativeLayout.ALIGN_RIGHT : RelativeLayout.ALIGN_LEFT, photoView.getId());
                         params2.topMargin = Utils.dipToPixels(5);
                         imageView.setLayoutParams(params2);
-                        imageView.setImageResource(ResId.drawable.online);
+                        imageView.setImageResource(R.drawable.online);
                         imageView.setAdjustViewBounds(true);
                         imageView.setScaleType(ImageView.ScaleType.FIT_XY);
                         imageView.setVisibility(View.INVISIBLE);

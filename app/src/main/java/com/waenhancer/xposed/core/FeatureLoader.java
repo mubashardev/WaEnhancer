@@ -97,6 +97,7 @@ import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ReflectionUtils;
 import com.waenhancer.xposed.utils.ResId;
 import com.waenhancer.xposed.utils.Utils;
+import com.waenhancer.xposed.utils.XResManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -125,6 +126,20 @@ public class FeatureLoader {
     private static final List<ErrorItem> list = java.util.Collections.synchronizedList(new ArrayList<>());
     private static List<String> supportedVersions;
     private static String currentVersion;
+
+    /**
+     * Safely resolve a module string resource. Uses moduleResources directly
+     * to avoid passing module IDs through the host's Resources which lacks
+     * the module's resource table.
+     */
+    public static String getModuleString(int resId) {
+        try {
+            if (XResManager.moduleResources != null) {
+                return XResManager.moduleResources.getString(resId);
+            }
+        } catch (Exception ignored) {}
+        return "";
+    }
 
     public static void start(@NonNull ClassLoader loader, @NonNull android.content.SharedPreferences pref, String sourceDir) {
 
@@ -184,10 +199,11 @@ public class FeatureLoader {
                             XposedBridge.log("[WAE] Failed to scan host prefs: " + e.getMessage());
                         }
 
-                        supportedVersions = Arrays.asList(mApp.getResources()
-                                .getStringArray(Objects.equals(mApp.getPackageName(), FeatureLoader.PACKAGE_WPP)
-                                        ? ResId.array.supported_versions_wpp
-                                        : ResId.array.supported_versions_business));
+                        int versionsArrayId = Objects.equals(mApp.getPackageName(), FeatureLoader.PACKAGE_WPP)
+                                ? com.waenhancer.R.array.supported_versions_wpp
+                                : com.waenhancer.R.array.supported_versions_business;
+                        supportedVersions = Arrays.asList(
+                                XResManager.moduleResources.getStringArray(versionsArrayId));
                         mApp.registerActivityLifecycleCallbacks(new WaCallback());
                         registerReceivers();
                         try {
@@ -252,22 +268,22 @@ public class FeatureLoader {
 
                             try {
                                 new AlertDialogWpp(activity)
-                                        .setTitle(activity.getString(ResId.string.error_detected))
-                                        .setMessage(activity.getString(ResId.string.version_error) + msg
+                                        .setTitle(getModuleString(ResId.string.error_detected))
+                                        .setMessage(getModuleString(ResId.string.version_error) + msg
                                                 + "\n\nCurrent Version: " + currentVersion + "\nSupported Versions:\n"
                                                 + String.join("\n", supportedVersions))
-                                        .setPositiveButton(activity.getString(ResId.string.copy_to_clipboard),
+                                        .setPositiveButton(getModuleString(ResId.string.copy_to_clipboard),
                                                 (dialog, which) -> {
                                                     var clipboard = (ClipboardManager) mApp
                                                             .getSystemService(Context.CLIPBOARD_SERVICE);
                                                     ClipData clip = ClipData.newPlainText("text", String.join("\n",
                                                             list.stream().map(ErrorItem::toString).toArray(String[]::new)));
                                                     clipboard.setPrimaryClip(clip);
-                                                    Toast.makeText(mApp, ResId.string.copied_to_clipboard,
+                                                    Toast.makeText(mApp, getModuleString(ResId.string.copied_to_clipboard),
                                                             Toast.LENGTH_SHORT).show();
                                                     dialog.dismiss();
                                                 })
-                                        .setNegativeButton(activity.getString(ResId.string.check_for_latest_version),
+                                        .setNegativeButton(getModuleString(ResId.string.check_for_latest_version),
                                                 (dialog, which) -> {
                                                     CompletableFuture.runAsync(new UpdateChecker(activity, true));
                                                     dialog.dismiss();
@@ -332,12 +348,12 @@ public class FeatureLoader {
         if (WppCore.getPrivBoolean("need_restart", false)) {
             WppCore.setPrivBooleanSync("need_restart", false);
             try {
-                new AlertDialogWpp(activity).setMessage(activity.getString(ResId.string.restart_wpp))
-                        .setPositiveButton(activity.getString(ResId.string.yes), (dialog, which) -> {
+                new AlertDialogWpp(activity).setMessage(getModuleString(ResId.string.restart_wpp))
+                        .setPositiveButton(getModuleString(ResId.string.yes), (dialog, which) -> {
                             if (!Utils.doRestart(activity))
                                 Toast.makeText(activity, "Unable to rebooting activity", Toast.LENGTH_SHORT).show();
                         })
-                        .setNegativeButton(activity.getString(ResId.string.no), null)
+                        .setNegativeButton(getModuleString(ResId.string.no), null)
                         .show();
             } catch (Throwable ignored) {
             }
@@ -351,7 +367,7 @@ public class FeatureLoader {
             public void onReceive(Context context, Intent intent) {
                 if (context.getPackageName().equals(intent.getStringExtra("PKG"))) {
                     var appName = context.getPackageManager().getApplicationLabel(context.getApplicationInfo());
-                    Toast.makeText(context, context.getString(ResId.string.rebooting) + " " + appName + "...",
+                    Toast.makeText(context, getModuleString(ResId.string.rebooting) + " " + appName + "...",
                             Toast.LENGTH_SHORT).show();
                     if (!Utils.doRestart(context))
                         Toast.makeText(context, "Unable to rebooting " + appName, Toast.LENGTH_SHORT).show();

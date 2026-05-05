@@ -16,7 +16,7 @@ import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
 import com.waenhancer.xposed.utils.DesignUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -41,7 +41,7 @@ public class NewChat extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var activity = (Activity) param.thisObject;
                 var menu = (Menu) param.args[0];
-                var item = menu.add(0, 0, 0, ResId.string.new_chat);
+                var item = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.new_chat));
                 var drawable = DesignUtils.getDrawableByName("vec_ic_chat_add");
 
                 if (drawable != null) {
@@ -63,13 +63,13 @@ public class NewChat extends Feature {
                     edt.setMaxLines(1);
                     edt.setInputType(InputType.TYPE_CLASS_PHONE);
                     edt.setTransformationMethod(null);
-                    edt.setHint(ResId.string.number_with_country_code);
+                    edt.setHint(R.string.number_with_country_code);
                     view.addView(edt);
 
                     new AlertDialogWpp(activity)
-                            .setTitle(activity.getString(ResId.string.new_chat))
+                            .setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.new_chat))
                             .setView(view)
-                            .setPositiveButton(activity.getString(ResId.string.message), (dialog, which) -> {
+                            .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message), (dialog, which) -> {
                                 var number = edt.getText().toString();
                                 var numberFomatted = number.replaceAll("[+\\-()/\\s]", "");
                                 var intent = new Intent(Intent.ACTION_VIEW);
@@ -77,7 +77,7 @@ public class NewChat extends Feature {
                                 intent.setPackage(Utils.getApplication().getPackageName());
                                 activity.startActivity(intent);
                             })
-                            .setNegativeButton(activity.getString(ResId.string.cancel), null)
+                            .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel), null)
                             .show();
 
                     return true;

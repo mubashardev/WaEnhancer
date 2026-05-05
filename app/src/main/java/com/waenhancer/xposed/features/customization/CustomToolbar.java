@@ -21,7 +21,7 @@ import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.features.general.Others;
 import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import org.luckypray.dexkit.query.enums.StringMatchType;
@@ -117,7 +117,7 @@ public class CustomToolbar extends Feature {
                         var version = (TextView) viewRoot.findViewById(Utils.getID("version", "id"));
 
                         if (version != null) {
-                            var expirationText = activity.getString(ResId.string.expiration, mDateExpiration);
+                            var expirationText = activity.getString(R.string.expiration, mDateExpiration);
                             version.setText(version.getText() + " " + expirationText);
                         }
                     }

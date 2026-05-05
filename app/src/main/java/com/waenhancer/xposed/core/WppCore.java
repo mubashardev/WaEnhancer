@@ -22,7 +22,7 @@ import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.core.devkit.UnobfuscatorCache;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import org.json.JSONObject;
@@ -214,7 +214,7 @@ public class WppCore {
         }
 
         if (!connected) {
-            throw new Exception(context.getString(ResId.string.bridge_error));
+            throw new Exception(context.getString(R.string.bridge_error));
         }
 
         // Update the preferred order if it changed

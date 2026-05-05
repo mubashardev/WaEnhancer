@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -48,7 +48,7 @@ public class Stickers extends Feature {
                             param.args[0] = (View.OnClickListener) v -> {
                                 var context = view.getContext();
                                 var dialog = new AlertDialogWpp(view.getContext());
-                                dialog.setTitle(context.getString(ResId.string.send_sticker));
+                                dialog.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.send_sticker));
 
                                 var stickerView = (ImageView) view.findViewById(Utils.getID("sticker", "id"));
                                 LinearLayout linearLayout = new LinearLayout(context);
@@ -65,14 +65,14 @@ public class Stickers extends Feature {
                                 linearLayout.addView(image);
 
                                 TextView text = new TextView(context);
-                                text.setText(context.getString(ResId.string.do_you_want_to_send_sticker));
+                                text.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.do_you_want_to_send_sticker));
                                 text.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                                 linearLayout.addView(text);
 
 
                                 dialog.setView(linearLayout);
-                                dialog.setPositiveButton(context.getString(ResId.string.send), (dialog1, which) -> mCaptureOnClickListener.onClick(view));
-                                dialog.setNegativeButton(context.getString(ResId.string.cancel), null);
+                                dialog.setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.send), (dialog1, which) -> mCaptureOnClickListener.onClick(view));
+                                dialog.setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel), null);
                                 dialog.show();
                             };
                         }

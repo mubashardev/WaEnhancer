@@ -56,7 +56,7 @@ public final class SettingsViewBuilder {
         header.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        header.setPadding(dp(context, 16), dp(context, 12), dp(context, 16), dp(context, 16));
+        header.setPadding(dp(context, 20), dp(context, 12), dp(context, 20), dp(context, 20));
         
         // Toolbar with Back Button
         LinearLayout toolbar = new LinearLayout(context);
@@ -78,31 +78,35 @@ public final class SettingsViewBuilder {
             backButton.setBackgroundResource(rippleValue.resourceId);
         } catch (Throwable ignored) {}
 
+        // Spacer to push things right if needed, but here we want back button on left
         toolbar.addView(backButton);
+        
+        // Add "Manager" badge style text if we want, or just the logo
         header.addView(toolbar);
 
-        // Large Title
+        // Large Title - Modern look
         TextView titleView = new TextView(context);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        titleParams.setMargins(dp(context, 8), dp(context, 8), 0, 0);
+        titleParams.setMargins(dp(context, 4), dp(context, 8), 0, 0);
         titleView.setLayoutParams(titleParams);
         titleView.setTextColor(textColor);
-        titleView.setTextSize(28);
-        titleView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        titleView.setTextSize(32); // Slightly larger
+        titleView.setLetterSpacing(-0.02f);
+        titleView.setTypeface(Typeface.create("sans-serif-black", Typeface.NORMAL));
         titleView.setText("Settings");
 
         TextView subtitleView = new TextView(context);
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        subtitleParams.setMargins(dp(context, 8), dp(context, 2), 0, 0);
+        subtitleParams.setMargins(dp(context, 4), dp(context, 2), 0, 0);
         subtitleView.setLayoutParams(subtitleParams);
         subtitleView.setTextColor(textSecondary);
         subtitleView.setTextSize(14);
-        subtitleView.setText("Customize your experience");
-        subtitleView.setAlpha(0.8f);
+        subtitleView.setText("WaEnhancer X Premium");
+        subtitleView.setAlpha(0.7f);
 
         header.addView(titleView);
         header.addView(subtitleView);
@@ -110,7 +114,7 @@ public final class SettingsViewBuilder {
 
         // Settings Container
         FrameLayout container = new FrameLayout(context);
-        container.setId(View.generateViewId());
+        container.setId(com.waenhancer.R.id.container);
         LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 0,

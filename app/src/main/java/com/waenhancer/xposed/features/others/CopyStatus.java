@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -37,7 +37,7 @@ public class CopyStatus extends Feature {
                 if (caption != null) {
                     caption.setOnLongClickListener((view1 -> {
                         Utils.setToClipboard(caption.getText().toString());
-                        Utils.showToast(Utils.getApplication().getString(ResId.string.copied_to_clipboard), Toast.LENGTH_LONG);
+                        Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.copied_to_clipboard), Toast.LENGTH_LONG);
                         return true;
                     }));
                 }
@@ -54,7 +54,7 @@ public class CopyStatus extends Feature {
                 if (text != null) {
                     text.setOnLongClickListener((view1 -> {
                         Utils.setToClipboard(text.getText().toString());
-                        Utils.showToast(Utils.getApplication().getString(ResId.string.copied_to_clipboard), Toast.LENGTH_LONG);
+                        Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.copied_to_clipboard), Toast.LENGTH_LONG);
                         return true;
                     }));
                 }

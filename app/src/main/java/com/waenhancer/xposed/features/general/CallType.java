@@ -14,7 +14,7 @@ import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.components.SharedPreferencesWrapper;
 import com.waenhancer.xposed.core.devkit.UnobfuscatorCache;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 
 import java.util.Objects;
 
@@ -82,7 +82,7 @@ public class CallType extends Feature {
                 var context = origDialog.getContext();
                 var mAlertDialog = new AlertDialogWpp(origDialog.getContext());
                 mAlertDialog.setTitle(UnobfuscatorCache.getInstance().getString("selectcalltype"));
-                mAlertDialog.setItems(new String[]{context.getString(ResId.string.phone_call), context.getString(ResId.string.whatsapp_call)}, (dialog, which) -> {
+                mAlertDialog.setItems(new String[]{com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.phone_call), com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.whatsapp_call)}, (dialog, which) -> {
                     newDialog.dismiss();
                     switch (which) {
                         case 0:

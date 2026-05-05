@@ -18,7 +18,7 @@ import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 
 import org.luckypray.dexkit.query.enums.StringMatchType;
 
@@ -74,7 +74,7 @@ public class ActivityController extends Feature {
                                     method -> method.getParameterCount() == 1
                                             && method.getParameterTypes()[0] == CharSequence.class);
                             ReflectionUtils.callMethod(methods[1], toolbar,
-                                    activity.getString(ResId.string.select_contacts));
+                                    com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.select_contacts));
                         }
                     }
                 });

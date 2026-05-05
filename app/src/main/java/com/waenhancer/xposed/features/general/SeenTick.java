@@ -29,7 +29,7 @@ import com.waenhancer.xposed.features.customization.HideSeenView;
 import com.waenhancer.xposed.features.listeners.MenuStatusListener;
 import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import org.luckypray.dexkit.query.enums.StringMatchType;
@@ -231,7 +231,7 @@ public class SeenTick extends Feature {
                     contentView.addView(buttonImage, 0);
                     registerMessageView(key.messageID, buttonImage);
                     buttonImage.setOnClickListener(v -> CompletableFuture.runAsync(() -> {
-                        Utils.showToast(view.getContext().getString(ResId.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
+                        Utils.showToast(view.getContext().getString(R.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
                         sendBlueTickStatus(currentJid);
                         buttonImage.post(() -> setSeenButton(buttonImage, true));
                     }));
@@ -247,15 +247,15 @@ public class SeenTick extends Feature {
                     new MenuStatusListener.onMenuItemStatusListener() {
                         @Override
                         public MenuItem addMenu(Menu menu, FMessageWpp fMessage) {
-                            if (menu.findItem(ResId.string.send_blue_tick) != null) return null;
+                            if (menu.findItem(R.string.send_blue_tick) != null) return null;
                             if (fMessage.getKey().isFromMe) return null;
-                            return menu.add(0, ResId.string.send_blue_tick, 0, ResId.string.send_blue_tick);
+                            return menu.add(0, R.string.send_blue_tick, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.send_blue_tick));
                         }
 
                         @Override
                         public void onClick(MenuItem item, Object fragmentInstance, FMessageWpp fMessageWpp) {
                             sendBlueTickStatus(currentJid);
-                            Utils.showToast(Utils.getApplication().getString(ResId.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
+                            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
                         }
                     });
         }
@@ -268,12 +268,12 @@ public class SeenTick extends Feature {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var menu = (Menu) param.args[0];
-                var menuItem = menu.add(0, 0, 0, ResId.string.send_blue_tick);
+                var menuItem = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.send_blue_tick));
                 if (ticktype == 1) menuItem.setShowAsAction(2);
                 menuItem.setIcon(Utils.getID("ic_notif_mark_read", "drawable"));
                 menuItem.setOnMenuItemClickListener(item -> {
                     sendBlueTick(currentJid);
-                    Utils.showToast(Utils.getApplication().getString(ResId.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
+                    Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
                     HideSeenView.updateAllBubbleViews();
                     return true;
                 });
@@ -284,9 +284,9 @@ public class SeenTick extends Feature {
                 new MenuStatusListener.onMenuItemStatusListener() {
                     @Override
                     public MenuItem addMenu(Menu menu, FMessageWpp fMessage) {
-                        if (menu.findItem(ResId.string.read_all_mark_as_read) != null) return null;
+                        if (menu.findItem(R.string.read_all_mark_as_read) != null) return null;
                         if (fMessage.getKey().isFromMe) return null;
-                        return menu.add(0, ResId.string.read_all_mark_as_read, 0, ResId.string.read_all_mark_as_read);
+                        return menu.add(0, R.string.read_all_mark_as_read, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.read_all_mark_as_read));
                     }
 
                     @Override
@@ -315,7 +315,7 @@ public class SeenTick extends Feature {
                             log(e);
                         }
                         sendBlueTickStatus(currentJid);
-                        Utils.showToast(Utils.getApplication().getString(ResId.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
+                        Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
                     }
                 });
     }
@@ -343,7 +343,7 @@ public class SeenTick extends Feature {
                 FMessageWpp fMessage = new FMessageWpp(fmessageObj);
                 if (!fMessage.isViewOnce()) return;
                 Menu menu = (Menu) param.args[0];
-                MenuItem item = menu.add(0, 0, 0, ResId.string.send_blue_tick).setIcon(Utils.getID("ic_notif_mark_read", "drawable"));
+                MenuItem item = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.send_blue_tick)).setIcon(Utils.getID("ic_notif_mark_read", "drawable"));
                 if (ticktype == 1) item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 item.setOnMenuItemClickListener(item1 -> {
                     var userJid = fMessage.getKey().remoteJid;
@@ -352,7 +352,7 @@ public class SeenTick extends Feature {
                     MessageHistory.getInstance().updateViewedMessage(userJid.getPhoneRawString(), messageID, MessageHistory.MessageType.MESSAGE_TYPE, true);
                     sendBlueTickMedia(fMessage);
                     statuses.clear();
-                    Utils.showToast(Utils.getApplication().getString(ResId.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
+                    Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
                     HideSeenView.updateAllBubbleViews();
                     return true;
                 });
@@ -364,7 +364,7 @@ public class SeenTick extends Feature {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         Menu menu = (Menu) param.args[0];
-                        MenuItem item = menu.add(0, 0, 0, ResId.string.send_blue_tick).setIcon(Utils.getID("ic_notif_mark_read", "drawable"));
+                        MenuItem item = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.send_blue_tick)).setIcon(Utils.getID("ic_notif_mark_read", "drawable"));
                         if (ticktype == 1) item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                         item.setOnMenuItemClickListener(item1 -> {
                             CompletableFuture.runAsync(() -> {
@@ -378,7 +378,7 @@ public class SeenTick extends Feature {
                                 MessageHistory.getInstance().updateViewedMessage(rawJid, messageID, MessageHistory.MessageType.MESSAGE_TYPE, true);
                                 sendBlueTickMedia(fMessage);
                                 statuses.clear();
-                                Utils.showToast(Utils.getApplication().getString(ResId.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
+                                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.sending_read_blue_tick), Toast.LENGTH_SHORT);
                                 HideSeenView.updateAllBubbleViews();
                             });
                             return true;

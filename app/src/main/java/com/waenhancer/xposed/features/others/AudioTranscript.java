@@ -8,7 +8,7 @@ import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import org.json.JSONObject;
@@ -62,7 +62,7 @@ public class AudioTranscript extends Feature {
                 var fmessage = new FMessageWpp(fmessageObj);
                 File file = fmessage.getMediaFile();
                 if (file == null) {
-                    Utils.showToast(Utils.getApplication().getString(ResId.string.download_not_available), 1);
+                    Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.download_not_available), 1);
                     return;
                 }
                 var callback = param.args[1];

@@ -23,7 +23,7 @@ import com.waenhancer.xposed.core.db.MessageStore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.HKDF;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.io.File;
@@ -101,7 +101,7 @@ public class MediaPreview extends Feature {
                 var layoutParams = new LinearLayout.LayoutParams(Utils.dipToPixels(42), Utils.dipToPixels(32));
                 layoutParams.gravity = Gravity.CENTER;
                 prevBtn.setLayoutParams(layoutParams);
-                var drawable = context.getDrawable(ResId.drawable.preview_eye);
+                var drawable = context.getDrawable(R.drawable.preview_eye);
                 drawable.setTint(Color.WHITE);
                 prevBtn.setImageDrawable(drawable);
                 prevBtn.setPadding(Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4));
@@ -145,7 +145,7 @@ public class MediaPreview extends Feature {
                 layoutParams2.gravity = Gravity.CENTER;
                 layoutParams2.topMargin = Utils.dipToPixels(8);
                 prevBtn.setLayoutParams(layoutParams2);
-                var drawable = context.getDrawable(ResId.drawable.preview_eye);
+                var drawable = context.getDrawable(R.drawable.preview_eye);
                 drawable.setTint(Color.WHITE);
                 prevBtn.setImageDrawable(drawable);
                 prevBtn.setPadding(Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4));
@@ -198,7 +198,7 @@ public class MediaPreview extends Feature {
                 webView.getSettings().setDisplayZoomControls(false);
                 webView.getSettings().setJavaScriptEnabled(true);
                 webView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                webView.loadDataWithBaseURL(null, HTML_LOADING.replace("$loading", context.getString(ResId.string.loading)), "text/html", "UTF-8", null);
+                webView.loadDataWithBaseURL(null, HTML_LOADING.replace("$loading", com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.loading)), "text/html", "UTF-8", null);
                 frameLayout.addView(webView);
                 alertDialog.setView(frameLayout);
                 alertDialog.setOnDismissListener(dialog1 -> {

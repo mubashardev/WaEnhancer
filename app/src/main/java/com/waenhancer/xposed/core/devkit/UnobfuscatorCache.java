@@ -13,8 +13,9 @@ import androidx.annotation.NonNull;
 import com.google.devrel.gmscore.tools.apk.arsc.ArscUtils;
 import com.waenhancer.BuildConfig;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
+import com.waenhancer.xposed.utils.XResManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -56,9 +57,28 @@ public class UnobfuscatorCache {
         try {
             sPrefsCacheHooks = mApplication.getSharedPreferences("UnobfuscatorCache", Context.MODE_PRIVATE);
             sPrefsCacheStrings = mApplication.getSharedPreferences("UnobfuscatorCacheStrings", Context.MODE_PRIVATE);
-            long version = sPrefsCacheHooks.getLong("version", 0);
+            long version = 0;
+            try {
+                version = sPrefsCacheHooks.getLong("version", 0);
+            } catch (Exception e) {
+                try {
+                    String v = sPrefsCacheHooks.getString("version", "0");
+                    version = Long.parseLong(v);
+                } catch (Exception ignored) {}
+            }
+            
             long currentVersion = mApplication.getPackageManager().getPackageInfo(mApplication.getPackageName(), 0).getLongVersionCode();
-            long savedUpdateTime = sPrefsCacheHooks.getLong("updateTime", 0);
+            
+            long savedUpdateTime = 0;
+            try {
+                savedUpdateTime = sPrefsCacheHooks.getLong("updateTime", 0);
+            } catch (Exception e) {
+                try {
+                    String v = sPrefsCacheHooks.getString("updateTime", "0");
+                    savedUpdateTime = Long.parseLong(v);
+                } catch (Exception ignored) {}
+            }
+
             String savedVersionName = sPrefsCacheHooks.getString("wae_version_name", "");
             String versionName = BuildConfig.VERSION_NAME;
             long lastUpdateTime = savedUpdateTime;
@@ -67,12 +87,13 @@ public class UnobfuscatorCache {
             } catch (Exception ignored) {
             }
             if (version != currentVersion || savedUpdateTime != lastUpdateTime || !versionName.equals(savedVersionName)) {
-                int toastResId = ResId.string.starting_cache;
-                if (toastResId == 0) {
-                    toastResId = mApplication.getResources().getIdentifier("starting_cache", "string", mApplication.getPackageName());
-                }
-                if (toastResId != 0) {
-                    Utils.showToast(mApplication.getString(toastResId), Toast.LENGTH_LONG);
+                int toastResId = R.string.starting_cache;
+                try {
+                    if (XResManager.moduleResources != null) {
+                        String message = XResManager.moduleResources.getString(toastResId);
+                        Utils.showToast(message, Toast.LENGTH_LONG);
+                    }
+                } catch (Exception ignored) {
                 }
                 sPrefsCacheHooks.edit().clear().commit();
                 sPrefsCacheHooks.edit().putLong("version", currentVersion).commit();

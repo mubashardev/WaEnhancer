@@ -15,7 +15,7 @@ import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.lang.reflect.Method;
@@ -189,7 +189,7 @@ public class GroupAdmin extends Feature {
                         iconAdmin = new ImageView(context);
                         var size = Utils.dipToPixels(16);
                         iconAdmin.setLayoutParams(new LinearLayout.LayoutParams(size, size));
-                        iconAdmin.setImageResource(ResId.drawable.admin);
+                        iconAdmin.setImageResource(R.drawable.admin);
                         iconAdmin.setId(0x7fff0010);
                         nameGroup.removeView(nametv);
                         view1.addView(nametv);

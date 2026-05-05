@@ -15,7 +15,7 @@ import androidx.annotation.NonNull;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.DesignUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.util.HashSet;
@@ -195,7 +195,7 @@ public class SettingsInjector extends Feature {
             if (menu != null && menu.findItem(9999) == null) {
                 String title = "WaEnhancer Settings";
                 try {
-                    title = Utils.getApplication().getString(ResId.string.waenhancer_settings);
+                    title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
                 } catch (Throwable ignored) {}
                 
                 var item = menu.add(0, 9999, 0, title);
@@ -294,7 +294,7 @@ public class SettingsInjector extends Feature {
         TextView textView = new TextView(activity);
         String title = "WaEnhancer Settings";
         try {
-            title = Utils.getApplication().getString(ResId.string.waenhancer_settings);
+            title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
         } catch (Throwable ignored) {}
         textView.setText(title);
         textView.setTextSize(16);

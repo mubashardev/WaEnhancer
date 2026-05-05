@@ -13,7 +13,7 @@ import com.waenhancer.xposed.core.db.MessageStore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.features.general.Tasker;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import org.luckypray.dexkit.query.enums.StringMatchType;
@@ -113,7 +113,7 @@ public class ToastViewer extends Feature {
             var participantHash = result2.getString(result2.getColumnIndexOrThrow("participant_hash"));
             if (participantHash != null) {
                 if (toast_viewed_status) {
-                    Utils.showToast(Utils.getApplication().getString(ResId.string.viewed_your_status, contactName), Toast.LENGTH_LONG);
+                    Utils.showToast(Utils.getApplication().getString(R.string.viewed_your_status, contactName), Toast.LENGTH_LONG);
                 }
                 Tasker.sendTaskerEvent(contactName, WppCore.stripJID(rawJid), "viewed_status");
                 return;
@@ -135,7 +135,7 @@ public class ToastViewer extends Feature {
                     lastEventTimeMap.put(key, currentTime);
                     Tasker.sendTaskerEvent(contactName, WppCore.stripJID(rawJid), "viewed_message");
                     if (toastViewedMessage) {
-                        Utils.showToast(Utils.getApplication().getString(ResId.string.viewed_your_message, contactName), Toast.LENGTH_LONG);
+                        Utils.showToast(Utils.getApplication().getString(R.string.viewed_your_message, contactName), Toast.LENGTH_LONG);
                     }
                 }
             } catch (Exception e) {

@@ -57,10 +57,15 @@ public class ProviderSharedPreferences implements SharedPreferences {
                     Uri.parse("content://" + authority + "/preferences"),
                     true,
                     new android.database.ContentObserver(new android.os.Handler(android.os.Looper.getMainLooper())) {
+                        private long lastHydration = 0;
                         @Override
                         public void onChange(boolean selfChange) {
-                            Utils.log("[WAE] ProviderSharedPreferences: Preferences changed, re-hydrating...");
-                            hydrateFromProvider();
+                            long now = System.currentTimeMillis();
+                            if (now - lastHydration > 500) {
+                                lastHydration = now;
+                                Utils.log("[WAE] ProviderSharedPreferences: Preferences changed, re-hydrating...");
+                                hydrateFromProvider();
+                            }
                         }
                     }
             );
@@ -74,9 +79,14 @@ public class ProviderSharedPreferences implements SharedPreferences {
                         Uri.parse("content://" + AUTHORITY_LEGACY + "/preferences"),
                         true,
                         new android.database.ContentObserver(new android.os.Handler(android.os.Looper.getMainLooper())) {
+                            private long lastHydration = 0;
                             @Override
                             public void onChange(boolean selfChange) {
-                                hydrateFromProvider();
+                                long now = System.currentTimeMillis();
+                                if (now - lastHydration > 500) {
+                                    lastHydration = now;
+                                    hydrateFromProvider();
+                                }
                             }
                         }
                     );
@@ -180,8 +190,16 @@ public class ProviderSharedPreferences implements SharedPreferences {
         localPrefs.unregisterOnSharedPreferenceChangeListener(listener);
     }
 
+    private long lastHydrationTime = 0;
+
     @SuppressWarnings("unchecked")
     private void hydrateFromProvider() {
+        long now = System.currentTimeMillis();
+        if (now - lastHydrationTime < 500) {
+            // Skip rapid re-hydration to avoid loops
+            return;
+        }
+        lastHydrationTime = now;
         try {
             Utils.log("[WAE] ProviderSharedPreferences: Starting hydration...");
             Bundle result = callProvider("get_all_preferences", null);
@@ -266,6 +284,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
         }
 
         private void syncToProvider(String key, Object value) {
+            de.robv.android.xposed.XposedBridge.log("[WAE] ProviderSharedPreferences: Putting preference: " + key + " = " + value);
             Bundle extras = new Bundle();
             extras.putString("key", key);
             if (value instanceof String) {

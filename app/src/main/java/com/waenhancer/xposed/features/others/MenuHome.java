@@ -2,28 +2,24 @@ package com.waenhancer.xposed.features.others;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Intent;
-import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.FragmentActivity;
 
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
 import com.waenhancer.xposed.utils.DesignUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
+import com.waenhancer.xposed.utils.XResManager;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
@@ -64,8 +60,11 @@ public class MenuHome extends Feature {
             XposedBridge.log("[WaEnhancer] MenuHome: entryPoint is " + entryPoint + " in " + activity.getClass().getSimpleName());
             if (!"1".equals(entryPoint)) return;
 
-            String title = Utils.getApplication().getString(ResId.string.waenhancer_settings);
-            if (TextUtils.isEmpty(title)) title = "WaEnhancer Settings";
+            String title = "WaEnhancer Settings";
+            try {
+                if (XResManager.moduleResources != null)
+                    title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
+            } catch (Exception ignored) {}
             var itemMenu = menu.add(0, 0, 9999, " " + title);
             var iconDraw = DesignUtils.getDrawableByName("ic_settings");
             if (iconDraw != null) {
@@ -82,36 +81,15 @@ public class MenuHome extends Feature {
     }
 
     /**
-     * Show WaEnhancer settings as a full-screen dialog that looks like a native
-     * WhatsApp activity. This is the only approach that reliably works from within
-     * an Xposed hook — we cannot launch activities that aren't in the host manifest.
+     * Show WaEnhancer settings embedded inside the host WhatsApp activity.
+     * Delegates to {@link EmbeddedSettingsDialogFragment#show(Activity)} which
+     * handles all cross-process safety, fallback, and back-stack management.
      */
     public static void showWaeSettingsDialog(Activity activity) {
         try {
-            Object fm = null;
-            try {
-                fm = XposedHelpers.callMethod(activity, "getSupportFragmentManager");
-            } catch (Throwable ignored) {}
-
-            if (fm != null) {
-                XposedBridge.log("[WaEnhancer] Showing settings dialog within host process via reflection.");
-                EmbeddedSettingsDialogFragment dialog = new EmbeddedSettingsDialogFragment();
-                try {
-                    XposedHelpers.callMethod(dialog, "show", fm, "wae_embedded_settings_dialog");
-                    return;
-                } catch (Throwable t) {
-                    XposedBridge.log("[WaEnhancer] Failed to show dialog via reflection: " + t.getMessage());
-                }
-            }
-
-            XposedBridge.log("[WaEnhancer] Host activity " + activity.getClass().getName() + " does not support FragmentManager or reflection failed, using activity fallback.");
-            Intent intent = new Intent();
-            intent.setComponent(new ComponentName(com.waenhancer.BuildConfig.APPLICATION_ID,
-                    EmbeddedSettingsActivity.class.getName()));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            activity.startActivity(intent);
+            EmbeddedSettingsDialogFragment.show(activity);
         } catch (Throwable t) {
-            XposedBridge.log("[WaEnhancer] Failed to show settings dialog: " + t.getMessage());
+            XposedBridge.log("[WaEnhancer] showWaeSettingsDialog failed: " + t.getMessage());
             Utils.showToast("Could not open WaEnhancer Settings", android.widget.Toast.LENGTH_SHORT);
         }
     }
@@ -125,24 +103,40 @@ public class MenuHome extends Feature {
             }
             return;
         }
-        var itemMenu = menu.add(0, 0, 0, ResId.string.ghost_mode);
+        String ghostLabel = "Ghost Mode";
+        try { if (XResManager.moduleResources != null) ghostLabel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode); } catch (Exception ignored) {}
+        var itemMenu = menu.add(0, 0, 0, ghostLabel);
 
-        var iconDraw = activity.getDrawable(ghostmode ? ResId.drawable.ghost_enabled : ResId.drawable.ghost_disabled);
-        if (iconDraw != null) {
-            iconDraw.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
-            itemMenu.setIcon(iconDraw);
-        }
+        try {
+            var iconDraw = XResManager.moduleResources.getDrawable(ghostmode ? R.drawable.ghost_enabled : R.drawable.ghost_disabled, null);
+            if (iconDraw != null) {
+                iconDraw.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
+                itemMenu.setIcon(iconDraw);
+            }
+        } catch (Exception ignored) {}
         if (newSettings) {
             itemMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
         itemMenu.setOnMenuItemClickListener(item -> {
-            new AlertDialogWpp(activity).setTitle(activity.getString(ResId.string.ghost_mode_s, (ghostmode ? "ON" : "OFF"))).
-                    setMessage(activity.getString(ResId.string.ghost_mode_message))
-                    .setPositiveButton(activity.getString(ResId.string.disable), (dialog, which) -> {
+            String gmTitle = "Ghost Mode (" + (ghostmode ? "ON" : "OFF") + ")";
+            String gmMsg = "Toggle ghost mode";
+            String disableStr = "Disable";
+            String enableStr = "Enable";
+            try {
+                if (XResManager.moduleResources != null) {
+                    gmTitle = XResManager.moduleResources.getString(R.string.ghost_mode_s, (ghostmode ? "ON" : "OFF"));
+                    gmMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode_message);
+                    disableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.disable);
+                    enableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.enable);
+                }
+            } catch (Exception ignored) {}
+            new AlertDialogWpp(activity).setTitle(gmTitle).
+                    setMessage(gmMsg)
+                    .setPositiveButton(disableStr, (dialog, which) -> {
                         WppCore.setPrivBoolean("ghostmode", false);
                         Utils.doRestart(activity);
                     })
-                    .setNegativeButton(activity.getString(ResId.string.enable), (dialog, which) -> {
+                    .setNegativeButton(enableStr, (dialog, which) -> {
                         WppCore.setPrivBoolean("ghostmode", true);
                         Utils.doRestart(activity);
                     }).show();
@@ -153,9 +147,13 @@ public class MenuHome extends Feature {
 
     private void InsertRestartButton(Menu menu, Activity activity, boolean newSettings) {
         if (!prefs.getBoolean("restartbutton", true)) return;
-        var iconDraw = activity.getDrawable(ResId.drawable.refresh);
-        iconDraw.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
-        var itemMenu = menu.add(0, 0, 0, ResId.string.restart_whatsapp).setIcon(iconDraw);
+        android.graphics.drawable.Drawable iconDraw = null;
+        try { iconDraw = XResManager.moduleResources.getDrawable(R.drawable.refresh, null); } catch (Exception ignored) {}
+        if (iconDraw != null) iconDraw.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
+        String restartLabel = "Restart WhatsApp";
+        try { if (XResManager.moduleResources != null) restartLabel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_whatsapp); } catch (Exception ignored) {}
+        var itemMenu = menu.add(0, 0, 0, restartLabel);
+        if (iconDraw != null) itemMenu.setIcon(iconDraw);
         if (newSettings) {
             itemMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
@@ -175,25 +173,38 @@ public class MenuHome extends Feature {
             }
             return;
         }
-        var item = menu.add(0, 0, 0, activity.getString(ResId.string.dnd_mode_title));
-        var drawable = Utils.getApplication().getDrawable(dndmode ? ResId.drawable.airplane_enabled : ResId.drawable.airplane_disabled);
-        if (drawable != null) {
-            drawable.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
-            item.setIcon(drawable);
-        }
+        String dndTitle = "DND Mode";
+        try { if (XResManager.moduleResources != null) dndTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title); } catch (Exception ignored) {}
+        var item = menu.add(0, 0, 0, dndTitle);
+        try {
+            var drawable = XResManager.moduleResources.getDrawable(dndmode ? R.drawable.airplane_enabled : R.drawable.airplane_disabled, null);
+            if (drawable != null) {
+                drawable.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
+                item.setIcon(drawable);
+            }
+        } catch (Exception ignored) {}
         if (newSettings) {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
         item.setOnMenuItemClickListener(menuItem -> {
             if (!dndmode) {
+                String dTitle = "DND Mode", dMsg = "", dActivate = "Activate", dCancel = "Cancel";
+                try {
+                    if (XResManager.moduleResources != null) {
+                        dTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title);
+                        dMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_message);
+                        dActivate = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.activate);
+                        dCancel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel);
+                    }
+                } catch (Exception ignored) {}
                 new AlertDialogWpp(activity)
-                        .setTitle(activity.getString(ResId.string.dnd_mode_title))
-                        .setMessage(activity.getString(ResId.string.dnd_message))
-                        .setPositiveButton(activity.getString(ResId.string.activate), (dialog, which) -> {
+                        .setTitle(dTitle)
+                        .setMessage(dMsg)
+                        .setPositiveButton(dActivate, (dialog, which) -> {
                             WppCore.setPrivBoolean("dndmode", true);
                             Utils.doRestart(activity);
                         })
-                        .setNegativeButton(activity.getString(ResId.string.cancel), (dialog, which) -> dialog.dismiss())
+                        .setNegativeButton(dCancel, (dialog, which) -> dialog.dismiss())
                         .create().show();
                 return true;
             }
@@ -213,25 +224,38 @@ public class MenuHome extends Feature {
             return;
         }
 
-        MenuItem item = menu.add(0, 0, 0, activity.getString(ResId.string.freezelastseen_title));
-        var drawable = Utils.getApplication().getDrawable(freezelastseen ? ResId.drawable.eye_disabled : ResId.drawable.eye_enabled);
-        if (drawable != null) {
-            drawable.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
-            item.setIcon(drawable);
-        }
+        String flsTitle = "Freeze Last Seen";
+        try { if (XResManager.moduleResources != null) flsTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_title); } catch (Exception ignored) {}
+        MenuItem item = menu.add(0, 0, 0, flsTitle);
+        try {
+            var drawable = XResManager.moduleResources.getDrawable(freezelastseen ? R.drawable.eye_disabled : R.drawable.eye_enabled, null);
+            if (drawable != null) {
+                drawable.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
+                item.setIcon(drawable);
+            }
+        } catch (Exception ignored) {}
         if (newSettings) {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
         item.setOnMenuItemClickListener(menuItem -> {
             if (!freezelastseen) {
+                String fTitle = "Freeze Last Seen", fMsg = "", fActivate = "Activate", fCancel = "Cancel";
+                try {
+                    if (XResManager.moduleResources != null) {
+                        fTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_title);
+                        fMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_message);
+                        fActivate = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.activate);
+                        fCancel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel);
+                    }
+                } catch (Exception ignored2) {}
                 new AlertDialogWpp(activity)
-                        .setTitle(activity.getString(ResId.string.freezelastseen_title))
-                        .setMessage(activity.getString(ResId.string.freezelastseen_message))
-                        .setPositiveButton(activity.getString(ResId.string.activate), (dialog, which) -> {
+                        .setTitle(fTitle)
+                        .setMessage(fMsg)
+                        .setPositiveButton(fActivate, (dialog, which) -> {
                             WppCore.setPrivBoolean("freezelastseen", true);
                             Utils.doRestart(activity);
                         })
-                        .setNegativeButton(activity.getString(ResId.string.cancel), (dialog, which) -> dialog.dismiss())
+                        .setNegativeButton(fCancel, (dialog, which) -> dialog.dismiss())
                         .create().show();
                 return true;
             }

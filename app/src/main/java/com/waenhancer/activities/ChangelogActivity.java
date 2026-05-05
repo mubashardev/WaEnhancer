@@ -110,10 +110,10 @@ public class ChangelogActivity extends BaseActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        navigateToHome();
-    }
+    // @Override
+    // public void onBackPressed() {
+    //     navigateToHome();
+    // }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -124,7 +124,8 @@ public class ChangelogActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            navigateToHome();
+            // navigateToHome();
+            finish();
             return true;
         }
         if (item.getItemId() == R.id.action_update_settings) {

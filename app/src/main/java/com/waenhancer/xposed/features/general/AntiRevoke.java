@@ -17,7 +17,7 @@ import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.core.devkit.UnobfuscatorCache;
 import com.waenhancer.xposed.features.listeners.ConversationItemListener;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.lang.reflect.Field;
@@ -211,7 +211,7 @@ public class AntiRevoke extends Feature {
                 var date = Objects.requireNonNull(DATE_FORMAT_THREAD_LOCAL.get()).format(new Date(timestamp));
                 dateTextView.getPaint().setUnderlineText(true);
                 dateTextView.setOnClickListener(v -> Utils.showToast(
-                        String.format(Utils.getApplication().getString(ResId.string.message_removed_on), date),
+                        String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message_removed_on), date),
                         Toast.LENGTH_LONG));
             }
 
@@ -231,7 +231,7 @@ public class AntiRevoke extends Feature {
                         + dateTextView.getText();
                 dateTextView.setText(newTextData);
             } else if (antirevokeValue == 2) {
-                var drawable = Utils.getApplication().getDrawable(ResId.drawable.deleted);
+                var drawable = Utils.getApplication().getDrawable(R.drawable.deleted);
                 dateTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null);
                 dateTextView.setCompoundDrawablePadding(5);
             }
@@ -295,9 +295,9 @@ public class AntiRevoke extends Feature {
 
     private void showRevocationToast(FMessageWpp fMessage) {
         var jidAuthor = fMessage.getKey().remoteJid;
-        var messageSuffix = Utils.getApplication().getString(ResId.string.deleted_message);
+        var messageSuffix = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.deleted_message);
         if (jidAuthor.isStatus()) {
-            messageSuffix = Utils.getApplication().getString(ResId.string.deleted_status);
+            messageSuffix = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.deleted_status);
             jidAuthor = fMessage.getUserJid();
         }
         if (jidAuthor.userJid == null)
@@ -319,7 +319,7 @@ public class AntiRevoke extends Feature {
             if (TextUtils.isEmpty(participantName)) {
                 participantName = participantJid.getPhoneNumber();
             }
-            message = Utils.getApplication().getString(ResId.string.deleted_a_message_in_group, participantName, name);
+            message = Utils.getApplication().getString(R.string.deleted_a_message_in_group, participantName, name);
         } else {
             message = name + " " + messageSuffix;
         }

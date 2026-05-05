@@ -24,7 +24,6 @@ import com.waenhancer.preference.StatusForwardRulesPreference;
 import com.waenhancer.ui.helpers.BottomSheetHelper;
 import com.waenhancer.xposed.bridge.client.ProviderSharedPreferences;
 import com.waenhancer.xposed.utils.ThemeUtils;
-import com.waenhancer.xposed.utils.ResId;
 import com.waenhancer.xposed.utils.Utils;
 import com.waenhancer.xposed.utils.XPrefManager;
 
@@ -42,7 +41,8 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
     }
 
     private static final String PREFS_NAME = "wae_embedded_prefs";
-    private static final String ARG_TITLE = "embedded_title";
+    /** Public so {@link EmbeddedSettingsDialogFragment} can read the title. */
+    public static final String ARG_TITLE = "embedded_title";
 
     protected ProviderSharedPreferences mPrefs;
     private boolean suppressRestartBroadcast;
@@ -99,7 +99,7 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
     public android.content.Context getContext() {
         android.content.Context context = super.getContext();
         if (context == null) return null;
-        int themeRes = ThemeUtils.isNightMode(context) ? com.waenhancer.xposed.utils.ResId.style.Theme : com.waenhancer.xposed.utils.ResId.style.Theme_Light;
+        int themeRes = ThemeUtils.isNightMode(context) ? R.style.Theme : R.style.Theme_Light;
         return new android.view.ContextThemeWrapper(context, themeRes) {
             @Override
             public android.content.res.Resources getResources() {
@@ -271,15 +271,51 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
                 args.putCharSequence(ARG_TITLE, preference.getTitle());
             }
             fragment.setArguments(args);
-            int containerId = ((View) requireView().getParent()).getId();
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(containerId, fragment)
-                    .addToBackStack("wae_embedded")
-                    .commit();
+
+            // Walk up the parent chain to find the owning dialog so we use
+            // its childFragmentManager and containerId. This keeps all navigation
+            // self-contained within the dialog and works in the host process.
+            EmbeddedSettingsDialogFragment owningDialog = findOwningDialog();
+            if (owningDialog != null) {
+                owningDialog.navigateTo(fragment, preference.getTitle());
+                return;
+            }
+
+            // Fallback: use parent fragment manager with our view's parent as container.
+            try {
+                int containerId = requireView().getParent() instanceof android.view.View
+                        ? ((android.view.View) requireView().getParent()).getId()
+                        : android.view.View.NO_ID;
+                if (containerId != android.view.View.NO_ID) {
+                    getParentFragmentManager()
+                            .beginTransaction()
+                            .replace(containerId, fragment)
+                            .addToBackStack("wae_embedded")
+                            .commit();
+                    return;
+                }
+            } catch (Throwable ignored) {}
+
+            Utils.showToast("Unable to open settings screen", android.widget.Toast.LENGTH_SHORT);
         } catch (Exception e) {
             Utils.showToast("Unable to open settings screen", android.widget.Toast.LENGTH_SHORT);
         }
+    }
+
+    /**
+     * Walk the parent fragment chain to find the {@link EmbeddedSettingsDialogFragment}
+     * that owns this preference page, if any.
+     */
+    @Nullable
+    private EmbeddedSettingsDialogFragment findOwningDialog() {
+        Fragment parent = getParentFragment();
+        while (parent != null) {
+            if (parent instanceof EmbeddedSettingsDialogFragment) {
+                return (EmbeddedSettingsDialogFragment) parent;
+            }
+            parent = parent.getParentFragment();
+        }
+        return null;
     }
 
     public CharSequence getToolbarTitle() {
@@ -287,7 +323,7 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
         if (args != null && args.containsKey(ARG_TITLE)) {
             return args.getCharSequence(ARG_TITLE);
         }
-        return getString(ResId.string.app_name);
+        return getString(R.string.app_name);
     }
 
     private void setPreferenceState(String key, boolean enabled) {
@@ -354,8 +390,8 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
         setPreferenceState("filtergroups", !separategroups);
 
         updateGroupPref("separategroups", isSeparateGroupSupported(),
-                ResId.string.separate_groups_sum,
-                ResId.string.separate_groups_unsupported_sum);
+                R.string.separate_groups_sum,
+                R.string.separate_groups_unsupported_sum);
 
         Preference callBlockContacts = findPreference("call_block_contacts");
         Preference callWhiteContacts = findPreference("call_white_contacts");

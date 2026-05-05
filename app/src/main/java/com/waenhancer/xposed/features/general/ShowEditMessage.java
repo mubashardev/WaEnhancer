@@ -26,7 +26,7 @@ import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.features.listeners.ConversationItemListener;
 import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.util.ArrayList;
@@ -166,7 +166,7 @@ public class ShowEditMessage extends Feature {
             titleView.setTextSize(16.0f);
             titleView.setTextColor(DesignUtils.getPrimaryTextColor());
             titleView.setTypeface(null, Typeface.BOLD);
-            titleView.setText(ResId.string.edited_history);
+            titleView.setText(R.string.edited_history);
 
             // List View
             var adapter = new MessageAdapter(ctx, messages);

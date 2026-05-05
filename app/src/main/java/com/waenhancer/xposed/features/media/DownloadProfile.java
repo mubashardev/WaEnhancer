@@ -13,7 +13,7 @@ import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.WaContactWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import org.luckypray.dexkit.query.enums.StringMatchType;
@@ -36,9 +36,9 @@ public class DownloadProfile extends Feature {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var menu = (Menu) param.args[0];
-                var item = menu.add(0, 0, 0, ResId.string.download);
+                var item = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.download));
                 item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                item.setIcon(ResId.drawable.download);
+                item.setIcon(R.drawable.download);
                 item.setOnMenuItemClickListener(menuItem -> {
                     var subCls = param.thisObject.getClass().getSuperclass();
                     if (subCls == null) {
@@ -60,9 +60,9 @@ public class DownloadProfile extends Feature {
                     var name = Utils.generateName(userJid, "jpg");
                     var error = Utils.copyFile(file, destPath, name);
                     if (TextUtils.isEmpty(error)) {
-                        Toast.makeText(Utils.getApplication(), Utils.getApplication().getString(ResId.string.saved_to) + destPath, Toast.LENGTH_LONG).show();
+                        Toast.makeText(Utils.getApplication(), com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.saved_to) + destPath, Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(Utils.getApplication(), Utils.getApplication().getString(ResId.string.error_when_saving_try_again) + " " + error, Toast.LENGTH_LONG).show();
+                        Toast.makeText(Utils.getApplication(), com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.error_when_saving_try_again) + " " + error, Toast.LENGTH_LONG).show();
                     }
                     return true;
                 });

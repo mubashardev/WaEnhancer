@@ -14,7 +14,7 @@ import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.features.listeners.MenuStatusListener;
 import com.waenhancer.xposed.utils.ReflectionUtils;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 
 import org.luckypray.dexkit.query.enums.StringMatchType;
 
@@ -42,9 +42,9 @@ public class DeleteStatus extends Feature {
 
             @Override
             public MenuItem addMenu(Menu menu, FMessageWpp fMessage) {
-                if (menu.findItem(ResId.string.delete_for_me) != null) return null;
+                if (menu.findItem(R.string.delete_for_me) != null) return null;
                 if (fMessage.getKey().isFromMe) return null;
-                return menu.add(0, ResId.string.delete_for_me, 0, ResId.string.delete_for_me);
+                return menu.add(0, R.string.delete_for_me, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.delete_for_me));
             }
 
             @Override

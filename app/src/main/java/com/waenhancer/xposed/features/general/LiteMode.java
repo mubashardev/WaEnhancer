@@ -20,7 +20,7 @@ import com.waenhancer.utils.RealPathUtil;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
-import com.waenhancer.xposed.utils.ResId;
+import com.waenhancer.R;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
@@ -45,13 +45,13 @@ public class LiteMode extends Feature {
     }
 
     private static void showDialogUriPermission(Activity activity) {
-        new AlertDialogWpp(activity).setTitle(activity.getString(ResId.string.download_folder_permission))
-                .setMessage(activity.getString(ResId.string.ask_download_folder))
-                .setPositiveButton(activity.getString(ResId.string.allow), (dialog, which) -> {
+        new AlertDialogWpp(activity).setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.download_folder_permission))
+                .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ask_download_folder))
+                .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.allow), (dialog, which) -> {
                     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                     intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, getDownloadsUri());
                     activity.startActivityForResult(intent, REQUEST_FOLDER);
-                }).setNegativeButton(activity.getString(ResId.string.cancel), (dialog, which) -> dialog.dismiss()).show();
+                }).setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel), (dialog, which) -> dialog.dismiss()).show();
     }
 
     @Override
@@ -98,7 +98,7 @@ public class LiteMode extends Feature {
         var entryPoint = getSafeString("open_wae", "1");
         if (!"1".equals(entryPoint)) return;
         var itemMenu = menu.add(0, 0, 9999, "Download Folder");
-        var iconDraw = activity.getDrawable(ResId.drawable.download);
+        var iconDraw = activity.getDrawable(R.drawable.download);
         iconDraw.setTint(0xff8696a0);
         itemMenu.setIcon(iconDraw);
         itemMenu.setOnMenuItemClickListener(item -> {

@@ -90,18 +90,24 @@ public class ChangelogActivity extends BaseActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ChangelogAdapter(getCurrentVersion());
+        // Load initial state
+        downgradesEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("downgrades_enabled", false);
+        adapter.setDowngradesEnabled(downgradesEnabled);
+        
         recyclerView.setAdapter(adapter);
 
         fetchChangelog();
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem item = menu.add(0, 1001, 0, R.string.enable_downgrades);
-        item.setCheckable(true);
-        item.setChecked(downgradesEnabled);
-        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-        return true;
+    protected void onResume() {
+        super.onResume();
+        // Refresh settings in case they were changed in UpdateSettingsActivity
+        boolean newDowngradeState = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("downgrades_enabled", false);
+        if (newDowngradeState != downgradesEnabled) {
+            downgradesEnabled = newDowngradeState;
+            adapter.setDowngradesEnabled(downgradesEnabled);
+        }
     }
 
     @Override
@@ -110,39 +116,22 @@ public class ChangelogActivity extends BaseActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_changelog, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             navigateToHome();
             return true;
         }
-        if (item.getItemId() == 1001) {
-            toggleDowngrades(item);
+        if (item.getItemId() == R.id.action_update_settings) {
+            startActivity(new Intent(this, UpdateSettingsActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    private void toggleDowngrades(MenuItem item) {
-        if (!item.isChecked()) {
-            // Request root
-            new Thread(() -> {
-                boolean granted = com.waenhancer.utils.LogManager.hasRootAccess();
-                runOnUiThread(() -> {
-                    if (granted) {
-                        downgradesEnabled = true;
-                        item.setChecked(true);
-                        adapter.setDowngradesEnabled(true);
-                    } else {
-                        item.setChecked(false);
-                        Toast.makeText(this, R.string.root_required_downgrade, Toast.LENGTH_LONG).show();
-                    }
-                });
-            }).start();
-        } else {
-            downgradesEnabled = false;
-            item.setChecked(false);
-            adapter.setDowngradesEnabled(false);
-        }
     }
 
     private void navigateToHome() {

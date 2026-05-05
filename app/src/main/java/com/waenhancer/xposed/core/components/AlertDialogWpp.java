@@ -342,6 +342,14 @@ public class AlertDialogWpp {
         return this;
     }
 
+    public AlertDialogWpp setCancelable(boolean cancelable) {
+        if (shouldUseSystem()) {
+            mAlertDialog.setCancelable(cancelable);
+        } else {
+            XposedHelpers.callMethod(mAlertDialogWpp, "setCancelable", cancelable);
+        }
+        return this;
+    }
 
     public Dialog create() {
         if (mCreate != null) return mCreate;
@@ -363,23 +371,25 @@ public class AlertDialogWpp {
         mCreate.dismiss();
     }
 
-    public void show() {
+    public Dialog show() {
         if (mContext instanceof Activity) {
             Activity activity = (Activity) mContext;
             if (activity.isFinishing() || activity.isDestroyed()) {
-                return;
+                return null;
             }
         }
         try {
             if (shouldUseSystem()) {
-                mAlertDialog.show();
+                return mAlertDialog.show();
             } else {
-                create().show();
+                Dialog d = create();
+                d.show();
+                return d;
             }
         } catch (Throwable t) {
             XposedBridge.log("[WAE] AlertDialogWpp.show() failed: " + t.getMessage());
             // Last resort
-            try { mAlertDialog.show(); } catch (Throwable ignored) {}
+            try { return mAlertDialog.show(); } catch (Throwable ignored) { return null; }
         }
     }
 

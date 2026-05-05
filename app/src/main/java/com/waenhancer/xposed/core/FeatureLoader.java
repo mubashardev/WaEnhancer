@@ -122,9 +122,12 @@ import lombok.Setter;
 
 public class FeatureLoader {
     public static Application mApp;
+    public static ClassLoader hostClassLoader;
     private static Toast hookingToast;
     private static String loadedTimeStr;
     private static boolean needsSnackbar = false;
+    private static final java.util.concurrent.CountDownLatch loadLatch = new java.util.concurrent.CountDownLatch(1);
+    private static volatile boolean isLoaded = false;
 
     public final static String PACKAGE_WPP = "com.whatsapp";
     public final static String PACKAGE_BUSINESS = "com.whatsapp.w4b";
@@ -148,7 +151,7 @@ public class FeatureLoader {
     }
 
     public static void start(@NonNull ClassLoader loader, @NonNull android.content.SharedPreferences pref, String sourceDir) {
-
+        hostClassLoader = loader;
         Feature.DEBUG = pref.getBoolean("enablelogs", true);
         Utils.xprefs = pref;
 
@@ -220,17 +223,6 @@ public class FeatureLoader {
                         mApp.registerActivityLifecycleCallbacks(new WaCallback());
                         registerReceivers();
                         try {
-                            var timemillis = System.currentTimeMillis();
-                            
-                            Unobfuscator.loadLibrary(mApp);
-                            if (!Unobfuscator.initWithPath(sourceDir)) {
-                                XposedBridge.log("Can't init dexkit");
-                                return;
-                            }
-                            UnobfuscatorCache.init(mApp);
-                            SharedPreferencesWrapper.hookInit(mApp.getClassLoader());
-                            ReflectionUtils.initCache(mApp);
-                            XposedBridge.log("[WAE] Supported versions list: " + supportedVersions);
                             boolean isSupported = supportedVersions.stream()
                                     .anyMatch(s -> packageInfo.versionName.startsWith(s.replace(".xx", "")));
                             XposedBridge.log("[WAE] Version verification result for " + packageInfo.versionName + ": isSupported=" + isSupported);
@@ -244,24 +236,18 @@ public class FeatureLoader {
                                     throw new Exception(sb);
                                 }
                             }
-                            XposedBridge.log("[WAE] Initializing components and plugins using ProviderSharedPreferences...");
-                            ResId.initLocal(mApp);
-                            initComponents(loader, providerPrefs);
-                            plugins(loader, providerPrefs, packageInfo.versionName);
-                            sendEnabledBroadcast(mApp);
-                            // XposedHelpers.setStaticIntField(XposedHelpers.findClass("com.whatsapp.infra.logging.Log",
-                            // loader), "level", 5);
-                            var timemillis2 = System.currentTimeMillis() - timemillis;
-                            loadedTimeStr = String.format(java.util.Locale.US, "%.2fs", timemillis2 / 1000.0);
-                            XposedBridge.log("[WAE] Loaded Hooks in " + loadedTimeStr);
                             
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                if (hookingToast != null) {
-                                    hookingToast.cancel();
+                            // Start intensive loading in background
+                            new Thread(() -> {
+                                try {
+                                    load(loader, providerPrefs, packageInfo, sourceDir);
+                                } catch (Throwable t) {
+                                    XposedBridge.log("[WAE] Background load failed: " + t.getMessage());
+                                } finally {
+                                    isLoaded = true;
+                                    loadLatch.countDown();
                                 }
-                                needsSnackbar = true;
-                                triggerLoadedFeedback();
-                            });
+                            }).start();
                         } catch (Throwable e) {
                             XposedBridge.log(e);
                             var error = new ErrorItem();
@@ -333,6 +319,41 @@ public class FeatureLoader {
                 param.setResult(calendar.getTime());
             }
         });
+    }
+
+    private static void load(ClassLoader loader, SharedPreferences providerPrefs, PackageInfo packageInfo, String sourceDir) {
+        try {
+            var timemillis = System.currentTimeMillis();
+            
+            Unobfuscator.loadLibrary(mApp);
+            if (!Unobfuscator.initWithPath(sourceDir)) {
+                XposedBridge.log("Can't init dexkit");
+                return;
+            }
+            UnobfuscatorCache.init(mApp);
+            SharedPreferencesWrapper.hookInit(mApp.getClassLoader());
+
+            XposedBridge.log("[WAE] Initializing components and plugins using ProviderSharedPreferences...");
+            ResId.initLocal(mApp);
+            initComponents(loader, providerPrefs);
+            plugins(loader, providerPrefs, packageInfo.versionName);
+            sendEnabledBroadcast(mApp);
+            
+            var timemillis2 = System.currentTimeMillis() - timemillis;
+            loadedTimeStr = String.format(java.util.Locale.US, "%.2fs", timemillis2 / 1000.0);
+            XposedBridge.log("[WAE] Loaded Hooks in " + loadedTimeStr);
+            
+            new Handler(Looper.getMainLooper()).post(() -> {
+                if (hookingToast != null) {
+                    hookingToast.cancel();
+                }
+                needsSnackbar = true;
+                triggerLoadedFeedback();
+            });
+        } catch (Throwable e) {
+            XposedBridge.log("[WAE] Error in background load: " + e.getMessage());
+            XposedBridge.log(e);
+        }
     }
 
     private static void initComponents(ClassLoader loader, android.content.SharedPreferences pref) throws Exception {
@@ -506,8 +527,42 @@ public class FeatureLoader {
     public static void triggerLoadedFeedback() {
         if (!needsSnackbar || loadedTimeStr == null || WppCore.mCurrentActivity == null) return;
         
+        // If still loading in background, we might want to wait or show a dialog
+        // But for now, we only trigger if needsSnackbar is true (which is set after background load)
         needsSnackbar = false;
         Utils.showSnackbar(WppCore.mCurrentActivity, "Hooks loaded in " + loadedTimeStr);
+    }
+
+    public static void checkLoading(Activity activity) {
+        if (isLoaded || activity == null) return;
+        
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                // If still not loaded, show a simple non-cancelable dialog
+                if (isLoaded) return;
+                
+                var dialog = new AlertDialogWpp(activity)
+                        .setTitle("WaEnhancer")
+                        .setMessage("Hooking in to WhatsApp cache. Please wait...")
+                        .setCancelable(false)
+                        .show();
+                
+                // Auto-dismiss when loaded
+                new Thread(() -> {
+                    try {
+                        loadLatch.await();
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            try {
+                                dialog.dismiss();
+                                triggerLoadedFeedback();
+                            } catch (Throwable ignored) {}
+                        });
+                    } catch (Throwable ignored) {}
+                }).start();
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] Failed to show loading dialog: " + t.getMessage());
+            }
+        });
     }
 
     private static void plugins(@NonNull ClassLoader loader, @NonNull android.content.SharedPreferences pref,

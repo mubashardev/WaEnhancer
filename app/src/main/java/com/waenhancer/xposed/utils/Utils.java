@@ -254,15 +254,22 @@ public class Utils {
             try {
                 var view = activity.findViewById(android.R.id.content);
                 if (view != null) {
-                    // Use reflection to find the Snackbar class in the host process
-                    // to avoid resource ID issues between module and host material libraries
-                    Class<?> snackbarClass = XposedHelpers.findClass("com.google.android.material.snackbar.Snackbar", activity.getClassLoader());
-                    Object snackbar = XposedHelpers.callStaticMethod(snackbarClass, "make", view, message, 0); // 0 is LENGTH_LONG usually
-                    XposedHelpers.callMethod(snackbar, "show");
+                    Class<?> snackbarClass = null;
+                    ClassLoader loader = FeatureLoader.hostClassLoader != null ? FeatureLoader.hostClassLoader : activity.getClassLoader();
+                    
+                    try {
+                        snackbarClass = XposedHelpers.findClass("com.google.android.material.snackbar.Snackbar", loader);
+                    } catch (Throwable t) {
+                        snackbarClass = XposedHelpers.findClass("com.google.android.material.snackbar.Snackbar", activity.getClassLoader());
+                    }
+                    
+                    if (snackbarClass != null) {
+                        Object snackbar = XposedHelpers.callStaticMethod(snackbarClass, "make", view, message, 0); // 0 = LENGTH_LONG
+                        XposedHelpers.callMethod(snackbar, "show");
+                    }
                 }
             } catch (Throwable t) {
                 XposedBridge.log("[WAE] Failed to show Snackbar: " + t.getMessage());
-                // Final fallback to toast
                 showToast(message, Toast.LENGTH_SHORT);
             }
         });

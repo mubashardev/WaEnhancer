@@ -43,6 +43,7 @@
 # Support for Xposed libraries
 -keep class de.robv.android.xposed.** { *; }
 -dontwarn de.robv.android.xposed.**
+
 -keep class io.github.libxposed.** { *; }
 
 # Bouncy Castle

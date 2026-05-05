@@ -167,6 +167,12 @@
             android:parentActivityName=".activities.MainActivity" />
 
         <activity
+            android:name=".activities.UpdateSettingsActivity"
+            android:theme="@style/AppTheme"
+            android:label="@string/update_settings"
+            android:parentActivityName=".activities.ChangelogActivity" />
+
+        <activity
             android:name=".activities.LogsActivity"
             android:label="@string/logs"
             android:theme="@style/AppTheme"

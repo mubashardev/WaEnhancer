@@ -237,17 +237,15 @@ public class FeatureLoader {
                                 }
                             }
                             
-                            // Start intensive loading in background
-                            new Thread(() -> {
-                                try {
-                                    load(loader, providerPrefs, packageInfo, sourceDir);
-                                } catch (Throwable t) {
-                                    XposedBridge.log("[WAE] Background load failed: " + t.getMessage());
-                                } finally {
-                                    isLoaded = true;
-                                    loadLatch.countDown();
-                                }
-                            }).start();
+                            // Execute loading synchronously to ensure hooks are applied before app continues
+                            try {
+                                load(loader, providerPrefs, packageInfo, sourceDir);
+                            } catch (Throwable t) {
+                                XposedBridge.log("[WAE] Load failed: " + t.getMessage());
+                            } finally {
+                                isLoaded = true;
+                                loadLatch.countDown();
+                            }
                         } catch (Throwable e) {
                             XposedBridge.log(e);
                             var error = new ErrorItem();

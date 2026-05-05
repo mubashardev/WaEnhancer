@@ -1,6 +1,10 @@
 package com.waenhancer.xposed.features.others;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -11,21 +15,24 @@ import androidx.annotation.NonNull;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.DesignUtils;
+import com.waenhancer.xposed.utils.ResId;
 import com.waenhancer.xposed.utils.Utils;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.robv.android.xposed.XC_MethodHook;
-import android.content.SharedPreferences;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 /**
- * Injects a "WaEnhancer Settings" tile into WhatsApp's settings RecyclerView.
- * Clicking it opens the full-screen settings dialog via MenuHome.showWaeSettingsDialog().
+ * Ultimate Settings Injector: Uses multiple strategies to find and inject into WA Settings.
+ * Injects BOTH a Tile (row) and a Toolbar menu item as a backup.
  */
 public class SettingsInjector extends Feature {
 
-    private final android.os.Handler hunterHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Set<Integer> processedActivities = new HashSet<>();
 
     public SettingsInjector(@NonNull ClassLoader classLoader, @NonNull SharedPreferences preferences) {
         super(classLoader, preferences);
@@ -33,191 +40,274 @@ public class SettingsInjector extends Feature {
 
     @Override
     public void doHook() throws Throwable {
-        var entryPoint = getSafeString("open_wae", "1");
-        XposedBridge.log("[WaEnhancer] SettingsInjector: entryPoint is " + entryPoint);
-        if (!"2".equals(entryPoint)) return;
-
-        // Hook RecyclerView attachment to inject tile into WA's Settings list
-        XposedHelpers.findAndHookMethod(android.view.View.class, "onAttachedToWindow", new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod(Activity.class, "onResume", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                View view = (View) param.thisObject;
-                String className = view.getClass().getName();
-                if (className.contains("RecyclerView")) {
-                    hunterHandler.post(() -> {
-                        try {
-                            checkAndInject((ViewGroup) view);
-                        } catch (Throwable t) {
-                            XposedBridge.log("[WaEnhancer] SettingsInjector post-hook error: " + t.getMessage());
-                        }
-                    });
-                }
+                Activity activity = (Activity) param.thisObject;
+                String entryPoint = getSafeString("open_wae", "1");
+                
+                // Log for debugging sync issues
+                XposedBridge.log("[WaEnhancer] SettingsInjector: Active in " + activity.getClass().getSimpleName() + ", entryPoint=" + entryPoint);
+                
+                if (!"2".equals(entryPoint)) return;
+
+                int hash = System.identityHashCode(activity);
+                if (processedActivities.contains(hash)) return;
+
+                // Run multiple attempts to catch dynamic loading
+                mainHandler.postDelayed(() -> performInjection(activity), 500);
+                mainHandler.postDelayed(() -> performInjection(activity), 1500);
+            }
+        });
+
+        XposedHelpers.findAndHookMethod(Activity.class, "onDestroy", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                processedActivities.remove(System.identityHashCode(param.thisObject));
             }
         });
     }
 
-    private void checkAndInject(ViewGroup recyclerView) {
-        checkAndInject(recyclerView, 0);
+    private void performInjection(Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) return;
+
+        ViewGroup decor = (ViewGroup) activity.getWindow().getDecorView();
+        
+        // 1. Identification
+        boolean isSettings = isSettingsActivity(activity, decor);
+        if (!isSettings) return;
+
+        XposedBridge.log("[WaEnhancer] SettingsInjector: Confirmed Settings Activity: " + activity.getClass().getSimpleName());
+
+        // 2. Tile Injection (In RecyclerView)
+        injectTile(decor, activity);
+
+        // 3. Toolbar Injection (Menu Item)
+        injectToolbarMenu(decor, activity);
+        
+        processedActivities.add(System.identityHashCode(activity));
     }
 
-    private void checkAndInject(ViewGroup recyclerView, int attempt) {
-        Activity activity = Utils.getActivityFromView(recyclerView);
-        if (activity == null) return;
-
-        boolean isSettingsScreen = false;
+    private boolean isSettingsActivity(Activity activity, ViewGroup decor) {
+        // Class check
         try {
-            Class<?> settingsActivityClass = Unobfuscator.loadSettingsActivityClass(classLoader);
-            if (settingsActivityClass != null && settingsActivityClass.isInstance(activity)) {
-                isSettingsScreen = true;
-            }
-        } catch (Throwable t) {
-            // Fallback to markers if Unobfuscator fails
-            isSettingsScreen = hasSettingsMarkers(recyclerView);
-        }
-
-        if (isSettingsScreen) {
-            if (!isAlreadyInjected(recyclerView)) {
-                Object adapter = XposedHelpers.callMethod(recyclerView, "getAdapter");
-                if (adapter == null && attempt < 3) {
-                    XposedBridge.log("[WaEnhancer] SettingsInjector: Adapter null, retrying in 500ms... (attempt " + (attempt + 1) + ")");
-                    hunterHandler.postDelayed(() -> checkAndInject(recyclerView, attempt + 1), 500);
-                    return;
-                }
-                
-                XposedBridge.log("[WaEnhancer] SettingsInjector: Detected Settings screen in " + activity.getClass().getSimpleName());
-                boolean success = injectIntoRecyclerView(recyclerView, activity);
-                XposedBridge.log("[WaEnhancer] SettingsInjector: Injection success = " + success);
-            }
-        }
-    }
-
-    private boolean isAlreadyInjected(ViewGroup recyclerView) {
-        try {
-            for (int i = 0; i < Math.min(3, recyclerView.getChildCount()); i++) {
-                View child = recyclerView.getChildAt(i);
-                if (child instanceof ViewGroup && findTextRecursive((ViewGroup) child, "WaEnhancer Settings"))
-                    return true;
-            }
+            Class<?> settingsClass = Unobfuscator.loadSettingsActivityClass(classLoader);
+            if (settingsClass != null && settingsClass.isInstance(activity)) return true;
         } catch (Throwable ignored) {}
+
+        // Title check
+        String title = getToolbarTitle(decor);
+        if (title != null && (title.equalsIgnoreCase("Settings") || title.equalsIgnoreCase("Configurações") || title.equalsIgnoreCase("Cuenta"))) {
+            return true;
+        }
+
+        // Marker check
+        if (hasSettingsMarkers(decor)) return true;
+
         return false;
     }
 
-    private boolean findTextRecursive(ViewGroup group, String text) {
+    private String getToolbarTitle(ViewGroup group) {
         for (int i = 0; i < group.getChildCount(); i++) {
-            View child = group.getChildAt(i);
-            if (child instanceof TextView && ((TextView) child).getText().toString().equals(text)) return true;
-            if (child instanceof ViewGroup && findTextRecursive((ViewGroup) child, text)) return true;
+            View v = group.getChildAt(i);
+            if (v instanceof TextView) {
+                String text = ((TextView) v).getText().toString();
+                if (text.length() > 2 && text.length() < 20) {
+                    // Toolbar titles are usually fairly short but descriptive
+                    if (text.equals("Settings") || text.equals("Configurações") || text.equals("Configuracion")) return text;
+                }
+            } else if (v instanceof ViewGroup) {
+                String result = getToolbarTitle((ViewGroup) v);
+                if (result != null) return result;
+            }
         }
-        return false;
+        return null;
     }
 
     private boolean hasSettingsMarkers(ViewGroup group) {
-        int[] count = {0};
-        String[] markers = {"Account", "Privacy", "Storage", "Help", "Settings", "Lists", "Chats", "Notifications"};
-        boolean found = findMarkersRecursive(group, markers, count);
-        if (found) {
-            XposedBridge.log("[WaEnhancer] SettingsInjector: Found " + count[0] + " settings markers in " + group.getClass().getSimpleName());
-        }
-        return found;
+        String[] critical = {"Account", "Privacy", "Notifications", "Storage", "Help"};
+        int count = 0;
+        return scanForMarkers(group, critical, count) >= 2;
     }
 
-    private boolean findMarkersRecursive(ViewGroup group, String[] markers, int[] count) {
+    private int scanForMarkers(ViewGroup group, String[] markers, int count) {
         for (int i = 0; i < group.getChildCount(); i++) {
             View child = group.getChildAt(i);
             if (child instanceof TextView) {
                 String text = ((TextView) child).getText().toString();
-                for (String marker : markers) {
-                    if (text.equals(marker)) {
-                        count[0]++;
-                        if (count[0] >= 2) return true;
+                for (String m : markers) {
+                    if (text.equalsIgnoreCase(m)) {
+                        count++;
+                        if (count >= 2) return count;
                     }
                 }
             } else if (child instanceof ViewGroup) {
-                if (findMarkersRecursive((ViewGroup) child, markers, count)) return true;
+                count = scanForMarkers((ViewGroup) child, markers, count);
+                if (count >= 2) return count;
             }
         }
-        return false;
+        return count;
     }
 
-    private boolean injectIntoRecyclerView(ViewGroup recyclerView, Activity activity) {
-        try {
-            Object adapter = XposedHelpers.callMethod(recyclerView, "getAdapter");
-            if (adapter == null) {
-                XposedBridge.log("[WaEnhancer] SettingsInjector: Adapter is null for " + recyclerView.getClass().getSimpleName());
-                return false;
-            }
-            XposedBridge.log("[WaEnhancer] SettingsInjector: Adapter class is " + adapter.getClass().getName());
+    private void injectTile(ViewGroup decor, Activity activity) {
+        ViewGroup rv = findRecyclerView(decor);
+        if (rv == null) {
+            XposedBridge.log("[WaEnhancer] SettingsInjector: Could not find RecyclerView for Tile injection");
+            return;
+        }
 
-            java.lang.reflect.Method addHeaderMethod = null;
+        try {
+            Object adapter = XposedHelpers.callMethod(rv, "getAdapter");
+            if (adapter == null) return;
+
+            // Look for header methods
+            java.lang.reflect.Method addHeader = findMethod(adapter.getClass(), "addHeader", View.class);
+            if (addHeader == null) addHeader = findMethod(adapter.getClass(), "addSearchBar", View.class);
+            if (addHeader == null) addHeader = findMethod(adapter.getClass(), "A0R", View.class); // Obfuscated common name
+
+            if (addHeader != null) {
+                View tile = createTile(activity);
+                addHeader.setAccessible(true);
+                addHeader.invoke(adapter, tile);
+                XposedBridge.log("[WaEnhancer] SettingsInjector: Tile injected via Adapter." + addHeader.getName());
+            } else {
+                // Direct Layout Injection (Top of RV)
+                ViewGroup parent = (ViewGroup) rv.getParent();
+                if (parent != null && !hasChildWithText(parent, "WaEnhancer Settings")) {
+                    View tile = createTile(activity);
+                    int index = parent.indexOfChild(rv);
+                    parent.addView(tile, index);
+                    XposedBridge.log("[WaEnhancer] SettingsInjector: Tile injected via Layout (index " + index + ")");
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WaEnhancer] SettingsInjector: Tile error: " + t.getMessage());
+        }
+    }
+
+    private void injectToolbarMenu(ViewGroup decor, Activity activity) {
+        try {
+            ViewGroup toolbar = findToolbar(decor);
+            if (toolbar == null) return;
+
+            // Access the menu via reflection
+            Menu menu = (Menu) XposedHelpers.callMethod(toolbar, "getMenu");
+            if (menu != null && menu.findItem(9999) == null) {
+                String title = "WaEnhancer Settings";
+                try {
+                    title = Utils.getApplication().getString(ResId.string.waenhancer_settings);
+                } catch (Throwable ignored) {}
+                
+                var item = menu.add(0, 9999, 0, title);
+                var icon = DesignUtils.getDrawableByName("ic_settings");
+                if (icon != null) {
+                    icon.setTint(0xff8696a0);
+                    item.setIcon(icon);
+                }
+                item.setShowAsAction(2); // SHOW_AS_ACTION_IF_ROOM
+                item.setOnMenuItemClickListener(it -> {
+                    MenuHome.showWaeSettingsDialog(activity);
+                    return true;
+                });
+                XposedBridge.log("[WaEnhancer] SettingsInjector: Toolbar menu item injected.");
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WaEnhancer] SettingsInjector: Toolbar error: " + t.getMessage());
+        }
+    }
+
+    private ViewGroup findRecyclerView(ViewGroup group) {
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View v = group.getChildAt(i);
+            if (v.getClass().getName().contains("RecyclerView")) return (ViewGroup) v;
+            if (v instanceof ViewGroup) {
+                ViewGroup res = findRecyclerView((ViewGroup) v);
+                if (res != null) return res;
+            }
+        }
+        return null;
+    }
+
+    private ViewGroup findToolbar(ViewGroup group) {
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View v = group.getChildAt(i);
+            String name = v.getClass().getName();
+            if (name.contains("Toolbar") || name.contains("TopBar")) return (ViewGroup) v;
+            if (v instanceof ViewGroup) {
+                ViewGroup res = findToolbar((ViewGroup) v);
+                if (res != null) return res;
+            }
+        }
+        return null;
+    }
+
+    private java.lang.reflect.Method findMethod(Class<?> clazz, String name, Class<?>... params) {
+        while (clazz != null && clazz != Object.class) {
             try {
-                addHeaderMethod = Unobfuscator.loadViewAddSearchBarMethod(classLoader);
-            } catch (Exception e) {
-                XposedBridge.log("[WaEnhancer] SettingsInjector: Default addHeader method not found, searching hierarchy for fallbacks...");
-                // Fallback: search hierarchy for any method that takes a single View and has "Header" or "Search" in its name
-                Class<?> currentClass = adapter.getClass();
-                while (currentClass != null && currentClass != Object.class && addHeaderMethod == null) {
-                    for (java.lang.reflect.Method m : currentClass.getDeclaredMethods()) {
-                        if (m.getParameterCount() == 1 && m.getParameterTypes()[0] == View.class && 
-                            (m.getName().toLowerCase().contains("header") || m.getName().toLowerCase().contains("search"))) {
-                            m.setAccessible(true);
-                            addHeaderMethod = m;
-                            XposedBridge.log("[WaEnhancer] SettingsInjector: Found potential fallback method: " + m.getName() + " in " + currentClass.getName());
-                            break;
+                return clazz.getDeclaredMethod(name, params);
+            } catch (NoSuchMethodException e) {
+                // Search for ANY method with matching params if name check fails for obfuscation
+                if (name.length() <= 3) {
+                    for (java.lang.reflect.Method m : clazz.getDeclaredMethods()) {
+                        if (m.getParameterCount() == params.length && java.util.Arrays.equals(m.getParameterTypes(), params)) {
+                            return m;
                         }
                     }
-                    currentClass = currentClass.getSuperclass();
                 }
             }
+            clazz = clazz.getSuperclass();
+        }
+        return null;
+    }
 
-            if (addHeaderMethod != null) {
-                XposedBridge.log("[WaEnhancer] SettingsInjector: Using method: " + addHeaderMethod.getName() + " in " + addHeaderMethod.getDeclaringClass().getName());
-                View customRow = createCustomRow(activity);
-                addHeaderMethod.setAccessible(true);
-                if (addHeaderMethod.getParameterCount() == 1) {
-                    addHeaderMethod.invoke(adapter, customRow);
-                } else if (addHeaderMethod.getParameterCount() == 2 && addHeaderMethod.getParameterTypes()[1] == int.class) {
-                    addHeaderMethod.invoke(adapter, customRow, 0);
-                }
-                XposedBridge.log("[WaEnhancer] SettingsInjector: Successfully called " + addHeaderMethod.getName() + " on adapter");
-                return true;
-            } else {
-                XposedBridge.log("[WaEnhancer] SettingsInjector: No suitable injection method found in " + adapter.getClass().getSimpleName() + " hierarchy");
-            }
-        } catch (Exception e) {
-            XposedBridge.log("[WaEnhancer] SettingsInjector: Tile injection error: " + e.getMessage());
-            e.printStackTrace();
+    private boolean hasChildWithText(ViewGroup group, String text) {
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View v = group.getChildAt(i);
+            if (v instanceof TextView && ((TextView) v).getText().toString().equals(text)) return true;
+            if (v instanceof ViewGroup && hasChildWithText((ViewGroup) v, text)) return true;
         }
         return false;
     }
 
-    private View createCustomRow(Activity activity) {
+    private View createTile(Activity activity) {
         LinearLayout row = new LinearLayout(activity);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        row.setPadding(Utils.dipToPixels(16), Utils.dipToPixels(12),
-                Utils.dipToPixels(16), Utils.dipToPixels(12));
-        row.setClickable(true);
-        row.setFocusable(true);
-        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        row.setBackground(DesignUtils.getSelectableItemBackground(activity));
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout content = new LinearLayout(activity);
+        content.setOrientation(LinearLayout.HORIZONTAL);
+        content.setPadding(Utils.dipToPixels(16), Utils.dipToPixels(16), Utils.dipToPixels(16), Utils.dipToPixels(16));
+        content.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        content.setBackground(DesignUtils.getSelectableItemBackground(activity));
+        content.setOnClickListener(v -> MenuHome.showWaeSettingsDialog(activity));
 
         android.widget.ImageView icon = new android.widget.ImageView(activity);
         var iconDraw = DesignUtils.getDrawableByName("ic_settings");
-        iconDraw.setTint(0xff8696a0);
-        icon.setImageDrawable(iconDraw);
+        if (iconDraw != null) {
+            iconDraw.setTint(0xff8696a0);
+            icon.setImageDrawable(iconDraw);
+        }
         var iconParams = new LinearLayout.LayoutParams(Utils.dipToPixels(24), Utils.dipToPixels(24));
         iconParams.rightMargin = Utils.dipToPixels(32);
         icon.setLayoutParams(iconParams);
 
         TextView textView = new TextView(activity);
-        textView.setText("WaEnhancer Settings");
+        String title = "WaEnhancer Settings";
+        try {
+            title = Utils.getApplication().getString(ResId.string.waenhancer_settings);
+        } catch (Throwable ignored) {}
+        textView.setText(title);
         textView.setTextSize(16);
         textView.setTextColor(DesignUtils.getPrimaryTextColor());
 
-        row.addView(icon);
-        row.addView(textView);
-        row.setOnClickListener(v -> MenuHome.showWaeSettingsDialog(activity));
+        content.addView(icon);
+        content.addView(textView);
+        row.addView(content);
+
+        View divider = new View(activity);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Utils.dipToPixels(1)));
+        divider.setBackgroundColor(0x338696a0);
+        row.addView(divider);
 
         return row;
     }

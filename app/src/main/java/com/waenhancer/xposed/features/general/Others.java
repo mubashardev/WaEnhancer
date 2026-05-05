@@ -3,6 +3,8 @@ package com.waenhancer.xposed.features.general;
 import static com.waenhancer.xposed.core.FeatureLoader.disableExpirationVersion;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
 import android.os.BaseBundle;
 import android.os.Message;
 import android.os.PowerManager;
@@ -25,6 +27,7 @@ import com.waenhancer.xposed.utils.AnimationUtil;
 import com.waenhancer.xposed.utils.ReflectionUtils;
 import com.waenhancer.xposed.utils.ResId;
 import com.waenhancer.xposed.utils.Utils;
+import com.waenhancer.xposed.features.others.MenuHome;
 
 import org.json.JSONObject;
 import org.luckypray.dexkit.query.enums.StringMatchType;
@@ -261,6 +264,8 @@ public class Others extends Feature {
         if (!filterSeen) {
             disableHomeFilters();
         }
+
+
 
     }
 

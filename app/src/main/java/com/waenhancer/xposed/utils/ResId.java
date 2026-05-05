@@ -118,6 +118,7 @@ public class ResId {
         public static int contact_probably_not_added;
         public static int separate_groups_sum;
         public static int separate_groups_unsupported_sum;
+        public static int waenhancer_settings;
     }
 
     public static class array {

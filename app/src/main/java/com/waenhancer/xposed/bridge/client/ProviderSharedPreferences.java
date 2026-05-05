@@ -160,6 +160,11 @@ public class ProviderSharedPreferences implements SharedPreferences {
         return localPrefs.contains(key) || (fallbackPrefs != null && fallbackPrefs.contains(key));
     }
 
+    public void reload() {
+        Utils.log("[WAE] ProviderSharedPreferences: Manual reload requested");
+        hydrateFromProvider();
+    }
+
     @Override
     public Editor edit() {
         return new ProviderEditor(localPrefs.edit());

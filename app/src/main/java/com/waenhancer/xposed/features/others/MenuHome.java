@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -60,15 +61,11 @@ public class MenuHome extends Feature {
     private void InsertOpenWae(Menu menu, Activity activity) {
         try {
             var entryPoint = getSafeString("open_wae", "1");
+            XposedBridge.log("[WaEnhancer] MenuHome: entryPoint is " + entryPoint + " in " + activity.getClass().getSimpleName());
             if (!"1".equals(entryPoint)) return;
 
-            int appNameId = ResId.string.app_name;
-            if (appNameId == 0) {
-                // Fallback if ResId is not yet initialized
-                appNameId = activity.getResources().getIdentifier("app_name", "string", activity.getPackageName());
-            }
-
-            String title = (appNameId != 0) ? activity.getString(appNameId) : "WaEnhancer";
+            String title = Utils.getApplication().getString(ResId.string.waenhancer_settings);
+            if (TextUtils.isEmpty(title)) title = "WaEnhancer Settings";
             var itemMenu = menu.add(0, 0, 9999, " " + title);
             var iconDraw = DesignUtils.getDrawableByName("ic_settings");
             if (iconDraw != null) {

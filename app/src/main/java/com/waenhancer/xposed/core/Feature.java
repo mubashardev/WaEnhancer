@@ -59,6 +59,11 @@ public abstract class Feature {
     protected void reloadPrefs() {
         if (prefs instanceof XSharedPreferences) {
             ((XSharedPreferences) prefs).reload();
+        } else if (prefs.getClass().getName().contains("ProviderSharedPreferences")) {
+            try {
+                java.lang.reflect.Method reload = prefs.getClass().getMethod("reload");
+                reload.invoke(prefs);
+            } catch (Exception ignored) {}
         }
     }
 

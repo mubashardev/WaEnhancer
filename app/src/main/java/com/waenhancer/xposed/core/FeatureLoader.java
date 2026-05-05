@@ -215,6 +215,7 @@ public class FeatureLoader {
                                 }
                             }
                             XposedBridge.log("[WAE] Initializing components and plugins using ProviderSharedPreferences...");
+                            ResId.initLocal(mApp);
                             initComponents(loader, providerPrefs);
                             plugins(loader, providerPrefs, packageInfo.versionName);
                             sendEnabledBroadcast(mApp);

@@ -157,6 +157,13 @@ public class FeatureLoader {
                     @SuppressWarnings("deprecation")
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         mApp = (Application) param.args[0];
+                        
+                        // Show initial feedback immediately
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            hookingToast = Toast.makeText(mApp, "Hooking in to WhatsApp cache. Please wait.", Toast.LENGTH_LONG);
+                            hookingToast.show();
+                        });
+
                         String processName = Application.getProcessName();
                         XposedBridge.log("[WAE] callApplicationOnCreate for: " + mApp.getPackageName() + " (process: " + processName + ")");
 
@@ -215,12 +222,6 @@ public class FeatureLoader {
                         try {
                             var timemillis = System.currentTimeMillis();
                             
-                            // Show initial feedback
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                hookingToast = Toast.makeText(mApp, "Hooking in to WhatsApp cache. Please wait.", Toast.LENGTH_LONG);
-                                hookingToast.show();
-                            });
-
                             Unobfuscator.loadLibrary(mApp);
                             if (!Unobfuscator.initWithPath(sourceDir)) {
                                 XposedBridge.log("Can't init dexkit");

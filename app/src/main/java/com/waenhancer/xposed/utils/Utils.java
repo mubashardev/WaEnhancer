@@ -54,6 +54,7 @@ import java.util.regex.Pattern;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 
 public class Utils {
 
@@ -253,10 +254,15 @@ public class Utils {
             try {
                 var view = activity.findViewById(android.R.id.content);
                 if (view != null) {
-                    com.google.android.material.snackbar.Snackbar.make(view, message, com.google.android.material.snackbar.Snackbar.LENGTH_LONG).show();
+                    // Use reflection to find the Snackbar class in the host process
+                    // to avoid resource ID issues between module and host material libraries
+                    Class<?> snackbarClass = XposedHelpers.findClass("com.google.android.material.snackbar.Snackbar", activity.getClassLoader());
+                    Object snackbar = XposedHelpers.callStaticMethod(snackbarClass, "make", view, message, 0); // 0 is LENGTH_LONG usually
+                    XposedHelpers.callMethod(snackbar, "show");
                 }
             } catch (Throwable t) {
                 XposedBridge.log("[WAE] Failed to show Snackbar: " + t.getMessage());
+                // Final fallback to toast
                 showToast(message, Toast.LENGTH_SHORT);
             }
         });

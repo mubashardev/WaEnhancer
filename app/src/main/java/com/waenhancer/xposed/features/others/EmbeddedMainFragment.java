@@ -129,24 +129,30 @@ public class EmbeddedMainFragment extends Fragment {
     }
 
     private String getTabTitle(int position) {
+        String title = null;
         try {
             if (XResManager.moduleResources != null) {
-                return switch (position) {
+                title = switch (position) {
                     case 0 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.general);
                     case 1 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.privacy);
                     case 2 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.title_home);
                     case 3 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.media);
                     case 4 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.perso);
-                    default -> "?";
+                    default -> null;
                 };
             }
         } catch (Throwable ignored) {}
+
+        if (title != null && !title.isEmpty()) {
+            return title;
+        }
+
         return switch (position) {
             case 0 -> "General";
             case 1 -> "Privacy";
             case 2 -> "Home";
             case 3 -> "Media";
-            case 4 -> "Colors";
+            case 4 -> "Styles";
             default -> "?";
         };
     }

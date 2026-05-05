@@ -173,7 +173,7 @@ public class SettingsInjector extends Feature {
             } else {
                 // Direct Layout Injection (Top of RV)
                 ViewGroup parent = (ViewGroup) rv.getParent();
-                if (parent != null && !hasChildWithText(parent, "WaEnhancer Settings")) {
+                if (parent != null && !hasChildWithText(parent, "WaEnhancerX Settings")) {
                     View tile = createTile(activity);
                     int index = parent.indexOfChild(rv);
                     parent.addView(tile, index);
@@ -193,9 +193,12 @@ public class SettingsInjector extends Feature {
             // Access the menu via reflection
             Menu menu = (Menu) XposedHelpers.callMethod(toolbar, "getMenu");
             if (menu != null && menu.findItem(9999) == null) {
-                String title = "WaEnhancer Settings";
+                String title = "WaEnhancerX Settings";
                 try {
-                    title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
+                    String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
+                    if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                        title = moduleTitle;
+                    }
                 } catch (Throwable ignored) {}
                 
                 var item = menu.add(0, 9999, 0, title);
@@ -292,9 +295,12 @@ public class SettingsInjector extends Feature {
         icon.setLayoutParams(iconParams);
 
         TextView textView = new TextView(activity);
-        String title = "WaEnhancer Settings";
+        String title = "WaEnhancerX Settings";
         try {
-            title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
+            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
+            if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                title = moduleTitle;
+            }
         } catch (Throwable ignored) {}
         textView.setText(title);
         textView.setTextSize(16);

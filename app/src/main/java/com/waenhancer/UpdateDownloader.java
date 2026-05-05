@@ -173,7 +173,7 @@ public class UpdateDownloader {
         Activity activity = getActivity(context);
         if (activity == null) return;
 
-        // For Xposed: Need to get resources from WaEnhancer package if running in e.g. WhatsApp
+        // For Xposed: Need to get resources from WaEnhancerX package if running in e.g. WhatsApp
         Context modContext = activity;
         boolean isXposed = !BuildConfig.APPLICATION_ID.equals(activity.getPackageName());
         

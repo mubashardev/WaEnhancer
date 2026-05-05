@@ -21,7 +21,7 @@ import com.waenhancer.xposed.utils.XResManager;
 
 /**
  * A self-contained, process-agnostic full-screen DialogFragment that wraps the
- * WaEnhancer settings UI when injected into WhatsApp's process.
+ * WaEnhancerX settings UI when injected into WhatsApp's process.
  *
  * Key design decisions:
  * - All UI is built programmatically via {@link SettingsViewBuilder} so we never
@@ -203,7 +203,7 @@ public class EmbeddedSettingsDialogFragment extends DialogFragment {
     // -------------------------------------------------------------------------
 
     /**
-     * Show the embedded WaEnhancer settings dialog inside {@code activity}.
+     * Show the embedded WaEnhancerX settings dialog inside {@code activity}.
      * Falls back to launching {@link EmbeddedSettingsActivity} in the module's
      * own process if the host activity doesn't have a FragmentManager.
      */

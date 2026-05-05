@@ -514,4 +514,5 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="call_recording_experimental_ok">I understand, enable anyway</string>
     <string name="contact_probably_not_added">Contact probably didn\'t add you!</string>
     <string name="coming_soon">Coming soon!</string>
+    <string name="waenhancer_settings">WaEnhancerX Configurações</string>
 </resources>

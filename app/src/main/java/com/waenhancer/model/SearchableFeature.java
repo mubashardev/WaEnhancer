@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Data model representing a searchable feature in the WaEnhancer app.
+ * Data model representing a searchable feature in the WaEnhancerX app.
  * Each feature corresponds to a preference item that can be found via search.
  */
 public class SearchableFeature {

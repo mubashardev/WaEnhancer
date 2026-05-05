@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Central catalog of all searchable features in the WaEnhancer app.
+ * Central catalog of all searchable features in the WaEnhancerX app.
  * This class builds and maintains a complete index of all features from
  * preference XMLs.
  */

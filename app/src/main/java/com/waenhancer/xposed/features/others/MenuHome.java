@@ -60,10 +60,14 @@ public class MenuHome extends Feature {
             XposedBridge.log("[WaEnhancer] MenuHome: entryPoint is " + entryPoint + " in " + activity.getClass().getSimpleName());
             if (!"1".equals(entryPoint)) return;
 
-            String title = "WaEnhancer Settings";
+            String title = "WaEnhancerX Settings";
             try {
-                if (XResManager.moduleResources != null)
-                    title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
+                if (XResManager.moduleResources != null) {
+                    String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
+                    if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                        title = moduleTitle;
+                    }
+                }
             } catch (Exception ignored) {}
             var itemMenu = menu.add(0, 0, 9999, " " + title);
             var iconDraw = DesignUtils.getDrawableByName("ic_settings");
@@ -81,7 +85,7 @@ public class MenuHome extends Feature {
     }
 
     /**
-     * Show WaEnhancer settings embedded inside the host WhatsApp activity.
+     * Show WaEnhancerX settings embedded inside the host WhatsApp activity.
      * Delegates to {@link EmbeddedSettingsDialogFragment#show(Activity)} which
      * handles all cross-process safety, fallback, and back-stack management.
      */
@@ -90,7 +94,7 @@ public class MenuHome extends Feature {
             EmbeddedSettingsDialogFragment.show(activity);
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancer] showWaeSettingsDialog failed: " + t.getMessage());
-            Utils.showToast("Could not open WaEnhancer Settings", android.widget.Toast.LENGTH_SHORT);
+            Utils.showToast("Could not open WaEnhancerX Settings", android.widget.Toast.LENGTH_SHORT);
         }
     }
 
@@ -104,7 +108,14 @@ public class MenuHome extends Feature {
             return;
         }
         String ghostLabel = "Ghost Mode";
-        try { if (XResManager.moduleResources != null) ghostLabel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode); } catch (Exception ignored) {}
+        try {
+            if (XResManager.moduleResources != null) {
+                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode);
+                if (moduleString != null && !moduleString.isEmpty()) {
+                    ghostLabel = moduleString;
+                }
+            }
+        } catch (Exception ignored) {}
         var itemMenu = menu.add(0, 0, 0, ghostLabel);
 
         try {
@@ -151,7 +162,14 @@ public class MenuHome extends Feature {
         try { iconDraw = XResManager.moduleResources.getDrawable(R.drawable.refresh, null); } catch (Exception ignored) {}
         if (iconDraw != null) iconDraw.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
         String restartLabel = "Restart WhatsApp";
-        try { if (XResManager.moduleResources != null) restartLabel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_whatsapp); } catch (Exception ignored) {}
+        try {
+            if (XResManager.moduleResources != null) {
+                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_whatsapp);
+                if (moduleString != null && !moduleString.isEmpty()) {
+                    restartLabel = moduleString;
+                }
+            }
+        } catch (Exception ignored) {}
         var itemMenu = menu.add(0, 0, 0, restartLabel);
         if (iconDraw != null) itemMenu.setIcon(iconDraw);
         if (newSettings) {
@@ -174,7 +192,14 @@ public class MenuHome extends Feature {
             return;
         }
         String dndTitle = "DND Mode";
-        try { if (XResManager.moduleResources != null) dndTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title); } catch (Exception ignored) {}
+        try {
+            if (XResManager.moduleResources != null) {
+                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title);
+                if (moduleString != null && !moduleString.isEmpty()) {
+                    dndTitle = moduleString;
+                }
+            }
+        } catch (Exception ignored) {}
         var item = menu.add(0, 0, 0, dndTitle);
         try {
             var drawable = XResManager.moduleResources.getDrawable(dndmode ? R.drawable.airplane_enabled : R.drawable.airplane_disabled, null);

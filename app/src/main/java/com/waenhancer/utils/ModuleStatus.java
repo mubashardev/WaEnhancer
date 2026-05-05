@@ -12,7 +12,7 @@ public class ModuleStatus {
     /**
      * This method is hooked by the WppXposed module to return true.
      * If it returns false, the module is either disabled in LSPosed 
-     * or the WaEnhancer app is not in the module's scope.
+     * or the WaEnhancerX app is not in the module's scope.
      * 
      * @return true if the module is active and hooking the current process.
      */

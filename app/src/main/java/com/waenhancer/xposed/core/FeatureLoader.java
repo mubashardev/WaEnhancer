@@ -112,6 +112,9 @@ import java.util.concurrent.TimeUnit;
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.Toast;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import lombok.Getter;
@@ -119,6 +122,9 @@ import lombok.Setter;
 
 public class FeatureLoader {
     public static Application mApp;
+    private static Toast hookingToast;
+    private static String loadedTimeStr;
+    private static boolean needsSnackbar = false;
 
     public final static String PACKAGE_WPP = "com.whatsapp";
     public final static String PACKAGE_BUSINESS = "com.whatsapp.w4b";
@@ -208,6 +214,13 @@ public class FeatureLoader {
                         registerReceivers();
                         try {
                             var timemillis = System.currentTimeMillis();
+                            
+                            // Show initial feedback
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                hookingToast = Toast.makeText(mApp, "Hooking in to WhatsApp cache. Please wait.", Toast.LENGTH_LONG);
+                                hookingToast.show();
+                            });
+
                             Unobfuscator.loadLibrary(mApp);
                             if (!Unobfuscator.initWithPath(sourceDir)) {
                                 XposedBridge.log("Can't init dexkit");
@@ -238,9 +251,16 @@ public class FeatureLoader {
                             // XposedHelpers.setStaticIntField(XposedHelpers.findClass("com.whatsapp.infra.logging.Log",
                             // loader), "level", 5);
                             var timemillis2 = System.currentTimeMillis() - timemillis;
-                            String timeStr = String.format(java.util.Locale.US, "%.2fs", timemillis2 / 1000.0);
-                            XposedBridge.log("[WAE] Loaded Hooks in " + timeStr);
-                            Utils.showToast("Loaded Hooks in " + timeStr, Toast.LENGTH_SHORT);
+                            loadedTimeStr = String.format(java.util.Locale.US, "%.2fs", timemillis2 / 1000.0);
+                            XposedBridge.log("[WAE] Loaded Hooks in " + loadedTimeStr);
+                            
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                if (hookingToast != null) {
+                                    hookingToast.cancel();
+                                }
+                                needsSnackbar = true;
+                                triggerLoadedFeedback();
+                            });
                         } catch (Throwable e) {
                             XposedBridge.log(e);
                             var error = new ErrorItem();
@@ -480,6 +500,13 @@ public class FeatureLoader {
             context.sendBroadcast(wppIntent);
         } catch (Exception ignored) {
         }
+    }
+
+    public static void triggerLoadedFeedback() {
+        if (!needsSnackbar || loadedTimeStr == null || WppCore.mCurrentActivity == null) return;
+        
+        needsSnackbar = false;
+        Utils.showSnackbar(WppCore.mCurrentActivity, "Hooks loaded in " + loadedTimeStr);
     }
 
     private static void plugins(@NonNull ClassLoader loader, @NonNull android.content.SharedPreferences pref,

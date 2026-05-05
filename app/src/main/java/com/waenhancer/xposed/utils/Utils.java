@@ -247,6 +247,21 @@ public class Utils {
     }
 
 
+    public static void showSnackbar(Activity activity, String message) {
+        if (activity == null || message == null) return;
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                var view = activity.findViewById(android.R.id.content);
+                if (view != null) {
+                    com.google.android.material.snackbar.Snackbar.make(view, message, com.google.android.material.snackbar.Snackbar.LENGTH_LONG).show();
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] Failed to show Snackbar: " + t.getMessage());
+                showToast(message, Toast.LENGTH_SHORT);
+            }
+        });
+    }
+
     public static void showToast(String message, int length) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             // Já estamos na thread principal

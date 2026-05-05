@@ -33,6 +33,7 @@ public class WaCallback implements Application.ActivityLifecycleCallbacks {
         WppCore.mCurrentActivity = activity;
         ActivityStateRegistry.updateState(activity, WppCore.ActivityChangeState.ChangeType.RESUMED);
         triggerActivityState(activity, WppCore.ActivityChangeState.ChangeType.RESUMED);
+        FeatureLoader.triggerLoadedFeedback();
     }
 
     @Override

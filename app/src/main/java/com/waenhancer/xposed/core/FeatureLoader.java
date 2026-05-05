@@ -238,7 +238,9 @@ public class FeatureLoader {
                             // XposedHelpers.setStaticIntField(XposedHelpers.findClass("com.whatsapp.infra.logging.Log",
                             // loader), "level", 5);
                             var timemillis2 = System.currentTimeMillis() - timemillis;
-                            XposedBridge.log("[WAE] Loaded Hooks in " + timemillis2 + "ms");
+                            String timeStr = String.format(java.util.Locale.US, "%.2fs", timemillis2 / 1000.0);
+                            XposedBridge.log("[WAE] Loaded Hooks in " + timeStr);
+                            Utils.showToast("Loaded Hooks in " + timeStr, Toast.LENGTH_SHORT);
                         } catch (Throwable e) {
                             XposedBridge.log(e);
                             var error = new ErrorItem();
@@ -325,7 +327,72 @@ public class FeatureLoader {
 
         WppCore.addListenerActivity((activity, state) -> {
             if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
-                checkUpdate(activity);
+                
+                // Refresh preferences to pick up live changes from the manager app
+                // Wrap in post() to ensure we don't interfere with the immediate activity resume cycle
+                activity.getWindow().getDecorView().post(() -> {
+                    try {
+                        XposedBridge.log("[WAE] Activity RESUMED: " + activity.getClass().getSimpleName());
+                        if (pref instanceof de.robv.android.xposed.XSharedPreferences) {
+                            ((de.robv.android.xposed.XSharedPreferences) pref).reload();
+                        } else if (pref instanceof com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) {
+                            ((com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) pref).reload();
+                        }
+                        
+                        boolean needRestartPref = pref.getBoolean("need_restart", false);
+                        boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
+                        XposedBridge.log("[WAE] Restart Check on RESUMED - Pref: " + needRestartPref + ", Global: " + needRestartGlobal);
+                        
+                        if (needRestartPref || needRestartGlobal) {
+                            String msg = getModuleString(ResId.string.restart_wpp);
+                            String btnRestart = getModuleString(ResId.string.restart_whatsapp);
+                            String btnCancel = getModuleString(android.R.string.cancel);
+                            
+                            // Enhance message with changed items if possible
+                            try {
+                                java.util.Set<String> changes = pref.getStringSet("pending_restart_changes", null);
+                                if (changes != null && !changes.isEmpty()) {
+                                    StringBuilder sb = new StringBuilder();
+                                    if (msg.isEmpty()) msg = "WhatsApp needs to be restarted to apply the following changes:";
+                                    else sb.append(msg).append("\n\n");
+                                    
+                                    sb.append("Changes:\n");
+                                    for (String change : changes) {
+                                        sb.append("• ").append(change).append("\n");
+                                    }
+                                    msg = sb.toString().trim();
+                                }
+                            } catch (Exception ignored) {}
+
+                            if (msg.isEmpty()) msg = "WhatsApp needs to be restarted to apply your recent changes in WaEnhancer. Would you like to restart now?";
+                            if (btnRestart.isEmpty()) btnRestart = "Restart WhatsApp";
+                            if (btnCancel.isEmpty()) btnCancel = "Cancel";
+
+                            XposedBridge.log("[WAE] Restart dialog - Msg: '" + msg + "', Btn: '" + btnRestart + "'");
+                            
+                            new AlertDialogWpp(activity)
+                                    .setTitle("Restart Required")
+                                    .setMessage(msg)
+                                    .setPositiveButton(btnRestart, (dialog, which) -> {
+                                        XposedBridge.log("[WAE] User clicked RESTART WHATSAPP");
+                                        pref.edit().putBoolean("need_restart", false)
+                                            .remove("pending_restart_changes").apply();
+                                        WppCore.setPrivBooleanSync("need_restart", false);
+                                        Utils.doRestart(activity);
+                                    })
+                                    .setNegativeButton(btnCancel, (dialog, which) -> {
+                                        pref.edit().putBoolean("need_restart", false)
+                                            .remove("pending_restart_changes").apply();
+                                        WppCore.setPrivBooleanSync("need_restart", false);
+                                    })
+                                    .show();
+                        } else {
+                            XposedBridge.log("[WAE] No restart needed (flags are false)");
+                        }
+                    } catch (Throwable e) {
+                        XposedBridge.log("[WAE] Error during post-resume pref reload: " + e.getMessage());
+                    }
+                });
 
                 if (pref.getBoolean("update_check", true)) {
                     if (!hasCheckedThisSession[0]) {
@@ -337,28 +404,14 @@ public class FeatureLoader {
                             } catch (Throwable e) {
                                 XposedBridge.log("[WAE] Error launching UpdateChecker: " + e.getMessage());
                             }
-                        }, 2000);
+                        }, 5000);
                     }
                 }
             }
         });
     }
 
-    private static void checkUpdate(@NonNull Activity activity) {
-        if (WppCore.getPrivBoolean("need_restart", false)) {
-            WppCore.setPrivBooleanSync("need_restart", false);
-            try {
-                new AlertDialogWpp(activity).setMessage(getModuleString(ResId.string.restart_wpp))
-                        .setPositiveButton(getModuleString(ResId.string.yes), (dialog, which) -> {
-                            if (!Utils.doRestart(activity))
-                                Toast.makeText(activity, "Unable to rebooting activity", Toast.LENGTH_SHORT).show();
-                        })
-                        .setNegativeButton(getModuleString(ResId.string.no), null)
-                        .show();
-            } catch (Throwable ignored) {
-            }
-        }
-    }
+
 
     private static void registerReceivers() {
         // Reboot receiver
@@ -387,15 +440,19 @@ public class FeatureLoader {
         ContextCompat.registerReceiver(mApp, wppReceiver, new IntentFilter(BuildConfig.APPLICATION_ID + ".CHECK_WPP"),
                 ContextCompat.RECEIVER_EXPORTED);
 
-        // Dialog receiver restart
+        // Dialog receiver restart (Fail-safe)
         BroadcastReceiver restartManualReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                XposedBridge.log("[WAE] MANUAL_RESTART broadcast received");
                 WppCore.setPrivBooleanSync("need_restart", true);
+                XposedBridge.log("[WAE] Global need_restart set to true via broadcast");
             }
         };
         ContextCompat.registerReceiver(mApp, restartManualReceiver,
                 new IntentFilter(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART"), ContextCompat.RECEIVER_EXPORTED);
+
+
 
         // Clear Cache receiver
         BroadcastReceiver clearCacheReceiver = new BroadcastReceiver() {

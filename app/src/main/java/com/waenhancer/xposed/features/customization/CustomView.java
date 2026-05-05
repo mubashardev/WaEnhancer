@@ -176,6 +176,9 @@ public class CustomView extends Feature {
             ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
             StyleSheet sheet;
             try {
+                // Manually register the RuleFactory implementation to bypass ServiceLoader/Class.forName issues in obfuscated builds
+                cz.vutbr.web.css.CSSFactory.registerRuleFactory(cz.vutbr.web.csskit.RuleFactoryImpl.getInstance());
+                
                 Thread.currentThread().setContextClassLoader(CustomView.class.getClassLoader());
                 sheet = CSSFactory.parseString(cssContent, new URL("https://base.url/"));
             } finally {

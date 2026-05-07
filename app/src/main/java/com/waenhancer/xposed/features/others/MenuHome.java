@@ -70,7 +70,7 @@ public class MenuHome extends Feature {
             String title = "WaEnhancerX Settings";
             try {
                 if (XResManager.moduleResources != null) {
-                    String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings);
+                    String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings, "WaEnhancerX Settings");
                     if (moduleTitle != null && !moduleTitle.isEmpty()) {
                         title = moduleTitle;
                     }
@@ -118,7 +118,7 @@ public class MenuHome extends Feature {
         String ghostLabel = "Ghost Mode";
         try {
             if (XResManager.moduleResources != null) {
-                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode);
+                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode, "Ghost Mode");
                 if (moduleString != null && !moduleString.isEmpty()) {
                     ghostLabel = moduleString;
                 }
@@ -175,7 +175,7 @@ public class MenuHome extends Feature {
         String restartLabel = "Restart WhatsApp";
         try {
             if (XResManager.moduleResources != null) {
-                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_whatsapp);
+                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_whatsapp, "Restart WhatsApp");
                 if (moduleString != null && !moduleString.isEmpty()) {
                     restartLabel = moduleString;
                 }
@@ -206,7 +206,7 @@ public class MenuHome extends Feature {
         String dndTitle = "DND Mode";
         try {
             if (XResManager.moduleResources != null) {
-                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title);
+                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title, "DND Mode");
                 if (moduleString != null && !moduleString.isEmpty()) {
                     dndTitle = moduleString;
                 }
@@ -264,7 +264,7 @@ public class MenuHome extends Feature {
         }
 
         String flsTitle = "Freeze Last Seen";
-        try { if (XResManager.moduleResources != null) flsTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_title); } catch (Exception ignored) {}
+        try { if (XResManager.moduleResources != null) flsTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_title, "Freeze Last Seen"); } catch (Exception ignored) {}
         if (menu.findItem(MENU_ID_FREEZE) != null) return;
         MenuItem item = menu.add(0, MENU_ID_FREEZE, 0, flsTitle);
         try {

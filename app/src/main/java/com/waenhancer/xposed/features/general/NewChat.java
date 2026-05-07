@@ -24,6 +24,8 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
 
+import com.waenhancer.xposed.utils.XResManager;
+
 public class NewChat extends Feature {
     public NewChat(@NonNull ClassLoader loader, @NonNull SharedPreferences preferences) {
         super(loader, preferences);
@@ -41,8 +43,15 @@ public class NewChat extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var activity = (Activity) param.thisObject;
                 var menu = (Menu) param.args[0];
-                var item = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.new_chat));
+                var item = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.new_chat, "New Chat"));
                 var drawable = DesignUtils.getDrawableByName("vec_ic_chat_add");
+                if (drawable == null) {
+                    try {
+                        if (XResManager.moduleResources != null) {
+                            drawable = XResManager.moduleResources.getDrawable(R.drawable.ic_contacts, null);
+                        }
+                    } catch (Exception ignored) {}
+                }
 
                 if (drawable != null) {
                     drawable.setTint(action ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
@@ -63,13 +72,13 @@ public class NewChat extends Feature {
                     edt.setMaxLines(1);
                     edt.setInputType(InputType.TYPE_CLASS_PHONE);
                     edt.setTransformationMethod(null);
-                    edt.setHint(R.string.number_with_country_code);
+                    edt.setHint(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.number_with_country_code, "Number with country code"));
                     view.addView(edt);
 
                     new AlertDialogWpp(activity)
-                            .setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.new_chat))
+                            .setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.new_chat, "New Chat"))
                             .setView(view)
-                            .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message), (dialog, which) -> {
+                            .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message, "Message"), (dialog, which) -> {
                                 var number = edt.getText().toString();
                                 var numberFomatted = number.replaceAll("[+\\-()/\\s]", "");
                                 var intent = new Intent(Intent.ACTION_VIEW);
@@ -77,7 +86,7 @@ public class NewChat extends Feature {
                                 intent.setPackage(Utils.getApplication().getPackageName());
                                 activity.startActivity(intent);
                             })
-                            .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel), null)
+                            .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel, "Cancel"), null)
                             .show();
 
                     return true;

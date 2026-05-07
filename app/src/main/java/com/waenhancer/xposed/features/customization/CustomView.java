@@ -369,7 +369,13 @@ public class CustomView extends Feature {
         XposedHelpers.findAndHookMethod(View.class, "onAttachedToWindow", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                applyRulesForView((View) param.thisObject);
+                View view = (View) param.thisObject;
+                int id = view.getId();
+                // Fast path: skip views with no ID or no matching CSS rules.
+                // This avoids expensive rule lookups for the vast majority of views.
+                if (id <= 0) return;
+                if (!mapIds.containsKey(id) && !leafMapIds.containsKey(id)) return;
+                applyRulesForView(view);
             }
         });
 

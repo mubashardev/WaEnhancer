@@ -54,7 +54,11 @@ public class CustomThemeV2 extends Feature {
     private HashMap<String, String> navAlpha;
     private HashMap<String, String> toolbarAlpha;
     private Properties properties;
-    // private ViewGroup mContent;
+    // Pre-computed set of source color ints for O(1) rejection in hot hooks.
+    // Populated after loadAndApplyColors() so hooks can skip unmatched colors instantly.
+    private static final Set<Integer> sourceColorInts = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    // Cached ID for conversations_row_message_count to avoid repeated lookups
+    private static int cachedMsgCountId = 0;
 
     public CustomThemeV2(@NonNull ClassLoader classLoader, @NonNull SharedPreferences preferences) {
         super(classLoader, preferences);
@@ -241,6 +245,9 @@ public class CustomThemeV2 extends Feature {
                         && typedValue.type <= TypedValue.TYPE_LAST_INT) {
                     if (typedValue.data == 0)
                         return;
+                    // Fast path: skip colors not in our replacement set (O(1) check)
+                    if (!sourceColorInts.isEmpty() && !sourceColorInts.contains(typedValue.data))
+                        return;
                     if (checkNotApplyColor(typedValue.data))
                         return;
                     typedValue.data = IColors.getFromIntColor(typedValue.data, IColors.colors);
@@ -382,6 +389,19 @@ public class CustomThemeV2 extends Feature {
             backgroundColors.put("ffffff", "ffffff");
         }
 
+        // Pre-compute integer set of source colors for O(1) rejection in hot hooks.
+        // This avoids toString() conversion + HashMap.get() on every hook invocation.
+        sourceColorInts.clear();
+        for (String key : IColors.colors.keySet()) {
+            try {
+                if (key.startsWith("#") && key.length() == 9) {
+                    sourceColorInts.add(IColors.parseColor(key));
+                } else if (key.length() == 6) {
+                    // Short-form colors (without alpha) — add with 0xFF alpha
+                    sourceColorInts.add(IColors.parseColor("#ff" + key));
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     private int resolveMonetColor(String resourceName) {
@@ -482,10 +502,10 @@ public class CustomThemeV2 extends Feature {
     }
 
     private boolean checkNotApplyColor(int color) {
+        // Simplified check: avoid expensive isCalledFromStrings() stack walks.
+        // Only skip color replacement for the specific dark background in Conversation.
         var activity = WppCore.getCurrentActivity();
-        if (activity != null && activity.getClass().getSimpleName().equals("Conversation")
-                && ReflectionUtils.isCalledFromStrings("getValue")
-                && !ReflectionUtils.isCalledFromStrings("android.view")) {
+        if (activity != null && activity.getClass().getSimpleName().equals("Conversation")) {
             return color != 0xff12181c;
         }
         return false;
@@ -503,15 +523,22 @@ public class CustomThemeV2 extends Feature {
         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
             var color = (int) param.args[0];
 
+            // Fast path: skip colors not in our replacement set (O(1) check).
+            // This avoids expensive string conversion + map lookup on every Paint.setColor() call.
+            if (!sourceColorInts.isEmpty() && !sourceColorInts.contains(color)) return;
+
             if (param.thisObject instanceof TextView) {
-                TextView textView = (TextView) param.thisObject;
-                var id = Utils.getID("conversations_row_message_count", "id");
-                if (textView.getId() == id) {
+                // Cache the ID lookup to avoid repeated resource resolution
+                if (cachedMsgCountId == 0) {
+                    cachedMsgCountId = Utils.getID("conversations_row_message_count", "id");
+                }
+                if (((TextView) param.thisObject).getId() == cachedMsgCountId) {
                     return;
                 }
-            } else if (param.thisObject instanceof Paint && ReflectionUtils.isCalledFromStrings("getValue")) {
-                return;
             }
+            // Removed expensive isCalledFromStrings("getValue") stack walk.
+            // The original check prevented color replacement when called from getValue(),
+            // but the O(n) stack trace inspection on every Paint.setColor() was too costly.
             param.args[0] = IColors.getFromIntColor(color, IColors.colors);
         }
     }

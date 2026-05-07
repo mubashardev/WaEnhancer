@@ -95,10 +95,17 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
             // Populate valid IDs immediately for hooks to work
             populateValidIds();
 
-            try {
-                setupLogging(lpparam);
-            } catch (Throwable t) {
-                XposedBridge.log("[WAE] Logging hook setup failed: " + t.getMessage());
+            // Only install logging hooks when user has explicitly enabled logging.
+            // The println_native hook intercepts EVERY Log call in WhatsApp and does
+            // cross-process IPC per call, which causes severe lag when always active.
+            if (getPref().getBoolean("logging_enabled", false)) {
+                try {
+                    setupLogging(lpparam);
+                } catch (Throwable t) {
+                    XposedBridge.log("[WAE] Logging hook setup failed: " + t.getMessage());
+                }
+            } else {
+                XposedBridge.log("[WAE] Logging hooks skipped (logging_enabled=false)");
             }
 
             try {

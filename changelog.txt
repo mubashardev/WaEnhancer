@@ -3,7 +3,7 @@
 
 [Improvements]
 - Optimize: Fixed app slow down / lagging issue on some devices.
-
+- Improved Manage Recordings UI
 
 [Fixes]
 - Fixed media preview icon missing

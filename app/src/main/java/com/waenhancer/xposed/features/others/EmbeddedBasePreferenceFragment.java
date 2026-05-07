@@ -201,6 +201,28 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
 
     @Override
     public boolean onPreferenceTreeClick(@NonNull Preference preference) {
+        if ("call_recording_settings".equals(preference.getKey())) {
+            try {
+                Intent intent = new Intent();
+                intent.setClassName(BuildConfig.APPLICATION_ID, "com.waenhancer.activities.CallRecordingSettingsActivity");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                requireContext().startActivity(intent);
+            } catch (Exception e) {
+                Utils.showToast("Failed to open Recording Settings", android.widget.Toast.LENGTH_SHORT);
+            }
+            return true;
+        }
+        if ("call_recording_manage".equals(preference.getKey())) {
+            try {
+                Intent intent = new Intent();
+                intent.setClassName(BuildConfig.APPLICATION_ID, "com.waenhancer.activities.RecordingsActivity");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                requireContext().startActivity(intent);
+            } catch (Exception e) {
+                Utils.showToast("Failed to open Recordings Manager", android.widget.Toast.LENGTH_SHORT);
+            }
+            return true;
+        }
         if (preference.getFragment() != null) {
             navigateToFragment(preference);
             return true;

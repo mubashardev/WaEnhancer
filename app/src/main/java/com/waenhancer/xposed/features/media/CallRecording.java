@@ -136,6 +136,80 @@ public class CallRecording extends Feature {
             logDebug("WaEnhancer: Could not hook VoipActivity: " + e.getMessage());
         }
 
+        try {
+            Class<?> callsFragmentClass = Unobfuscator.findFirstClassUsingName(
+                    classLoader,
+                    StringMatchType.EndsWith,
+                    "CallsHistoryFragment"
+            );
+            if (callsFragmentClass != null) {
+                logDebug("WaEnhancer: Found CallsHistoryFragment: " + callsFragmentClass.getName());
+
+                try {
+                    XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onPrepareOptionsMenu", android.view.Menu.class, new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            try {
+                                android.app.Activity activity = (android.app.Activity) param.thisObject;
+                                boolean isCallsTab = false;
+
+                                Object fragmentManager = XposedHelpers.callMethod(activity, "getSupportFragmentManager");
+                                java.util.List<?> fragments = (java.util.List<?>) XposedHelpers.callMethod(fragmentManager, "getFragments");
+                                
+                                for (Object f : fragments) {
+                                    if (f != null && f.getClass().getName().endsWith("CallsHistoryFragment")) {
+                                        boolean isVisible = (boolean) XposedHelpers.callMethod(f, "isVisible");
+                                        boolean isResumed = (boolean) XposedHelpers.callMethod(f, "isResumed");
+                                        boolean isMenuVisible = (boolean) XposedHelpers.callMethod(f, "isMenuVisible");
+                                        if (isVisible && isResumed && isMenuVisible) {
+                                            isCallsTab = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                android.view.Menu menu = (android.view.Menu) param.args[0];
+                                if (isCallsTab) {
+                                    if (menu.findItem(1338) == null) {
+                                        String title = "Manage Recordings";
+                                        try {
+                                            if (com.waenhancer.xposed.utils.XResManager.moduleResources != null) {
+                                                String mod = FeatureLoader.getModuleString(com.waenhancer.R.string.call_recording_manage);
+                                                if (mod != null && !mod.isEmpty()) title = mod;
+                                            }
+                                        } catch (Exception ignored) {}
+                                        android.view.MenuItem item = menu.add(0, 1338, 0, title);
+                                        item.setOnMenuItemClickListener(menuItem -> {
+                                            try {
+                                                android.content.Intent intent = new android.content.Intent();
+                                                intent.setClassName(com.waenhancer.BuildConfig.APPLICATION_ID, "com.waenhancer.activities.RecordingsActivity");
+                                                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                activity.startActivity(intent);
+                                            } catch (Throwable t) {
+                                                logDebug("WaEnhancer: Failed to start recordings activity: " + t);
+                                            }
+                                            return true;
+                                        });
+                                    }
+                                } else {
+                                    menu.removeItem(1338);
+                                }
+                            } catch (Throwable t) {
+                                logDebug("WaEnhancer: Error in HomeActivity onPrepareOptionsMenu hook: " + t);
+                            }
+                        }
+                    });
+                    hooksInstalled++;
+                    logDebug("WaEnhancer: Hooked HomeActivity onPrepareOptionsMenu for Calls menu");
+                } catch (Throwable t) {
+                    logDebug("WaEnhancer: Could not hook HomeActivity onPrepareOptionsMenu");
+                }
+                hooksInstalled++;
+            }
+        } catch (Throwable e) {
+            logDebug("WaEnhancer: Could not hook CallsHistoryFragment: " + e.getMessage());
+        }
+
         logDebug("WaEnhancer: Call Recording initialized with " + hooksInstalled + " hooks");
     }
 

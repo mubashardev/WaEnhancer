@@ -6,15 +6,21 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ActionMode;
 import androidx.core.content.FileProvider;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -39,6 +45,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
     private final List<Recording> allRecordings = new ArrayList<>();
     private final List<File> baseDirs = new ArrayList<>();
     private int currentSortType = 1;
+    private ActionMode actionMode;
 
     @Nullable
     @Override
@@ -56,19 +63,50 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
         binding.recyclerView.setAdapter(adapter);
 
         adapter.setSelectionChangeListener(count -> {
-            binding.selectionBar.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
-            binding.tvSelectionCount.setText(getString(R.string.selected_count, count));
+            if (count > 0) {
+                if (actionMode == null) {
+                    actionMode = ((AppCompatActivity) requireActivity()).startSupportActionMode(actionModeCallback);
+                }
+                actionMode.setTitle(getString(R.string.selected_count, count));
+            } else if (actionMode != null) {
+                actionMode.finish();
+            }
         });
 
-        binding.btnCloseSelection.setOnClickListener(v -> adapter.clearSelection());
-        binding.btnSelectAll.setOnClickListener(v -> adapter.selectAll());
-        binding.btnShareSelected.setOnClickListener(v -> shareSelectedRecordings());
-        binding.btnDeleteSelected.setOnClickListener(v -> deleteSelectedRecordings());
-        binding.fabSort.setOnClickListener(v -> showSortMenu());
         binding.swipeRefresh.setOnRefreshListener(() -> {
             initializeBaseDirs();
             loadRecordings();
         });
+
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_recordings, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                int itemId = menuItem.getItemId();
+                if (itemId == R.id.action_sort_date) {
+                    currentSortType = 1;
+                    loadRecordings();
+                    return true;
+                } else if (itemId == R.id.action_sort_name) {
+                    currentSortType = 2;
+                    loadRecordings();
+                    return true;
+                } else if (itemId == R.id.action_sort_duration) {
+                    currentSortType = 3;
+                    loadRecordings();
+                    return true;
+                } else if (itemId == R.id.action_sort_contact) {
+                    currentSortType = 4;
+                    loadRecordings();
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         initializeBaseDirs();
         loadRecordings();
@@ -173,19 +211,40 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
         }
     }
 
-    private void showSortMenu() {
-        PopupMenu popupMenu = new PopupMenu(requireContext(), binding.fabSort);
-        popupMenu.getMenu().add(0, 1, 0, R.string.sort_date);
-        popupMenu.getMenu().add(0, 2, 0, R.string.sort_name);
-        popupMenu.getMenu().add(0, 3, 0, R.string.sort_duration);
-        popupMenu.getMenu().add(0, 4, 0, R.string.sort_contact);
-        popupMenu.setOnMenuItemClickListener(item -> {
-            currentSortType = item.getItemId();
-            loadRecordings();
+    private final ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            mode.getMenuInflater().inflate(R.menu.menu_recordings_action, menu);
             return true;
-        });
-        popupMenu.show();
-    }
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            int itemId = item.getItemId();
+            if (itemId == R.id.action_select_all) {
+                adapter.selectAll();
+                return true;
+            } else if (itemId == R.id.action_share) {
+                shareSelectedRecordings();
+                return true;
+            } else if (itemId == R.id.action_delete) {
+                deleteSelectedRecordings();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            adapter.clearSelection();
+            actionMode = null;
+        }
+    };
 
     @Override
     public void onPlay(Recording recording) {

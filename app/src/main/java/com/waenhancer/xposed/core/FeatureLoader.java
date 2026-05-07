@@ -506,7 +506,6 @@ public class FeatureLoader {
 
 
 
-        // Clear Cache receiver
         BroadcastReceiver clearCacheReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {

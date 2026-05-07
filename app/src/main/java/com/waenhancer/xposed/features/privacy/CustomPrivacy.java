@@ -80,7 +80,7 @@ public class CustomPrivacy extends Feature {
                         if (activity.findViewById(0x7f0a9999) != null) return;
                         int id = Utils.getID("contact_info_security_card_layout", "id");
                         ViewGroup infoLayout = activity.getWindow().findViewById(id);
-                        Drawable icon = activity.getDrawable(R.drawable.ic_privacy);
+                        Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_privacy);
                         View itemView = createItemView(activity, com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.custom_privacy), com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.custom_privacy_sum), icon);
                         itemView.setId(0x7f0a9999);
                         itemView.setOnClickListener((v) -> showPrivacyDialog(activity, ContactInfoActivityClass.isInstance(activity)));
@@ -99,7 +99,7 @@ public class CustomPrivacy extends Feature {
                     var menu = (Menu) param.args[0];
                     var activity = (Activity) param.thisObject;
                     var customPrivacy = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.custom_privacy));
-                    customPrivacy.setIcon(R.drawable.ic_privacy);
+                    customPrivacy.setIcon(com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_privacy));
                     customPrivacy.setOnMenuItemClickListener(item -> {
                         showPrivacyDialog(activity, ContactInfoActivityClass.isInstance(activity));
                         return true;

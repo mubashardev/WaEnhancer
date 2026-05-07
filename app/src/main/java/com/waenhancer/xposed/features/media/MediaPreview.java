@@ -101,7 +101,7 @@ public class MediaPreview extends Feature {
                 var layoutParams = new LinearLayout.LayoutParams(Utils.dipToPixels(42), Utils.dipToPixels(32));
                 layoutParams.gravity = Gravity.CENTER;
                 prevBtn.setLayoutParams(layoutParams);
-                var drawable = context.getDrawable(R.drawable.preview_eye);
+                var drawable = DesignUtils.getDrawable(R.drawable.preview_eye);
                 drawable.setTint(Color.WHITE);
                 prevBtn.setImageDrawable(drawable);
                 prevBtn.setPadding(Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4));
@@ -145,7 +145,7 @@ public class MediaPreview extends Feature {
                 layoutParams2.gravity = Gravity.CENTER;
                 layoutParams2.topMargin = Utils.dipToPixels(8);
                 prevBtn.setLayoutParams(layoutParams2);
-                var drawable = context.getDrawable(R.drawable.preview_eye);
+                var drawable = DesignUtils.getDrawable(R.drawable.preview_eye);
                 drawable.setTint(Color.WHITE);
                 prevBtn.setImageDrawable(drawable);
                 prevBtn.setPadding(Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4));

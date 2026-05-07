@@ -6,4 +6,7 @@
 
 
 [Fixes]
-- Fixed Resources$NotFoundException crashes
+- Fixed media preview icon missing
+- Fixed crash on media preview
+- Fixed: CustomPrivacy - Resource ID #0x7f0800f7
+- Fixed: Resources$NotFoundException on startup

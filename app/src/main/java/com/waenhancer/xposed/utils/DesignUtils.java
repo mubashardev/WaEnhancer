@@ -33,6 +33,11 @@ public class DesignUtils {
 
     @SuppressLint("UseCompatLoadingForDrawables")
     public static Drawable getDrawable(int id) {
+        try {
+            if ((id & 0xFF000000) == 0x7F000000 && XResManager.moduleResources != null) {
+                return XResManager.moduleResources.getDrawable(id, null);
+            }
+        } catch (Throwable ignored) {}
         return Utils.getApplication().getDrawable(id);
     }
 

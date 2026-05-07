@@ -231,7 +231,7 @@ public class AntiRevoke extends Feature {
                         + dateTextView.getText();
                 dateTextView.setText(newTextData);
             } else if (antirevokeValue == 2) {
-                var drawable = Utils.getApplication().getDrawable(R.drawable.deleted);
+                var drawable = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.deleted);
                 dateTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null);
                 dateTextView.setCompoundDrawablePadding(5);
             }

@@ -98,7 +98,7 @@ public class LiteMode extends Feature {
         var entryPoint = getSafeString("open_wae", "1");
         if (!"1".equals(entryPoint)) return;
         var itemMenu = menu.add(0, 0, 9999, "Download Folder");
-        var iconDraw = activity.getDrawable(R.drawable.download);
+        var iconDraw = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.download);
         iconDraw.setTint(0xff8696a0);
         itemMenu.setIcon(iconDraw);
         itemMenu.setOnMenuItemClickListener(item -> {

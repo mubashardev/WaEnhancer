@@ -110,7 +110,7 @@ public class MenuHome extends Feature {
         var ghostmode = WppCore.getPrivBoolean("ghostmode", false);
         if (!prefs.getBoolean("ghostmode", true)) {
             if (ghostmode) {
-                WppCore.setPrivBoolean("ghostmode", false);
+                WppCore.setPrivBooleanSync("ghostmode", false);
                 Utils.doRestart(activity);
             }
             return;
@@ -153,11 +153,11 @@ public class MenuHome extends Feature {
             new AlertDialogWpp(activity).setTitle(gmTitle).
                     setMessage(gmMsg)
                     .setPositiveButton(disableStr, (dialog, which) -> {
-                        WppCore.setPrivBoolean("ghostmode", false);
+                        WppCore.setPrivBooleanSync("ghostmode", false);
                         Utils.doRestart(activity);
                     })
                     .setNegativeButton(enableStr, (dialog, which) -> {
-                        WppCore.setPrivBoolean("ghostmode", true);
+                        WppCore.setPrivBooleanSync("ghostmode", true);
                         Utils.doRestart(activity);
                     }).show();
             return true;
@@ -196,7 +196,7 @@ public class MenuHome extends Feature {
         var dndmode = WppCore.getPrivBoolean("dndmode", false);
         if (!prefs.getBoolean("show_dndmode", false)) {
             if (WppCore.getPrivBoolean("dndmode", false)) {
-                WppCore.setPrivBoolean("dndmode", false);
+                WppCore.setPrivBooleanSync("dndmode", false);
                 Utils.doRestart(activity);
             }
             return;
@@ -237,14 +237,14 @@ public class MenuHome extends Feature {
                         .setTitle(dTitle)
                         .setMessage(dMsg)
                         .setPositiveButton(dActivate, (dialog, which) -> {
-                            WppCore.setPrivBoolean("dndmode", true);
+                            WppCore.setPrivBooleanSync("dndmode", true);
                             Utils.doRestart(activity);
                         })
                         .setNegativeButton(dCancel, (dialog, which) -> dialog.dismiss())
                         .create().show();
                 return true;
             }
-            WppCore.setPrivBoolean("dndmode", false);
+            WppCore.setPrivBooleanSync("dndmode", false);
             Utils.doRestart(activity);
             return true;
         });
@@ -254,7 +254,7 @@ public class MenuHome extends Feature {
         var freezelastseen = WppCore.getPrivBoolean("freezelastseen", false);
         if (!prefs.getBoolean("show_freezeLastSeen", true)) {
             if (freezelastseen) {
-                WppCore.setPrivBoolean("freezelastseen", false);
+                WppCore.setPrivBooleanSync("freezelastseen", false);
                 Utils.doRestart(activity);
             }
             return;
@@ -289,14 +289,14 @@ public class MenuHome extends Feature {
                         .setTitle(fTitle)
                         .setMessage(fMsg)
                         .setPositiveButton(fActivate, (dialog, which) -> {
-                            WppCore.setPrivBoolean("freezelastseen", true);
+                            WppCore.setPrivBooleanSync("freezelastseen", true);
                             Utils.doRestart(activity);
                         })
                         .setNegativeButton(fCancel, (dialog, which) -> dialog.dismiss())
                         .create().show();
                 return true;
             }
-            WppCore.setPrivBoolean("freezelastseen", false);
+            WppCore.setPrivBooleanSync("freezelastseen", false);
             Utils.doRestart(activity);
             return true;
         });

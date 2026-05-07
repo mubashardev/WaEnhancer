@@ -144,10 +144,12 @@ public class MenuHome extends Feature {
             String enableStr = "Enable";
             try {
                 if (XResManager.moduleResources != null) {
-                    gmTitle = XResManager.moduleResources.getString(R.string.ghost_mode_s, (ghostmode ? "ON" : "OFF"));
-                    gmMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode_message);
-                    disableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.disable);
-                    enableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.enable);
+                    try {
+                        gmTitle = XResManager.moduleResources.getString(R.string.ghost_mode_s, (ghostmode ? "ON" : "OFF"));
+                    } catch (Exception ignored1) {}
+                    gmMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode_message, gmMsg);
+                    disableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.disable, disableStr);
+                    enableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.enable, enableStr);
                 }
             } catch (Exception ignored) {}
             new AlertDialogWpp(activity).setTitle(gmTitle).
@@ -223,29 +225,30 @@ public class MenuHome extends Feature {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
         item.setOnMenuItemClickListener(menuItem -> {
-            if (!dndmode) {
-                String dTitle = "DND Mode", dMsg = "", dActivate = "Activate", dCancel = "Cancel";
-                try {
-                    if (XResManager.moduleResources != null) {
-                        dTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title);
-                        dMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_message);
-                        dActivate = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.activate);
-                        dCancel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel);
-                    }
-                } catch (Exception ignored) {}
-                new AlertDialogWpp(activity)
-                        .setTitle(dTitle)
-                        .setMessage(dMsg)
-                        .setPositiveButton(dActivate, (dialog, which) -> {
-                            WppCore.setPrivBooleanSync("dndmode", true);
-                            Utils.doRestart(activity);
-                        })
-                        .setNegativeButton(dCancel, (dialog, which) -> dialog.dismiss())
-                        .create().show();
-                return true;
-            }
-            WppCore.setPrivBooleanSync("dndmode", false);
-            Utils.doRestart(activity);
+            String dTitle = "DND Mode (" + (dndmode ? "ON" : "OFF") + ")";
+            String dMsg = "When Do Not Disturb mode is on, you will be unable to send or receive messages";
+            String disableStr = "Disable";
+            String enableStr = "Enable";
+            try {
+                if (XResManager.moduleResources != null) {
+                    dTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title, "DND Mode") + " (" + (dndmode ? "ON" : "OFF") + ")";
+                    dMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_message, dMsg);
+                    disableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.disable, disableStr);
+                    enableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.enable, enableStr);
+                }
+            } catch (Exception ignored) {}
+            new AlertDialogWpp(activity)
+                    .setTitle(dTitle)
+                    .setMessage(dMsg)
+                    .setPositiveButton(disableStr, (dialog, which) -> {
+                        WppCore.setPrivBooleanSync("dndmode", false);
+                        Utils.doRestart(activity);
+                    })
+                    .setNegativeButton(enableStr, (dialog, which) -> {
+                        WppCore.setPrivBooleanSync("dndmode", true);
+                        Utils.doRestart(activity);
+                    })
+                    .create().show();
             return true;
         });
     }
@@ -265,7 +268,7 @@ public class MenuHome extends Feature {
         if (menu.findItem(MENU_ID_FREEZE) != null) return;
         MenuItem item = menu.add(0, MENU_ID_FREEZE, 0, flsTitle);
         try {
-            var drawable = XResManager.moduleResources.getDrawable(freezelastseen ? R.drawable.eye_disabled : R.drawable.eye_enabled, null);
+            var drawable = XResManager.moduleResources.getDrawable(freezelastseen ? R.drawable.eye_enabled : R.drawable.eye_disabled, null);
             if (drawable != null) {
                 drawable.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
                 item.setIcon(drawable);
@@ -275,29 +278,30 @@ public class MenuHome extends Feature {
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
         item.setOnMenuItemClickListener(menuItem -> {
-            if (!freezelastseen) {
-                String fTitle = "Freeze Last Seen", fMsg = "", fActivate = "Activate", fCancel = "Cancel";
-                try {
-                    if (XResManager.moduleResources != null) {
-                        fTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_title);
-                        fMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_message);
-                        fActivate = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.activate);
-                        fCancel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel);
-                    }
-                } catch (Exception ignored2) {}
-                new AlertDialogWpp(activity)
-                        .setTitle(fTitle)
-                        .setMessage(fMsg)
-                        .setPositiveButton(fActivate, (dialog, which) -> {
-                            WppCore.setPrivBooleanSync("freezelastseen", true);
-                            Utils.doRestart(activity);
-                        })
-                        .setNegativeButton(fCancel, (dialog, which) -> dialog.dismiss())
-                        .create().show();
-                return true;
-            }
-            WppCore.setPrivBooleanSync("freezelastseen", false);
-            Utils.doRestart(activity);
+            String fTitle = "Freeze Last Seen (" + (freezelastseen ? "ON" : "OFF") + ")";
+            String fMsg = "When Freeze Last Seen is on, you will be unable to see others last seen time or online";
+            String disableStr = "Disable";
+            String enableStr = "Enable";
+            try {
+                if (XResManager.moduleResources != null) {
+                    fTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_title, "Freeze Last Seen") + " (" + (freezelastseen ? "ON" : "OFF") + ")";
+                    fMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_message, fMsg);
+                    disableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.disable, disableStr);
+                    enableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.enable, enableStr);
+                }
+            } catch (Exception ignored) {}
+            new AlertDialogWpp(activity)
+                    .setTitle(fTitle)
+                    .setMessage(fMsg)
+                    .setPositiveButton(disableStr, (dialog, which) -> {
+                        WppCore.setPrivBooleanSync("freezelastseen", false);
+                        Utils.doRestart(activity);
+                    })
+                    .setNegativeButton(enableStr, (dialog, which) -> {
+                        WppCore.setPrivBooleanSync("freezelastseen", true);
+                        Utils.doRestart(activity);
+                    })
+                    .create().show();
             return true;
         });
     }

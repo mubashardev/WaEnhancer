@@ -7,7 +7,7 @@
 - Improved Configs Export/Import functionality
 
 [Fixes]
-- Fixed Ghost Mode was not enabling on some devices
+- Fixed Freeze Last Seen & Ghost Mode not enabling on some devices
 - Fixed media preview icon missing
 - Fixed crash on media preview
 - Fixed empty menu items on home and status view

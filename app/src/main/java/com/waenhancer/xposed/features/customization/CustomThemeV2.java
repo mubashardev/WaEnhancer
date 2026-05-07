@@ -260,7 +260,19 @@ public class CustomThemeV2 extends Feature {
         XposedBridge.hookAllMethods(resourceImpl, "loadDrawable", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                // Suppress Resources$NotFoundException from drawables with unsupported
+                // XML elements (e.g. 'gradient' class in $status_tile_overlay_sdk_24__0).
+                // Without this, the exception propagates through the hook and crashes WhatsApp.
+                if (param.hasThrowable()) {
+                    var throwable = param.getThrowable();
+                    if (throwable instanceof android.content.res.Resources.NotFoundException) {
+                        param.setResult(null);
+                        param.setThrowable(null);
+                    }
+                    return;
+                }
                 var drawable = (Drawable) param.getResult();
+                if (drawable == null) return;
                 replaceColor(drawable, IColors.colors);
             }
         });
@@ -268,7 +280,9 @@ public class CustomThemeV2 extends Feature {
         XposedBridge.hookAllMethods(resourceImpl, "loadColorStateList", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                if (param.hasThrowable()) return;
                 var colorStateList = (ColorStateList) param.getResult();
+                if (colorStateList == null) return;
                 var mColors = (int[]) XposedHelpers.getObjectField(colorStateList, "mColors");
                 for (var i = 0; i < mColors.length; i++) {
                     mColors[i] = IColors.getFromIntColor(mColors[i], IColors.colors);
@@ -502,10 +516,10 @@ public class CustomThemeV2 extends Feature {
     }
 
     private boolean checkNotApplyColor(int color) {
-        // Simplified check: avoid expensive isCalledFromStrings() stack walks.
-        // Only skip color replacement for the specific dark background in Conversation.
         var activity = WppCore.getCurrentActivity();
-        if (activity != null && activity.getClass().getSimpleName().equals("Conversation")) {
+        if (activity != null && activity.getClass().getSimpleName().equals("Conversation")
+                && ReflectionUtils.isCalledFromStrings("getValue")
+                && !ReflectionUtils.isCalledFromStrings("android.view")) {
             return color != 0xff12181c;
         }
         return false;

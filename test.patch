@@ -1,0 +1,13 @@
+--- app/src/main/AndroidManifest.xml
++++ app/src/main/AndroidManifest.xml
+@@ -87,6 +87,11 @@
+             android:authorities="${applicationId}.provider"
+             android:exported="true" />
+ 
++        <provider
++            android:name="com.google.firebase.provider.FirebaseInitProvider"
++            android:authorities="${applicationId}.firebaseinitprovider"
++            tools:node="remove" />
++
+         <activity
+             android:name=".xposed.features.others.EmbeddedSettingsActivity"

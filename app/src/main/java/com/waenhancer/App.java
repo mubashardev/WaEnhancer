@@ -58,6 +58,16 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
+        
+        // Initialize Firebase manually only in the standalone process to prevent SecurityException in host processes
+        if (Application.getProcessName().equals(BuildConfig.APPLICATION_ID)) {
+            try {
+                Class<?> firebaseAppClass = Class.forName("com.google.firebase.FirebaseApp");
+                firebaseAppClass.getMethod("initializeApp", Context.class).invoke(null, this);
+            } catch (Throwable ignored) {
+            }
+        }
+        
         var sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         var mode = Integer.parseInt(sharedPreferences.getString("thememode", "0"));
         setThemeMode(mode);

@@ -88,11 +88,6 @@
             android:authorities="${applicationId}.provider"
             android:exported="true" />
 
-        <provider
-            android:name="com.google.firebase.provider.FirebaseInitProvider"
-            android:authorities="${applicationId}.firebaseinitprovider"
-            tools:node="remove" />
-
         <activity
             android:name=".xposed.features.others.EmbeddedSettingsActivity"
             android:exported="true"

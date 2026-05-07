@@ -306,29 +306,38 @@ public class HomeFragment extends BaseFragment {
     }
 
     private void startCardAnimations() {
-        var slideUp = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
-        var fadeIn = AnimationUtils.loadAnimation(getContext(), R.anim.fade_in);
+        Context context = getContext();
+        if (context == null) return;
+        
+        var slideUp = AnimationUtils.loadAnimation(context, R.anim.slide_up);
+        var fadeIn = AnimationUtils.loadAnimation(context, R.anim.fade_in);
 
         binding.status.startAnimation(slideUp);
 
         binding.status2.postDelayed(() -> {
+            if (getContext() == null || !isAdded()) return;
             var anim = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
             binding.status2.startAnimation(anim);
         }, 100);
 
         binding.status3.postDelayed(() -> {
+            if (getContext() == null || !isAdded()) return;
             var anim = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
             binding.status3.startAnimation(anim);
         }, 100);
 
         binding.infoCard.postDelayed(() -> {
+            if (getContext() == null || !isAdded()) return;
             binding.infoCard.startAnimation(fadeIn);
         }, 200);
     }
 
     private void animateClick(View view) {
-        var scaleIn = AnimationUtils.loadAnimation(getContext(), R.anim.scale_in);
-        view.startAnimation(scaleIn);
+        Context context = getContext();
+        if (context != null) {
+            var scaleIn = AnimationUtils.loadAnimation(context, R.anim.scale_in);
+            view.startAnimation(scaleIn);
+        }
     }
 
     @Override

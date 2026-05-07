@@ -595,7 +595,7 @@ public class Others extends Feature {
 
     private void filterItems(String filterItems) {
         var itens = filterItems.split("\n");
-        var idsFilter = new ArrayList<Integer>();
+        var idsFilter = new java.util.HashSet<Integer>();
         for (String item : itens) {
             var id = Utils.getID(item, "id");
             if (id > 0) {

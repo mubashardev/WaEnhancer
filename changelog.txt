@@ -4,6 +4,7 @@
 [Improvements]
 - Optimize: Fixed app slow down / lagging issue on some devices.
 - Improved Manage Recordings UI
+- Improved Configs Export/Import functionality
 
 [Fixes]
 - Fixed media preview icon missing

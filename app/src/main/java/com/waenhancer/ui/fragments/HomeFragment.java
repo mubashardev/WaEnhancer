@@ -407,6 +407,9 @@ public class HomeFragment extends BaseFragment {
         App.getInstance().restartApp(FeatureLoader.PACKAGE_WPP);
         App.getInstance().restartApp(FeatureLoader.PACKAGE_BUSINESS);
         Utils.showToast(context.getString(R.string.configs_reset), Toast.LENGTH_SHORT);
+        if (getActivity() != null && context.getPackageName().equals(BuildConfig.APPLICATION_ID)) {
+            getActivity().recreate();
+        }
     }
 
     private static @NonNull JSONObject getJsonObject(SharedPreferences prefs) throws JSONException {
@@ -494,6 +497,9 @@ public class HomeFragment extends BaseFragment {
                 Toast.makeText(context, context.getString(R.string.configs_imported), Toast.LENGTH_SHORT).show();
                 App.getInstance().restartApp(FeatureLoader.PACKAGE_WPP);
                 App.getInstance().restartApp(FeatureLoader.PACKAGE_BUSINESS);
+                if (getActivity() != null && context.getPackageName().equals(BuildConfig.APPLICATION_ID)) {
+                    getActivity().recreate();
+                }
             } catch (Exception e) {
                 Log.e("importConfigs", e.getMessage(), e);
                 Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();

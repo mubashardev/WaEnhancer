@@ -419,13 +419,21 @@ public class AlertDialogWpp {
     public Dialog create() {
         if (mCreate != null) return mCreate;
         if (mIsBottomSheet && mItems != null && mItems.length == 2 && mPositiveButtonText == null && mNegativeButtonText == null) {
-            mPositiveButtonText = mItems[0];
+            CharSequence item0 = mItems[0];
+            CharSequence item1 = mItems[1];
+            if (item0 == null || item0.toString().trim().isEmpty()) {
+                item0 = "Phone Call";
+            }
+            if (item1 == null || item1.toString().trim().isEmpty()) {
+                item1 = "WhatsApp Call";
+            }
+            mPositiveButtonText = item0;
             mPositiveListener = (dialogInterface, which) -> {
                 if (mItemsListener != null) {
                     mItemsListener.onClick(dialogInterface, 0);
                 }
             };
-            mNegativeButtonText = mItems[1];
+            mNegativeButtonText = item1;
             mNegativeListener = (dialogInterface, which) -> {
                 if (mItemsListener != null) {
                     mItemsListener.onClick(dialogInterface, 1);
@@ -449,17 +457,12 @@ public class AlertDialogWpp {
                     isDarkMode = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES;
                 } catch (Exception ignored) {}
                 
-                int backgroundColor = isDarkMode ? 0xFF121212 : 0xFFFFFFFF;
+                int backgroundColor = isDarkMode ? 0xFF1E1E1E : 0xFFFFFFFF;
                 int primaryTextColor = isDarkMode ? 0xFFFFFFFF : 0xFF000000;
                 int secondaryTextColor = isDarkMode ? 0xFFB0B0B0 : 0xFF666666;
                 int accentColor = 0xFF008080;
                 try {
                     android.util.TypedValue typedValue = new android.util.TypedValue();
-                    if (mContext.getTheme().resolveAttribute(android.R.attr.windowBackground, typedValue, true)) {
-                        if (typedValue.data != 0 && typedValue.data != 1) {
-                            backgroundColor = typedValue.data | 0xFF000000;
-                        }
-                    }
                     if (mContext.getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)) {
                         primaryTextColor = typedValue.data;
                     }
@@ -485,7 +488,7 @@ public class AlertDialogWpp {
                 mainLayout.setPadding(dp20, dp16, dp20, (int) (32 * density));
                 
                 android.widget.RelativeLayout.LayoutParams mainParams = new android.widget.RelativeLayout.LayoutParams(
-                        android.widget.RelativeLayout.LayoutParams.MATCH_PARENT, halfScreenHeight);
+                        android.widget.RelativeLayout.LayoutParams.MATCH_PARENT, android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT);
                 mainParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
                 mainLayout.setLayoutParams(mainParams);
                 
@@ -608,8 +611,7 @@ public class AlertDialogWpp {
                 // Scrollable content
                 androidx.core.widget.NestedScrollView scrollView = new androidx.core.widget.NestedScrollView(mContext);
                 android.widget.LinearLayout.LayoutParams scrollParams = new android.widget.LinearLayout.LayoutParams(
-                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0);
-                scrollParams.weight = 1.0f;
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
                 scrollView.setLayoutParams(scrollParams);
                 
                 if (mMessageText != null) {
@@ -741,17 +743,35 @@ public class AlertDialogWpp {
                     negButton.setBackground(negRipple);
                     negButton.setTextColor(primaryTextColor);
                     
-                    negButton.setOnClickListener(v -> {
-                        if (mNegativeListener != null) {
-                            mNegativeListener.onClick(dialog, DialogInterface.BUTTON_NEGATIVE);
+                     negButton.setOnClickListener(v -> {
+                         if (mNegativeListener != null) {
+                             mNegativeListener.onClick(dialog, DialogInterface.BUTTON_NEGATIVE);
+                         }
+                         dialog.dismiss();
+                     });
+                     buttonsLayout.addView(negButton);
+                 }
+                 
+                 mainLayout.addView(buttonsLayout);
+                 container.addView(mainLayout);
+
+                mainLayout.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        mainLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        int measuredHeight = mainLayout.getHeight();
+                        if (measuredHeight > halfScreenHeight) {
+                            android.view.ViewGroup.LayoutParams lp = mainLayout.getLayoutParams();
+                            lp.height = halfScreenHeight;
+                            mainLayout.setLayoutParams(lp);
+                            
+                            android.widget.LinearLayout.LayoutParams sLp = (android.widget.LinearLayout.LayoutParams) scrollView.getLayoutParams();
+                            sLp.height = 0;
+                            sLp.weight = 1.0f;
+                            scrollView.setLayoutParams(sLp);
                         }
-                        dialog.dismiss();
-                    });
-                    buttonsLayout.addView(negButton);
-                }
-                
-                mainLayout.addView(buttonsLayout);
-                container.addView(mainLayout);
+                    }
+                });
                 
                 // Clicking outside mainLayout dismisses the dialog
                 container.setOnClickListener(v -> {

@@ -71,8 +71,8 @@ public class Stickers extends Feature {
 
 
                                 dialog.setView(linearLayout);
-                                dialog.setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.send), (dialog1, which) -> mCaptureOnClickListener.onClick(view));
-                                dialog.setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel), null);
+                                dialog.setPositiveButton("Send Sticker", (dialog1, which) -> mCaptureOnClickListener.onClick(view));
+                                dialog.setNegativeButton("Cancel", null);
                                 dialog.show();
                             };
                         }

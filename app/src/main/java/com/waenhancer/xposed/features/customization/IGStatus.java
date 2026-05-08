@@ -29,6 +29,7 @@ import de.robv.android.xposed.XposedBridge;
 
 public class IGStatus extends Feature {
     public static ArrayList<Object> itens = new ArrayList<>();
+    public static int unseenCount = 0;
     private static final ArrayList<IGStatusView> mListStatusContainer = new ArrayList<>();
 
     public IGStatus(@NonNull ClassLoader loader, @NonNull SharedPreferences preferences) {
@@ -118,8 +119,15 @@ public class IGStatus extends Feature {
                 final var lists = Arrays.stream(param.args).filter(v -> v instanceof List<?>).toArray();
                 itens.clear();
                 itens.add(0, null);
-                itens.addAll((List) lists[0]);
-                itens.addAll((List) lists[1]);
+                if (lists.length >= 1) {
+                    var list0 = (List) lists[0];
+                    unseenCount = list0.size();
+                } else {
+                    unseenCount = 0;
+                }
+                for (Object list : lists) {
+                    itens.addAll((List) list);
+                }
                 for (var mStatusContainer : mListStatusContainer)
                     mStatusContainer.updateList();
             }

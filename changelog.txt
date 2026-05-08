@@ -1,10 +1,8 @@
 [Added]
-- When calls recording enabled, you can manage recordings directly from your WahtsApp calls tab.
+- Added support for 2.26.18.xx WA/WB
 
 [Improvements]
-- Improved confirmation dialogs with action buttons
+- Improved IG Style Stories
+- WaEnhancerX Changelog Screen improved
 
 [Fixes]
-- Fixed Dialogs without action buttons
-- Fixed Send blue tick button
-- Fixed Call Blocking not working for some devices

@@ -48,7 +48,7 @@ public class HorizontalListView extends AdapterView<ListAdapter> {
     private synchronized void initView() {
         mLeftViewIndex = -1;
         mRightViewIndex = 0;
-        mDisplayOffset = 0;
+        mDisplayOffset = com.waenhancer.xposed.utils.Utils.dipToPixels(16);
         mCurrentX = 0;
         mNextX = 0;
         mMaxX = Integer.MAX_VALUE;

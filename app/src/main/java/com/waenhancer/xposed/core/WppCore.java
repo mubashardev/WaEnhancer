@@ -941,7 +941,10 @@ public class WppCore {
 
     public static Drawable getMyPhoto() {
         String datafolder = Utils.getApplication().getCacheDir().getParent() + "/";
-        File file = new File(datafolder + "files" + "/" + "me.jpg");
+        File file = new File(datafolder + "files" + "/" + "me");
+        if (file.exists())
+            return Drawable.createFromPath(file.getAbsolutePath());
+        file = new File(datafolder + "files" + "/" + "me.jpg");
         if (file.exists())
             return Drawable.createFromPath(file.getAbsolutePath());
         return null;
@@ -1096,11 +1099,29 @@ public class WppCore {
 
     public static FMessageWpp.UserJid getMyUserJid() {
         try {
-            return new FMessageWpp.UserJid(meManagerPhoneJidField.get(meManagerInstance));
+            Object instance = meManagerInstance;
+            if (instance == null && meManagerPhoneJidField != null) {
+                Class<?> meManagerClass = meManagerPhoneJidField.getDeclaringClass();
+                for (java.lang.reflect.Field f : meManagerClass.getDeclaredFields()) {
+                    if (java.lang.reflect.Modifier.isStatic(f.getModifiers()) && f.getType() == meManagerClass) {
+                        try {
+                            f.setAccessible(true);
+                            instance = f.get(null);
+                            if (instance != null) {
+                                meManagerInstance = instance;
+                                break;
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+            if (instance != null && meManagerPhoneJidField != null) {
+                return new FMessageWpp.UserJid(meManagerPhoneJidField.get(instance));
+            }
         } catch (Exception e) {
             XposedBridge.log(e);
-            return null;
         }
+        return null;
     }
 
     public interface ActivityChangeState {

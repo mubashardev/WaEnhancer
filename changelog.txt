@@ -1,18 +1,7 @@
 [Added]
-- Option to Enable/Disable Hook Toasts
 
 [Improvements]
-- Optimize: Fixed app slow down / lagging issue on some devices.
-- Improved Manage Recordings UI
-- Improved Configs Export/Import functionality
 
 [Fixes]
-- Fixed Freeze Last Seen & Ghost Mode not enabling on some devices
-- Fixed media preview icon missing
-- Fixed crash on media preview and profile pixture viewer
-- Fixed custom privacy per contact 
-- Fixed empty menu items on home and status view
-- Fixed WhatsApp home screen chats list animations
-- Fixed: CustomPrivacy - Resource ID #0x7f0800f7
-- Fixed: Resources$NotFoundException on startup
+- Fixed Dialogs without action buttons
 

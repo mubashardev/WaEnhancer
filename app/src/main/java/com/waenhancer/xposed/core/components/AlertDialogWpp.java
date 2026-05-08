@@ -34,6 +34,15 @@ public class AlertDialogWpp {
     private Object mAlertDialogWpp;
     private Dialog mCreate;
     private boolean mIsUsingSystem = false;
+    private CharSequence mTitleText;
+    private CharSequence mMessageText;
+    private CharSequence mPositiveButtonText;
+    private DialogInterface.OnClickListener mPositiveListener;
+    private CharSequence mNegativeButtonText;
+    private DialogInterface.OnClickListener mNegativeListener;
+    private CharSequence mNeutralButtonText;
+    private DialogInterface.OnClickListener mNeutralListener;
+    private Dialog mBottomSheetDialog;
 
     public static void initDialog(ClassLoader loader) {
         try {
@@ -153,6 +162,7 @@ public class AlertDialogWpp {
         if (title == null || title.trim().isEmpty()) {
             title = "WaEnhancer";
         }
+        mTitleText = title;
         mAlertDialog.setTitle(title);
         if (!shouldUseSystem()) {
             try {
@@ -165,6 +175,7 @@ public class AlertDialogWpp {
     }
 
     public AlertDialogWpp setTitle(int title) {
+        mTitleText = getContext().getString(title);
         mAlertDialog.setTitle(title);
         if (!shouldUseSystem()) {
             try {
@@ -180,6 +191,7 @@ public class AlertDialogWpp {
         if (title == null || title.toString().trim().isEmpty()) {
             title = "WaEnhancer";
         }
+        mTitleText = title;
         mAlertDialog.setTitle(title);
         if (!shouldUseSystem()) {
             try {
@@ -203,6 +215,7 @@ public class AlertDialogWpp {
         if (message == null || message.toString().trim().isEmpty()) {
             message = "Are you sure you want to proceed?";
         }
+        mMessageText = message;
         mAlertDialog.setMessage(message);
         if (!shouldUseSystem()) {
             try {
@@ -306,6 +319,8 @@ public class AlertDialogWpp {
         if (text == null || text.toString().trim().isEmpty()) {
             text = "Cancel";
         }
+        mNegativeButtonText = text;
+        mNegativeListener = listener;
         mAlertDialog.setNegativeButton(text, listener);
         if (!shouldUseSystem()) {
             callBuilderMethod(setNegativeButtonMethod, "setNegativeButton", text, listener);
@@ -317,6 +332,8 @@ public class AlertDialogWpp {
         if (text == null || text.toString().trim().isEmpty()) {
             text = "Dismiss";
         }
+        mNeutralButtonText = text;
+        mNeutralListener = listener;
         mAlertDialog.setNeutralButton(text, listener);
         if (!shouldUseSystem()) {
             callBuilderMethod(setNeutralButtonMethod, "setNeutralButton", text, listener);
@@ -328,6 +345,8 @@ public class AlertDialogWpp {
         if (text == null || text.toString().trim().isEmpty()) {
             text = "OK";
         }
+        mPositiveButtonText = text;
+        mPositiveListener = listener;
         mAlertDialog.setPositiveButton(text, listener);
         if (!shouldUseSystem()) {
             callBuilderMethod(setPositiveButtonMethod, "setPositiveButton", text, listener);
@@ -359,8 +378,326 @@ public class AlertDialogWpp {
         return this;
     }
 
+    private boolean mIsBottomSheet = false;
+
+    public AlertDialogWpp asBottomSheet() {
+        mIsBottomSheet = true;
+        return this;
+    }
+
+    private void applyBottomSheetStyle(Dialog d) {
+        if (d == null) return;
+        android.view.Window window = d.getWindow();
+        if (window != null) {
+            window.setGravity(android.view.Gravity.BOTTOM);
+            window.getAttributes().windowAnimations = android.R.style.Animation_InputMethod;
+            
+            int backgroundColor = 0xFFFFFFFF;
+            try {
+                android.util.TypedValue typedValue = new android.util.TypedValue();
+                if (mContext.getTheme().resolveAttribute(android.R.attr.windowBackground, typedValue, true)) {
+                    backgroundColor = typedValue.data;
+                }
+            } catch (Exception ignored) {}
+            
+            android.graphics.drawable.GradientDrawable drawable = new android.graphics.drawable.GradientDrawable();
+            drawable.setColor(backgroundColor);
+            float radius = 16 * mContext.getResources().getDisplayMetrics().density;
+            drawable.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
+            window.setBackgroundDrawable(drawable);
+            
+            window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+    }
+
     public Dialog create() {
         if (mCreate != null) return mCreate;
+        if (mIsBottomSheet) {
+            try {
+                android.app.Dialog dialog = new android.app.Dialog(mContext, android.R.style.Theme_Translucent_NoTitleBar);
+                
+                float density = mContext.getResources().getDisplayMetrics().density;
+                int dp8 = (int) (8 * density);
+                int dp12 = (int) (12 * density);
+                int dp16 = (int) (16 * density);
+                int dp20 = (int) (20 * density);
+                
+                boolean isDarkMode = false;
+                try {
+                    int nightModeFlags = mContext.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+                    isDarkMode = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+                } catch (Exception ignored) {}
+                
+                int backgroundColor = isDarkMode ? 0xFF121212 : 0xFFFFFFFF;
+                int primaryTextColor = isDarkMode ? 0xFFFFFFFF : 0xFF000000;
+                int secondaryTextColor = isDarkMode ? 0xFFB0B0B0 : 0xFF666666;
+                int accentColor = 0xFF008080;
+                try {
+                    android.util.TypedValue typedValue = new android.util.TypedValue();
+                    if (mContext.getTheme().resolveAttribute(android.R.attr.windowBackground, typedValue, true)) {
+                        if (typedValue.data != 0 && typedValue.data != 1) {
+                            backgroundColor = typedValue.data | 0xFF000000;
+                        }
+                    }
+                    if (mContext.getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)) {
+                        primaryTextColor = typedValue.data;
+                    }
+                    if (mContext.getTheme().resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)) {
+                        secondaryTextColor = typedValue.data;
+                    }
+                    if (mContext.getTheme().resolveAttribute(android.R.attr.colorAccent, typedValue, true)) {
+                        accentColor = typedValue.data;
+                    }
+                } catch (Exception ignored) {}
+                
+                final int screenHeight = mContext.getResources().getDisplayMetrics().heightPixels;
+                final int halfScreenHeight = screenHeight / 2;
+                final float capHeight = screenHeight * 0.85f;
+                
+                final android.widget.RelativeLayout container = new android.widget.RelativeLayout(mContext);
+                container.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+                container.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+                
+                final android.widget.LinearLayout mainLayout = new android.widget.LinearLayout(mContext);
+                mainLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                mainLayout.setPadding(dp20, dp16, dp20, (int) (32 * density));
+                
+                android.widget.RelativeLayout.LayoutParams mainParams = new android.widget.RelativeLayout.LayoutParams(
+                        android.widget.RelativeLayout.LayoutParams.MATCH_PARENT, halfScreenHeight);
+                mainParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
+                mainLayout.setLayoutParams(mainParams);
+                
+                // Rounded background for the sheet with perfect outline clipping
+                android.graphics.drawable.GradientDrawable bgDrawable = new android.graphics.drawable.GradientDrawable();
+                bgDrawable.setColor(backgroundColor);
+                float radius = 24 * density;
+                bgDrawable.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
+                mainLayout.setBackground(bgDrawable);
+                mainLayout.setOutlineProvider(android.view.ViewOutlineProvider.BACKGROUND);
+                mainLayout.setClipToOutline(true);
+                
+                // Drag Handle
+                android.view.View dragHandle = new android.view.View(mContext);
+                android.widget.LinearLayout.LayoutParams handleParams = new android.widget.LinearLayout.LayoutParams((int) (40 * density), (int) (4 * density));
+                handleParams.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+                handleParams.bottomMargin = dp16;
+                dragHandle.setLayoutParams(handleParams);
+                
+                android.graphics.drawable.GradientDrawable handleDrawable = new android.graphics.drawable.GradientDrawable();
+                handleDrawable.setColor(secondaryTextColor & 0x33FFFFFF | 0x33000000);
+                handleDrawable.setCornerRadius(2 * density);
+                dragHandle.setBackground(handleDrawable);
+                mainLayout.addView(dragHandle);
+                
+                // Implement touch-to-drag downward and upward multi-state height gesture
+                android.view.View.OnTouchListener dragListener = new android.view.View.OnTouchListener() {
+                    private float initialY;
+                    private int initialHeight;
+                    private float initialTranslationY;
+                    private boolean isDragging = false;
+                    
+                    @Override
+                    public boolean onTouch(android.view.View v, android.view.MotionEvent event) {
+                        switch (event.getAction()) {
+                            case android.view.MotionEvent.ACTION_DOWN:
+                                initialY = event.getRawY();
+                                initialHeight = mainLayout.getHeight();
+                                initialTranslationY = mainLayout.getTranslationY();
+                                isDragging = true;
+                                return true;
+                            case android.view.MotionEvent.ACTION_MOVE:
+                                if (!isDragging) return false;
+                                float deltaY = event.getRawY() - initialY;
+                                if (deltaY < 0) { // Dragging UP -> Increase height
+                                    mainLayout.setTranslationY(0);
+                                    int newHeight = (int) (initialHeight - deltaY);
+                                    if (newHeight > capHeight) {
+                                        newHeight = (int) capHeight;
+                                    }
+                                    android.view.ViewGroup.LayoutParams lp = mainLayout.getLayoutParams();
+                                    lp.height = newHeight;
+                                    mainLayout.setLayoutParams(lp);
+                                } else { // Dragging DOWN -> Decrease height first, then translate down to dismiss
+                                    if (initialHeight > halfScreenHeight) {
+                                        int newHeight = (int) (initialHeight - deltaY);
+                                        if (newHeight < halfScreenHeight) {
+                                            newHeight = halfScreenHeight;
+                                        }
+                                        android.view.ViewGroup.LayoutParams lp = mainLayout.getLayoutParams();
+                                        lp.height = newHeight;
+                                        mainLayout.setLayoutParams(lp);
+                                        mainLayout.setTranslationY(0);
+                                    } else {
+                                        mainLayout.setTranslationY(deltaY);
+                                    }
+                                }
+                                return true;
+                            case android.view.MotionEvent.ACTION_UP:
+                                isDragging = false;
+                                float currentTranslationY = mainLayout.getTranslationY();
+                                int currentHeight = mainLayout.getHeight();
+                                
+                                if (currentTranslationY > (halfScreenHeight / 3)) {
+                                    // Dismiss downwards
+                                    mainLayout.animate()
+                                            .translationY(screenHeight)
+                                            .setDuration(200)
+                                            .withEndAction(dialog::dismiss)
+                                            .start();
+                                } else {
+                                    mainLayout.animate().translationY(0).setDuration(200).start();
+                                    
+                                    // Snap height to either collapsed or expanded state
+                                    int targetHeight = halfScreenHeight;
+                                    if (currentHeight > (halfScreenHeight + (capHeight - halfScreenHeight) / 2)) {
+                                        targetHeight = (int) capHeight;
+                                    }
+                                    
+                                    final int finalTargetHeight = targetHeight;
+                                    android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofInt(currentHeight, finalTargetHeight);
+                                    animator.addUpdateListener(animation -> {
+                                        android.view.ViewGroup.LayoutParams lp = mainLayout.getLayoutParams();
+                                        lp.height = (int) animation.getAnimatedValue();
+                                        mainLayout.setLayoutParams(lp);
+                                    });
+                                    animator.setDuration(200);
+                                    animator.start();
+                                }
+                                return true;
+                        }
+                        return false;
+                    }
+                };
+                mainLayout.setOnTouchListener(dragListener);
+                dragHandle.setOnTouchListener(dragListener);
+                
+                // Title
+                if (mTitleText != null) {
+                    android.widget.TextView titleView = new android.widget.TextView(mContext);
+                    titleView.setText(mTitleText);
+                    titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 20);
+                    titleView.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                    titleView.setTextColor(primaryTextColor);
+                    titleView.setPadding(0, 0, 0, dp12);
+                    mainLayout.addView(titleView);
+                }
+                
+                // Scrollable content
+                androidx.core.widget.NestedScrollView scrollView = new androidx.core.widget.NestedScrollView(mContext);
+                android.widget.LinearLayout.LayoutParams scrollParams = new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0);
+                scrollParams.weight = 1.0f;
+                scrollView.setLayoutParams(scrollParams);
+                
+                android.widget.TextView messageView = new android.widget.TextView(mContext);
+                messageView.setText(mMessageText != null ? mMessageText : "Are you sure you want to proceed?");
+                messageView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
+                messageView.setTextColor(secondaryTextColor);
+                scrollView.addView(messageView);
+                mainLayout.addView(scrollView);
+                
+                // Bottom Buttons Layout (Stacked Vertically for Spacious Premium Look)
+                android.widget.LinearLayout buttonsLayout = new android.widget.LinearLayout(mContext);
+                buttonsLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                android.widget.LinearLayout.LayoutParams buttonsParams = new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                buttonsParams.topMargin = dp16;
+                buttonsLayout.setLayoutParams(buttonsParams);
+                
+                if (mPositiveButtonText != null) {
+                    android.widget.TextView posButton = new android.widget.TextView(mContext);
+                    android.widget.LinearLayout.LayoutParams posParams = new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, (int) (48 * density));
+                    if (mNegativeButtonText != null) {
+                        posParams.bottomMargin = dp12; // Gap between stacked buttons
+                    }
+                    posButton.setLayoutParams(posParams);
+                    posButton.setText(mPositiveButtonText);
+                    posButton.setGravity(android.view.Gravity.CENTER);
+                    posButton.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
+                    posButton.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                    posButton.setPadding((int) (16 * density), 0, (int) (16 * density), 0);
+                    
+                    android.graphics.drawable.GradientDrawable posBg = new android.graphics.drawable.GradientDrawable();
+                    posBg.setColor(accentColor);
+                    posBg.setCornerRadius(12 * density);
+                    posButton.setBackground(posBg);
+                    posButton.setTextColor(android.graphics.Color.WHITE);
+                    
+                    posButton.setOnClickListener(v -> {
+                        if (mPositiveListener != null) {
+                            mPositiveListener.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
+                        }
+                        dialog.dismiss();
+                    });
+                    buttonsLayout.addView(posButton);
+                }
+                
+                if (mNegativeButtonText != null) {
+                    android.widget.TextView negButton = new android.widget.TextView(mContext);
+                    android.widget.LinearLayout.LayoutParams negParams = new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, (int) (48 * density));
+                    negButton.setLayoutParams(negParams);
+                    negButton.setText(mNegativeButtonText);
+                    negButton.setGravity(android.view.Gravity.CENTER);
+                    negButton.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
+                    negButton.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                    negButton.setPadding((int) (16 * density), 0, (int) (16 * density), 0);
+                    
+                    android.graphics.drawable.GradientDrawable negBg = new android.graphics.drawable.GradientDrawable();
+                    negBg.setColor(android.graphics.Color.TRANSPARENT);
+                    negBg.setStroke((int) (1 * density), secondaryTextColor & 0x44FFFFFF | 0x44000000);
+                    negBg.setCornerRadius(12 * density);
+                    negButton.setBackground(negBg);
+                    negButton.setTextColor(primaryTextColor);
+                    
+                    negButton.setOnClickListener(v -> {
+                        if (mNegativeListener != null) {
+                            mNegativeListener.onClick(dialog, DialogInterface.BUTTON_NEGATIVE);
+                        }
+                        dialog.dismiss();
+                    });
+                    buttonsLayout.addView(negButton);
+                }
+                
+                mainLayout.addView(buttonsLayout);
+                container.addView(mainLayout);
+                
+                // Clicking outside mainLayout dismisses the dialog
+                container.setOnClickListener(v -> {
+                    mainLayout.animate()
+                            .translationY(screenHeight)
+                            .setDuration(200)
+                            .withEndAction(dialog::dismiss)
+                            .start();
+                });
+                mainLayout.setOnClickListener(v -> {});
+                
+                dialog.setContentView(container);
+                
+                // Configure Window properties for true Bottom Sheet presentation
+                android.view.Window window = dialog.getWindow();
+                if (window != null) {
+                    window.setGravity(android.view.Gravity.BOTTOM);
+                    window.getDecorView().setPadding(0, 0, 0, 0);
+                    window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+                    
+                    // Add standard bottom sheet background dimming scrim
+                    window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+                    window.setDimAmount(0.5f);
+                    
+                    window.getAttributes().windowAnimations = android.R.style.Animation_InputMethod;
+                    window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+                }
+                
+                mCreate = dialog;
+                return mCreate;
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] BottomSheetDialog instantiation failed: " + t.getMessage());
+                t.printStackTrace();
+            }
+        }
         if (shouldUseSystem()) {
             mCreate = mAlertDialog.create();
         } else {
@@ -387,17 +724,20 @@ public class AlertDialogWpp {
             }
         }
         try {
-            if (shouldUseSystem()) {
-                return mAlertDialog.show();
-            } else {
-                Dialog d = create();
-                d.show();
-                return d;
-            }
+            Dialog d = create();
+            d.show();
+            return d;
         } catch (Throwable t) {
             XposedBridge.log("[WAE] AlertDialogWpp.show() failed: " + t.getMessage());
-            // Last resort
-            try { return mAlertDialog.show(); } catch (Throwable ignored) { return null; }
+            try {
+                Dialog d = mAlertDialog.show();
+                if (mIsBottomSheet) {
+                    applyBottomSheetStyle(d);
+                }
+                return d;
+            } catch (Throwable ignored) {
+                return null;
+            }
         }
     }
 

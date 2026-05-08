@@ -236,28 +236,22 @@ public class FeatureLoader {
                         registerReceivers();
                         try {
                             boolean isSupported = supportedVersions.stream()
-                                    .anyMatch(s -> packageInfo.versionName.startsWith(s.replace(".xx", "")));
+                                    .anyMatch(s -> {
+                                        String target = s.endsWith(".xx") ? s.replace(".xx", ".") : s + ".";
+                                        return (packageInfo.versionName + ".").startsWith(target);
+                                    });
                             XposedBridge.log("[WAE] Version verification result for " + packageInfo.versionName + ": isSupported=" + isSupported);
                             if (!isSupported) {
                                 disableExpirationVersion(mApp.getClassLoader());
-                                if (!pref.getBoolean("bypass_version_check", false)) {
-                                    String sb = "Unsupported version: " +
-                                            packageInfo.versionName +
-                                            "\n" +
-                                            "Only the function of ignoring the expiration of the WhatsApp version has been applied!";
-                                    throw new Exception(sb);
-                                }
+                                String sb = "Unsupported version: " +
+                                        packageInfo.versionName +
+                                        "\n" +
+                                        "Only the function of ignoring the expiration of the WhatsApp version has been applied!";
+                                throw new Exception(sb);
                             }
                             
                             // Execute loading synchronously to ensure hooks are applied before app continues
-                            try {
-                                load(loader, providerPrefs, packageInfo, sourceDir);
-                            } catch (Throwable t) {
-                                XposedBridge.log("[WAE] Load failed: " + t.getMessage());
-                            } finally {
-                                isLoaded = true;
-                                loadLatch.countDown();
-                            }
+                            load(loader, providerPrefs, packageInfo, sourceDir);
                         } catch (Throwable e) {
                             XposedBridge.log(e);
                             var error = new ErrorItem();
@@ -270,6 +264,9 @@ public class FeatureLoader {
                                             && !s.getClassName().startsWith("com.android"))
                                     .map(StackTraceElement::toString).toArray()));
                             list.add(error);
+                        } finally {
+                            isLoaded = true;
+                            loadLatch.countDown();
                         }
                     }
                 });
@@ -287,24 +284,32 @@ public class FeatureLoader {
 
                             try {
                                 new AlertDialogWpp(activity)
-                                        .setTitle(getModuleString(ResId.string.error_detected))
-                                        .setMessage(getModuleString(ResId.string.version_error) + msg
+                                        .asBottomSheet()
+                                        .setTitle(getModuleString(ResId.string.error_detected, "Error Detected"))
+                                        .setMessage(getModuleString(ResId.string.version_error, "Version Compatibility Error\n") + msg
                                                 + "\n\nCurrent Version: " + currentVersion + "\nSupported Versions:\n"
                                                 + String.join("\n", supportedVersions))
-                                        .setPositiveButton(getModuleString(ResId.string.copy_to_clipboard),
+                                        .setPositiveButton(getModuleString(ResId.string.copy_to_clipboard, "Copy to Clipboard"),
                                                 (dialog, which) -> {
                                                     var clipboard = (ClipboardManager) mApp
                                                             .getSystemService(Context.CLIPBOARD_SERVICE);
                                                     ClipData clip = ClipData.newPlainText("text", String.join("\n",
                                                             list.stream().map(ErrorItem::toString).toArray(String[]::new)));
                                                     clipboard.setPrimaryClip(clip);
-                                                    Toast.makeText(mApp, getModuleString(ResId.string.copied_to_clipboard),
+                                                    Toast.makeText(mApp, getModuleString(ResId.string.copied_to_clipboard, "Copied to Clipboard"),
                                                             Toast.LENGTH_SHORT).show();
                                                     dialog.dismiss();
                                                 })
-                                        .setNegativeButton(getModuleString(ResId.string.check_for_latest_version),
+                                        .setNegativeButton(getModuleString(ResId.string.check_for_latest_version, "Check for Latest Version"),
                                                 (dialog, which) -> {
-                                                    CompletableFuture.runAsync(new UpdateChecker(activity, true));
+                                                    try {
+                                                        Intent intent = new Intent();
+                                                        intent.setComponent(new android.content.ComponentName("com.waenhancer", "com.waenhancer.activities.ChangelogActivity"));
+                                                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                        activity.startActivity(intent);
+                                                    } catch (Throwable t) {
+                                                        XposedBridge.log("[WAE] Failed to open ChangelogActivity: " + t.getMessage());
+                                                    }
                                                     dialog.dismiss();
                                                 })
                                         .show();

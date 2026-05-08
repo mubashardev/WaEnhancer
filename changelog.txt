@@ -1,3 +1,6 @@
+[Added]
+- When calls recording enabled, you can manage recordings directly from your WahtsApp calls tab.
+
 [Improvements]
 - Improved confirmation dialogs with action buttons
 

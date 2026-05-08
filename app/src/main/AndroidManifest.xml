@@ -139,6 +139,7 @@
         <activity
             android:name=".activities.RecordingsActivity"
             android:theme="@style/AppTheme"
+            android:exported="true"
             android:parentActivityName=".activities.MainActivity" />
 
 

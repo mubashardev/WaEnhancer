@@ -43,6 +43,9 @@ public class AlertDialogWpp {
     private CharSequence mNeutralButtonText;
     private DialogInterface.OnClickListener mNeutralListener;
     private Dialog mBottomSheetDialog;
+    private View mCustomView;
+    private CharSequence[] mItems;
+    private DialogInterface.OnClickListener mItemsListener;
 
     public static void initDialog(ClassLoader loader) {
         try {
@@ -233,6 +236,8 @@ public class AlertDialogWpp {
     }
 
     public AlertDialogWpp setItems(CharSequence[] items, DialogInterface.OnClickListener listener) {
+        mItems = items;
+        mItemsListener = listener;
         mAlertDialog.setItems(items, listener);
         if (!shouldUseSystem()) {
             try {
@@ -355,6 +360,7 @@ public class AlertDialogWpp {
     }
 
     public AlertDialogWpp setView(View view) {
+        mCustomView = view;
         mAlertDialog.setView(view);
         if (!shouldUseSystem()) {
             try {
@@ -378,7 +384,7 @@ public class AlertDialogWpp {
         return this;
     }
 
-    private boolean mIsBottomSheet = false;
+    private boolean mIsBottomSheet = true;
 
     public AlertDialogWpp asBottomSheet() {
         mIsBottomSheet = true;
@@ -412,6 +418,21 @@ public class AlertDialogWpp {
 
     public Dialog create() {
         if (mCreate != null) return mCreate;
+        if (mIsBottomSheet && mItems != null && mItems.length == 2 && mPositiveButtonText == null && mNegativeButtonText == null) {
+            mPositiveButtonText = mItems[0];
+            mPositiveListener = (dialogInterface, which) -> {
+                if (mItemsListener != null) {
+                    mItemsListener.onClick(dialogInterface, 0);
+                }
+            };
+            mNegativeButtonText = mItems[1];
+            mNegativeListener = (dialogInterface, which) -> {
+                if (mItemsListener != null) {
+                    mItemsListener.onClick(dialogInterface, 1);
+                }
+            };
+            mItems = null;
+        }
         if (mIsBottomSheet) {
             try {
                 android.app.Dialog dialog = new android.app.Dialog(mContext, android.R.style.Theme_Translucent_NoTitleBar);
@@ -591,12 +612,73 @@ public class AlertDialogWpp {
                 scrollParams.weight = 1.0f;
                 scrollView.setLayoutParams(scrollParams);
                 
-                android.widget.TextView messageView = new android.widget.TextView(mContext);
-                messageView.setText(mMessageText != null ? mMessageText : "Are you sure you want to proceed?");
-                messageView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
-                messageView.setTextColor(secondaryTextColor);
-                scrollView.addView(messageView);
-                mainLayout.addView(scrollView);
+                if (mMessageText != null) {
+                    android.widget.TextView messageView = new android.widget.TextView(mContext);
+                    messageView.setText(mMessageText);
+                    messageView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
+                    messageView.setTextColor(secondaryTextColor);
+                    scrollView.addView(messageView);
+                    mainLayout.addView(scrollView);
+                } else if (mItems == null && mCustomView == null) {
+                    android.widget.TextView messageView = new android.widget.TextView(mContext);
+                    messageView.setText("Are you sure you want to proceed?");
+                    messageView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
+                    messageView.setTextColor(secondaryTextColor);
+                    scrollView.addView(messageView);
+                    mainLayout.addView(scrollView);
+                }
+                
+                if (mCustomView != null) {
+                    try {
+                        android.view.ViewParent parent = mCustomView.getParent();
+                        if (parent instanceof android.view.ViewGroup) {
+                            ((android.view.ViewGroup) parent).removeView(mCustomView);
+                        }
+                    } catch (Exception ignored) {}
+                    android.widget.LinearLayout.LayoutParams customParams = new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                    customParams.topMargin = dp8;
+                    customParams.bottomMargin = dp8;
+                    mCustomView.setLayoutParams(customParams);
+                    mainLayout.addView(mCustomView);
+                }
+                
+                if (mItems != null) {
+                    android.widget.LinearLayout itemsLayout = new android.widget.LinearLayout(mContext);
+                    itemsLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    android.widget.LinearLayout.LayoutParams itemsParams = new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                    itemsParams.topMargin = dp8;
+                    itemsParams.bottomMargin = dp8;
+                    itemsLayout.setLayoutParams(itemsParams);
+                    
+                    for (int i = 0; i < mItems.length; i++) {
+                        final int index = i;
+                        android.widget.TextView itemView = new android.widget.TextView(mContext);
+                        android.widget.LinearLayout.LayoutParams itemLp = new android.widget.LinearLayout.LayoutParams(
+                                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                        itemView.setLayoutParams(itemLp);
+                        itemView.setText(mItems[index]);
+                        itemView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
+                        itemView.setTextColor(primaryTextColor);
+                        itemView.setGravity(android.view.Gravity.CENTER_VERTICAL);
+                        itemView.setPadding((int) (16 * density), (int) (14 * density), (int) (16 * density), (int) (14 * density));
+                        
+                        android.graphics.drawable.ColorDrawable normalBg = new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT);
+                        android.content.res.ColorStateList itemRippleColor = android.content.res.ColorStateList.valueOf(secondaryTextColor & 0x15FFFFFF | 0x15000000);
+                        android.graphics.drawable.RippleDrawable itemRipple = new android.graphics.drawable.RippleDrawable(itemRippleColor, normalBg, null);
+                        itemView.setBackground(itemRipple);
+                        
+                        itemView.setOnClickListener(v -> {
+                            if (mItemsListener != null) {
+                                mItemsListener.onClick(dialog, index);
+                            }
+                            dialog.dismiss();
+                        });
+                        itemsLayout.addView(itemView);
+                    }
+                    mainLayout.addView(itemsLayout);
+                }
                 
                 // Bottom Buttons Layout (Stacked Vertically for Spacious Premium Look)
                 android.widget.LinearLayout buttonsLayout = new android.widget.LinearLayout(mContext);

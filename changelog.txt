@@ -1,6 +1,23 @@
 [Added]
-- Added support for 2.26.18.xx WA/WB
+- Added support for 2.26.18.xx WA/WB versions
+- Implemented direct call recording management from the WhatsApp Calls tab
+- Added native WhatsApp contact picker integration for privacy settings
+- Implemented Bottom Sheet support in AlertDialogWpp for enhanced UI flexibility
+- Added custom view and list item support to Bottom Sheet dialogs
+- Added structured category parsing and formatting to the Changelog screen
 
 [Improvements]
-- Improved IG Style Stories
-- WaEnhancerX Changelog Screen improved
+- Improved IG Style Stories with better navigation logic
+- Enhanced Changelog UI with expandable categories and better formatting
+- Optimized hook performance using reflection field caching
+- Improved layout responsiveness and button labeling in dialogs
+- Applied elevation and ripple effects to various UI components
+- Enhanced Ghost Mode preference persistence and synchronization
+- Added fallback strings for better resource resolution across WA versions
+
+[Fixes]
+- Fixed crashes related to uninitialized FilePicker launchers
+- Fixed NullPointerException in fragment animations during detachment
+- Fixed Firebase initialization deadlocks to prevent app freezes
+- Fixed theme preference crashes and button text visibility in Dark Mode
+- Improved number matching logic in Call Privacy feature

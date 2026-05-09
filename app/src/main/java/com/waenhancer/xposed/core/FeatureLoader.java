@@ -128,6 +128,7 @@ public class FeatureLoader {
     private static boolean needsSnackbar = false;
     private static final java.util.concurrent.CountDownLatch loadLatch = new java.util.concurrent.CountDownLatch(1);
     private static volatile boolean isLoaded = false;
+    private static boolean isRestartDialogShowing = false;
 
     public final static String PACKAGE_WPP = "com.whatsapp";
     public final static String PACKAGE_BUSINESS = "com.whatsapp.w4b";
@@ -403,9 +404,10 @@ public class FeatureLoader {
                         
                         boolean needRestartPref = pref.getBoolean("need_restart", false);
                         boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
-                        XposedBridge.log("[WAE] Restart Check on RESUMED - Pref: " + needRestartPref + ", Global: " + needRestartGlobal);
+                        XposedBridge.log("[WAE] Restart Check on RESUMED - Pref: " + needRestartPref + ", Global: " + needRestartGlobal + ", isShowing: " + isRestartDialogShowing);
                         
-                        if (needRestartPref || needRestartGlobal) {
+                        if ((needRestartPref || needRestartGlobal) && !isRestartDialogShowing) {
+                            isRestartDialogShowing = true;
                             String msg = getModuleString(ResId.string.restart_wpp);
                             String btnRestart = getModuleString(ResId.string.restart_whatsapp);
                             String btnCancel = getModuleString(android.R.string.cancel);
@@ -437,12 +439,14 @@ public class FeatureLoader {
                                     .setMessage(msg)
                                     .setPositiveButton(btnRestart, (dialog, which) -> {
                                         XposedBridge.log("[WAE] User clicked RESTART WHATSAPP");
+                                        isRestartDialogShowing = false;
                                         pref.edit().putBoolean("need_restart", false)
                                             .remove("pending_restart_changes").apply();
                                         WppCore.setPrivBooleanSync("need_restart", false);
                                         Utils.doRestart(activity);
                                     })
                                     .setNegativeButton(btnCancel, (dialog, which) -> {
+                                        isRestartDialogShowing = false;
                                         pref.edit().putBoolean("need_restart", false)
                                             .remove("pending_restart_changes").apply();
                                         WppCore.setPrivBooleanSync("need_restart", false);

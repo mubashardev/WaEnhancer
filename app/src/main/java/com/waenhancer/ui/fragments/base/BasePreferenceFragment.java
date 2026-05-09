@@ -200,7 +200,19 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         }
         
         // Flag that a restart is needed for the changes to take effect in WhatsApp
-        if (s != null && !s.equals("need_restart") && !s.equals("release_channel")) {
+        // Ignore internal/meta keys to avoid synchronization loops
+        boolean isInternalKey = s == null || 
+                s.equals("need_restart") || 
+                s.equals("release_channel") || 
+                s.equals("pending_restart_changes") || 
+                s.equals("ignored_version") || 
+                s.equals("ignored_timestamp") || 
+                s.equals("update_alert_frequency") || 
+                s.equals("last_update_check") || 
+                s.equals("show_hook_toast") || 
+                s.equals("open_wae");
+
+        if (!isInternalKey) {
             android.util.Log.d("WAE_Manager", "Setting need_restart = true due to change in: " + s);
             
             // Track what changed for the restart dialog

@@ -3,4 +3,4 @@
 
 [Fixes]
 - Fixed crashes HideReciept, HideSeen, FilterGroup
-- Fixed Multiple Restart Dialogs Bug
+- Fixed Multiple Restart Dialogs Bug 

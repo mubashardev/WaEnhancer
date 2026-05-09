@@ -172,8 +172,25 @@ jobs:
 
       - name: Setup Google Services
         run: |
-          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
-            echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
+          SECRET="${{ secrets.GOOGLE_SERVICES_JSON }}"
+          if [ -n "$SECRET" ]; then
+            # Check if it starts with { (raw JSON) or needs decoding
+            if [[ "$SECRET" == \{* ]]; then
+              echo "$SECRET" > app/google-services.json
+              echo "Google Services: Configuration injected from raw JSON secret"
+            else
+              echo "$SECRET" | base64 --decode > app/google-services.json
+              echo "Google Services: Configuration injected from base64 secret"
+            fi
+            
+            # Verify file exists and is not empty
+            if [ -s "app/google-services.json" ]; then
+              echo "Google Services: app/google-services.json created successfully"
+            else
+              echo "::warning::Google Services file was not created or is empty!"
+            fi
+          else
+            echo "Google Services: GOOGLE_SERVICES_JSON secret is missing. Crashlytics will be disabled for this build."
           fi
 
       - name: Build WhatsApp flavor

@@ -11,6 +11,8 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+// Apply Google Services and Crashlytics only if the configuration file is present.
+// This allows the project to be built without Firebase if secrets are missing (e.g. in forks).
 val hasGoogleServices = file("google-services.json").exists()
 if (hasGoogleServices) {
     apply(plugin = "com.google.gms.google-services")
@@ -144,6 +146,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            
+            if (hasGoogleServices) {
+                configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                    mappingFileUploadEnabled = true
+                }
+            }
         }
     }
     compileOptions {

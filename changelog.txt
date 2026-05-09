@@ -1,3 +1,7 @@
+[Added]
+- Tasker Automation Integration [Experimental] - Send & Receive WhatsApp messages through intents (Tasker, MacroDroid, Automate)
+
+
 [Restored]
 - Option to hide ads between status updates [Not Tested]
 

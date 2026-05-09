@@ -179,6 +179,18 @@
             android:parentActivityName=".activities.ChangelogActivity" />
 
         <activity
+            android:name=".activities.TaskerGuideActivity"
+            android:theme="@style/AppTheme"
+            android:label="Automation Guide"
+            android:parentActivityName=".activities.MainActivity" />
+
+        <activity
+            android:name=".activities.TaskerHistoryActivity"
+            android:theme="@style/AppTheme"
+            android:label="Automation History"
+            android:parentActivityName=".activities.MainActivity" />
+
+        <activity
             android:name=".activities.LogsActivity"
             android:label="@string/logs"
             android:theme="@style/AppTheme"

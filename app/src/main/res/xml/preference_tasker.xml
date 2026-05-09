@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="Integration">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:icon="@drawable/ic_round_settings_24"
+            app:key="tasker"
+            app:summary="Allow external automation apps (Tasker, MacroDroid, Automate) to send and receive WhatsApp messages through intents"
+            app:title="Enable Tasker/Automation Integration" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="Resources">
+
+        <Preference
+            app:dependency="tasker"
+            app:icon="@drawable/ic_round_bug_report_24"
+            app:key="tasker_guide"
+            app:summary="Learn how to set up intents, view available variables, and see example automations"
+            app:title="Automation Guide &amp; Samples" />
+
+        <Preference
+            app:dependency="tasker"
+            app:icon="@drawable/ic_logs"
+            app:key="tasker_history"
+            app:summary="View a log of recent automation events and their status"
+            app:title="Automation History" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

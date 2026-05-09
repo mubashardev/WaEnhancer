@@ -123,6 +123,21 @@ public class DeletedMessagesProvider extends ContentProvider {
             return android.os.Bundle.EMPTY;
         }
 
+        if ("log_tasker_event".equals(method) && extras != null) {
+            String type = extras.getString("type");
+            String targetNumber = extras.getString("targetNumber");
+            String messagePreview = extras.getString("messagePreview");
+            if (type != null && targetNumber != null) {
+                try {
+                    com.waenhancer.utils.TaskerHistoryManager.getInstance(context)
+                            .logEvent(type, targetNumber, messagePreview != null ? messagePreview : "");
+                } catch (Exception e) {
+                    android.util.Log.e("DeletedMessagesProvider", "Failed to log tasker event", e);
+                }
+            }
+            return android.os.Bundle.EMPTY;
+        }
+
         if ("put_preference".equals(method) && extras != null) {
             String key = extras.getString("key");
             Object value = extras.get("value");

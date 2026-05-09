@@ -103,8 +103,9 @@
             app:summary="@string/textonahora_sum"
             app:title="@string/textonahora" />
 
-        <rikka.material.preference.MaterialSwitchPreference
-            app:key="tasker"
+        <Preference
+            app:fragment="com.waenhancer.ui.fragments.TaskerPreferenceFragment"
+            app:iconSpaceReserved="false"
             app:summary="@string/enable_tasker_automation_sum"
             app:title="@string/enable_tasker_automation" />
 

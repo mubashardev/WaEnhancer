@@ -1,4 +1,5 @@
 package com.waenhancer;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
 
 import android.app.Activity;
 
@@ -201,15 +202,26 @@ public class UpdateChecker implements Runnable {
 
     private void showAlreadyLatestDialog() {
         try {
-            var dialog = new AlertDialogWpp(mActivity);
-            dialog.setTitle(mActivity.getString(R.string.error_detected));
-            dialog.setMessage(mActivity.getString(R.string.already_have_latest));
-            dialog.setPositiveButton(mActivity.getString(R.string.contact_developer), (dialog1, which) -> {
-                Utils.openLink(mActivity, "https://t.me/mubashardev");
-                dialog1.dismiss();
-            });
-            dialog.setNegativeButton(mActivity.getString(R.string.cancel), (dialog1, which) -> dialog1.dismiss());
-            dialog.show();
+            boolean isXposed = !BuildConfig.APPLICATION_ID.equals(mActivity.getPackageName());
+            String title = mActivity.getString(R.string.error_detected);
+            String message = mActivity.getString(R.string.already_have_latest);
+            String contactText = mActivity.getString(R.string.contact_developer);
+
+            if (!isXposed) {
+                BottomSheetHelper.showConfirmation(mActivity, title, message, contactText, false, () -> {
+                    Utils.openLink(mActivity, "https://t.me/mubashardev");
+                });
+            } else {
+                var dialog = new AlertDialogWpp(mActivity);
+                dialog.setTitle(title);
+                dialog.setMessage(message);
+                dialog.setPositiveButton(contactText, (dialog1, which) -> {
+                    Utils.openLink(mActivity, "https://t.me/mubashardev");
+                    dialog1.dismiss();
+                });
+                dialog.setNegativeButton(mActivity.getString(R.string.cancel), (dialog1, which) -> dialog1.dismiss());
+                dialog.show();
+            }
         } catch (Exception e) {
             XposedBridge.log("[" + TAG + "] Error showing already latest dialog: " + e.getMessage());
         }
@@ -218,8 +230,6 @@ public class UpdateChecker implements Runnable {
     private void showUpdateDialog(String version, String tagName, String changelog, String publishedAt, String downloadUrl) {
         try {
             var markwon = Markwon.create(mActivity);
-            var dialog = new AlertDialogWpp(mActivity);
-
             String releaseTypeBadge = getReleaseTypeBadge(tagName);
             String formattedDate = formatPublishedDate(publishedAt);
 
@@ -230,17 +240,31 @@ public class UpdateChecker implements Runnable {
             }
             message.append("\n### What's New\n\n").append(changelog);
 
-            dialog.setTitle(releaseTypeBadge + " New Update Available!");
-            dialog.setMessage(markwon.toMarkdown(message.toString()));
-            dialog.setNegativeButton("Ignore", (dialog1, which) -> dialog1.dismiss());
-            dialog.setPositiveButton("Update Now", (dialog1, which) -> {
-                android.content.Intent intent = new android.content.Intent();
-                intent.setComponent(new android.content.ComponentName("com.waenhancer", "com.waenhancer.activities.ChangelogActivity"));
-                intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                mActivity.startActivity(intent);
-                dialog1.dismiss();
-            });
-            dialog.show();
+            String title = releaseTypeBadge + " New Update Available!";
+            CharSequence styledMessage = markwon.toMarkdown(message.toString());
+            boolean isXposed = !BuildConfig.APPLICATION_ID.equals(mActivity.getPackageName());
+
+            if (!isXposed) {
+                BottomSheetHelper.showConfirmation(mActivity, title, styledMessage, "Update Now", false, () -> {
+                    android.content.Intent intent = new android.content.Intent();
+                    intent.setComponent(new android.content.ComponentName("com.waenhancer", "com.waenhancer.activities.ChangelogActivity"));
+                    intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mActivity.startActivity(intent);
+                });
+            } else {
+                var dialog = new AlertDialogWpp(mActivity);
+                dialog.setTitle(title);
+                dialog.setMessage(styledMessage);
+                dialog.setNegativeButton("Ignore", (dialog1, which) -> dialog1.dismiss());
+                dialog.setPositiveButton("Update Now", (dialog1, which) -> {
+                    android.content.Intent intent = new android.content.Intent();
+                    intent.setComponent(new android.content.ComponentName("com.waenhancer", "com.waenhancer.activities.ChangelogActivity"));
+                    intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mActivity.startActivity(intent);
+                    dialog1.dismiss();
+                });
+                dialog.show();
+            }
         } catch (Exception e) {
             XposedBridge.log("[" + TAG + "] Error showing update dialog: " + e.getMessage());
         }

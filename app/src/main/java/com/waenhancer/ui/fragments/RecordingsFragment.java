@@ -37,6 +37,8 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class RecordingsFragment extends Fragment implements RecordingsAdapter.OnRecordingActionListener {
 
@@ -46,6 +48,7 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
     private final List<File> baseDirs = new ArrayList<>();
     private int currentSortType = 1;
     private ActionMode actionMode;
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     @Nullable
     @Override
@@ -165,24 +168,44 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
             return;
         }
 
-        allRecordings.clear();
-        try {
-            for (File baseDir : baseDirs) {
-                if (baseDir.exists() && baseDir.isDirectory()) {
-                    traverseDirectory(baseDir);
+        binding.swipeRefresh.setRefreshing(true);
+        executorService.execute(() -> {
+            List<Recording> recordings = new ArrayList<>();
+            try {
+                for (File baseDir : baseDirs) {
+                    if (baseDir.exists() && baseDir.isDirectory()) {
+                        traverseDirectory(baseDir, recordings);
+                    }
+                }
+
+                applySort(recordings);
+
+                if (getActivity() != null) {
+                    requireActivity().runOnUiThread(() -> {
+                        if (binding == null) {
+                            return;
+                        }
+                        allRecordings.clear();
+                        allRecordings.addAll(recordings);
+                        adapter.setRecordings(allRecordings);
+                        binding.emptyView.setVisibility(allRecordings.isEmpty() ? View.VISIBLE : View.GONE);
+                        binding.recyclerView.setVisibility(allRecordings.isEmpty() ? View.GONE : View.VISIBLE);
+                        binding.swipeRefresh.setRefreshing(false);
+                    });
+                }
+            } catch (Exception ignored) {
+                if (getActivity() != null) {
+                    requireActivity().runOnUiThread(() -> {
+                        if (binding != null) {
+                            binding.swipeRefresh.setRefreshing(false);
+                        }
+                    });
                 }
             }
-
-            applySort();
-            adapter.setRecordings(allRecordings);
-            binding.emptyView.setVisibility(allRecordings.isEmpty() ? View.VISIBLE : View.GONE);
-            binding.recyclerView.setVisibility(allRecordings.isEmpty() ? View.GONE : View.VISIBLE);
-        } finally {
-            binding.swipeRefresh.setRefreshing(false);
-        }
+        });
     }
 
-    private void traverseDirectory(@NonNull File dir) {
+    private void traverseDirectory(@NonNull File dir, List<Recording> recordings) {
         File[] files = dir.listFiles();
         if (files == null) {
             return;
@@ -190,24 +213,24 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
 
         for (File file : files) {
             if (file.isDirectory()) {
-                traverseDirectory(file);
+                traverseDirectory(file, recordings);
                 continue;
             }
 
             String name = file.getName().toLowerCase();
             if (name.endsWith(".wav") || name.endsWith(".mp3") || name.endsWith(".aac") || name.endsWith(".m4a")) {
-                allRecordings.add(new Recording(file));
+                recordings.add(new Recording(file));
             }
         }
     }
 
-    private void applySort() {
+    private void applySort(List<Recording> recordings) {
         switch (currentSortType) {
-            case 2 -> allRecordings.sort(Comparator.comparing(Recording::getContactName, String.CASE_INSENSITIVE_ORDER));
-            case 3 -> allRecordings.sort((left, right) -> Long.compare(right.getDuration(), left.getDuration()));
-            case 4 -> allRecordings.sort(Comparator.comparing(Recording::getContactName, String.CASE_INSENSITIVE_ORDER)
+            case 2 -> recordings.sort(Comparator.comparing(Recording::getContactName, String.CASE_INSENSITIVE_ORDER));
+            case 3 -> recordings.sort((left, right) -> Long.compare(right.getDuration(), left.getDuration()));
+            case 4 -> recordings.sort(Comparator.comparing(Recording::getContactName, String.CASE_INSENSITIVE_ORDER)
                     .thenComparing((left, right) -> Long.compare(right.getDate(), left.getDate())));
-            default -> allRecordings.sort((left, right) -> Long.compare(right.getDate(), left.getDate()));
+            default -> recordings.sort((left, right) -> Long.compare(right.getDate(), left.getDate()));
         }
     }
 
@@ -356,5 +379,11 @@ public class RecordingsFragment extends Fragment implements RecordingsAdapter.On
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        executorService.shutdown();
     }
 }

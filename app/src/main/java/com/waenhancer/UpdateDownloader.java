@@ -1,4 +1,5 @@
 package com.waenhancer;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
 
 import android.app.Activity;
 import android.content.Context;
@@ -186,9 +187,10 @@ public class UpdateDownloader {
         }
 
         // Dynamically get resource IDs for layout and views
-        int layoutId = isXposed ? modContext.getResources().getIdentifier("dialog_update_progress", "layout", BuildConfig.APPLICATION_ID) : R.layout.dialog_update_progress;
+        int layoutId = isXposed ? modContext.getResources().getIdentifier("bottom_sheet_update_progress", "layout", BuildConfig.APPLICATION_ID) : R.layout.bottom_sheet_update_progress;
         int progressBarId = isXposed ? modContext.getResources().getIdentifier("update_progress_bar", "id", BuildConfig.APPLICATION_ID) : R.id.update_progress_bar;
         int statusTextId = isXposed ? modContext.getResources().getIdentifier("update_status_text", "id", BuildConfig.APPLICATION_ID) : R.id.update_status_text;
+        int cancelBtnId = isXposed ? modContext.getResources().getIdentifier("bs_cancel_btn", "id", BuildConfig.APPLICATION_ID) : R.id.bs_cancel_btn;
 
         if (layoutId == 0) {
             Toast.makeText(activity, "Error: Could not load update layout", Toast.LENGTH_SHORT).show();
@@ -198,20 +200,22 @@ public class UpdateDownloader {
         android.view.View dialogView = android.view.LayoutInflater.from(modContext).inflate(layoutId, null);
         var progressBar = (com.google.android.material.progressindicator.LinearProgressIndicator) dialogView.findViewById(progressBarId);
         var statusText = (com.google.android.material.textview.MaterialTextView) dialogView.findViewById(statusTextId);
+        var cancelBtn = (com.google.android.material.button.MaterialButton) dialogView.findViewById(cancelBtnId);
 
         // Final references for inner class
         final Call[] currentCall = {null};
 
-        var dialogBuilder = new com.waenhancer.xposed.core.components.AlertDialogWpp(activity)
-                .setTitle("Downloading Update")
-                .setView(dialogView)
-                .setNegativeButton("Cancel", (d, w) -> {
-                    if (currentCall[0] != null) currentCall[0].cancel();
-                    d.dismiss();
-                });
-
-        var dialog = dialogBuilder.create();
+        var dialog = BottomSheetHelper.createStyledDialog(activity);
+        dialog.setContentView(dialogView);
         dialog.setCanceledOnTouchOutside(false);
+
+        if (cancelBtn != null) {
+            cancelBtn.setOnClickListener(v -> {
+                if (currentCall[0] != null) currentCall[0].cancel();
+                dialog.dismiss();
+            });
+        }
+
         dialog.show();
 
         currentCall[0] = downloadApk(activity, url, version, new DownloadCallback() {

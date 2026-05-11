@@ -134,8 +134,8 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                 // Fast path: skip host resources and zero IDs
                 if (id <= 0 || (id & 0xFF000000) != 0x7F000000) return;
 
-                // Fast path: skip if we know it's not one of our resources
-                if (!XResManager.validModuleIds.isEmpty() && !XResManager.validModuleIds.contains(id)) return;
+                // Fast path: skip if we know it's not one of our resources, or if valid IDs list is not populated yet
+                if (XResManager.validModuleIds.isEmpty() || !XResManager.validModuleIds.contains(id)) return;
 
                 if (Boolean.TRUE.equals(inResourceHook.get())) return;
 

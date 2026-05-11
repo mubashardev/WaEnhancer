@@ -29,7 +29,7 @@ public class XResManager {
         }
 
         // Fast check: is it one of our resources?
-        if (!validModuleIds.isEmpty() && !validModuleIds.contains(moduleId)) {
+        if (validModuleIds.isEmpty() || !validModuleIds.contains(moduleId)) {
             return moduleId;
         }
 

@@ -31,7 +31,16 @@ public class MessageStore {
         var dataDir = Utils.getApplication().getFilesDir().getParentFile();
         var dbFile = new File(dataDir, "/databases/msgstore.db");
         if (!dbFile.exists()) return;
-        sqLiteDatabase = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+        try {
+            sqLiteDatabase = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+        } catch (Exception e) {
+            XposedBridge.log("Failed to open msgstore.db as read-write, falling back to read-only: " + e.getMessage());
+            try {
+                sqLiteDatabase = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+            } catch (Exception ex) {
+                XposedBridge.log("Failed to open msgstore.db even as read-only: " + ex.getMessage());
+            }
+        }
     }
 
     public static MessageStore getInstance() {
@@ -183,6 +192,10 @@ public class MessageStore {
     public synchronized void executeSQL(String sql) {
         try {
             if (sqLiteDatabase == null) return;
+            if (sqLiteDatabase.isReadOnly()) {
+                XposedBridge.log("Cannot execute SQL because database is opened in read-only mode: " + sql);
+                return;
+            }
             sqLiteDatabase.execSQL(sql);
         } catch (Exception e) {
             XposedBridge.log(e);
@@ -192,7 +205,15 @@ public class MessageStore {
     public void storeMessageRead(String messageId) {
         if (sqLiteDatabase == null) return;
         XposedBridge.log("storeMessageRead: " + messageId);
-        sqLiteDatabase.execSQL("UPDATE message SET status = 1 WHERE key_id = \"" + messageId + "\"");
+        try {
+            if (sqLiteDatabase.isReadOnly()) {
+                XposedBridge.log("Cannot storeMessageRead because database is opened in read-only mode for key: " + messageId);
+                return;
+            }
+            sqLiteDatabase.execSQL("UPDATE message SET status = 1 WHERE key_id = \"" + messageId + "\"");
+        } catch (Exception e) {
+            XposedBridge.log("Failed to storeMessageRead: " + e.getMessage());
+        }
     }
 
     public boolean isReadMessageStatus(String messageId) {

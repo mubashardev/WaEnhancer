@@ -467,7 +467,18 @@ public class HomeFragment extends BaseFragment {
         FilePicker.setOnUriPickedListener((uri) -> {
             try {
                 try (var input = context.getContentResolver().openInputStream(uri)) {
-                    var data = IOUtils.toString(input);
+                    java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+                    int nRead;
+                    byte[] dataBuffer = new byte[8192];
+                    int totalRead = 0;
+                    while ((nRead = input.read(dataBuffer, 0, dataBuffer.length)) != -1) {
+                        buffer.write(dataBuffer, 0, nRead);
+                        totalRead += nRead;
+                        if (totalRead > 5 * 1024 * 1024) { // 5 MB limit
+                            throw new RuntimeException("File is too large to be a valid config.");
+                        }
+                    }
+                    var data = buffer.toString("UTF-8");
                     var prefs = PreferenceManager.getDefaultSharedPreferences(context);
                     var jsonObject = new JSONObject(data);
                     prefs.getAll().forEach((key, value) -> prefs.edit().remove(key).apply());

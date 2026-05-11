@@ -73,6 +73,19 @@ public class HookProvider extends ContentProvider {
             }
             return Bundle.EMPTY;
         }
+        if ("record_crash".equals(method) && extras != null) {
+            String stacktrace = extras.getString("stacktrace");
+            if (stacktrace != null && !stacktrace.isEmpty()) {
+                try {
+                    com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().log("WhatsApp Crash:\n" + stacktrace);
+                    com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(
+                            new com.waenhancer.utils.WhatsAppCrashException("WhatsApp Crash: \n" + stacktrace));
+                } catch (Exception e) {
+                    android.util.Log.e("WAE_Provider", "Failed to record crash to Crashlytics: " + e.getMessage());
+                }
+            }
+            return Bundle.EMPTY;
+        }
         if ("get_preference".equals(method) && extras != null) {
             String key = extras.getString("key");
             Bundle result = new Bundle();

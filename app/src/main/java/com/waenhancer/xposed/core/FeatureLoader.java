@@ -188,6 +188,21 @@ public class FeatureLoader {
                             return;
                         }
 
+                        final Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
+                        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+                            try {
+                                String stacktrace = android.util.Log.getStackTraceString(throwable);
+                                android.os.Bundle extras = new android.os.Bundle();
+                                extras.putString("stacktrace", stacktrace);
+                                mApp.getContentResolver().call(
+                                        android.net.Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider"),
+                                        "record_crash", null, extras);
+                            } catch (Exception ignored) {}
+                            if (defaultHandler != null) {
+                                defaultHandler.uncaughtException(thread, throwable);
+                            }
+                        });
+
                         // Inject Booloader Spoofer
                         if (pref.getBoolean("bootloader_spoofer", false)) {
                             HookBL.hook(loader, pref);

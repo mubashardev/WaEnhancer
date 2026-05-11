@@ -3022,40 +3022,134 @@ public class Unobfuscator {
 
     public static Field loadWaContactGetWaNameField(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getField(classLoader, () -> {
-            var method = dexkit
-                    .findMethod(FindMethod.create().matcher(
-                            MethodMatcher.create().addUsingString("ContactManagerDatabase/updateContactWAName")))
-                    .singleOrNull();
-            if (method == null)
-                throw new NoSuchMethodException("WaContactGetWaName field not found");
             var waContact = loadWaContactClass(classLoader).getName();
-            var usingFields = method.getUsingFields();
-            for (var usingField : usingFields) {
-                var field = usingField.getField();
-                if (field.getClassName().equals(waContact)
-                        && field.getType().getName().equals(String.class.getName())) {
-                    return field.getFieldInstance(classLoader);
+
+            // Strategy 1: Iterate over all methods matching the string
+            try {
+                var methods = dexkit.findMethod(FindMethod.create().matcher(
+                        MethodMatcher.create().addUsingString("ContactManagerDatabase/updateContactWAName")));
+                if (!methods.isEmpty()) {
+                    for (var methodData : methods) {
+                        var usingFields = methodData.getUsingFields();
+                        for (var usingField : usingFields) {
+                            var field = usingField.getField();
+                            if (field.getClassName().equals(waContact)
+                                    && field.getType().getName().equals(String.class.getName())) {
+                                return field.getFieldInstance(classLoader);
+                            }
+                        }
+                    }
                 }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] updateContactWAName method search error: " + t.getMessage());
             }
-            throw new NoSuchMethodException("WaContactGetWaName field not found");
+
+            // Strategy 2: Fallback to searching ContactManagerDatabase/updateGroupInfo for any String fields of WaContact
+            try {
+                var methods = dexkit.findMethod(FindMethod.create().matcher(
+                        MethodMatcher.create().addUsingString("ContactManagerDatabase/updateGroupInfo")));
+                if (!methods.isEmpty()) {
+                    for (var methodData : methods) {
+                        var usingFields = methodData.getUsingFields();
+                        for (var usingField : usingFields) {
+                            var field = usingField.getField();
+                            if (field.getClassName().equals(waContact)
+                                    && field.getType().getName().equals(String.class.getName())) {
+                                return field.getFieldInstance(classLoader);
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] updateGroupInfo field search error: " + t.getMessage());
+            }
+
+            // Strategy 3: Dynamic reflection fallback on WaContact class
+            try {
+                var clazz = loadWaContactClass(classLoader);
+                for (var f : clazz.getDeclaredFields()) {
+                    if (f.getType() == String.class
+                            && !java.lang.reflect.Modifier.isStatic(f.getModifiers())
+                            && java.lang.reflect.Modifier.isPublic(f.getModifiers())) {
+                        return f;
+                    }
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] WaContact class reflection search error for field: " + t.getMessage());
+            }
+
+            throw new NoSuchMethodException("WaContactGetWaName field not found after trying all search strategies");
         });
     }
 
     public static Method loadWaContactDisplayNameMethod(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
-            var methods = dexkit.findMethod(FindMethod.create()
-                    .matcher(MethodMatcher.create().addUsingString("ContactManagerDatabase/updateGroupInfo")));
-            if (methods.isEmpty())
-                throw new NoSuchMethodException("WaContactDiplayName not found");
-            var invokes = methods.get(0).getInvokes();
             var waContactClass = loadWaContactClass(classLoader);
-            for (var invoke : invokes) {
-                if (!invoke.getClassName().equals(waContactClass.getName()))
-                    continue;
-                if (invoke.getReturnTypeName().equals(String.class.getName()))
-                    return invoke.getMethodInstance(classLoader);
+
+            // Strategy 1: Search in methods matching "ContactManagerDatabase/updateGroupInfo"
+            try {
+                var methods = dexkit.findMethod(FindMethod.create()
+                        .matcher(MethodMatcher.create().addUsingString("ContactManagerDatabase/updateGroupInfo")));
+                if (!methods.isEmpty()) {
+                    for (var methodData : methods) {
+                        var invokes = methodData.getInvokes();
+                        for (var invoke : invokes) {
+                            if (!invoke.getClassName().equals(waContactClass.getName()))
+                                continue;
+                            if (invoke.getReturnTypeName().equals(String.class.getName())) {
+                                try {
+                                    var m = invoke.getMethodInstance(classLoader);
+                                    if (m != null && m.getParameterCount() == 0) {
+                                        return m;
+                                    }
+                                } catch (Throwable ignored) {}
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] updateGroupInfo method search error: " + t.getMessage());
             }
-            return null;
+
+            // Strategy 2: Search in methods matching "ContactManagerDatabase/updateContactWAName"
+            try {
+                var methods = dexkit.findMethod(FindMethod.create()
+                        .matcher(MethodMatcher.create().addUsingString("ContactManagerDatabase/updateContactWAName")));
+                if (!methods.isEmpty()) {
+                    for (var methodData : methods) {
+                        var invokes = methodData.getInvokes();
+                        for (var invoke : invokes) {
+                            if (!invoke.getClassName().equals(waContactClass.getName()))
+                                continue;
+                            if (invoke.getReturnTypeName().equals(String.class.getName())) {
+                                try {
+                                    var m = invoke.getMethodInstance(classLoader);
+                                    if (m != null && m.getParameterCount() == 0) {
+                                        return m;
+                                    }
+                                } catch (Throwable ignored) {}
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] updateContactWAName method search error: " + t.getMessage());
+            }
+
+            // Strategy 3: Dynamic reflection fallback on WaContact class
+            try {
+                for (var m : waContactClass.getDeclaredMethods()) {
+                    if (m.getParameterCount() == 0 && m.getReturnType() == String.class
+                            && !java.lang.reflect.Modifier.isStatic(m.getModifiers())
+                            && java.lang.reflect.Modifier.isPublic(m.getModifiers())) {
+                        return m;
+                    }
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] WaContact class reflection search error: " + t.getMessage());
+            }
+
+            throw new NoSuchMethodException("WaContactDisplayName method not found after trying all search strategies");
         });
     }
 

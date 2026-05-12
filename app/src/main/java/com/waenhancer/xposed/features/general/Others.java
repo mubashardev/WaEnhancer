@@ -21,6 +21,7 @@ import androidx.annotation.NonNull;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
+import com.waenhancer.xposed.core.db.MessageDeviceSourceStore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.features.listeners.ConversationItemListener;
 import com.waenhancer.xposed.utils.AnimationUtil;
@@ -53,11 +54,14 @@ import de.robv.android.xposed.XposedHelpers;
 import okhttp3.OkHttpClient;
 
 public class Others extends Feature {
+    private static final String DEVICE_SOURCE_SUFFIX_FIELD = "wae_device_source_suffix";
+    private static final String DEVICE_SOURCE_GUARD_FIELD = "wae_device_source_guard";
 
     private static java.lang.reflect.Field cachedAbsViewField;
     private static final Set<String> dumpedMessageIds = ConcurrentHashMap.newKeySet();
-    private static final String PRIMARY_DEVICE_SUFFIX = " | Primary device";
-    private static final String LINKED_DEVICE_SUFFIX = " | Linked device";
+    private static final Set<String> dumpedMessageRowViews = ConcurrentHashMap.newKeySet();
+    private static final String PRIMARY_DEVICE_EMOJI = " \uD83D\uDCF1";
+    private static final String LINKED_DEVICE_EMOJI = " \uD83D\uDDA5\uFE0F";
 
     public static HashMap<Integer, Boolean> propsBoolean = new HashMap<>();
     public static HashMap<Integer, Integer> propsInteger = new HashMap<>();
@@ -251,6 +255,7 @@ public class Others extends Feature {
 
         stampCopiedMessage();
         debugDumpMessageMetadata();
+        hookMessageDeviceSourceTextView();
         messageDeviceSourceTag();
 
         try {
@@ -525,16 +530,130 @@ public class Others extends Feature {
             public void onItemBind(FMessageWpp fMessage, ViewGroup viewGroup) {
                 var dateTextView = (TextView) viewGroup.findViewById(Utils.getID("date", "id"));
                 if (dateTextView == null) return;
+                var key = fMessage.getKey();
+                String messageId = key != null ? key.messageID : null;
+                XposedHelpers.setAdditionalInstanceField(dateTextView, "wae_device_source_message_id", messageId);
+                int resolvedDeviceId = resolveMessageDeviceId(messageId, fMessage);
+                XposedHelpers.setAdditionalInstanceField(dateTextView, DEVICE_SOURCE_SUFFIX_FIELD, getDeviceEmojiSuffix(resolvedDeviceId));
 
-                String text = String.valueOf(dateTextView.getText());
-                text = text.replace(PRIMARY_DEVICE_SUFFIX, "").replace(LINKED_DEVICE_SUFFIX, "");
+                dateTextView.post(() -> {
+                    Object currentId = XposedHelpers.getAdditionalInstanceField(dateTextView, "wae_device_source_message_id");
+                    if (!Objects.equals(currentId, messageId)) return;
+                    if (DEBUG) {
+                        logDebug("MessageDeviceSourceBind", "messageId=" + messageId
+                                + ", deviceId=" + resolvedDeviceId
+                                + ", deviceJid=" + fMessage.getDeviceJid()
+                                + ", before=" + dateTextView.getText());
+                    }
+                    bindMessageDeviceSource(dateTextView, resolvedDeviceId);
+                    applyDeviceSourceToMatchingTextViews(viewGroup, dateTextView, getDeviceEmojiSuffix(resolvedDeviceId));
+                    if (DEBUG && messageId != null && dumpedMessageRowViews.add(messageId)) {
+                        logDebug("MessageDeviceSourceRowViews", dumpRowTextViews(viewGroup));
+                    }
+                    if (DEBUG) {
+                        logDebug("MessageDeviceSourceApplied", "messageId=" + messageId
+                                + ", after=" + dateTextView.getText());
+                    }
+                });
+            }
+        });
+    }
 
-                if (fMessage.isPrimaryDeviceMessage()) {
-                    dateTextView.setText(text + PRIMARY_DEVICE_SUFFIX);
-                } else if (fMessage.isLinkedDeviceMessage()) {
-                    dateTextView.setText(text + LINKED_DEVICE_SUFFIX);
-                } else {
-                    dateTextView.setText(text);
+    private int resolveMessageDeviceId(String messageId, FMessageWpp fMessage) {
+        int liveDeviceId = fMessage.getDeviceId();
+        if (liveDeviceId >= 0) {
+            MessageDeviceSourceStore.getInstance().upsertDeviceId(messageId, liveDeviceId);
+            return liveDeviceId;
+        }
+        return MessageDeviceSourceStore.getInstance().getDeviceId(messageId);
+    }
+
+    private void bindMessageDeviceSource(TextView dateTextView, int deviceId) {
+        String baseText = String.valueOf(dateTextView.getText())
+                .replace(PRIMARY_DEVICE_EMOJI, "")
+                .replace(LINKED_DEVICE_EMOJI, "");
+
+        String suffix = getDeviceEmojiSuffix(deviceId);
+        XposedHelpers.setAdditionalInstanceField(dateTextView, DEVICE_SOURCE_SUFFIX_FIELD, suffix);
+
+        dateTextView.setText(baseText + suffix);
+    }
+
+    private String getDeviceEmojiSuffix(int deviceId) {
+        if (deviceId == 0) return PRIMARY_DEVICE_EMOJI;
+        if (deviceId > 0) return LINKED_DEVICE_EMOJI;
+        return "";
+    }
+
+    private void applyDeviceSourceToMatchingTextViews(ViewGroup root, TextView anchor, String suffix) {
+        if (suffix.isEmpty()) return;
+        String anchorBase = stripDeviceEmoji(String.valueOf(anchor.getText()));
+        if (TextUtils.isEmpty(anchorBase)) return;
+
+        forEachTextView(root, textView -> {
+            String current = String.valueOf(textView.getText());
+            String base = stripDeviceEmoji(current);
+            if (!anchorBase.equals(base)) return;
+
+            XposedHelpers.setAdditionalInstanceField(textView, DEVICE_SOURCE_SUFFIX_FIELD, suffix);
+            if (!current.equals(base + suffix)) {
+                textView.setText(base + suffix);
+            }
+        });
+    }
+
+    private String dumpRowTextViews(ViewGroup root) {
+        StringBuilder sb = new StringBuilder();
+        forEachTextView(root, textView -> {
+            sb.append("id=")
+                    .append(textView.getId())
+                    .append(", class=")
+                    .append(textView.getClass().getSimpleName())
+                    .append(", visibility=")
+                    .append(textView.getVisibility())
+                    .append(", text=")
+                    .append(textView.getText())
+                    .append(" | ");
+        });
+        return sb.toString();
+    }
+
+    private void forEachTextView(View view, java.util.function.Consumer<TextView> consumer) {
+        if (view instanceof TextView textView) {
+            consumer.accept(textView);
+            return;
+        }
+        if (!(view instanceof ViewGroup group)) return;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            forEachTextView(group.getChildAt(i), consumer);
+        }
+    }
+
+    private String stripDeviceEmoji(String text) {
+        return text.replace(PRIMARY_DEVICE_EMOJI, "").replace(LINKED_DEVICE_EMOJI, "");
+    }
+
+    private void hookMessageDeviceSourceTextView() {
+        XposedBridge.hookAllMethods(TextView.class, "setText", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                if (!(param.thisObject instanceof TextView textView)) return;
+                Object suffixObj = XposedHelpers.getAdditionalInstanceField(textView, DEVICE_SOURCE_SUFFIX_FIELD);
+                if (!(suffixObj instanceof String suffix) || suffix.isEmpty()) return;
+                if (Boolean.TRUE.equals(XposedHelpers.getAdditionalInstanceField(textView, DEVICE_SOURCE_GUARD_FIELD))) {
+                    return;
+                }
+
+                String current = String.valueOf(textView.getText());
+                String base = current.replace(PRIMARY_DEVICE_EMOJI, "").replace(LINKED_DEVICE_EMOJI, "");
+                String desired = base + suffix;
+                if (desired.equals(current)) return;
+
+                XposedHelpers.setAdditionalInstanceField(textView, DEVICE_SOURCE_GUARD_FIELD, true);
+                try {
+                    textView.setText(desired);
+                } finally {
+                    XposedHelpers.setAdditionalInstanceField(textView, DEVICE_SOURCE_GUARD_FIELD, false);
                 }
             }
         });

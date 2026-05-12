@@ -436,6 +436,56 @@
                             android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
 
+                    <!-- Sending limitations banner -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_medium"
+                        app:cardBackgroundColor="?attr/colorPrimaryContainer"
+                        app:cardCornerRadius="@dimen/card_radius_small"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="ℹ️"
+                                    android:textSize="18sp" />
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/spacing_small"
+                                    android:layout_weight="1"
+                                    android:text="Important Sending Notes"
+                                    android:textAppearance="?attr/textAppearanceBodySmall"
+                                    android:textColor="?attr/colorOnPrimaryContainer"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:lineSpacingMultiplier="1.3"
+                                android:text="• Active Notification Required: Since messages are sent via Android's RemoteInput reply mechanism, a status bar notification from the target contact must be actively present. It works perfectly for immediate auto-replies, but cannot initiate new chats.\n• Package Name: You can target either WaEnhancer ('com.waenhancer') or WhatsApp ('com.whatsapp' / 'com.whatsapp.w4b') as the package name in your automation app."
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnPrimaryContainer" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

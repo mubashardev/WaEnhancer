@@ -235,23 +235,24 @@ public class WppCore {
         return true;
     }
 
-    public static void sendMessage(Object userJidRaw, String message) {
+    public static boolean sendMessage(Object userJidRaw, String message) {
         try {
             // Get the JID raw string from the Jid object
             String jidRawString = (String) XposedHelpers.callMethod(userJidRaw, "getRawString");
             if (jidRawString == null) {
                 XposedBridge.log("WppCore.sendMessage - could not get rawString from jid: " + userJidRaw);
                 Utils.showToast("Error: could not find JID", Toast.LENGTH_SHORT);
-                return;
+                return false;
             }
             // Strip device suffix if LID: e.g. "4306.0:0@lid" -> "4306@lid"
             jidRawString = jidRawString.replaceFirst("\\.[\\d:]+@", "@");
             XposedBridge.log("WppCore.sendMessage - jidRawString: " + jidRawString);
 
-            sendMessage(jidRawString, message);
+            return sendMessage(jidRawString, message);
         } catch (Exception e) {
             XposedBridge.log("WppCore.sendMessage(Object) failed: " + e);
             Utils.showToast("Error in sending message: " + e.getMessage(), Toast.LENGTH_SHORT);
+            return false;
         }
     }
 
@@ -305,7 +306,7 @@ public class WppCore {
         return false;
     }
 
-    public static void sendMessage(String jidOrNumber, String message) {
+    public static boolean sendMessage(String jidOrNumber, String message) {
         try {
             android.app.NotificationManager nm = (android.app.NotificationManager) Utils.getApplication()
                     .getSystemService(Context.NOTIFICATION_SERVICE);
@@ -335,13 +336,15 @@ public class WppCore {
                         android.app.RemoteInput.addResultsToIntent(remoteInputs, fillIn, results);
                         action.actionIntent.send(Utils.getApplication(), 0, fillIn);
                         XposedBridge.log("WppCore.sendMessage - sent via RemoteInput (jid match)!");
-                        return;
+                        return true;
                     }
                 }
             }
             XposedBridge.log("WppCore.sendMessage - no matching WA notification for jid=" + jidOrNumber);
+            return false;
         } catch (Exception e) {
             XposedBridge.log("WppCore.sendMessage error: " + e);
+            return false;
         }
     }
 

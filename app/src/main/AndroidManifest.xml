@@ -68,6 +68,14 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name=".receivers.TaskerMessageSentReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.waenhancer.MESSAGE_SENT" />
+            </intent-filter>
+        </receiver>
+
         <!--suppress AndroidDomInspection -->
         <service
             android:name="com.google.android.gms.metadata.ModuleDependencies"

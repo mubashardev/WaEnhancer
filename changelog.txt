@@ -1,12 +1,13 @@
 [Added]
-- Option see wheather a message was sent via primary phone or linked device (linked device can be desktop/phone)
+- Message Device Source: Option to see whether a received message was sent to you via Primary phone or a Linked Device (Desktop/Phone)
 
 [Improvements]
-- Option to manage recordings directly from WhatsApp Calls Tab Menu
+- Enable/Disable manage recordings directly from WhatsApp Calls Tab Menu
 - Contact Online Indicator
+- Tasker com.waenhancer.MESSAGE_SENT [Under Development - Bugs Fixes ongoing]
 
 [Fixes]
 - Fixed Status Download/Share in WA/WB v2.26.18
 - Fixed empty toast for Contact Online
 - Fixed Edit History not showing
-- Fixed Custom Privacy Per Contact 
+- Fixed Custom Privacy Per Contact

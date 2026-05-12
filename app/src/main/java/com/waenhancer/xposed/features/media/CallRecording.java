@@ -143,111 +143,116 @@ public class CallRecording extends Feature {
                     try {
                         android.app.Activity activity = (android.app.Activity) param.thisObject;
                         XposedBridge.log("[Call Recording] onPrepareOptionsMenu hooked successfully on HomeActivity");
-                        boolean isCallsTab = false;
-
-                        Object fragmentManager = XposedHelpers.callMethod(activity, "getSupportFragmentManager");
-                        XposedBridge.log("[Call Recording] fragmentManager is " + (fragmentManager == null ? "null" : fragmentManager.getClass().getName()));
-                        java.util.List<?> fragments = null;
-
-                        if (fragmentManager != null) {
-                            // Try 1: Direct getObjectField "mAdded"
-                            try {
-                                fragments = (java.util.List<?>) XposedHelpers.getObjectField(fragmentManager, "mAdded");
-                                XposedBridge.log("[Call Recording] Direct mAdded succeeded: " + (fragments == null ? "null" : fragments.size()));
-                            } catch (Throwable t) {
-                                XposedBridge.log("[Call Recording] Direct mAdded failed: " + t.getMessage());
-                            }
-
-                            // Try 2: Direct call getFragments
-                            if (fragments == null) {
-                                try {
-                                    fragments = (java.util.List<?>) XposedHelpers.callMethod(fragmentManager, "getFragments");
-                                    XposedBridge.log("[Call Recording] Direct call getFragments succeeded: " + (fragments == null ? "null" : fragments.size()));
-                                } catch (Throwable directT) {
-                                    XposedBridge.log("[Call Recording] Direct call getFragments failed: " + directT.getMessage());
-                                }
-                            }
-
-                            // Try 3: Superclass-traversed method scanning
-                            if (fragments == null) {
-                                try {
-                                    Class<?> current = fragmentManager.getClass();
-                                    while (current != null && current != Object.class) {
-                                        for (java.lang.reflect.Method m : current.getDeclaredMethods()) {
-                                            try {
-                                                if (m.getParameterCount() == 0 && java.util.List.class.isAssignableFrom(m.getReturnType())) {
-                                                    m.setAccessible(true);
-                                                    java.util.List<?> list = (java.util.List<?>) m.invoke(fragmentManager);
-                                                    if (list != null && !list.isEmpty()) {
-                                                        Object first = list.get(0);
-                                                        if (first != null && first.getClass().getName().contains("Fragment")) {
-                                                            fragments = list;
-                                                            XposedBridge.log("[Call Recording] Method " + current.getSimpleName() + "#" + m.getName() + " succeeded: " + list.size());
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            } catch (Throwable ignored) {}
-                                        }
-                                        if (fragments != null) break;
-                                        current = current.getSuperclass();
-                                    }
-                                } catch (Throwable t) {
-                                    XposedBridge.log("[Call Recording] Method scanning failed: " + t.getMessage());
-                                }
-                            }
-
-                            // Try 4: Superclass-traversed field scanning
-                            if (fragments == null) {
-                                try {
-                                    Class<?> current = fragmentManager.getClass();
-                                    while (current != null && current != Object.class) {
-                                        for (java.lang.reflect.Field f : current.getDeclaredFields()) {
-                                            try {
-                                                if (java.util.Collection.class.isAssignableFrom(f.getType())) {
-                                                    f.setAccessible(true);
-                                                    java.util.Collection<?> col = (java.util.Collection<?>) f.get(fragmentManager);
-                                                    if (col != null && !col.isEmpty()) {
-                                                        java.util.List<?> list = new java.util.ArrayList<>(col);
-                                                        Object first = list.get(0);
-                                                        if (first != null && first.getClass().getName().contains("Fragment")) {
-                                                            fragments = list;
-                                                            XposedBridge.log("[Call Recording] Field " + current.getSimpleName() + "#" + f.getName() + " succeeded: " + list.size());
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            } catch (Throwable ignored) {}
-                                        }
-                                        if (fragments != null) break;
-                                        current = current.getSuperclass();
-                                    }
-                                } catch (Throwable t) {
-                                    XposedBridge.log("[Call Recording] Field scanning failed: " + t.getMessage());
-                                }
-                            }
-                        }
                         
-                        if (fragments != null) {
-                            for (Object f : fragments) {
-                                if (f != null) {
-                                    String className = f.getClass().getName();
-                                    XposedBridge.log("[Call Recording] Active Fragment: " + className);
-                                    if (className.endsWith("CallsHistoryFragment") || 
-                                        className.toLowerCase().contains("callshistory") || 
-                                        className.toLowerCase().contains("callsfragment") ||
-                                        (className.contains(".calling.") && className.endsWith("Fragment"))) {
-                                        
-                                        XposedBridge.log("[Call Recording] Calls Fragment Found in active list: " + className);
-                                        isCallsTab = true;
-                                        break;
+                        reloadPrefs();
+                        boolean callsTabMenuEnabled = prefs.getBoolean("call_recording_calls_tab_menu", true);
+                        
+                        boolean isCallsTab = false;
+                        if (callsTabMenuEnabled) {
+                            Object fragmentManager = XposedHelpers.callMethod(activity, "getSupportFragmentManager");
+                            XposedBridge.log("[Call Recording] fragmentManager is " + (fragmentManager == null ? "null" : fragmentManager.getClass().getName()));
+                            java.util.List<?> fragments = null;
+
+                            if (fragmentManager != null) {
+                                // Try 1: Direct getObjectField "mAdded"
+                                try {
+                                    fragments = (java.util.List<?>) XposedHelpers.getObjectField(fragmentManager, "mAdded");
+                                    XposedBridge.log("[Call Recording] Direct mAdded succeeded: " + (fragments == null ? "null" : fragments.size()));
+                                } catch (Throwable t) {
+                                    XposedBridge.log("[Call Recording] Direct mAdded failed: " + t.getMessage());
+                                }
+
+                                // Try 2: Direct call getFragments
+                                if (fragments == null) {
+                                    try {
+                                        fragments = (java.util.List<?>) XposedHelpers.callMethod(fragmentManager, "getFragments");
+                                        XposedBridge.log("[Call Recording] Direct call getFragments succeeded: " + (fragments == null ? "null" : fragments.size()));
+                                    } catch (Throwable directT) {
+                                        XposedBridge.log("[Call Recording] Direct call getFragments failed: " + directT.getMessage());
+                                    }
+                                }
+
+                                // Try 3: Superclass-traversed method scanning
+                                if (fragments == null) {
+                                    try {
+                                        Class<?> current = fragmentManager.getClass();
+                                        while (current != null && current != Object.class) {
+                                            for (java.lang.reflect.Method m : current.getDeclaredMethods()) {
+                                                try {
+                                                    if (m.getParameterCount() == 0 && java.util.List.class.isAssignableFrom(m.getReturnType())) {
+                                                        m.setAccessible(true);
+                                                        java.util.List<?> list = (java.util.List<?>) m.invoke(fragmentManager);
+                                                        if (list != null && !list.isEmpty()) {
+                                                            Object first = list.get(0);
+                                                            if (first != null && first.getClass().getName().contains("Fragment")) {
+                                                                fragments = list;
+                                                                XposedBridge.log("[Call Recording] Method " + current.getSimpleName() + "#" + m.getName() + " succeeded: " + list.size());
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                } catch (Throwable ignored) {}
+                                            }
+                                            if (fragments != null) break;
+                                            current = current.getSuperclass();
+                                        }
+                                    } catch (Throwable t) {
+                                        XposedBridge.log("[Call Recording] Method scanning failed: " + t.getMessage());
+                                    }
+                                }
+
+                                // Try 4: Superclass-traversed field scanning
+                                if (fragments == null) {
+                                    try {
+                                        Class<?> current = fragmentManager.getClass();
+                                        while (current != null && current != Object.class) {
+                                            for (java.lang.reflect.Field f : current.getDeclaredFields()) {
+                                                try {
+                                                    if (java.util.Collection.class.isAssignableFrom(f.getType())) {
+                                                        f.setAccessible(true);
+                                                        java.util.Collection<?> col = (java.util.Collection<?>) f.get(fragmentManager);
+                                                        if (col != null && !col.isEmpty()) {
+                                                            java.util.List<?> list = new java.util.ArrayList<>(col);
+                                                            Object first = list.get(0);
+                                                            if (first != null && first.getClass().getName().contains("Fragment")) {
+                                                                fragments = list;
+                                                                XposedBridge.log("[Call Recording] Field " + current.getSimpleName() + "#" + f.getName() + " succeeded: " + list.size());
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                } catch (Throwable ignored) {}
+                                            }
+                                            if (fragments != null) break;
+                                            current = current.getSuperclass();
+                                        }
+                                    } catch (Throwable t) {
+                                        XposedBridge.log("[Call Recording] Field scanning failed: " + t.getMessage());
+                                    }
+                                }
+                            }
+                            
+                            if (fragments != null) {
+                                for (Object f : fragments) {
+                                    if (f != null) {
+                                        String className = f.getClass().getName();
+                                        XposedBridge.log("[Call Recording] Active Fragment: " + className);
+                                        if (className.endsWith("CallsHistoryFragment") || 
+                                            className.toLowerCase().contains("callshistory") || 
+                                            className.toLowerCase().contains("callsfragment") ||
+                                            (className.contains(".calling.") && className.endsWith("Fragment"))) {
+                                            
+                                            XposedBridge.log("[Call Recording] Calls Fragment Found in active list: " + className);
+                                            isCallsTab = true;
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
 
                         android.view.Menu menu = (android.view.Menu) param.args[0];
-                        if (isCallsTab) {
+                        if (isCallsTab && callsTabMenuEnabled) {
                             if (menu.findItem(1338) == null) {
                                 String title = "Manage Recordings";
                                 try {

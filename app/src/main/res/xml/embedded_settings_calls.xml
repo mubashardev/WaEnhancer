@@ -42,6 +42,13 @@
             app:summary="@string/call_recording_enable_summary_latest"
             app:title="@string/call_recording_enable" />
 
+        <rikka.material.preference.MaterialSwitchPreference
+            android:defaultValue="true"
+            app:dependency="call_recording_enable"
+            app:key="call_recording_calls_tab_menu"
+            app:summary="@string/call_recording_calls_tab_menu_summary"
+            app:title="@string/call_recording_calls_tab_menu" />
+
         <com.waenhancer.preference.FileSelectPreference
             android:defaultValue="/sdcard/Download"
             app:dependency="call_recording_enable"

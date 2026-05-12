@@ -2,6 +2,8 @@
     <string name="call_recording_enable_summary_latest">Record incoming and outgoing calls (Voice &amp; Video) as audio.</string>
     <string name="call_recording_manage">Manage Recordings</string>
     <string name="call_recording_manage_summary">Browse, play, share and delete saved call recordings.</string>
+    <string name="call_recording_calls_tab_menu">Manage recordings in calls tab</string>
+    <string name="call_recording_calls_tab_menu_summary">Enable "Manage Recordings" option in WhatsApp calls tab menu</string>
     <string name="call_recording_toast_title">Show Recording Notifications</string>
     <string name="call_recording_toast_summary">Show a toast when recording starts or stops.</string>
 

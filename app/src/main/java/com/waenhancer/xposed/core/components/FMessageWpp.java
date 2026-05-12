@@ -16,8 +16,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
@@ -26,7 +24,6 @@ import de.robv.android.xposed.XposedHelpers;
  * @noinspection unused
  */
 public class FMessageWpp {
-    private static final Pattern DEVICE_JID_PATTERN = Pattern.compile(":(\\d+)@");
 
     public static Class<?> TYPE;
     private static Method userJidMethod;
@@ -142,18 +139,9 @@ public class FMessageWpp {
 
     public Key getOriginalKey() {
         try {
-            if (getOriginalMessageKey == null) return null;
-            Object origKeyObj;
-            if (getOriginalMessageKey.getParameterCount() == 1) {
-                origKeyObj = getOriginalMessageKey.invoke(null, fmessage);
-            } else {
-                origKeyObj = getOriginalMessageKey.invoke(fmessage);
-            }
-            if (origKeyObj == null) return null;
-            return new Key(origKeyObj, this);
+            return new Key(getOriginalMessageKey.invoke(fmessage), this);
         } catch (Exception e) {
-            XposedBridge.log("[WAE] Error invoking getOriginalMessageKey: " + e.getMessage());
-            e.printStackTrace();
+            XposedBridge.log(e);
         }
         return null;
     }
@@ -256,12 +244,9 @@ public class FMessageWpp {
 
     public int getDeviceId() {
         Object deviceJid = getDeviceJid();
-        if (deviceJid == null) return getDeviceIdFromMessageFields();
+        if (deviceJid == null) return -1;
         try {
-            Object result = XposedHelpers.callMethod(deviceJid, "getDevice");
-            if (result instanceof Number) {
-                return ((Number) result).intValue();
-            }
+            return (Integer) XposedHelpers.callMethod(deviceJid, "getDevice");
         } catch (Throwable ignored) {
         }
         try {
@@ -271,47 +256,7 @@ public class FMessageWpp {
             }
         } catch (Throwable ignored) {
         }
-        try {
-            Field field = ReflectionUtils.getFieldByType(deviceJid.getClass(), int.class);
-            if (field != null) {
-                return field.getInt(deviceJid);
-            }
-        } catch (Throwable ignored) {
-        }
-        int parsed = parseDeviceId(String.valueOf(deviceJid));
-        if (parsed >= 0) {
-            return parsed;
-        }
-        return getDeviceIdFromMessageFields();
-    }
-
-    private int getDeviceIdFromMessageFields() {
-        try {
-            for (Field field : fmessage.getClass().getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers())) continue;
-                field.setAccessible(true);
-                Object value = field.get(fmessage);
-                if (value == null) continue;
-
-                int parsed = parseDeviceId(String.valueOf(value));
-                if (parsed >= 0) {
-                    return parsed;
-                }
-            }
-        } catch (Throwable ignored) {
-        }
         return -1;
-    }
-
-    private int parseDeviceId(String value) {
-        if (value == null) return -1;
-        Matcher matcher = DEVICE_JID_PATTERN.matcher(value);
-        if (!matcher.find()) return -1;
-        try {
-            return Integer.parseInt(matcher.group(1));
-        } catch (NumberFormatException ignored) {
-            return -1;
-        }
     }
 
     public boolean hasDeviceSource() {
@@ -324,7 +269,7 @@ public class FMessageWpp {
 
     public boolean isLinkedDeviceMessage() {
         int deviceId = getDeviceId();
-        return deviceId != 0 && deviceId != -1;
+        return deviceId > 0;
     }
 
     public String dumpDebugInfo() {

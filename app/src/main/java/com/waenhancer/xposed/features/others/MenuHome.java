@@ -128,7 +128,7 @@ public class MenuHome extends Feature {
         var itemMenu = menu.add(0, MENU_ID_GHOST, 0, ghostLabel);
 
         try {
-            var iconDraw = XResManager.moduleResources.getDrawable(ghostmode ? R.drawable.ghost_enabled : R.drawable.ghost_disabled, null);
+            var iconDraw = DesignUtils.getDrawable(ghostmode ? R.drawable.ghost_enabled : R.drawable.ghost_disabled);
             if (iconDraw != null) {
                 iconDraw.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
                 itemMenu.setIcon(iconDraw);
@@ -170,7 +170,7 @@ public class MenuHome extends Feature {
     private void InsertRestartButton(Menu menu, Activity activity, boolean newSettings) {
         if (!prefs.getBoolean("restartbutton", true)) return;
         android.graphics.drawable.Drawable iconDraw = null;
-        try { iconDraw = XResManager.moduleResources.getDrawable(R.drawable.refresh, null); } catch (Exception ignored) {}
+        try { iconDraw = DesignUtils.getDrawable(R.drawable.refresh); } catch (Exception ignored) {}
         if (iconDraw != null) iconDraw.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
         String restartLabel = "Restart WhatsApp";
         try {
@@ -215,7 +215,7 @@ public class MenuHome extends Feature {
         if (menu.findItem(MENU_ID_DND) != null) return;
         var item = menu.add(0, MENU_ID_DND, 0, dndTitle);
         try {
-            var drawable = XResManager.moduleResources.getDrawable(dndmode ? R.drawable.airplane_enabled : R.drawable.airplane_disabled, null);
+            var drawable = DesignUtils.getDrawable(dndmode ? R.drawable.airplane_enabled : R.drawable.airplane_disabled);
             if (drawable != null) {
                 drawable.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
                 item.setIcon(drawable);
@@ -268,7 +268,7 @@ public class MenuHome extends Feature {
         if (menu.findItem(MENU_ID_FREEZE) != null) return;
         MenuItem item = menu.add(0, MENU_ID_FREEZE, 0, flsTitle);
         try {
-            var drawable = XResManager.moduleResources.getDrawable(freezelastseen ? R.drawable.eye_enabled : R.drawable.eye_disabled, null);
+            var drawable = DesignUtils.getDrawable(freezelastseen ? R.drawable.eye_enabled : R.drawable.eye_disabled);
             if (drawable != null) {
                 drawable.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
                 item.setIcon(drawable);

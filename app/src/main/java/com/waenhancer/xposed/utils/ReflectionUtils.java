@@ -623,6 +623,7 @@ public class ReflectionUtils {
                 Object match = findFMessageInObject(item, fMessageClass, keyClass, classLoader, visited, depth + 1);
                 if (match != null) return match;
             }
+        }
         return null;
     }
 

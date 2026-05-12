@@ -14,6 +14,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.waenhancer.R;
+import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ThemeUtils;
 import com.waenhancer.xposed.utils.XResManager;
 import com.waenhancer.ui.fragments.CustomizationFragment;
@@ -119,7 +120,7 @@ public class EmbeddedMainFragment extends Fragment {
             tab.setText(getTabTitle(position));
             try {
                 if (XResManager.moduleResources != null) {
-                    tab.setIcon(XResManager.moduleResources.getDrawable(TAB_ICONS[position], null));
+                    tab.setIcon(DesignUtils.getDrawable(TAB_ICONS[position]));
                 }
             } catch (Throwable ignored) {}
         }).attach();

@@ -35,20 +35,29 @@ public class DesignUtils {
 
     @SuppressLint("UseCompatLoadingForDrawables")
     public static Drawable getDrawable(int id) {
-        try {
-            if ((id & 0xFF000000) == 0x7F000000 && XResManager.moduleResources != null) {
-                Drawable.ConstantState cachedState = drawableCache.get(id);
-                if (cachedState != null) {
-                    return cachedState.newDrawable().mutate();
-                }
-                Drawable drawable = XResManager.moduleResources.getDrawable(id, null);
-                if (drawable != null && drawable.getConstantState() != null) {
-                    drawableCache.put(id, drawable.getConstantState());
-                }
-                return drawable;
-            }
-        } catch (Throwable ignored) {}
-        return Utils.getApplication().getDrawable(id);
+        Drawable.ConstantState cachedState = drawableCache.get(id);
+        if (cachedState != null) {
+            return cachedState.newDrawable().mutate();
+        }
+
+        Drawable drawable = null;
+        if ((id & 0xFF000000) == 0x7F000000 && XResManager.moduleResources != null) {
+            try {
+                drawable = XResManager.moduleResources.getDrawable(id, null);
+            } catch (Throwable ignored) {}
+        }
+
+        if (drawable == null) {
+            try {
+                drawable = Utils.getApplication().getDrawable(id);
+            } catch (Throwable ignored) {}
+        }
+
+        if (drawable != null && drawable.getConstantState() != null) {
+            drawableCache.put(id, drawable.getConstantState());
+        }
+
+        return drawable;
     }
 
     @Nullable

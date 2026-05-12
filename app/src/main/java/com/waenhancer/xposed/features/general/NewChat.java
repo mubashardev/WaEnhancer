@@ -47,9 +47,7 @@ public class NewChat extends Feature {
                 var drawable = DesignUtils.getDrawableByName("vec_ic_chat_add");
                 if (drawable == null) {
                     try {
-                        if (XResManager.moduleResources != null) {
-                            drawable = XResManager.moduleResources.getDrawable(R.drawable.ic_contacts, null);
-                        }
+                        drawable = DesignUtils.getDrawable(R.drawable.ic_contacts);
                     } catch (Exception ignored) {}
                 }
 

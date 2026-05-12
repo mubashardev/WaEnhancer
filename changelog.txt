@@ -1,3 +1,6 @@
+[Added]
+- Option see wheather a message was sent via primary phone or linked device (linked device can be desktop/phone)
+
 [Improvements]
 - Option to manage recordings directly from WhatsApp Calls Tab Menu
 - Contact Online Indicator

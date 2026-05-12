@@ -40,7 +40,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
@@ -53,6 +55,9 @@ import okhttp3.OkHttpClient;
 public class Others extends Feature {
 
     private static java.lang.reflect.Field cachedAbsViewField;
+    private static final Set<String> dumpedMessageIds = ConcurrentHashMap.newKeySet();
+    private static final String PRIMARY_DEVICE_SUFFIX = " | Primary device";
+    private static final String LINKED_DEVICE_SUFFIX = " | Linked device";
 
     public static HashMap<Integer, Boolean> propsBoolean = new HashMap<>();
     public static HashMap<Integer, Integer> propsInteger = new HashMap<>();
@@ -245,6 +250,8 @@ public class Others extends Feature {
         animationList();
 
         stampCopiedMessage();
+        debugDumpMessageMetadata();
+        messageDeviceSourceTag();
 
         try {
             doubleTapReaction();
@@ -488,6 +495,47 @@ public class Others extends Feature {
                         return 1;
                     }
                 };
+            }
+        });
+    }
+
+    private void debugDumpMessageMetadata() {
+        if (!DEBUG) return;
+
+        ConversationItemListener.conversationListeners.add(new ConversationItemListener.OnConversationItemListener() {
+            @Override
+            public void onItemBind(FMessageWpp fMessage, ViewGroup viewGroup) {
+                try {
+                    var key = fMessage.getKey();
+                    if (key == null || TextUtils.isEmpty(key.messageID)) return;
+                    if (!dumpedMessageIds.add(key.messageID)) return;
+                    logDebug("MessageMetaDump", fMessage.dumpDebugInfo());
+                } catch (Throwable t) {
+                    logDebug("MessageMetaDumpError", t);
+                }
+            }
+        });
+    }
+
+    private void messageDeviceSourceTag() {
+        if (!prefs.getBoolean("message_device_source", false)) return;
+
+        ConversationItemListener.conversationListeners.add(new ConversationItemListener.OnConversationItemListener() {
+            @Override
+            public void onItemBind(FMessageWpp fMessage, ViewGroup viewGroup) {
+                var dateTextView = (TextView) viewGroup.findViewById(Utils.getID("date", "id"));
+                if (dateTextView == null) return;
+
+                String text = String.valueOf(dateTextView.getText());
+                text = text.replace(PRIMARY_DEVICE_SUFFIX, "").replace(LINKED_DEVICE_SUFFIX, "");
+
+                if (fMessage.isPrimaryDeviceMessage()) {
+                    dateTextView.setText(text + PRIMARY_DEVICE_SUFFIX);
+                } else if (fMessage.isLinkedDeviceMessage()) {
+                    dateTextView.setText(text + LINKED_DEVICE_SUFFIX);
+                } else {
+                    dateTextView.setText(text);
+                }
             }
         });
     }

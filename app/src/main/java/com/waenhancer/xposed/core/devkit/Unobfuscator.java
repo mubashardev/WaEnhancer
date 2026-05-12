@@ -2792,9 +2792,32 @@ public class Unobfuscator {
     }
 
     public static Class loadWaContactClass(ClassLoader classLoader) throws Exception {
-        return UnobfuscatorCache.getInstance().getClass(classLoader,
-                () -> findFirstClassUsingStrings(classLoader, StringMatchType.Contains, "problematic contact:"));
+        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
+            // Strategy 1: Use the return type of loadGetWaContactMethod (extremely robust!)
+            try {
+                var method = loadGetWaContactMethod(classLoader);
+                if (method != null) {
+                    var returnType = method.getReturnType();
+                    if (returnType != null && returnType != void.class) {
+                        return returnType;
+                    }
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] loadWaContactClass - Strategy 1 (loadGetWaContactMethod) failed: " + t.getMessage());
+            }
 
+            // Strategy 2: Fallback to searching using "problematic contact:"
+            try {
+                var cls = findFirstClassUsingStrings(classLoader, StringMatchType.Contains, "problematic contact:");
+                if (cls != null) {
+                    return cls;
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] loadWaContactClass - Strategy 2 (problematic contact:) failed: " + t.getMessage());
+            }
+
+            throw new ClassNotFoundException("WaContact Class not found using all search strategies");
+        });
     }
 
 
@@ -3106,7 +3129,8 @@ public class Unobfuscator {
                         for (var invoke : invokes) {
                             if (!invoke.getClassName().equals(waContactClass.getName()))
                                 continue;
-                            if (invoke.getReturnTypeName().equals(String.class.getName())) {
+                            var returnTypeName = invoke.getReturnTypeName();
+                            if (returnTypeName.equals(String.class.getName()) || returnTypeName.equals(CharSequence.class.getName())) {
                                 try {
                                     var m = invoke.getMethodInstance(classLoader);
                                     if (m != null && m.getParameterCount() == 0) {
@@ -3131,7 +3155,8 @@ public class Unobfuscator {
                         for (var invoke : invokes) {
                             if (!invoke.getClassName().equals(waContactClass.getName()))
                                 continue;
-                            if (invoke.getReturnTypeName().equals(String.class.getName())) {
+                            var returnTypeName = invoke.getReturnTypeName();
+                            if (returnTypeName.equals(String.class.getName()) || returnTypeName.equals(CharSequence.class.getName())) {
                                 try {
                                     var m = invoke.getMethodInstance(classLoader);
                                     if (m != null && m.getParameterCount() == 0) {
@@ -3146,18 +3171,26 @@ public class Unobfuscator {
                 XposedBridge.log("[WAE] updateContactWAName method search error: " + t.getMessage());
             }
 
-            // Strategy 3: Dynamic reflection fallback on WaContact class
+            // Strategy 3: Dynamic reflection fallback on WaContact class (supporting String & CharSequence, and any access modifier)
             try {
                 for (var m : waContactClass.getDeclaredMethods()) {
-                    if (m.getParameterCount() == 0 && m.getReturnType() == String.class
-                            && !java.lang.reflect.Modifier.isStatic(m.getModifiers())
-                            && java.lang.reflect.Modifier.isPublic(m.getModifiers())) {
+                    if (m.getParameterCount() == 0 
+                            && (m.getReturnType() == String.class || m.getReturnType() == CharSequence.class)
+                            && !java.lang.reflect.Modifier.isStatic(m.getModifiers())) {
                         return m;
                     }
                 }
             } catch (Throwable t) {
                 XposedBridge.log("[WAE] WaContact class reflection search error: " + t.getMessage());
             }
+
+            // Verbose logging if all search strategies fail for easy future troubleshooting
+            try {
+                XposedBridge.log("[WAE] WaContactDisplayName method lookup failed. Listing all methods of " + waContactClass.getName() + ":");
+                for (var m : waContactClass.getDeclaredMethods()) {
+                    XposedBridge.log("[WAE] Method: " + m.getName() + " params: " + m.getParameterCount() + " return: " + m.getReturnType().getName() + " static: " + java.lang.reflect.Modifier.isStatic(m.getModifiers()));
+                }
+            } catch (Throwable ignored) {}
 
             throw new NoSuchMethodException("WaContactDisplayName method not found after trying all search strategies");
         });

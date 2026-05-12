@@ -97,6 +97,8 @@
     <string name="call_blocker_buttons_only_unknown_block">Block only unknown numbers</string>
     <string name="show_edited_message_history">Show Edited Message History</string>
     <string name="show_edited_message_history_sum">Show edited message history when clicking \"Edited\" on a message</string>
+    <string name="show_message_device_source">Show Message Device Source</string>
+    <string name="show_message_device_source_sum">Shows whether a message was sent from the primary device or a linked device</string>
     <string name="dnd_message">When Do Not Disturb mode is on, you will be unable to send or receive messages</string>
     <string name="dnd_mode_title">DND Mode</string>
     <string name="activate">Activate</string>
@@ -377,6 +379,8 @@
     <string name="list_animations_home_screen_sum">Add animations when swiping the chat list</string>
     <string name="stamp_copied_messages">Remove Stamp from Copied Messages</string>
     <string name="stamp_copied_messages_sum">Removes name and date when copying more than one message</string>
+    <string name="primary_device">Primary device</string>
+    <string name="linked_device">Linked device</string>
     <string name="invalid_folder">The invalid folder has been selected. Please choose the WaEnhancer X folder</string>
     <string name="uri_permission">To use custom themes you need to select the \"WaEnhancer X\" folder in \"Download\"</string>
     <string name="double_click_to_react">Enable Double Click to React</string>

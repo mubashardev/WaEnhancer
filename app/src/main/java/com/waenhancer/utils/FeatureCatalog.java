@@ -428,6 +428,14 @@ public class FeatureCatalog {
                                 "conversation",
                                 Arrays.asList("copy", "stamp", "copied", "messages")));
 
+                catalog.add(new SearchableFeature("message_device_source",
+                                context.getString(R.string.show_message_device_source),
+                                context.getString(R.string.show_message_device_source_sum),
+                                SearchableFeature.Category.GENERAL_CONVERSATION,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "conversation",
+                                Arrays.asList("device", "source", "linked", "primary", "desktop", "phone")));
+
                 catalog.add(new SearchableFeature("doubletap2like",
                                 context.getString(R.string.double_click_to_react),
                                 context.getString(R.string.double_click_to_like_sum),

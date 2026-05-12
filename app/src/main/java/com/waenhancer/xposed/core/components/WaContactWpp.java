@@ -126,7 +126,8 @@ public record WaContactWpp(Object mInstance) {
 
     public String getDisplayName() {
         try {
-            return (String) methodGetDisplayName.invoke(mInstance);
+            Object name = methodGetDisplayName.invoke(mInstance);
+            return name != null ? name.toString() : null;
         } catch (Exception e) {
             XposedBridge.log(e);
         }
@@ -135,7 +136,8 @@ public record WaContactWpp(Object mInstance) {
 
     public String getWaName() {
         try {
-            return (String) fieldGetWaName.get(mInstance);
+            Object name = fieldGetWaName.get(mInstance);
+            return name != null ? name.toString() : null;
         } catch (Exception e) {
             XposedBridge.log(e);
         }

@@ -13,6 +13,7 @@ import org.luckypray.dexkit.query.enums.StringMatchType;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Objects;
 import java.util.Set;
 
@@ -239,6 +240,149 @@ public class FMessageWpp {
     public boolean isViewOnce() {
         var media_type = getMediaType();
         return (media_type == 82 || media_type == 42 || media_type == 43);
+    }
+
+    public int getDeviceId() {
+        Object deviceJid = getDeviceJid();
+        if (deviceJid == null) return -1;
+        try {
+            return (Integer) XposedHelpers.callMethod(deviceJid, "getDevice");
+        } catch (Throwable ignored) {
+        }
+        try {
+            Field field = ReflectionUtils.getFieldByType(deviceJid.getClass(), byte.class);
+            if (field != null) {
+                return field.getByte(deviceJid) & 0xFF;
+            }
+        } catch (Throwable ignored) {
+        }
+        return -1;
+    }
+
+    public boolean hasDeviceSource() {
+        return getDeviceId() >= 0;
+    }
+
+    public boolean isPrimaryDeviceMessage() {
+        return getDeviceId() == 0;
+    }
+
+    public boolean isLinkedDeviceMessage() {
+        int deviceId = getDeviceId();
+        return deviceId > 0;
+    }
+
+    public String dumpDebugInfo() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("FMessageDebug{");
+        tryAppend(sb, "class", fmessage.getClass().getName());
+        tryAppend(sb, "rowId", getRowId());
+        tryAppend(sb, "message", getMessageStr());
+        tryAppend(sb, "mediaType", getMediaType());
+        tryAppend(sb, "isBroadcast", isBroadcast());
+
+        Key key = getKey();
+        if (key != null) {
+            tryAppend(sb, "messageId", key.messageID);
+            tryAppend(sb, "fromMe", key.isFromMe);
+            tryAppend(sb, "remoteJid", key.remoteJid);
+        }
+
+        Object userJid = null;
+        try {
+            userJid = getUserJid();
+        } catch (Throwable ignored) {}
+        tryAppend(sb, "userJid", userJid);
+
+        Object deviceJid = getDeviceJid();
+        tryAppend(sb, "deviceJid", deviceJid);
+        if (deviceJid != null) {
+            appendObjectFields(sb, "deviceJidFields", deviceJid);
+            appendZeroArgMethods(sb, "deviceJidMethods", deviceJid);
+        }
+
+        appendObjectFields(sb, "keyFields", key != null ? key.thisObject : null);
+        appendObjectFields(sb, "messageFields", fmessage);
+        sb.append(" }");
+        return sb.toString();
+    }
+
+    private static void tryAppend(StringBuilder sb, String label, Object value) {
+        sb.append(label).append("=").append(safeValue(value)).append("; ");
+    }
+
+    private static String safeValue(Object value) {
+        if (value == null) return "null";
+        try {
+            return String.valueOf(value);
+        } catch (Throwable t) {
+            return value.getClass().getName() + "@toStringError";
+        }
+    }
+
+    private static void appendObjectFields(StringBuilder sb, String label, Object target) {
+        if (target == null) {
+            tryAppend(sb, label, null);
+            return;
+        }
+        StringBuilder fieldsSb = new StringBuilder();
+        Class<?> current = target.getClass();
+        int depth = 0;
+        while (current != null && current != Object.class && depth < 3) {
+            for (Field field : current.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())) continue;
+                try {
+                    field.setAccessible(true);
+                    fieldsSb.append(current.getSimpleName())
+                            .append(".")
+                            .append(field.getName())
+                            .append("=")
+                            .append(safeValue(field.get(target)))
+                            .append(", ");
+                } catch (Throwable t) {
+                    fieldsSb.append(current.getSimpleName())
+                            .append(".")
+                            .append(field.getName())
+                            .append("=<")
+                            .append(t.getClass().getSimpleName())
+                            .append(">, ");
+                }
+            }
+            current = current.getSuperclass();
+            depth++;
+        }
+        tryAppend(sb, label, fieldsSb);
+    }
+
+    private static void appendZeroArgMethods(StringBuilder sb, String label, Object target) {
+        if (target == null) {
+            tryAppend(sb, label, null);
+            return;
+        }
+        StringBuilder methodsSb = new StringBuilder();
+        for (Method method : target.getClass().getDeclaredMethods()) {
+            if (Modifier.isStatic(method.getModifiers()) || method.getParameterCount() != 0) continue;
+            Class<?> returnType = method.getReturnType();
+            if (returnType == Void.TYPE) continue;
+            String methodName = method.getName();
+            if (!(methodName.startsWith("get") || methodName.startsWith("is") || methodName.startsWith("to"))) {
+                continue;
+            }
+            try {
+                method.setAccessible(true);
+                Object result = method.invoke(target);
+                methodsSb.append(methodName)
+                        .append("=")
+                        .append(safeValue(result))
+                        .append(", ");
+            } catch (Throwable t) {
+                methodsSb.append(methodName)
+                        .append("=<")
+                        .append(t.getClass().getSimpleName())
+                        .append(">, ");
+            }
+        }
+        tryAppend(sb, label, methodsSb);
     }
 
     /*

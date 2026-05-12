@@ -1,5 +1,6 @@
 [Improvements]
 - Option to manage recordings directly from WhatsApp Calls Tab Menu
+- Contact Online Indicator
 
 [Fixes]
 - Fixed Status Download/Share in WA/WB v2.26.18

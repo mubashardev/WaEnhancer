@@ -110,6 +110,10 @@ public class ShowOnline extends Feature {
                         ImageView photoView = (ImageView) firstChild;
                         contactView.removeView(photoView);
 
+                        if (photoView.getId() == View.NO_ID) {
+                            photoView.setId(0x7FFF0004);
+                        }
+
                         var relativeLayout = new RelativeLayout(context);
                         relativeLayout.setId(0x7FFF0003);
                         var params = new RelativeLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -120,19 +124,35 @@ public class ShowOnline extends Feature {
 
                         var imageView = new ImageView(context);
                         imageView.setId(0x7FFF0001);
-                        var params2 = new RelativeLayout.LayoutParams(Utils.dipToPixels(14), Utils.dipToPixels(14));
-                        params2.addRule(RelativeLayout.ALIGN_TOP, contactView.getId());
+                        var params2 = new RelativeLayout.LayoutParams(Utils.dipToPixels(13), Utils.dipToPixels(13));
+                        params2.addRule(RelativeLayout.ALIGN_BOTTOM, photoView.getId());
                         params2.addRule(isLeftToRight ? RelativeLayout.ALIGN_RIGHT : RelativeLayout.ALIGN_LEFT, photoView.getId());
-                        params2.topMargin = Utils.dipToPixels(5);
+                        if (isLeftToRight) {
+                            params2.rightMargin = Utils.dipToPixels(1.5f);
+                        } else {
+                            params2.leftMargin = Utils.dipToPixels(1.5f);
+                        }
+                        params2.bottomMargin = Utils.dipToPixels(1.5f);
                         imageView.setLayoutParams(params2);
-                        imageView.setImageResource(R.drawable.online);
-                        imageView.setAdjustViewBounds(true);
-                        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+
+                        android.graphics.drawable.GradientDrawable dotDrawable = new android.graphics.drawable.GradientDrawable();
+                        dotDrawable.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                        dotDrawable.setColor(0xFF25D366); // WhatsApp Green
+                        boolean isDark = (context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) 
+                                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+                        int strokeColor = isDark ? 0xFF121212 : Color.WHITE;
+                        dotDrawable.setStroke(Utils.dipToPixels(1.5f), strokeColor);
+
+                        imageView.setImageDrawable(dotDrawable);
                         imageView.setVisibility(View.INVISIBLE);
                         relativeLayout.addView(imageView);
                     } else if (firstChild instanceof RelativeLayout) {
                         RelativeLayout relativeLayout = (RelativeLayout) firstChild;
                         var photoView = (ImageView) relativeLayout.getChildAt(0);
+
+                        if (photoView.getId() == View.NO_ID) {
+                            photoView.setId(0x7FFF0004);
+                        }
 
                         var params = new RelativeLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         params.addRule(RelativeLayout.CENTER_IN_PARENT);
@@ -140,14 +160,26 @@ public class ShowOnline extends Feature {
 
                         var imageView = new ImageView(context);
                         imageView.setId(0x7FFF0001);
-                        var params2 = new RelativeLayout.LayoutParams(Utils.dipToPixels(14), Utils.dipToPixels(14));
-                        params2.addRule(RelativeLayout.ALIGN_TOP, contactView.getId());
+                        var params2 = new RelativeLayout.LayoutParams(Utils.dipToPixels(13), Utils.dipToPixels(13));
+                        params2.addRule(RelativeLayout.ALIGN_BOTTOM, photoView.getId());
                         params2.addRule(isLeftToRight ? RelativeLayout.ALIGN_RIGHT : RelativeLayout.ALIGN_LEFT, photoView.getId());
-                        params2.topMargin = Utils.dipToPixels(5);
+                        if (isLeftToRight) {
+                            params2.rightMargin = Utils.dipToPixels(1.5f);
+                        } else {
+                            params2.leftMargin = Utils.dipToPixels(1.5f);
+                        }
+                        params2.bottomMargin = Utils.dipToPixels(1.5f);
                         imageView.setLayoutParams(params2);
-                        imageView.setImageResource(R.drawable.online);
-                        imageView.setAdjustViewBounds(true);
-                        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+
+                        android.graphics.drawable.GradientDrawable dotDrawable = new android.graphics.drawable.GradientDrawable();
+                        dotDrawable.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                        dotDrawable.setColor(0xFF25D366); // WhatsApp Green
+                        boolean isDark = (context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) 
+                                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+                        int strokeColor = isDark ? 0xFF121212 : Color.WHITE;
+                        dotDrawable.setStroke(Utils.dipToPixels(1.5f), strokeColor);
+
+                        imageView.setImageDrawable(dotDrawable);
                         imageView.setVisibility(View.INVISIBLE);
                         relativeLayout.addView(imageView);
                     }

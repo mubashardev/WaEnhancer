@@ -54,6 +54,7 @@ public class UpdateChecker implements Runnable {
     }
 
     private static void writeDebugLog(String message) {
+        if (!Utils.DEBUG) return;
         try {
             File debugDir = new File("/sdcard/Android/data/com.waenhancer/files");
             debugDir.mkdirs();

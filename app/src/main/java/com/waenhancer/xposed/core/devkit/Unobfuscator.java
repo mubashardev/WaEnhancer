@@ -24,6 +24,7 @@ import com.waenhancer.xposed.utils.Utils;
 import org.luckypray.dexkit.DexKitBridge;
 import org.luckypray.dexkit.query.FindClass;
 import org.luckypray.dexkit.query.FindMethod;
+import org.luckypray.dexkit.query.matchers.FieldMatcher;
 import org.luckypray.dexkit.query.enums.OpCodeMatchType;
 import org.luckypray.dexkit.query.enums.StringMatchType;
 import org.luckypray.dexkit.query.matchers.ClassMatcher;
@@ -47,7 +48,12 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -1080,13 +1086,98 @@ public class Unobfuscator {
     }
 
     public synchronized static Method loadAntiRevokeMessageMethod(ClassLoader loader) throws Exception {
-        return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            Method method = findFirstMethodUsingStrings(loader, StringMatchType.Contains, "msgstore/edit/revoke");
-            if (method == null)
-                throw new Exception("AntiRevokeMessage method not found");
-            return method;
+        return findAllAntiRevokeMessageMethods(loader)[0];
+    }
+
+    public synchronized static Method[] findAllAntiRevokeMessageMethods(ClassLoader loader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethods(loader, () -> {
+            Set<Method> methods = new LinkedHashSet<>();
+            String[] anchors = {
+                    "msgstore/edit/revoke",
+                    "msgstore/add/revoke",
+                    "msgstore/add/revoked",
+                    "msgstore/add/revocation",
+                    "CoreMessageStore/revoke",
+                    "CoreMessageStore/revocation",
+                    "CoreMessageStore/revoked",
+                    "RevokeMessageStore/revoke",
+                    "RevokeMessageStore/revocation",
+                    "revoke_message",
+                    "revokeMessage",
+                    "MessageStore/revoke",
+                    "CoreMessageStore/revoke",
+                    "CoreMessageStore/revocation",
+                    "CoreMessageStore/revoked",
+                    "FMessage/revoked",
+                    "fmessage-revoked",
+                    "MessageRevoke/revoke"
+            };
+            for (String anchor : anchors) {
+                try {
+                    var results = dexkit.findMethod(FindMethod.create()
+                            .matcher(MethodMatcher.create()
+                                    .addUsingString(anchor, StringMatchType.Contains)));
+                    for (var mData : results) {
+                        var method = mData.getMethodInstance(loader);
+                        if (method.getParameterCount() >= 1 && method.getParameterCount() <= 4) {
+                            methods.add(method);
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            // Fallback: Broad string-based search
+            String[] broadAnchors = {"revoked", "revocation", "message_revoke", "MessageRevoke", "msgstore/edit/revoke", "msgstore/add/revoke"};
+            for (String anchor : broadAnchors) {
+                try {
+                    var results = dexkit.findMethod(FindMethod.create()
+                            .matcher(MethodMatcher.create()
+                                    .addUsingString(anchor, StringMatchType.Contains)));
+                    for (var mData : results) {
+                        var method = mData.getMethodInstance(loader);
+                        if (method.getParameterCount() >= 1 && method.getParameterCount() <= 4) {
+                            methods.add(method);
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            // Advanced discovery: find methods that use revocation constants and FMessage
+            try {
+                var fMessageClass = loadFMessageClass(loader);
+                int[] revokeTypes = {15, 31, 74};
+                for (int type : revokeTypes) {
+                    var results = dexkit.findMethod(FindMethod.create()
+                            .matcher(MethodMatcher.create()
+                                    .addParamType(fMessageClass.getName())
+                                    .addUsingNumber(type)));
+                    for (var mData : results) {
+                        methods.add(mData.getMethodInstance(loader));
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            if (methods.isEmpty())
+                throw new Exception("No AntiRevoke methods found");
+            
+            return methods.toArray(new Method[0]);
         });
     }
+
+    public synchronized static Method[] findAllAddOnMethods(ClassLoader loader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethods(loader, () -> {
+            Set<Method> methods = new LinkedHashSet<>();
+            var results = dexkit.findMethod(FindMethod.create()
+                    .matcher(MethodMatcher.create()
+                            .addUsingString("message_add_on", StringMatchType.Contains)));
+            for (var mData : results) {
+                methods.add(mData.getMethodInstance(loader));
+            }
+            return methods.toArray(new Method[0]);
+        });
+    }
+
+
 
     public synchronized static Field loadMessageKeyField(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getField(loader, () -> {

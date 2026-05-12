@@ -164,6 +164,7 @@ public class FeatureLoader {
     public static void start(@NonNull ClassLoader loader, @NonNull android.content.SharedPreferences pref, String sourceDir) {
         hostClassLoader = loader;
         Feature.DEBUG = pref.getBoolean("enablelogs", true);
+        Utils.DEBUG = Feature.DEBUG;
         Utils.xprefs = pref;
 
         XposedHelpers.findAndHookMethod(Instrumentation.class, "callApplicationOnCreate", Application.class,
@@ -181,7 +182,9 @@ public class FeatureLoader {
                         }
 
                         String processName = Application.getProcessName();
-                        XposedBridge.log("[WAE] callApplicationOnCreate for: " + mApp.getPackageName() + " (process: " + processName + ")");
+                        if (Feature.DEBUG) {
+                            XposedBridge.log("[WAE] callApplicationOnCreate for: " + mApp.getPackageName() + " (process: " + processName + ")");
+                        }
 
                         if (!Objects.equals(processName, mApp.getPackageName())) {
                             XposedBridge.log("[WAE] Skipping secondary process. Expected: " + mApp.getPackageName() + ", Actual: " + processName);
@@ -206,7 +209,9 @@ public class FeatureLoader {
                         // Inject Booloader Spoofer
                         if (pref.getBoolean("bootloader_spoofer", false)) {
                             HookBL.hook(loader, pref);
-                            XposedBridge.log("[WAE] Bootloader Spoofer Injected");
+                            if (Feature.DEBUG) {
+                                XposedBridge.log("[WAE] Bootloader Spoofer Injected");
+                            }
                         }
 
                         PackageManager packageManager = mApp.getPackageManager();
@@ -215,7 +220,9 @@ public class FeatureLoader {
                         var localBridgePrefs = mApp.getSharedPreferences("wae_bridge_prefs", Context.MODE_PRIVATE);
                         var providerPrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(mApp, localBridgePrefs, pref);
                         Utils.xprefs = providerPrefs;
-                        XposedBridge.log("[WAE] ProviderSharedPreferences initialized with " + providerPrefs.getAll().size() + " preferences");
+                        if (Feature.DEBUG) {
+                            XposedBridge.log("[WAE] ProviderSharedPreferences initialized with " + providerPrefs.getAll().size() + " preferences");
+                        }
                         
                         if (pref instanceof XSharedPreferences) {
                             ((XSharedPreferences) pref).registerOnSharedPreferenceChangeListener((sharedPreferences, s) -> ((XSharedPreferences) pref).reload());
@@ -225,23 +232,7 @@ public class FeatureLoader {
                         XposedBridge.log(packageInfo.versionName);
                         currentVersion = packageInfo.versionName;
 
-                        // Diagnostic: Log theme-related preferences from multiple common files
-                        try {
-                            String[] prefFiles = {mApp.getPackageName() + "_preferences", "startup_prefs", "wa_global_prefs"};
-                            XposedBridge.log("[WAE] --- Host Preferences Broad Scan ---");
-                            for (String fileName : prefFiles) {
-                                var sharedPrefs = mApp.getSharedPreferences(fileName, Context.MODE_PRIVATE);
-                                for (var entry : sharedPrefs.getAll().entrySet()) {
-                                    String key = entry.getKey();
-                                    if (key.toLowerCase().contains("theme") || key.toLowerCase().contains("mode")) {
-                                        XposedBridge.log("[WAE] [" + fileName + "] " + key + " = " + entry.getValue());
-                                    }
-                                }
-                            }
-                            XposedBridge.log("[WAE] ------------------------------------");
-                        } catch (Exception e) {
-                            XposedBridge.log("[WAE] Failed to scan host prefs: " + e.getMessage());
-                        }
+                        // Host preference scan removed - too expensive
 
                         int versionsArrayId = Objects.equals(mApp.getPackageName(), FeatureLoader.PACKAGE_WPP)
                                 ? com.waenhancer.R.array.supported_versions_wpp
@@ -256,7 +247,9 @@ public class FeatureLoader {
                                         String target = s.endsWith(".xx") ? s.replace(".xx", ".") : s + ".";
                                         return (packageInfo.versionName + ".").startsWith(target);
                                     });
-                            XposedBridge.log("[WAE] Version verification result for " + packageInfo.versionName + ": isSupported=" + isSupported);
+                            if (Feature.DEBUG) {
+                                XposedBridge.log("[WAE] Version verification result for " + packageInfo.versionName + ": isSupported=" + isSupported);
+                            }
                             if (!isSupported) {
                                 disableExpirationVersion(mApp.getClassLoader());
                                 String sb = "Unsupported version: " +
@@ -372,7 +365,9 @@ public class FeatureLoader {
             
             var timemillis2 = System.currentTimeMillis() - timemillis;
             loadedTimeStr = String.format(java.util.Locale.US, "%.2fs", timemillis2 / 1000.0);
-            XposedBridge.log("[WAE] Loaded Hooks in " + loadedTimeStr);
+            if (Feature.DEBUG) {
+                XposedBridge.log("[WAE] Loaded Hooks in " + loadedTimeStr);
+            }
             
             new Handler(Looper.getMainLooper()).post(() -> {
                 if (hookingToast != null) {
@@ -408,7 +403,9 @@ public class FeatureLoader {
                         String activityName = activity.getClass().getSimpleName();
                         String fullName = activity.getClass().getName();
                         String superName = activity.getClass().getSuperclass() != null ? activity.getClass().getSuperclass().getName() : "null";
-                        XposedBridge.log("[WAE] Activity RESUMED: " + activityName + " (Full Class Name: " + fullName + " | Superclass: " + superName + ")");
+                        if (Feature.DEBUG) {
+                            XposedBridge.log("[WAE] Activity RESUMED: " + activityName + " (Full Class Name: " + fullName + " | Superclass: " + superName + ")");
+                        }
                         
                         // Record screen view in analytics
                         com.waenhancer.utils.AnalyticsManager.logScreenView(activity, activityName);
@@ -421,7 +418,9 @@ public class FeatureLoader {
                         
                         boolean needRestartPref = pref.getBoolean("need_restart", false);
                         boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
-                        XposedBridge.log("[WAE] Restart Check on RESUMED - Pref: " + needRestartPref + ", Global: " + needRestartGlobal + ", isShowing: " + isRestartDialogShowing);
+                        if (Feature.DEBUG) {
+                            XposedBridge.log("[WAE] Restart Check on RESUMED - Pref: " + needRestartPref + ", Global: " + needRestartGlobal + ", isShowing: " + isRestartDialogShowing);
+                        }
                         
                         if ((needRestartPref || needRestartGlobal) && !isRestartDialogShowing) {
                             isRestartDialogShowing = true;
@@ -469,8 +468,6 @@ public class FeatureLoader {
                                         WppCore.setPrivBooleanSync("need_restart", false);
                                     })
                                     .show();
-                        } else {
-                            XposedBridge.log("[WAE] No restart needed (flags are false)");
                         }
                     } catch (Throwable e) {
                         XposedBridge.log("[WAE] Error during post-resume pref reload: " + e.getMessage());
@@ -683,7 +680,9 @@ public class FeatureLoader {
                 RecoverDeleteForMe.class,
                 VideoNoteAttachment.class
         };
-        XposedBridge.log("Loading Plugins");
+        if (Feature.DEBUG) {
+            XposedBridge.log("Loading Plugins");
+        }
         var executorService = Executors.newWorkStealingPool(Math.min(Runtime.getRuntime().availableProcessors(), 4));
         var times = java.util.Collections.synchronizedList(new ArrayList<String>());
         for (var classe : classes) {

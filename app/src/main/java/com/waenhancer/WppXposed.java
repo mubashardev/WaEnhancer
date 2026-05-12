@@ -60,17 +60,23 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
     @SuppressLint("WorldReadableFiles")
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        XposedBridge.log("[WAE] handleLoadPackage: " + lpparam.packageName + " (process: " + lpparam.processName + ")");
+        if (Utils.DEBUG) {
+            XposedBridge.log("[WAE] handleLoadPackage: " + lpparam.packageName + " (process: " + lpparam.processName + ")");
+        }
         var packageName = lpparam.packageName;
         var classLoader = lpparam.classLoader;
 
         if (packageName.equals(BuildConfig.APPLICATION_ID)) {
-            XposedBridge.log("[WAE] Hooking module's own process: " + packageName);
+            if (Utils.DEBUG) {
+                XposedBridge.log("[WAE] Hooking module's own process: " + packageName);
+            }
             XposedHelpers.findAndHookMethod("com.waenhancer.utils.ModuleStatus", lpparam.classLoader, "isModuleActive", XC_MethodReplacement.returnConstant(true));
             return;
         }
 
-        XposedBridge.log("[WAE] Checking if target is WhatsApp or Business");
+        if (Utils.DEBUG) {
+            XposedBridge.log("[WAE] Checking if target is WhatsApp or Business");
+        }
 
         AntiUpdater.hookSession(lpparam);
 
@@ -83,10 +89,14 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
         boolean isBusiness = packageName.equals(FeatureLoader.PACKAGE_BUSINESS);
         boolean isOriginal = App.isOriginalPackage();
 
-        XposedBridge.log("[WAE] isWpp: " + isWpp + ", isBusiness: " + isBusiness + ", isOriginal: " + isOriginal);
+        if (Utils.DEBUG) {
+            XposedBridge.log("[WAE] isWpp: " + isWpp + ", isBusiness: " + isBusiness + ", isOriginal: " + isOriginal);
+        }
 
         if ((isWpp && isOriginal) || isBusiness) {
-            XposedBridge.log("[WAE] Target verified. Starting FeatureLoader...");
+            if (Utils.DEBUG) {
+                XposedBridge.log("[WAE] Target verified. Starting FeatureLoader...");
+            }
 
             // Initialize module resources early
             XResManager.moduleResources = XModuleResources.createInstance(MODULE_PATH, null);
@@ -104,12 +114,16 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                     XposedBridge.log("[WAE] Logging hook setup failed: " + t.getMessage());
                 }
             } else {
-                XposedBridge.log("[WAE] Logging hooks skipped (logging_enabled=false)");
+                if (Utils.DEBUG) {
+                    XposedBridge.log("[WAE] Logging hooks skipped (logging_enabled=false)");
+                }
             }
 
             try {
                 FeatureLoader.start(classLoader, getPref(), lpparam.appInfo.sourceDir);
-                XposedBridge.log("[WAE] FeatureLoader.start completed successfully");
+                if (Utils.DEBUG) {
+                    XposedBridge.log("[WAE] FeatureLoader.start completed successfully");
+                }
             } catch (Throwable t) {
                 XposedBridge.log("[WAE] CRITICAL ERROR in FeatureLoader.start: " + t.getMessage());
                 XposedBridge.log(t);
@@ -172,7 +186,9 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
             XposedBridge.log("[WAE] Failed to hook Resources.getLayout: " + t.getMessage());
         }
 
-        XposedBridge.log("[WAE] Global resource translation hooks installed.");
+        if (Utils.DEBUG) {
+            XposedBridge.log("[WAE] Global resource translation hooks installed.");
+        }
     }
 
     private void setupLogging(XC_LoadPackage.LoadPackageParam lpparam) {
@@ -320,7 +336,9 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                     } catch (Exception ignored) {}
                 }
             }
-            XposedBridge.log("[WAE] Valid module IDs populated: " + XResManager.validModuleIds.size());
+            if (Utils.DEBUG) {
+                XposedBridge.log("[WAE] Valid module IDs populated: " + XResManager.validModuleIds.size());
+            }
         } catch (Throwable t) {
             XposedBridge.log("[WAE] Error populating valid IDs: " + t.getMessage());
         }
@@ -346,7 +364,9 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                     } catch (Exception ignored) {}
                 }
             }
-            XposedBridge.log("[WAE] Background resource mapping complete. Total: " + XResManager.moduleToHostIdMap.size());
+            if (Utils.DEBUG) {
+                XposedBridge.log("[WAE] Background resource mapping complete. Total: " + XResManager.moduleToHostIdMap.size());
+            }
         } catch (Throwable t) {
             XposedBridge.log("[WAE] Resource mapping background error: " + t.getMessage());
         }

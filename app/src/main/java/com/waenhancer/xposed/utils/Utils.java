@@ -61,6 +61,12 @@ public class Utils {
     private static final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     public static android.content.SharedPreferences xprefs;
     private static final HashMap<String, Integer> ids = new HashMap<>();
+    public static boolean DEBUG = false;
+    private static final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    public static void postDelayed(Runnable runnable, long delay) {
+        mainHandler.postDelayed(runnable, delay);
+    }
 
     public static void init(ClassLoader loader) {
         var context = Utils.getApplication();
@@ -288,6 +294,7 @@ public class Utils {
     }
 
     public static void log(String message) {
+        if (!DEBUG) return;
         try {
             XposedBridge.log(message);
         } catch (NoClassDefFoundError | NoSuchMethodError e) {
@@ -296,10 +303,25 @@ public class Utils {
     }
 
     public static void log(Throwable t) {
+        if (!DEBUG) return;
         try {
             XposedBridge.log(t);
         } catch (NoClassDefFoundError | NoSuchMethodError e) {
             // Fallback logging not available
+        }
+    }
+
+    public static void logError(String message) {
+        try {
+            XposedBridge.log("[WAE_ERROR] " + message);
+        } catch (NoClassDefFoundError | NoSuchMethodError e) {
+        }
+    }
+
+    public static void logError(Throwable t) {
+        try {
+            XposedBridge.log(t);
+        } catch (NoClassDefFoundError | NoSuchMethodError e) {
         }
     }
 

@@ -95,6 +95,7 @@
             app:title="@string/stamp_copied_messages" />
 
         <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="true"
             app:key="message_device_source"
             app:summary="@string/show_message_device_source_sum"
             app:title="@string/show_message_device_source" />

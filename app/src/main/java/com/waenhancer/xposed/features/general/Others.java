@@ -74,7 +74,9 @@ public class Others extends Feature {
 
     @Override
     public void doHook() throws Exception {
-        XposedBridge.log("[WAE_Others] doHook() started");
+        if (DEBUG) {
+            XposedBridge.log("[WAE_Others] doHook() started");
+        }
 
         // receivedIncomingTimestamp
 
@@ -524,7 +526,7 @@ public class Others extends Feature {
     }
 
     private void messageDeviceSourceTag() {
-        if (!prefs.getBoolean("message_device_source", false)) return;
+        if (!prefs.getBoolean("message_device_source", true)) return;
 
         ConversationItemListener.conversationListeners.add(new ConversationItemListener.OnConversationItemListener() {
             @Override
@@ -626,7 +628,7 @@ public class Others extends Feature {
             } else if (deviceId > 0) {
                 Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(
                         R.string.message_sent_via_linked_device,
-                        "This message was sent a via Linked Device (Desktop/Phone)"), Toast.LENGTH_SHORT);
+                        "This message was sent via a Linked Device (Desktop/Phone)"), Toast.LENGTH_SHORT);
             }
         });
     }
@@ -752,13 +754,13 @@ public class Others extends Feature {
 
     private void sendAudioType(int audio_type) throws Exception {
         var sendAudioTypeMethod = Unobfuscator.loadSendAudioTypeMethod(classLoader);
-        log(Unobfuscator.getMethodDescriptor(sendAudioTypeMethod));
+        logDebug(Unobfuscator.getMethodDescriptor(sendAudioTypeMethod));
         XposedBridge.hookMethod(sendAudioTypeMethod, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 var results = ReflectionUtils.findInstancesOfType(param.args, Integer.class);
                 if (results.size() < 2) {
-                    log("sendAudioTypeMethod size < 2");
+                    logDebug("sendAudioTypeMethod size < 2");
                     return;
                 }
                 var mediaType = results.get(0);

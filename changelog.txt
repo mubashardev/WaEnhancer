@@ -1,5 +1,5 @@
 [Added]
-- Message Device Source: Option to see whether a received message was sent to you via Primary phone or a Linked Device (Desktop/Phone)
+- Support upto version 2.26.21 for WA/WB
 
 [Improvements]
 - Enable/Disable manage recordings directly from WhatsApp Calls Tab Menu

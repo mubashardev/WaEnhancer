@@ -54,7 +54,9 @@ public class XResManager {
                     return newHostId;
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] XResManager: addResource failed: " + t.getMessage());
+                if (Utils.DEBUG) {
+                    XposedBridge.log("[WAE] XResManager: addResource failed: " + t.getMessage());
+                }
             }
         }
 

@@ -71,7 +71,7 @@ public record WaContactWpp(Object mInstance) {
                         Object instance = m.invoke(null);
                         if (instance != null) {
                             mInstanceGetWaContact = instance;
-                            XposedBridge.log("WAE: WaContactWpp: Captured instance via static method: " + m.getName());
+                            ;
                             break;
                         }
                     } catch (Exception ignored) {
@@ -84,11 +84,11 @@ public record WaContactWpp(Object mInstance) {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         mInstanceGetWaContact = param.thisObject;
-                        XposedBridge.log("WAE: WaContactWpp: Captured instance via constructor");
+                        ;
                     }
                 });
             } else {
-                XposedBridge.log("WAE: WaContactWpp: Instance already captured, skipping constructor hook");
+                ;
             }
 
             getProfilePhoto = Unobfuscator.loadGetProfilePhotoMethod(classLoader);
@@ -164,7 +164,7 @@ public record WaContactWpp(Object mInstance) {
             if (contact != null) {
                 return new WaContactWpp(contact);
             } else {
-                XposedBridge.log("WAE: WaContactWpp: Contact lookup returned null for " + userJid);
+                ;
             }
         } catch (Exception e) {
             XposedBridge.log(e);

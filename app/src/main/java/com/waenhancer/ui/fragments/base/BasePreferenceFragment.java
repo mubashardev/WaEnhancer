@@ -193,7 +193,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String s) {
-        android.util.Log.d("WAE_Manager", "onSharedPreferenceChanged: " + s);
+        ;
         if (Objects.equals(s, "release_channel")) {
             String channel = mPrefs.getString("release_channel", "stable");
             WppCore.setPrivString("release_channel", channel);
@@ -213,7 +213,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                 s.equals("open_wae");
 
         if (!isInternalKey) {
-            android.util.Log.d("WAE_Manager", "Setting need_restart = true due to change in: " + s);
+            ;
             
             // Track what changed for the restart dialog
             try {
@@ -239,10 +239,10 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
     private void scheduleRestartBroadcast() {
         if (!isResumed()) {
-            android.util.Log.d("WAE_Manager", "scheduleRestartBroadcast: Fragment not resumed, skipping");
+            ;
             return;
         }
-        android.util.Log.d("WAE_Manager", "scheduleRestartBroadcast: Scheduling MANUAL_RESTART broadcast in 250ms");
+        ;
         restartBroadcastHandler.removeCallbacks(restartBroadcastRunnable);
         restartBroadcastHandler.postDelayed(restartBroadcastRunnable, 250);
     }

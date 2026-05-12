@@ -75,7 +75,7 @@ public class Others extends Feature {
     @Override
     public void doHook() throws Exception {
         if (DEBUG) {
-            XposedBridge.log("[WAE_Others] doHook() started");
+            ;
         }
 
         // receivedIncomingTimestamp
@@ -331,7 +331,7 @@ public class Others extends Feature {
         logDebug("disablePhotoProfileStatus", Unobfuscator.getMethodDescriptor(method));
         logDebug("disablePhotoProfileStatus Field", Unobfuscator.getFieldDescriptor(field));
         if (field == null) {
-            XposedBridge.log("WaEnhancer: disablePhotoProfileStatus skipped because refresh status field was not found");
+            ;
             return;
         }
         XposedBridge.hookMethod(method, new XC_MethodHook() {

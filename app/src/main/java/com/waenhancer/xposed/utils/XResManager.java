@@ -42,7 +42,7 @@ public class XResManager {
         if (hostResources != null && moduleResources != null) {
             try {
                 if (!(hostResources instanceof android.content.res.XResources)) {
-                    // XposedBridge.log("[WAE] XResManager: hostResources is not XResources yet!");
+                    // ;
                     return moduleId;
                 }
                 // Use reflection since hostResources is android.content.res.Resources at compile time

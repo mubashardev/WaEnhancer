@@ -137,7 +137,7 @@ public class WppCore {
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     mConversationDelegate = param.thisObject;
                     if (Utils.DEBUG) {
-                        XposedBridge.log("WAE: Captured conversation delegate: " + mConversationDelegate.getClass().getName());
+                        ;
                     }
                 }
             });
@@ -226,7 +226,7 @@ public class WppCore {
     private static boolean tryConnectBridge(BaseClient baseClient) throws Exception {
         try {
             if (Utils.DEBUG) {
-                XposedBridge.log("Trying to connect to " + baseClient.getClass().getSimpleName());
+                ;
             }
             client = baseClient;
             CompletableFuture<Boolean> canLoadFuture = baseClient.connect();
@@ -245,7 +245,7 @@ public class WppCore {
             String jidRawString = (String) XposedHelpers.callMethod(userJidRaw, "getRawString");
             if (jidRawString == null) {
                 if (Utils.DEBUG) {
-                    XposedBridge.log("WppCore.sendMessage - could not get rawString from jid: " + userJidRaw);
+                    ;
                 }
                 Utils.showToast("Error: could not find JID", Toast.LENGTH_SHORT);
                 return false;
@@ -253,7 +253,7 @@ public class WppCore {
             // Strip device suffix if LID: e.g. "4306.0:0@lid" -> "4306@lid"
             jidRawString = jidRawString.replaceFirst("\\.[\\d:]+@", "@");
             if (Utils.DEBUG) {
-                XposedBridge.log("WppCore.sendMessage - jidRawString: " + jidRawString);
+                ;
             }
 
             return sendMessage(jidRawString, message);
@@ -301,16 +301,14 @@ public class WppCore {
                         android.app.RemoteInput.addResultsToIntent(remoteInputs, fillIn, results);
                         action.actionIntent.send(Utils.getApplication(), 0, fillIn);
                         if (Utils.DEBUG) {
-                            XposedBridge.log(
-                                    "WppCore.sendMessageViaNotification - sent to [" + contactName + "] via RemoteInput!");
+                            ;
                         }
                         return true;
                     }
                 }
             }
             if (Utils.DEBUG) {
-                XposedBridge.log("WppCore.sendMessageViaNotification - no WA notification with title=[" + contactName
-                        + "]. Total=" + notifications.length);
+                ;
             }
         } catch (Exception e) {
             XposedBridge.log("WppCore.sendMessageViaNotification error: " + e);
@@ -348,14 +346,14 @@ public class WppCore {
                         android.app.RemoteInput.addResultsToIntent(remoteInputs, fillIn, results);
                         action.actionIntent.send(Utils.getApplication(), 0, fillIn);
                         if (Utils.DEBUG) {
-                            XposedBridge.log("WppCore.sendMessage - sent via RemoteInput (jid match)!");
+                            ;
                         }
                         return true;
                     }
                 }
             }
             if (Utils.DEBUG) {
-                XposedBridge.log("WppCore.sendMessage - no matching WA notification for jid=" + jidOrNumber);
+                ;
             }
             return false;
         } catch (Exception e) {
@@ -410,7 +408,7 @@ public class WppCore {
         try {
             actionUser = Unobfuscator.loadActionUser(loader);
             if (Utils.DEBUG) {
-                XposedBridge.log("ActionUser: " + actionUser.getName());
+                ;
             }
             XposedBridge.hookAllConstructors(actionUser, new XC_MethodHook() {
                 @Override
@@ -431,13 +429,12 @@ public class WppCore {
                                 f.setAccessible(true);
                                 Object val = f.get(oneKs);
                                 if (Utils.DEBUG) {
-                                    XposedBridge.log("WppCore.A00-hook: 1Ks." + f.getName() + " = " + val
-                                            + " [class=" + (val == null ? "null" : val.getClass().getName()) + "]");
+                                    ;
                                 }
                             }
                         }
                         if (Utils.DEBUG) {
-                            XposedBridge.log("WppCore.A00-hook: message arg = " + param.args[1]);
+                            ;
                         }
                     }
                 });
@@ -661,7 +658,7 @@ public class WppCore {
             return null;
         try {
             if (mCachedMessageStore == null) {
-                XposedBridge.log("CachedMessageStore is null");
+                ;
                 return null;
             }
             return cachedMessageStoreKey.invoke(mCachedMessageStore, messageKey);
@@ -747,7 +744,7 @@ public class WppCore {
                 cachedUserJid = jid;
                 cachedActivityHash = currentHash;
                 if (Utils.DEBUG) {
-                    XposedBridge.log("WAE: Resolved JID " + jid.getPhoneNumber() + " in " + (System.currentTimeMillis() - start) + "ms");
+                    ;
                 }
                 return jid;
             }
@@ -763,13 +760,13 @@ public class WppCore {
         }
         long start = System.currentTimeMillis();
         if (Utils.DEBUG) {
-            XposedBridge.log("WAE: ensureConversationJidResolvers started");
+            ;
         }
         try {
             if (conversationDelegateField == null) {
                 conversationDelegateField = Unobfuscator.loadConversationDelegateField(loader);
                 if (Utils.DEBUG) {
-                    XposedBridge.log("WAE: conversationDelegateField found: " + (conversationDelegateField != null));
+                    ;
                 }
             }
         } catch (Exception e) {
@@ -779,7 +776,7 @@ public class WppCore {
             if (conversationJidField == null) {
                 conversationJidField = Unobfuscator.loadUserJidConversationDelegate(loader);
                 if (Utils.DEBUG) {
-                    XposedBridge.log("WAE: conversationJidField found: " + (conversationJidField != null));
+                    ;
                 }
             }
         } catch (Exception e) {
@@ -965,7 +962,7 @@ public class WppCore {
             if (file.exists()) return file;
         }
 
-        XposedBridge.log("WAE: WppCore: getContactPhotoFile: No photo found for " + jid + " in " + datafolder);
+        ;
         return null;
     }
 
@@ -1132,7 +1129,7 @@ public class WppCore {
                     if (client == null) {
                         throw new Exception("Bridge client not initialized");
                     }
-                    XposedBridge.log("Bridge disconnected. Trying automatic synchronous reconnect");
+                    ;
                     boolean reconnected = false;
                     try {
                         reconnected = Boolean.TRUE.equals(client.connect().get(4, TimeUnit.SECONDS));

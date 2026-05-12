@@ -207,7 +207,7 @@ public class MessageStore {
         XposedBridge.log("storeMessageRead: " + messageId);
         try {
             if (sqLiteDatabase.isReadOnly()) {
-                XposedBridge.log("Cannot storeMessageRead because database is opened in read-only mode for key: " + messageId);
+                ;
                 return;
             }
             sqLiteDatabase.execSQL("UPDATE message SET status = 1 WHERE key_id = \"" + messageId + "\"");

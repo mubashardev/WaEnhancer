@@ -170,7 +170,7 @@ public class SeenTick extends Feature {
                 var object = list.get(position);
                 object = ReflectionUtils.findFMessageInObject(object, FMessageWpp.TYPE, FMessageWpp.Key.TYPE, classLoader);
                 if (object == null) {
-                    XposedBridge.log("[WAE] SeenTick: Could not find FMessage in status object!");
+                    ;
                     return;
                 }
                 var fMessage = new FMessageWpp(object);

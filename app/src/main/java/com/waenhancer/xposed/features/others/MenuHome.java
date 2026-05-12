@@ -64,7 +64,7 @@ public class MenuHome extends Feature {
     private void InsertOpenWae(Menu menu, Activity activity) {
         try {
             var entryPoint = getSafeString("open_wae", "1");
-            XposedBridge.log("[WaEnhancer] MenuHome: entryPoint is " + entryPoint + " in " + activity.getClass().getSimpleName());
+            ;
             if (!"1".equals(entryPoint)) return;
 
             String title = "WaEnhancerX Settings";

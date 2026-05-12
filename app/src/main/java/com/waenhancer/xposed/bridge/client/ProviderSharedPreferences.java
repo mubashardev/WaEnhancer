@@ -32,7 +32,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
     private final SharedPreferences fallbackPrefs;
 
     public ProviderSharedPreferences(Context context, SharedPreferences localPrefs, SharedPreferences fallbackPrefs) {
-        Utils.log("[WAE] ProviderSharedPreferences: Initializing...");
+        ;
         this.context = context;
         this.localPrefs = localPrefs;
         this.fallbackPrefs = fallbackPrefs;
@@ -52,7 +52,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
     private void registerObserver() {
         String authority = BuildConfig.APPLICATION_ID + AUTHORITY_SUFFIX;
         try {
-            Utils.log("[WAE] ProviderSharedPreferences: Registering observer for authority: " + authority);
+            ;
             context.getContentResolver().registerContentObserver(
                     Uri.parse("content://" + authority + "/preferences"),
                     true,
@@ -63,13 +63,13 @@ public class ProviderSharedPreferences implements SharedPreferences {
                             long now = System.currentTimeMillis();
                             if (now - lastHydration > 500) {
                                 lastHydration = now;
-                                Utils.log("[WAE] ProviderSharedPreferences: Preferences changed, re-hydrating...");
+                                ;
                                 hydrateFromProvider();
                             }
                         }
                     }
             );
-            Utils.log("[WAE] ProviderSharedPreferences: Observer registered successfully");
+            ;
         } catch (Throwable e) {
             Utils.log("[WAE] ProviderSharedPreferences: Failed to register observer: " + e.getMessage());
             // Try legacy
@@ -171,7 +171,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
     }
 
     public void reload() {
-        Utils.log("[WAE] ProviderSharedPreferences: Manual reload requested");
+        ;
         hydrateFromProvider();
     }
 
@@ -201,11 +201,11 @@ public class ProviderSharedPreferences implements SharedPreferences {
         }
         lastHydrationTime = now;
         try {
-            Utils.log("[WAE] ProviderSharedPreferences: Starting hydration...");
+            ;
             Bundle result = callProvider("get_all_preferences", null);
             if (result == null) {
                 Utils.log("[WAE] ProviderSharedPreferences: Hydration failed (null result). Using fallback.");
-                Utils.log("[WAE] ProviderSharedPreferences: Fallback cache size: " + fallbackPrefs.getAll().size());
+                ;
                 var editor = localPrefs.edit().clear();
                 for (Map.Entry<String, ?> entry : fallbackPrefs.getAll().entrySet()) {
                     Object value = entry.getValue();
@@ -218,7 +218,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
                 editor.commit();
                 return;
             }
-            Utils.log("[WAE] ProviderSharedPreferences: Received preferences bundle from provider");
+            ;
             Serializable serializable = result.getSerializable("prefs");
             if (!(serializable instanceof Map)) {
                 android.util.Log.e("WAE", "Hydration failed: result 'prefs' is not a Map (type: " + (serializable != null ? serializable.getClass().getName() : "null") + ")");
@@ -226,7 +226,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
             }
             Map<?, ?> rawMap = (Map<?, ?>) serializable;
             
-            android.util.Log.i("WAE", "Hydrating " + rawMap.size() + " preferences from provider");
+            ;
             var editor = localPrefs.edit().clear();
             for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
                 if (!(entry.getKey() instanceof String)) {
@@ -270,7 +270,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
                 }
             }
             editor.commit();
-            android.util.Log.i("WAE", "Hydration completed successfully");
+            ;
         } catch (Exception e) {
             android.util.Log.e("WAE", "Hydration failed with exception: " + e.getMessage(), e);
         }
@@ -284,7 +284,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
         }
 
         private void syncToProvider(String key, Object value) {
-            de.robv.android.xposed.XposedBridge.log("[WAE] ProviderSharedPreferences: Putting preference: " + key + " = " + value);
+            ;
             Bundle extras = new Bundle();
             extras.putString("key", key);
             if (value instanceof String) {
@@ -393,17 +393,17 @@ public class ProviderSharedPreferences implements SharedPreferences {
         String[] authorities = new String[] { BuildConfig.APPLICATION_ID + AUTHORITY_SUFFIX, AUTHORITY_LEGACY, "com.waenhancer.provider" };
         for (String authority : authorities) {
             try {
-                Utils.log("[WAE] ProviderSharedPreferences: Calling provider: " + method + " (Authority: " + authority + ")");
+                ;
                 Bundle result = context.getContentResolver().call(
                         Uri.parse("content://" + authority),
                         method,
                         null,
                         extras);
                 if (result != null) {
-                    Utils.log("[WAE] ProviderSharedPreferences: Call successful for: " + authority);
+                    ;
                     return result;
                 } else {
-                    Utils.log("[WAE] ProviderSharedPreferences: Call returned null for: " + authority);
+                    ;
                 }
             } catch (Throwable e) {
                 Utils.log("[WAE] ProviderSharedPreferences: Call error (" + authority + "): " + e.getMessage());

@@ -296,7 +296,7 @@ public class Utils {
     public static void log(String message) {
         if (!DEBUG) return;
         try {
-            XposedBridge.log(message);
+            ;
         } catch (NoClassDefFoundError | NoSuchMethodError e) {
             // Fallback logging not available
         }

@@ -99,7 +99,7 @@ public class Patch {
                 });
                 break;
             default:
-                XposedBridge.log("W/Patch Unsupported Version of Android " + Build.VERSION.SDK_INT);
+                ;
                 break;
         }
     }

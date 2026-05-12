@@ -183,11 +183,11 @@ public class FeatureLoader {
 
                         String processName = Application.getProcessName();
                         if (Feature.DEBUG) {
-                            XposedBridge.log("[WAE] callApplicationOnCreate for: " + mApp.getPackageName() + " (process: " + processName + ")");
+                            ;
                         }
 
                         if (!Objects.equals(processName, mApp.getPackageName())) {
-                            XposedBridge.log("[WAE] Skipping secondary process. Expected: " + mApp.getPackageName() + ", Actual: " + processName);
+                            ;
                             return;
                         }
 
@@ -210,7 +210,7 @@ public class FeatureLoader {
                         if (pref.getBoolean("bootloader_spoofer", false)) {
                             HookBL.hook(loader, pref);
                             if (Feature.DEBUG) {
-                                XposedBridge.log("[WAE] Bootloader Spoofer Injected");
+                                ;
                             }
                         }
 
@@ -221,7 +221,7 @@ public class FeatureLoader {
                         var providerPrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(mApp, localBridgePrefs, pref);
                         Utils.xprefs = providerPrefs;
                         if (Feature.DEBUG) {
-                            XposedBridge.log("[WAE] ProviderSharedPreferences initialized with " + providerPrefs.getAll().size() + " preferences");
+                            ;
                         }
                         
                         if (pref instanceof XSharedPreferences) {
@@ -229,7 +229,7 @@ public class FeatureLoader {
                         }
                         PackageInfo packageInfo = packageManager.getPackageInfo(mApp.getPackageName(), 0);
 
-                        XposedBridge.log(packageInfo.versionName);
+                        ;
                         currentVersion = packageInfo.versionName;
 
                         // Host preference scan removed - too expensive
@@ -248,7 +248,7 @@ public class FeatureLoader {
                                         return (packageInfo.versionName + ".").startsWith(target);
                                     });
                             if (Feature.DEBUG) {
-                                XposedBridge.log("[WAE] Version verification result for " + packageInfo.versionName + ": isSupported=" + isSupported);
+                                ;
                             }
                             if (!isSupported) {
                                 disableExpirationVersion(mApp.getClassLoader());
@@ -351,13 +351,13 @@ public class FeatureLoader {
             
             Unobfuscator.loadLibrary(mApp);
             if (!Unobfuscator.initWithPath(sourceDir)) {
-                XposedBridge.log("Can't init dexkit");
+                ;
                 return;
             }
             UnobfuscatorCache.init(mApp);
             SharedPreferencesWrapper.hookInit(mApp.getClassLoader());
 
-            XposedBridge.log("[WAE] Initializing components and plugins using ProviderSharedPreferences...");
+            ;
             ResId.initLocal(mApp);
             initComponents(loader, providerPrefs);
             plugins(loader, providerPrefs, packageInfo.versionName);
@@ -366,7 +366,7 @@ public class FeatureLoader {
             var timemillis2 = System.currentTimeMillis() - timemillis;
             loadedTimeStr = String.format(java.util.Locale.US, "%.2fs", timemillis2 / 1000.0);
             if (Feature.DEBUG) {
-                XposedBridge.log("[WAE] Loaded Hooks in " + loadedTimeStr);
+                ;
             }
             
             new Handler(Looper.getMainLooper()).post(() -> {
@@ -404,7 +404,7 @@ public class FeatureLoader {
                         String fullName = activity.getClass().getName();
                         String superName = activity.getClass().getSuperclass() != null ? activity.getClass().getSuperclass().getName() : "null";
                         if (Feature.DEBUG) {
-                            XposedBridge.log("[WAE] Activity RESUMED: " + activityName + " (Full Class Name: " + fullName + " | Superclass: " + superName + ")");
+                            ;
                         }
                         
                         // Record screen view in analytics
@@ -419,7 +419,7 @@ public class FeatureLoader {
                         boolean needRestartPref = pref.getBoolean("need_restart", false);
                         boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
                         if (Feature.DEBUG) {
-                            XposedBridge.log("[WAE] Restart Check on RESUMED - Pref: " + needRestartPref + ", Global: " + needRestartGlobal + ", isShowing: " + isRestartDialogShowing);
+                            ;
                         }
                         
                         if ((needRestartPref || needRestartGlobal) && !isRestartDialogShowing) {
@@ -448,13 +448,13 @@ public class FeatureLoader {
                             if (btnRestart.isEmpty()) btnRestart = "Restart WhatsApp";
                             if (btnCancel.isEmpty()) btnCancel = "Cancel";
 
-                            XposedBridge.log("[WAE] Restart dialog - Msg: '" + msg + "', Btn: '" + btnRestart + "'");
+                            ;
                             
                             new AlertDialogWpp(activity)
                                     .setTitle("Restart Required")
                                     .setMessage(msg)
                                     .setPositiveButton(btnRestart, (dialog, which) -> {
-                                        XposedBridge.log("[WAE] User clicked RESTART WHATSAPP");
+                                        ;
                                         isRestartDialogShowing = false;
                                         pref.edit().putBoolean("need_restart", false)
                                             .remove("pending_restart_changes").apply();
@@ -477,7 +477,7 @@ public class FeatureLoader {
                 if (pref.getBoolean("update_check", true)) {
                     if (!hasCheckedThisSession[0]) {
                         hasCheckedThisSession[0] = true;
-                        XposedBridge.log("[WAE] Scheduling startup update check...");
+                        ;
                         activity.getWindow().getDecorView().postDelayed(() -> {
                             try {
                                 CompletableFuture.runAsync(new UpdateChecker(activity));
@@ -524,9 +524,9 @@ public class FeatureLoader {
         BroadcastReceiver restartManualReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                XposedBridge.log("[WAE] MANUAL_RESTART broadcast received");
+                ;
                 WppCore.setPrivBooleanSync("need_restart", true);
-                XposedBridge.log("[WAE] Global need_restart set to true via broadcast");
+                ;
             }
         };
         ContextCompat.registerReceiver(mApp, restartManualReceiver,
@@ -539,7 +539,7 @@ public class FeatureLoader {
             public void onReceive(Context context, Intent intent) {
                 if (UnobfuscatorCache.getInstance() != null) {
                     UnobfuscatorCache.getInstance().clearCache();
-                    XposedBridge.log("WaEnhancer: Obfuscate cache cleared via broadcast");
+                    ;
                 }
             }
         };
@@ -681,7 +681,7 @@ public class FeatureLoader {
                 VideoNoteAttachment.class
         };
         if (Feature.DEBUG) {
-            XposedBridge.log("Loading Plugins");
+            ;
         }
         var executorService = Executors.newWorkStealingPool(Math.min(Runtime.getRuntime().availableProcessors(), 4));
         var times = java.util.Collections.synchronizedList(new ArrayList<String>());

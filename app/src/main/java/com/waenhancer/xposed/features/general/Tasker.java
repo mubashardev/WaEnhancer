@@ -151,12 +151,12 @@ public class Tasker extends Feature {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent == null) return;
-            XposedBridge.log("[WaEnhancerX] SenderMessageBroadcastReceiver onReceive triggered for action: " + intent.getAction());
+            ;
             
             if (intent.getExtras() != null) {
                 for (String key : intent.getExtras().keySet()) {
                     Object val = intent.getExtras().get(key);
-                    XposedBridge.log("[WaEnhancerX] Intent Extra: " + key + " = " + val + " (class: " + (val != null ? val.getClass().getName() : "null") + ")");
+                    ;
                 }
             }
 
@@ -174,20 +174,20 @@ public class Tasker extends Feature {
                 }
             }
 
-            XposedBridge.log("[WaEnhancerX] Resolved inputs -> number: " + number + ", message: " + message);
+            ;
 
             if (number == null || message == null) {
-                XposedBridge.log("[WaEnhancerX] Aborting: number or message is null!");
+                ;
                 return;
             }
 
             number = number.replaceAll("\\D", "");
-            XposedBridge.log("[WaEnhancerX] Stripped target number: " + number);
+            ;
 
             // Time-based deduplication
             long now = System.currentTimeMillis();
             if (Objects.equals(number, lastProcessedNumber) && Objects.equals(message, lastProcessedMessage) && (now - lastProcessedTime < 2000)) {
-                XposedBridge.log("[WaEnhancerX] SenderMessageBroadcastReceiver: Ignored duplicate broadcast");
+                ;
                 return;
             }
             lastProcessedNumber = number;
@@ -200,9 +200,9 @@ public class Tasker extends Feature {
             if (sent) {
                 // Mark successful notification-reply so the Conversation hook can skip
                 lastNotificationReplyTime = System.currentTimeMillis();
-                XposedBridge.log("[WaEnhancerX] Message sent via notification reply for " + number);
+                ;
             } else {
-                XposedBridge.log("[WaEnhancerX] No active notification for " + number + ". Launching Conversation fallback.");
+                ;
                 try {
                     Intent activityIntent = new Intent();
                     activityIntent.setClassName(context.getPackageName(), "com.whatsapp.Conversation");
@@ -246,7 +246,7 @@ public class Tasker extends Feature {
                     android.content.Intent intent = activity.getIntent();
                     if (intent != null && intent.hasExtra("wae_auto_send_message")) {
                         final String msgToSend = intent.getStringExtra("wae_auto_send_message");
-                        XposedBridge.log("[WaEnhancerX] Hooked Conversation onCreate with wae_auto_send_message: " + msgToSend);
+                        ;
                         
                         // Make the activity invisible
                         activity.overridePendingTransition(0, 0);
@@ -274,7 +274,7 @@ public class Tasker extends Feature {
 
     private static void autoSendTextAndFinish(final android.app.Activity activity, final String message, final int attemptsLeft) {
         if (attemptsLeft <= 0) {
-            XposedBridge.log("[WaEnhancerX] Headless send: exhausted all attempts. Dumping view hierarchy for debug:");
+            ;
             try {
                 dumpViewHierarchy(activity.getWindow().getDecorView(), 0);
             } catch (Exception ignored) {}
@@ -296,7 +296,7 @@ public class Tasker extends Feature {
                     // 2. Find message entry EditText
                     final android.widget.EditText inputField = findMessageInput(decorView);
                     if (inputField == null) {
-                        XposedBridge.log("[WaEnhancerX] Headless send: message input field not found, retrying... (" + attemptsLeft + ")");
+                        ;
                         autoSendTextAndFinish(activity, message, attemptsLeft - 1);
                         return;
                     }
@@ -314,7 +314,7 @@ public class Tasker extends Feature {
                                 android.view.View sendBtn = findSendButton(activity, decorView);
                                 if (sendBtn != null && sendBtn.isEnabled() && sendBtn.getVisibility() == android.view.View.VISIBLE) {
                                     sendBtn.performClick();
-                                    XposedBridge.log("[WaEnhancerX] Headless send: message sent successfully!");
+                                    ;
                                     
                                     new Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
                                         @Override
@@ -323,7 +323,7 @@ public class Tasker extends Feature {
                                         }
                                     }, 300);
                                 } else {
-                                    XposedBridge.log("[WaEnhancerX] Headless send: send button not ready, retrying... (" + attemptsLeft + ")");
+                                    ;
                                     autoSendTextAndFinish(activity, message, attemptsLeft - 1);
                                 }
                             } catch (Exception e) {
@@ -421,7 +421,7 @@ public class Tasker extends Feature {
         if (root instanceof android.widget.TextView) {
             sb.append(" text=").append(((android.widget.TextView) root).getText());
         }
-        XposedBridge.log("[WaEnhancerX] ViewHierarchy: " + sb.toString());
+        ;
 
         if (root instanceof android.view.ViewGroup) {
             android.view.ViewGroup group = (android.view.ViewGroup) root;

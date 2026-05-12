@@ -214,7 +214,7 @@ public class UnobfuscatorCache {
                 });
             }
             latch.await(); // Wait for all threads to finish
-            Utils.log("String cache saved in " + (System.currentTimeMillis() - currentTime) + "ms");
+            ;
         } catch (Exception e) {
             Utils.log(e);
         } finally {
@@ -228,7 +228,7 @@ public class UnobfuscatorCache {
             System.gc();
         }
         search = search.toLowerCase().replaceAll("\\s", "");
-        Utils.log("need search obsfucate: " + search);
+        ;
         return reverseResourceMap.get(search);
     }
 

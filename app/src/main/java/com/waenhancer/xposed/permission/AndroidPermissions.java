@@ -74,7 +74,7 @@ public class AndroidPermissions {
                                 Object bp = XposedHelpers.callMethod(mSettings, "getPermission", newPermission);
                                 XposedHelpers.callMethod(mState, "grantRuntimePermission", bp, userId);
 //                                XposedHelpers.callMethod(mState, "grantInstallPermission", bp);
-                                XposedBridge.log("Added " + newPermission + " permission to " + packageName);
+                                ;
                             }
                         }
                     }
@@ -146,14 +146,14 @@ public class AndroidPermissions {
                         for (String newPermission : sdk30Permissions) {
                             if (!permissions.contains(newPermission)) {
                                 permissions.add(newPermission);
-                                XposedBridge.log("Added " + newPermission + " permission to " + pkgName);
+                                ;
                             }
                         }
                     } else {
                         for (String newPermission : newPermissions) {
                             if (!permissions.contains(newPermission)) {
                                 permissions.add(newPermission);
-                                XposedBridge.log("Added " + newPermission + " permission to " + pkgName);
+                                ;
                             }
                         }
                     }

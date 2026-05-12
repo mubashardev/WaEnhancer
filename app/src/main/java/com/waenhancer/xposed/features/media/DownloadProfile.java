@@ -36,7 +36,7 @@ public class DownloadProfile extends Feature {
         Class<?> profileClass;
         try {
             profileClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "ViewProfilePhoto");
-            XposedBridge.log("WAE: DownloadProfile: Hooking class " + profileClass.getName());
+            ;
         } catch (Exception e) {
             XposedBridge.log("WAE: DownloadProfile: ViewProfilePhoto class not found: " + e.getMessage());
             return;
@@ -59,7 +59,7 @@ public class DownloadProfile extends Feature {
 
                 item.setOnMenuItemClickListener(menuItem -> {
                     try {
-                        XposedBridge.log("WAE: DownloadProfile: Download clicked");
+                        ;
                         Object fieldObj = null;
                         
                         // Strategy 1: Look for WaContactWpp.TYPE in fields of the activity and its superclasses
@@ -76,29 +76,29 @@ public class DownloadProfile extends Feature {
                         }
 
                         if (fieldObj == null) {
-                            XposedBridge.log("WAE: DownloadProfile: Could not find contact field in " + param.thisObject.getClass().getName());
+                            ;
                             Utils.showToast("Error: Could not find contact information", 1);
                             return true;
                         }
 
                         var waContact = new WaContactWpp(fieldObj);
                         var userJid = waContact.getUserJid();
-                        XposedBridge.log("WAE: DownloadProfile: UserJid resolved: " + userJid.getPhoneRawString());
+                        ;
                         
                         var file = waContact.getProfilePhoto();
                         
                         if (file == null || !file.exists()) {
-                            XposedBridge.log("WAE: DownloadProfile: waContact.getProfilePhoto() returned null or non-existent file: " + file + ". Trying fallback...");
+                            ;
                             file = WppCore.getContactPhotoFile(userJid.getPhoneRawString());
                         }
 
                         if (file == null || !file.exists()) {
-                            XposedBridge.log("WAE: DownloadProfile: Profile photo file not found in any location. UserJid: " + userJid.getPhoneRawString());
+                            ;
                             Utils.showToast("Error: Profile photo not found or not loaded yet", 1);
                             return true;
                         }
                         
-                        XposedBridge.log("WAE: DownloadProfile: Found photo at: " + file.getAbsolutePath());
+                        ;
 
                         String destPath;
                         try {

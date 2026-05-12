@@ -61,21 +61,21 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if (Utils.DEBUG) {
-            XposedBridge.log("[WAE] handleLoadPackage: " + lpparam.packageName + " (process: " + lpparam.processName + ")");
+            ;
         }
         var packageName = lpparam.packageName;
         var classLoader = lpparam.classLoader;
 
         if (packageName.equals(BuildConfig.APPLICATION_ID)) {
             if (Utils.DEBUG) {
-                XposedBridge.log("[WAE] Hooking module's own process: " + packageName);
+                ;
             }
             XposedHelpers.findAndHookMethod("com.waenhancer.utils.ModuleStatus", lpparam.classLoader, "isModuleActive", XC_MethodReplacement.returnConstant(true));
             return;
         }
 
         if (Utils.DEBUG) {
-            XposedBridge.log("[WAE] Checking if target is WhatsApp or Business");
+            ;
         }
 
         AntiUpdater.hookSession(lpparam);
@@ -90,12 +90,12 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
         boolean isOriginal = App.isOriginalPackage();
 
         if (Utils.DEBUG) {
-            XposedBridge.log("[WAE] isWpp: " + isWpp + ", isBusiness: " + isBusiness + ", isOriginal: " + isOriginal);
+            ;
         }
 
         if ((isWpp && isOriginal) || isBusiness) {
             if (Utils.DEBUG) {
-                XposedBridge.log("[WAE] Target verified. Starting FeatureLoader...");
+                ;
             }
 
             // Initialize module resources early
@@ -122,7 +122,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
             try {
                 FeatureLoader.start(classLoader, getPref(), lpparam.appInfo.sourceDir);
                 if (Utils.DEBUG) {
-                    XposedBridge.log("[WAE] FeatureLoader.start completed successfully");
+                    ;
                 }
             } catch (Throwable t) {
                 XposedBridge.log("[WAE] CRITICAL ERROR in FeatureLoader.start: " + t.getMessage());

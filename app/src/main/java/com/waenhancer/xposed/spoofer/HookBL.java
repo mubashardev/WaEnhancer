@@ -469,7 +469,7 @@ public final class HookBL {
             if (!xmlContent.isEmpty()) {
                 try {
                     parseBootloaderSpooferXml(xmlContent);
-                    XposedBridge.log("Successfully loaded custom bootloader spoofer keys");
+                    ;
                 } catch (Throwable t) {
                     XposedBridge.log(t);
                     Utils.showToast("Error parsing custom bootloader spoofer XML: " + t.getMessage(), 1);

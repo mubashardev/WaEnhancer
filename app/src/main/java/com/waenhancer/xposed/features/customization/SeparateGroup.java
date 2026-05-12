@@ -49,7 +49,7 @@ public class SeparateGroup extends Feature {
 
         if (!prefs.getBoolean("separategroups", false)) return;
         if (!isSupportedVersion()) {
-            XposedBridge.log("SeparateGroup: WhatsApp update disabled the runtime hooks for Separate Groups; feature temporarily disabled");
+            ;
             return;
         }
 
@@ -145,7 +145,7 @@ public class SeparateGroup extends Feature {
                         if (enableCountMethod.getDeclaringClass().isInstance(param.thisObject)) {
                             enableCountMethod.invoke(param.thisObject, param.args[0], instance1, tabs.indexOf(GROUPS));
                         } else {
-                            XposedBridge.log("SeparateGroup: Invalid receiver for enableCountMethod: " + param.thisObject.getClass().getName());
+                            ;
                         }
                     }
                 }

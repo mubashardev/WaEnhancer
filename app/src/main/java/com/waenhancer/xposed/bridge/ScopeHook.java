@@ -52,7 +52,7 @@ public class ScopeHook {
                         if ("getHookBinder".equals(arg)) {
                             Method mGetContext = param.thisObject.getClass().getMethod("getContext");
                             Context context = (Context) mGetContext.invoke(param.thisObject);
-                            XposedBridge.log("WaEnhancer X: Trying to allow blocking ");
+                            ;
                             try {
                                 XposedHelpers.callStaticMethod(Binder.class, "allowBlockingForCurrentThread");
                             } catch (Throwable ignored) {
@@ -96,7 +96,7 @@ public class ScopeHook {
     }
 
     private static void hookScope(Object pms, ClassLoader loader) {
-        XposedBridge.log("Hooked visibility Scope");
+        ;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             hook = XposedBridge.hookAllMethods(XposedHelpers.findClass("com.android.server.pm.AppsFilterBase", loader), "shouldFilterApplication", new XC_MethodHook() {
                 @Override

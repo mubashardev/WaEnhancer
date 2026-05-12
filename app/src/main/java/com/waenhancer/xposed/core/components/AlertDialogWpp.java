@@ -64,7 +64,7 @@ public class AlertDialogWpp {
                 return;
             }
             Class<?> alertDialogClass = getAlertDialog.getReturnType();
-            XposedBridge.log("[WAE] AlertDialogWpp: Initializing with class " + alertDialogClass.getName());
+            ;
 
             // Try to find methods by name first (more reliable if not obfuscated)
             setMessageMethod = null;
@@ -76,13 +76,13 @@ public class AlertDialogWpp {
                     method -> method.getParameterCount() == 1 && 
                     method.getParameterTypes()[0].equals(CharSequence.class));
             }
-            if (setMessageMethod != null) XposedBridge.log("[WAE] AlertDialogWpp: Found setMessageMethod: " + setMessageMethod.getName());
+            if (setMessageMethod != null) ;
 
             setItemsMethod = ReflectionUtils.findMethodUsingFilterIfExists(alertDialogClass,
                     method -> method.getParameterCount() == 2 &&
                     ((method.getParameterTypes()[0].equals(DialogInterface.OnClickListener.class) && CharSequence[].class.isAssignableFrom(method.getParameterTypes()[1])) ||
                      (CharSequence[].class.isAssignableFrom(method.getParameterTypes()[0]) && method.getParameterTypes()[1].equals(DialogInterface.OnClickListener.class))));
-            if (setItemsMethod != null) XposedBridge.log("[WAE] AlertDialogWpp: Found setItemsMethod: " + setItemsMethod.getName());
+            if (setItemsMethod != null) ;
 
             setMultiChoiceItemsMethod = ReflectionUtils.findMethodUsingFilterIfExists(alertDialogClass,
                     method -> method.getParameterCount() == 3 &&
@@ -96,7 +96,7 @@ public class AlertDialogWpp {
                     method.getParameterCount() == 2 && 
                     ((method.getParameterTypes()[0].equals(DialogInterface.OnClickListener.class) && CharSequence.class.isAssignableFrom(method.getParameterTypes()[1])) ||
                      (CharSequence.class.isAssignableFrom(method.getParameterTypes()[0]) && method.getParameterTypes()[1].equals(DialogInterface.OnClickListener.class))));
-                XposedBridge.log("[WAE] AlertDialogWpp: Found " + buttons.length + " button methods");
+                ;
             } catch (Exception ignored) {}
 
             setNegativeButtonMethod = null;
@@ -125,11 +125,11 @@ public class AlertDialogWpp {
                     setNeutralButtonMethod = buttons[1];
                 }
                 
-                XposedBridge.log("[WAE] AlertDialogWpp: Using button fallback mapping (Pos=" + setPositiveButtonMethod.getName() + ")");
+                ;
             }
 
             isAvailable = true;
-            XposedBridge.log("[WAE] AlertDialogWpp initialized successfully");
+            ;
             logClassMethods(alertDialogClass);
         } catch (Throwable e) {
             isAvailable = false;
@@ -141,9 +141,9 @@ public class AlertDialogWpp {
     private static void logClassMethods(Class<?> clazz) {
         XposedBridge.log("[WAE] --- Methods for " + clazz.getName() + " ---");
         for (Method m : clazz.getDeclaredMethods()) {
-            XposedBridge.log("[WAE] " + m.getReturnType().getSimpleName() + " " + m.getName() + "(" + Arrays.toString(m.getParameterTypes()) + ")");
+            ;
         }
-        XposedBridge.log("[WAE] ---------------------------------------");
+        ;
     }
 
 

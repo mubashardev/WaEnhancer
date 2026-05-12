@@ -99,7 +99,7 @@ public class CallRecordingSettingsActivity extends BaseActivity {
                 } else {
                     prefs.edit().putBoolean("call_recording_use_root", false).apply();
                     setModeSelection(false);
-                    Log.d(TAG, "Root denied, output: " + output);
+                    ;
                     Toast.makeText(this, R.string.root_access_denied, Toast.LENGTH_LONG).show();
                 }
             });

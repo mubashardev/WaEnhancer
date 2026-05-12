@@ -444,7 +444,7 @@ public class ReflectionUtils {
             }
 
             if (debug) {
-                XposedBridge.log("[WAE-DEBUG] Extracted Key details - id: " + id + ", fromMe: " + fromMe + ", Jid: " + (remoteJid != null ? remoteJid.toString() : "null"));
+                ;
             }
 
             if (id != null && fromMe != null && remoteJid != null) {
@@ -452,7 +452,7 @@ public class ReflectionUtils {
                 if (realKeyClass != null) {
                     Object realKey = XposedHelpers.newInstance(realKeyClass, remoteJid, id, fromMe);
                     if (debug) {
-                        XposedBridge.log("[WAE-DEBUG] Successfully created real Key: " + realKey);
+                        ;
                     }
                     return realKey;
                 }
@@ -480,7 +480,7 @@ public class ReflectionUtils {
 
         boolean debug = object.getClass().getName().contains("8hO");
         if (debug) {
-            XposedBridge.log("[WAE-DEBUG] findFMessageInObject starting for: " + object.getClass().getName() + " | fMessageClass: " + (fMessageClass != null ? fMessageClass.getName() : "null") + " | keyClass: " + (keyClass != null ? keyClass.getName() : "null"));
+            ;
         }
 
         // 1. Search for a direct field of type fMessageClass
@@ -489,7 +489,7 @@ public class ReflectionUtils {
             if (field != null) {
                 Object val = getObjectField(field, object);
                 if (val != null && fMessageClass.isInstance(val)) {
-                    if (debug) XposedBridge.log("[WAE-DEBUG] Found direct fMessage field: " + field.getName());
+                    if (debug) ;
                     return val;
                 }
             }
@@ -501,7 +501,7 @@ public class ReflectionUtils {
             if (field != null) {
                 Object val = getObjectField(field, object);
                 if (val != null && keyClass.isInstance(val)) {
-                    if (debug) XposedBridge.log("[WAE-DEBUG] Found direct key field: " + field.getName());
+                    if (debug) ;
                     try {
                         Object fmsg = com.waenhancer.xposed.core.WppCore.getFMessageFromKey(val);
                         if (fmsg != null) return fmsg;
@@ -525,13 +525,13 @@ public class ReflectionUtils {
                 try {
                     Object nestedObj = field.get(object);
                     if (debug) {
-                        XposedBridge.log("[WAE-DEBUG] Field: " + field.getName() + " (" + field.getType().getName() + ") = " + (nestedObj != null ? nestedObj.getClass().getName() : "null"));
+                        ;
                         if (nestedObj != null && nestedObj.getClass().getName().contains("8gx")) {
-                            XposedBridge.log("[WAE-DEBUG] Dumping fields of 8gx class:");
+                            ;
                             for (Field f : getCachedDeclaredFields(nestedObj.getClass())) {
                                 f.setAccessible(true);
                                 try {
-                                    XposedBridge.log("[WAE-DEBUG]   8gx Field: " + f.getName() + " (" + f.getType().getName() + ") = " + f.get(nestedObj));
+                                    ;
                                 } catch (Exception e) {
                                     XposedBridge.log("[WAE-DEBUG]   8gx Field read error: " + f.getName() + " -> " + e);
                                 }
@@ -544,18 +544,18 @@ public class ReflectionUtils {
                             return nestedContainerMatch;
                         }
                         if (fMessageClass != null && fMessageClass.isInstance(nestedObj)) {
-                            if (debug) XposedBridge.log("[WAE-DEBUG] Match fMessageClass directly on nestedObj!");
+                            if (debug) ;
                             return nestedObj;
                         }
                         if (fMessageClass != null) {
                             Field nestedFMsgField = getFieldByExtendType(nestedObj.getClass(), fMessageClass);
                             if (debug) {
-                                XposedBridge.log("[WAE-DEBUG] getFieldByExtendType for fMessageClass: " + (nestedFMsgField != null ? nestedFMsgField.getName() : "null"));
+                                ;
                             }
                             if (nestedFMsgField != null) {
                                 Object val = getObjectField(nestedFMsgField, nestedObj);
                                 if (val != null && fMessageClass.isInstance(val)) {
-                                    if (debug) XposedBridge.log("[WAE-DEBUG] Match fMessageClass inside nestedObj field!");
+                                    if (debug) ;
                                     return val;
                                 }
                             }
@@ -576,7 +576,7 @@ public class ReflectionUtils {
                                         }
                                     }
                                     if (isKey) {
-                                        if (debug) XposedBridge.log("[WAE-DEBUG] Found Key object: " + nestedKeyField.getName() + " (" + val.getClass().getName() + "). Converting if needed...");
+                                        if (debug) ;
                                         Object targetKey = val;
                                         if (keyClass != null && !keyClass.isInstance(val)) {
                                             targetKey = convertToRealKey(val, classLoader, debug);

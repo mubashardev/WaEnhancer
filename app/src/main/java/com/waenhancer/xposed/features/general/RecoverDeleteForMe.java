@@ -37,13 +37,13 @@ public class RecoverDeleteForMe extends Feature {
                 Class<?>[] p = m.getParameterTypes();
                 if (p.length == 3 && Collection.class.isAssignableFrom(p[1]) && p[2] == int.class) {
                     targetMethod = m;
-                    XposedBridge.log("WAE: Found potential DeleteForMe method: " + m.getName());
+                    ;
                     break; // Assuming only one method matches this signature in CoreMessageStore
                 }
             }
 
             if (targetMethod == null) {
-                XposedBridge.log("WAE: RecoverDeleteForMe: A06 not found");
+                ;
                 return;
             }
 
@@ -51,19 +51,19 @@ public class RecoverDeleteForMe extends Feature {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) {
                     try {
-                        XposedBridge.log("WAE: A06 Fired!");
+                        ;
                         Collection<?> msgs = (Collection<?>) param.args[1];
                         if (msgs == null) {
-                            XposedBridge.log("WAE: msgs is null");
+                            ;
                             return;
                         }
                         if (msgs.isEmpty()) {
-                            XposedBridge.log("WAE: msgs is empty");
+                            ;
                             return;
                         }
                         Context ctx = Utils.getApplication();
                         if (ctx == null) {
-                            XposedBridge.log("WAE: Context is null");
+                            ;
                             return;
                         }
                         // DelMessageStore store = DelMessageStore.getInstance(ctx); // No longer needed
@@ -206,7 +206,7 @@ public class RecoverDeleteForMe extends Feature {
             // Priority 2: WaContactWpp Internal Lookup (New Reliable Fallback)
             if (contactName == null && chatJid != null) {
                 try {
-                    XposedBridge.log("WAE: Attempting WaContactWpp lookup for " + chatJid);
+                    ;
                     FMessageWpp.UserJid userJidObj = new FMessageWpp.UserJid(chatJid);
                     WaContactWpp waContact = WaContactWpp.getWaContactFromJid(userJidObj);
                     if (waContact != null) {
@@ -214,9 +214,9 @@ public class RecoverDeleteForMe extends Feature {
                         if (contactName == null || contactName.isEmpty()) {
                             contactName = waContact.getWaName();
                         }
-                        XposedBridge.log("WAE: WaContact result: " + contactName);
+                        ;
                     } else {
-                        XposedBridge.log("WAE: WaContactWpp returned null for " + chatJid);
+                        ;
                     }
                 } catch (Throwable t) {
                     XposedBridge.log("WAE: WaContactWpp lookup failed: " + t.getMessage());
@@ -326,8 +326,7 @@ public class RecoverDeleteForMe extends Feature {
             String authority = com.waenhancer.BuildConfig.APPLICATION_ID + ".provider";
             android.net.Uri uri = android.net.Uri.parse("content://" + authority + "/deleted_messages");
             context.getContentResolver().insert(uri, values);
-            XposedBridge.log("WAE: RecoverDeleteForMe saved via Provider: id=" + message.getKeyId() + " text="
-                    + message.getTextContent());
+            ;
         } catch (Exception e) {
             XposedBridge.log("WAE: Failed to insert to provider: " + e.getMessage());
             e.printStackTrace();

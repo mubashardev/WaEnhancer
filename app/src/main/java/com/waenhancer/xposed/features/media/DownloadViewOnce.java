@@ -54,7 +54,7 @@ public class DownloadViewOnce extends Feature {
                 @Override
                 @SuppressLint("DiscouragedApi")
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: Media Activity menu hook triggered");
+                    if (DEBUG) ;
                     
                     Object fmessageObj = null;
                     var fields = ReflectionUtils.getFieldsByExtendType(param.thisObject.getClass(), FMessageWpp.TYPE);
@@ -79,12 +79,12 @@ public class DownloadViewOnce extends Feature {
                     }
                     
                     if (fmessageObj == null) {
-                        if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: fmessageObj is null, aborting");
+                        if (DEBUG) ;
                         return;
                     }
                     
                     FMessageWpp fMessage = new FMessageWpp(fmessageObj);
-                    if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: Found message, isViewOnce=" + fMessage.isViewOnce());
+                    if (DEBUG) ;
 
                     // check media is view once
                     if (!fMessage.isViewOnce()) return;
@@ -117,7 +117,7 @@ public class DownloadViewOnce extends Feature {
                     new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: ViewOnceViewerActivity menu hook triggered");
+                            if (DEBUG) ;
                             
                             Menu menu = (Menu) param.args[0];
                             
@@ -133,12 +133,12 @@ public class DownloadViewOnce extends Feature {
                                         var fieldType = ReflectionUtils.getFieldByType(param.thisObject.getClass(), keyClass);
                                         var keyMessageObj = ReflectionUtils.getObjectField(fieldType, param.thisObject);
                                         if (keyMessageObj == null) {
-                                            if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: keyMessageObj is null");
+                                            if (DEBUG) ;
                                             return;
                                         }
                                         var fmessage = new FMessageWpp.Key(keyMessageObj).getFMessage();
                                         if (fmessage == null) {
-                                            if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: fmessage retrieved from key is null");
+                                            if (DEBUG) ;
                                             return;
                                         }
                                         var file = fmessage.getMediaFile();

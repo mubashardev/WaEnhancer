@@ -229,7 +229,7 @@ public class DesignUtils {
             if (context == null) {
                 boolean systemNight = isNightModeBySystem();
                 int waTheme = Utils.getDefaultTheme();
-                // XposedBridge.log("[WAE] DesignUtils: No context, systemNight=" + systemNight + ", waTheme=" + waTheme);
+                // ;
                 return waTheme <= 0 ? systemNight : waTheme == 2;
             }
             

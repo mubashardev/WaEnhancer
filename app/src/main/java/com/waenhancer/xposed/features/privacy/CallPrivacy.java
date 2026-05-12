@@ -142,9 +142,9 @@ public class CallPrivacy extends Feature {
             case BACKLIST:
                 if (customprivacy.optBoolean("BlockCall", false)) return true;
                 var callBlockList = prefs.getString("call_block_contacts", "[]");
-                de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy BACKLIST callBlockList: " + callBlockList);
+                ;
                 var blockList = Arrays.stream(callBlockList.substring(1, callBlockList.length() - 1).split(", ")).map(String::trim).collect(Collectors.toCollection(ArrayList::new));
-                de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy BACKLIST blockList size: " + blockList.size());
+                ;
                 for (var blockNumber : blockList) {
                     if (!TextUtils.isEmpty(blockNumber)) {
                         String cleanBlockNumber = blockNumber;
@@ -160,11 +160,11 @@ public class CallPrivacy extends Feature {
                         }
                         String phoneRaw = userJid.getPhoneRawString();
                         String userRaw = userJid.getUserRawString();
-                        de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy comparing incoming caller phoneRaw: " + phoneRaw + ", userRaw: " + userRaw + ", cleanPhoneNumber: " + cleanPhoneNumber + " with blockNumber: " + blockNumber + ", cleanBlockNumber: " + cleanBlockNumber);
+                        ;
                         if (Objects.equals(phoneRaw, blockNumber) ||
                                 Objects.equals(userRaw, blockNumber) ||
                                 (cleanPhoneNumber != null && Objects.equals(cleanPhoneNumber, cleanBlockNumber))) {
-                            de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy MATCH FOUND! Blocking call.");
+                            ;
                             return true;
                         }
                     }
@@ -172,7 +172,7 @@ public class CallPrivacy extends Feature {
                 return false;
             case WHITELIST:
                 var callWhiteList = prefs.getString("call_white_contacts", "[]");
-                de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy WHITELIST callWhiteList: " + callWhiteList);
+                ;
                 var whiteList = Arrays.stream(callWhiteList.substring(1, callWhiteList.length() - 1).split(", ")).map(String::trim).collect(Collectors.toCollection(ArrayList::new));
                 for (var whiteNumber : whiteList) {
                     if (!TextUtils.isEmpty(whiteNumber)) {
@@ -189,11 +189,11 @@ public class CallPrivacy extends Feature {
                         }
                         String phoneRaw = userJid.getPhoneRawString();
                         String userRaw = userJid.getUserRawString();
-                        de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy comparing incoming caller phoneRaw: " + phoneRaw + ", userRaw: " + userRaw + ", cleanPhoneNumber: " + cleanPhoneNumber + " with whiteNumber: " + whiteNumber + ", cleanWhiteNumber: " + cleanWhiteNumber);
+                        ;
                         if (Objects.equals(phoneRaw, whiteNumber) ||
                                 Objects.equals(userRaw, whiteNumber) ||
                                 (cleanPhoneNumber != null && Objects.equals(cleanPhoneNumber, cleanWhiteNumber))) {
-                            de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy MATCH FOUND in WHITELIST! Allowing call.");
+                            ;
                             return false;
                         }
                     }

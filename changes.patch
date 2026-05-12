@@ -1,0 +1,2302 @@
+diff --git a/app/src/main/java/com/waenhancer/UpdateChecker.java b/app/src/main/java/com/waenhancer/UpdateChecker.java
+index 9f178f18..08115e85 100644
+--- a/app/src/main/java/com/waenhancer/UpdateChecker.java
++++ b/app/src/main/java/com/waenhancer/UpdateChecker.java
+@@ -234,7 +234,7 @@ public class UpdateChecker implements Runnable {
+             }
+         } catch (Exception e) {
+             String errMsg = "[UpdateChecker] Exception: " + e.getMessage();
+-            XposedBridge.log("[" + TAG + "] " + errMsg);
++            
+             writeDebugLog(errMsg);
+         }
+     }
+diff --git a/app/src/main/java/com/waenhancer/WppXposed.java b/app/src/main/java/com/waenhancer/WppXposed.java
+index 7e485667..e670398f 100644
+--- a/app/src/main/java/com/waenhancer/WppXposed.java
++++ b/app/src/main/java/com/waenhancer/WppXposed.java
+@@ -61,21 +61,21 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
+     @Override
+     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+         if (Utils.DEBUG) {
+-            XposedBridge.log("[WAE] handleLoadPackage: " + lpparam.packageName + " (process: " + lpparam.processName + ")");
++            
+         }
+         var packageName = lpparam.packageName;
+         var classLoader = lpparam.classLoader;
+ 
+         if (packageName.equals(BuildConfig.APPLICATION_ID)) {
+             if (Utils.DEBUG) {
+-                XposedBridge.log("[WAE] Hooking module's own process: " + packageName);
++                
+             }
+             XposedHelpers.findAndHookMethod("com.waenhancer.utils.ModuleStatus", lpparam.classLoader, "isModuleActive", XC_MethodReplacement.returnConstant(true));
+             return;
+         }
+ 
+         if (Utils.DEBUG) {
+-            XposedBridge.log("[WAE] Checking if target is WhatsApp or Business");
++            
+         }
+ 
+         AntiUpdater.hookSession(lpparam);
+@@ -90,12 +90,12 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
+         boolean isOriginal = App.isOriginalPackage();
+ 
+         if (Utils.DEBUG) {
+-            XposedBridge.log("[WAE] isWpp: " + isWpp + ", isBusiness: " + isBusiness + ", isOriginal: " + isOriginal);
++            
+         }
+ 
+         if ((isWpp && isOriginal) || isBusiness) {
+             if (Utils.DEBUG) {
+-                XposedBridge.log("[WAE] Target verified. Starting FeatureLoader...");
++                
+             }
+ 
+             // Initialize module resources early
+@@ -115,14 +115,14 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
+                 }
+             } else {
+                 if (Utils.DEBUG) {
+-                    XposedBridge.log("[WAE] Logging hooks skipped (logging_enabled=false)");
++                    
+                 }
+             }
+ 
+             try {
+                 FeatureLoader.start(classLoader, getPref(), lpparam.appInfo.sourceDir);
+                 if (Utils.DEBUG) {
+-                    XposedBridge.log("[WAE] FeatureLoader.start completed successfully");
++                    
+                 }
+             } catch (Throwable t) {
+                 XposedBridge.log("[WAE] CRITICAL ERROR in FeatureLoader.start: " + t.getMessage());
+@@ -187,7 +187,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
+         }
+ 
+         if (Utils.DEBUG) {
+-            XposedBridge.log("[WAE] Global resource translation hooks installed.");
++            
+         }
+     }
+ 
+@@ -337,7 +337,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
+                 }
+             }
+             if (Utils.DEBUG) {
+-                XposedBridge.log("[WAE] Valid module IDs populated: " + XResManager.validModuleIds.size());
++                
+             }
+         } catch (Throwable t) {
+             XposedBridge.log("[WAE] Error populating valid IDs: " + t.getMessage());
+@@ -365,7 +365,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
+                 }
+             }
+             if (Utils.DEBUG) {
+-                XposedBridge.log("[WAE] Background resource mapping complete. Total: " + XResManager.moduleToHostIdMap.size());
++                
+             }
+         } catch (Throwable t) {
+             XposedBridge.log("[WAE] Resource mapping background error: " + t.getMessage());
+diff --git a/app/src/main/java/com/waenhancer/activities/CallRecordingSettingsActivity.java b/app/src/main/java/com/waenhancer/activities/CallRecordingSettingsActivity.java
+index df223ec6..e5d94f24 100644
+--- a/app/src/main/java/com/waenhancer/activities/CallRecordingSettingsActivity.java
++++ b/app/src/main/java/com/waenhancer/activities/CallRecordingSettingsActivity.java
+@@ -99,7 +99,7 @@ public class CallRecordingSettingsActivity extends BaseActivity {
+                 } else {
+                     prefs.edit().putBoolean("call_recording_use_root", false).apply();
+                     setModeSelection(false);
+-                    Log.d(TAG, "Root denied, output: " + output);
++                    
+                     Toast.makeText(this, R.string.root_access_denied, Toast.LENGTH_LONG).show();
+                 }
+             });
+diff --git a/app/src/main/java/com/waenhancer/receivers/TaskerMessageSentReceiver.java b/app/src/main/java/com/waenhancer/receivers/TaskerMessageSentReceiver.java
+index 3accf305..0e92a0dc 100644
+--- a/app/src/main/java/com/waenhancer/receivers/TaskerMessageSentReceiver.java
++++ b/app/src/main/java/com/waenhancer/receivers/TaskerMessageSentReceiver.java
+@@ -10,18 +10,18 @@ public class TaskerMessageSentReceiver extends BroadcastReceiver {
+ 
+     @Override
+     public void onReceive(Context context, Intent intent) {
+-        Log.d(TAG, "TaskerMessageSentReceiver onReceive triggered");
++        
+         if (intent == null) return;
+ 
+         String number = intent.getStringExtra("number");
+         String message = intent.getStringExtra("message");
+ 
+         if (number == null || message == null) {
+-            Log.d(TAG, "Aborting: number or message is null");
++            
+             return;
+         }
+ 
+-        Log.d(TAG, "Forwarding com.waenhancer.MESSAGE_SENT: number=" + number + ", message=" + message);
++        
+ 
+         // Forward broadcast to WhatsApp packages for handling inside the hooked process
+         forwardBroadcast(context, "com.whatsapp", number, message);
+diff --git a/app/src/main/java/com/waenhancer/services/LogService.java b/app/src/main/java/com/waenhancer/services/LogService.java
+index 6c046f99..7ba8bc16 100644
+--- a/app/src/main/java/com/waenhancer/services/LogService.java
++++ b/app/src/main/java/com/waenhancer/services/LogService.java
+@@ -49,7 +49,7 @@ public class LogService extends Service {
+     @Override
+     public int onStartCommand(Intent intent, int flags, int startId) {
+         if (intent != null && ACTION_STOP.equals(intent.getAction())) {
+-            Log.d(TAG, "Stop action received via intent");
++            
+             LogManager.setLoggingEnabled(this, false);
+             stopSelf();
+             return START_NOT_STICKY;
+@@ -59,7 +59,7 @@ public class LogService extends Service {
+             isRunning = true;
+             startForeground(NOTIFICATION_ID, createNotification());
+             startStreaming();
+-            Log.d(TAG, "LogService started");
++            
+         }
+ 
+         return START_STICKY;
+diff --git a/app/src/main/java/com/waenhancer/ui/fragments/HomeFragment.java b/app/src/main/java/com/waenhancer/ui/fragments/HomeFragment.java
+index 627d8f29..0114685a 100644
+--- a/app/src/main/java/com/waenhancer/ui/fragments/HomeFragment.java
++++ b/app/src/main/java/com/waenhancer/ui/fragments/HomeFragment.java
+@@ -71,7 +71,7 @@ public class HomeFragment extends BaseFragment {
+             @Override
+             public void onReceive(Context context, Intent intent) {
+                 String pkg = intent.getStringExtra("PKG");
+-                Log.d("WAE_STATUS", "Received RECEIVER_WPP broadcast from: " + pkg);
++                
+                 try {
+                     if (FeatureLoader.PACKAGE_WPP.equals(pkg))
+                         receiverBroadcastWpp(context, intent);
+@@ -536,7 +536,7 @@ public class HomeFragment extends BaseFragment {
+         boolean hookEnabled = com.waenhancer.utils.ModuleStatus.isModuleActive();
+         boolean heartbeatEnabled = hasRecentModuleHeartbeat();
+         
+-        Log.d("WAE_STATUS", "checkStateWpp: framework=" + frameworkPresent + ", hook=" + hookEnabled + ", heartbeat=" + heartbeatEnabled);
++        
+         
+         updateModuleStatusUi(frameworkPresent, hookEnabled, heartbeatEnabled);
+         
+@@ -690,7 +690,7 @@ public class HomeFragment extends BaseFragment {
+     }
+ 
+     private static void checkWpp(FragmentActivity activity) {
+-        Log.d("WAE_STATUS", "Sending CHECK_WPP broadcast to " + BuildConfig.APPLICATION_ID);
++        
+         Intent checkWpp = new Intent(BuildConfig.APPLICATION_ID + ".CHECK_WPP");
+         // Ensure broadcast reaches WhatsApp even if it is in background/stopped state (Android 14+)
+         checkWpp.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+@@ -769,7 +769,7 @@ public class HomeFragment extends BaseFragment {
+         long diff = System.currentTimeMillis() - lastSeen;
+         // Expiry threshold: 24 hours for persistent status even if WhatsApp is force-stopped
+         boolean active = diff < 24 * 60 * 60 * 1000L;
+-        Log.v("WAE_STATUS", "Heartbeat check: lastSeen=" + lastSeen + ", diff=" + (diff/1000) + "s, active=" + active);
++        
+         return active;
+     }
+ 
+diff --git a/app/src/main/java/com/waenhancer/ui/fragments/base/BasePreferenceFragment.java b/app/src/main/java/com/waenhancer/ui/fragments/base/BasePreferenceFragment.java
+index fcb7202d..582ada69 100644
+--- a/app/src/main/java/com/waenhancer/ui/fragments/base/BasePreferenceFragment.java
++++ b/app/src/main/java/com/waenhancer/ui/fragments/base/BasePreferenceFragment.java
+@@ -193,7 +193,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
+ 
+     @Override
+     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String s) {
+-        android.util.Log.d("WAE_Manager", "onSharedPreferenceChanged: " + s);
++        
+         if (Objects.equals(s, "release_channel")) {
+             String channel = mPrefs.getString("release_channel", "stable");
+             WppCore.setPrivString("release_channel", channel);
+@@ -213,7 +213,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
+                 s.equals("open_wae");
+ 
+         if (!isInternalKey) {
+-            android.util.Log.d("WAE_Manager", "Setting need_restart = true due to change in: " + s);
++            
+             
+             // Track what changed for the restart dialog
+             try {
+@@ -239,10 +239,10 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
+ 
+     private void scheduleRestartBroadcast() {
+         if (!isResumed()) {
+-            android.util.Log.d("WAE_Manager", "scheduleRestartBroadcast: Fragment not resumed, skipping");
++            
+             return;
+         }
+-        android.util.Log.d("WAE_Manager", "scheduleRestartBroadcast: Scheduling MANUAL_RESTART broadcast in 250ms");
++        
+         restartBroadcastHandler.removeCallbacks(restartBroadcastRunnable);
+         restartBroadcastHandler.postDelayed(restartBroadcastRunnable, 250);
+     }
+diff --git a/app/src/main/java/com/waenhancer/xposed/bridge/ScopeHook.java b/app/src/main/java/com/waenhancer/xposed/bridge/ScopeHook.java
+index af19c7d7..07941e51 100644
+--- a/app/src/main/java/com/waenhancer/xposed/bridge/ScopeHook.java
++++ b/app/src/main/java/com/waenhancer/xposed/bridge/ScopeHook.java
+@@ -52,7 +52,7 @@ public class ScopeHook {
+                         if ("getHookBinder".equals(arg)) {
+                             Method mGetContext = param.thisObject.getClass().getMethod("getContext");
+                             Context context = (Context) mGetContext.invoke(param.thisObject);
+-                            XposedBridge.log("WaEnhancer X: Trying to allow blocking ");
++                            
+                             try {
+                                 XposedHelpers.callStaticMethod(Binder.class, "allowBlockingForCurrentThread");
+                             } catch (Throwable ignored) {
+@@ -66,7 +66,7 @@ public class ScopeHook {
+                                 XposedHelpers.callStaticMethod(Binder.class, "defaultBlockingForCurrentThread");
+                             } catch (Throwable ignored) {
+                             }
+-                            XposedBridge.log("WaEnhancer X: Bypass Scope using Provider Settings");
++                            
+                         }
+                     }
+                 } catch (Throwable ex) {
+@@ -96,7 +96,7 @@ public class ScopeHook {
+     }
+ 
+     private static void hookScope(Object pms, ClassLoader loader) {
+-        XposedBridge.log("Hooked visibility Scope");
++        
+         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+             hook = XposedBridge.hookAllMethods(XposedHelpers.findClass("com.android.server.pm.AppsFilterBase", loader), "shouldFilterApplication", new XC_MethodHook() {
+                 @Override
+diff --git a/app/src/main/java/com/waenhancer/xposed/bridge/client/ProviderClient.java b/app/src/main/java/com/waenhancer/xposed/bridge/client/ProviderClient.java
+index 7551afcf..d3c5359e 100644
+--- a/app/src/main/java/com/waenhancer/xposed/bridge/client/ProviderClient.java
++++ b/app/src/main/java/com/waenhancer/xposed/bridge/client/ProviderClient.java
+@@ -63,7 +63,7 @@ public class ProviderClient extends BaseClient {
+                 if (binder != null) {
+                     service = WaeIIFace.Stub.asInterface(binder);
+                     if (service != null && service.asBinder().pingBinder()) {
+-                        XposedBridge.log("" + service);
++                        
+ 
+                         connected = true;
+                     }
+diff --git a/app/src/main/java/com/waenhancer/xposed/bridge/client/ProviderSharedPreferences.java b/app/src/main/java/com/waenhancer/xposed/bridge/client/ProviderSharedPreferences.java
+index c23b0402..414f6bcc 100644
+--- a/app/src/main/java/com/waenhancer/xposed/bridge/client/ProviderSharedPreferences.java
++++ b/app/src/main/java/com/waenhancer/xposed/bridge/client/ProviderSharedPreferences.java
+@@ -32,7 +32,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
+     private final SharedPreferences fallbackPrefs;
+ 
+     public ProviderSharedPreferences(Context context, SharedPreferences localPrefs, SharedPreferences fallbackPrefs) {
+-        Utils.log("[WAE] ProviderSharedPreferences: Initializing...");
++        
+         this.context = context;
+         this.localPrefs = localPrefs;
+         this.fallbackPrefs = fallbackPrefs;
+@@ -46,13 +46,13 @@ public class ProviderSharedPreferences implements SharedPreferences {
+         } catch (Throwable t) {
+             Utils.log("[WAE] ProviderSharedPreferences: Observer registration critical failure: " + t.getMessage());
+         }
+-        Utils.log("[WAE] ProviderSharedPreferences: Initialization complete. Local cache size: " + localPrefs.getAll().size());
++        
+     }
+ 
+     private void registerObserver() {
+         String authority = BuildConfig.APPLICATION_ID + AUTHORITY_SUFFIX;
+         try {
+-            Utils.log("[WAE] ProviderSharedPreferences: Registering observer for authority: " + authority);
++            
+             context.getContentResolver().registerContentObserver(
+                     Uri.parse("content://" + authority + "/preferences"),
+                     true,
+@@ -63,13 +63,13 @@ public class ProviderSharedPreferences implements SharedPreferences {
+                             long now = System.currentTimeMillis();
+                             if (now - lastHydration > 500) {
+                                 lastHydration = now;
+-                                Utils.log("[WAE] ProviderSharedPreferences: Preferences changed, re-hydrating...");
++                                
+                                 hydrateFromProvider();
+                             }
+                         }
+                     }
+             );
+-            Utils.log("[WAE] ProviderSharedPreferences: Observer registered successfully");
++            
+         } catch (Throwable e) {
+             Utils.log("[WAE] ProviderSharedPreferences: Failed to register observer: " + e.getMessage());
+             // Try legacy
+@@ -171,7 +171,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
+     }
+ 
+     public void reload() {
+-        Utils.log("[WAE] ProviderSharedPreferences: Manual reload requested");
++        
+         hydrateFromProvider();
+     }
+ 
+@@ -201,11 +201,11 @@ public class ProviderSharedPreferences implements SharedPreferences {
+         }
+         lastHydrationTime = now;
+         try {
+-            Utils.log("[WAE] ProviderSharedPreferences: Starting hydration...");
++            
+             Bundle result = callProvider("get_all_preferences", null);
+             if (result == null) {
+-                Utils.log("[WAE] ProviderSharedPreferences: Hydration failed (null result). Using fallback.");
+-                Utils.log("[WAE] ProviderSharedPreferences: Fallback cache size: " + fallbackPrefs.getAll().size());
++                
++                
+                 var editor = localPrefs.edit().clear();
+                 for (Map.Entry<String, ?> entry : fallbackPrefs.getAll().entrySet()) {
+                     Object value = entry.getValue();
+@@ -218,7 +218,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
+                 editor.commit();
+                 return;
+             }
+-            Utils.log("[WAE] ProviderSharedPreferences: Received preferences bundle from provider");
++            
+             Serializable serializable = result.getSerializable("prefs");
+             if (!(serializable instanceof Map)) {
+                 android.util.Log.e("WAE", "Hydration failed: result 'prefs' is not a Map (type: " + (serializable != null ? serializable.getClass().getName() : "null") + ")");
+@@ -226,7 +226,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
+             }
+             Map<?, ?> rawMap = (Map<?, ?>) serializable;
+             
+-            android.util.Log.i("WAE", "Hydrating " + rawMap.size() + " preferences from provider");
++            
+             var editor = localPrefs.edit().clear();
+             for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                 if (!(entry.getKey() instanceof String)) {
+@@ -270,7 +270,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
+                 }
+             }
+             editor.commit();
+-            android.util.Log.i("WAE", "Hydration completed successfully");
++            
+         } catch (Exception e) {
+             android.util.Log.e("WAE", "Hydration failed with exception: " + e.getMessage(), e);
+         }
+@@ -284,7 +284,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
+         }
+ 
+         private void syncToProvider(String key, Object value) {
+-            de.robv.android.xposed.XposedBridge.log("[WAE] ProviderSharedPreferences: Putting preference: " + key + " = " + value);
++            de.robv.android.xposed.
+             Bundle extras = new Bundle();
+             extras.putString("key", key);
+             if (value instanceof String) {
+@@ -393,17 +393,17 @@ public class ProviderSharedPreferences implements SharedPreferences {
+         String[] authorities = new String[] { BuildConfig.APPLICATION_ID + AUTHORITY_SUFFIX, AUTHORITY_LEGACY, "com.waenhancer.provider" };
+         for (String authority : authorities) {
+             try {
+-                Utils.log("[WAE] ProviderSharedPreferences: Calling provider: " + method + " (Authority: " + authority + ")");
++                
+                 Bundle result = context.getContentResolver().call(
+                         Uri.parse("content://" + authority),
+                         method,
+                         null,
+                         extras);
+                 if (result != null) {
+-                    Utils.log("[WAE] ProviderSharedPreferences: Call successful for: " + authority);
++                    
+                     return result;
+                 } else {
+-                    Utils.log("[WAE] ProviderSharedPreferences: Call returned null for: " + authority);
++                    
+                 }
+             } catch (Throwable e) {
+                 Utils.log("[WAE] ProviderSharedPreferences: Call error (" + authority + "): " + e.getMessage());
+diff --git a/app/src/main/java/com/waenhancer/xposed/bridge/providers/HookProvider.java b/app/src/main/java/com/waenhancer/xposed/bridge/providers/HookProvider.java
+index bd5d195e..ba52a78e 100644
+--- a/app/src/main/java/com/waenhancer/xposed/bridge/providers/HookProvider.java
++++ b/app/src/main/java/com/waenhancer/xposed/bridge/providers/HookProvider.java
+@@ -38,7 +38,7 @@ public class HookProvider extends ContentProvider {
+     @Nullable
+     @Override
+     public Bundle call(@NonNull String method, @Nullable String arg, @Nullable Bundle extras) {
+-        android.util.Log.d("WAE_Provider", "HookProvider.call: method=" + method + ", arg=" + arg);
++        
+         
+         int callingUid = android.os.Binder.getCallingUid();
+         long token = android.os.Binder.clearCallingIdentity();
+@@ -71,7 +71,7 @@ public class HookProvider extends ContentProvider {
+             if ("record_event".equals(method) && extras != null) {
+                 String eventName = extras.getString("event_name");
+                 Bundle params = extras.getBundle("params");
+-                android.util.Log.d("WAE_Provider", "record_event received: " + eventName);
++                
+                 if (eventName != null) {
+                     com.waenhancer.utils.AnalyticsManager.logEvent(context, eventName, params);
+                 }
+@@ -105,10 +105,10 @@ public class HookProvider extends ContentProvider {
+             }
+             if (method.equals("get_all_preferences")) {
+                 var all = prefs.getAll();
+-                android.util.Log.d("WAE_Provider", "Serving " + all.size() + " preferences to caller (UID: " + callingUid + ")");
++                
+                 // Dump keys for diagnosis
+                 for (String k : all.keySet()) {
+-                    android.util.Log.v("WAE_Provider", "  Key: " + k + " = " + all.get(k));
++                    
+                 }
+                 Bundle result = new Bundle();
+                 result.putSerializable("prefs", new HashMap<>(all));
+@@ -117,7 +117,7 @@ public class HookProvider extends ContentProvider {
+             if ("put_preference".equals(method) && extras != null) {
+                 String key = extras.getString("key");
+                 String type = extras.getString("type");
+-                android.util.Log.d("WAE_Provider", "Writing preference: " + key + " (from UID: " + callingUid + ")");
++                
+                 if (key == null || type == null) {
+                     return null;
+                 }
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/Feature.java b/app/src/main/java/com/waenhancer/xposed/core/Feature.java
+index 352d0c15..2a993353 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/Feature.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/Feature.java
+@@ -31,7 +31,7 @@ public abstract class Feature {
+             Throwable th = (Throwable) object;
+             Log.i("WAE", this.getPluginName() + "-> " + th.getMessage(), th);
+         } else {
+-            Log.i("WAE", this.getPluginName() + "-> " + object);
++            
+         }
+     }
+ 
+@@ -42,7 +42,7 @@ public abstract class Feature {
+             Throwable th = (Throwable) object;
+             Log.i("WAE", this.getPluginName() + "-> " + title + ": " + th.getMessage(), th);
+         } else {
+-            Log.i("WAE", this.getPluginName() + "-> " + title + ": " + object);
++            
+         }
+     }
+ 
+@@ -51,18 +51,18 @@ public abstract class Feature {
+         if (!DEBUG) return;
+         if (object instanceof Throwable) {
+             XposedBridge.log(String.format("[%s] Error:", this.getPluginName()));
+-            XposedBridge.log((Throwable) object);
++            
+         } else {
+-            XposedBridge.log(String.format("[%s] %s", this.getPluginName(), object));
++            
+         }
+     }
+ 
+     public void logError(Object object) {
+         if (object instanceof Throwable) {
+-            XposedBridge.log(String.format("[%s] CRITICAL ERROR:", this.getPluginName()));
+-            XposedBridge.log((Throwable) object);
++            
++            
+         } else {
+-            XposedBridge.log(String.format("[%s] CRITICAL ERROR: %s", this.getPluginName(), object));
++            
+         }
+     }
+ 
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/FeatureLoader.java b/app/src/main/java/com/waenhancer/xposed/core/FeatureLoader.java
+index 4e0490a7..1dd4372c 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/FeatureLoader.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/FeatureLoader.java
+@@ -183,11 +183,11 @@ public class FeatureLoader {
+ 
+                         String processName = Application.getProcessName();
+                         if (Feature.DEBUG) {
+-                            XposedBridge.log("[WAE] callApplicationOnCreate for: " + mApp.getPackageName() + " (process: " + processName + ")");
++                            
+                         }
+ 
+                         if (!Objects.equals(processName, mApp.getPackageName())) {
+-                            XposedBridge.log("[WAE] Skipping secondary process. Expected: " + mApp.getPackageName() + ", Actual: " + processName);
++                            
+                             return;
+                         }
+ 
+@@ -210,7 +210,7 @@ public class FeatureLoader {
+                         if (pref.getBoolean("bootloader_spoofer", false)) {
+                             HookBL.hook(loader, pref);
+                             if (Feature.DEBUG) {
+-                                XposedBridge.log("[WAE] Bootloader Spoofer Injected");
++                                
+                             }
+                         }
+ 
+@@ -221,7 +221,7 @@ public class FeatureLoader {
+                         var providerPrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(mApp, localBridgePrefs, pref);
+                         Utils.xprefs = providerPrefs;
+                         if (Feature.DEBUG) {
+-                            XposedBridge.log("[WAE] ProviderSharedPreferences initialized with " + providerPrefs.getAll().size() + " preferences");
++                            
+                         }
+                         
+                         if (pref instanceof XSharedPreferences) {
+@@ -229,7 +229,7 @@ public class FeatureLoader {
+                         }
+                         PackageInfo packageInfo = packageManager.getPackageInfo(mApp.getPackageName(), 0);
+ 
+-                        XposedBridge.log(packageInfo.versionName);
++                        
+                         currentVersion = packageInfo.versionName;
+ 
+                         // Host preference scan removed - too expensive
+@@ -248,7 +248,7 @@ public class FeatureLoader {
+                                         return (packageInfo.versionName + ".").startsWith(target);
+                                     });
+                             if (Feature.DEBUG) {
+-                                XposedBridge.log("[WAE] Version verification result for " + packageInfo.versionName + ": isSupported=" + isSupported);
++                                
+                             }
+                             if (!isSupported) {
+                                 disableExpirationVersion(mApp.getClassLoader());
+@@ -351,13 +351,13 @@ public class FeatureLoader {
+             
+             Unobfuscator.loadLibrary(mApp);
+             if (!Unobfuscator.initWithPath(sourceDir)) {
+-                XposedBridge.log("Can't init dexkit");
++                
+                 return;
+             }
+             UnobfuscatorCache.init(mApp);
+             SharedPreferencesWrapper.hookInit(mApp.getClassLoader());
+ 
+-            XposedBridge.log("[WAE] Initializing components and plugins using ProviderSharedPreferences...");
++            
+             ResId.initLocal(mApp);
+             initComponents(loader, providerPrefs);
+             plugins(loader, providerPrefs, packageInfo.versionName);
+@@ -366,7 +366,7 @@ public class FeatureLoader {
+             var timemillis2 = System.currentTimeMillis() - timemillis;
+             loadedTimeStr = String.format(java.util.Locale.US, "%.2fs", timemillis2 / 1000.0);
+             if (Feature.DEBUG) {
+-                XposedBridge.log("[WAE] Loaded Hooks in " + loadedTimeStr);
++                
+             }
+             
+             new Handler(Looper.getMainLooper()).post(() -> {
+@@ -404,7 +404,7 @@ public class FeatureLoader {
+                         String fullName = activity.getClass().getName();
+                         String superName = activity.getClass().getSuperclass() != null ? activity.getClass().getSuperclass().getName() : "null";
+                         if (Feature.DEBUG) {
+-                            XposedBridge.log("[WAE] Activity RESUMED: " + activityName + " (Full Class Name: " + fullName + " | Superclass: " + superName + ")");
++                            
+                         }
+                         
+                         // Record screen view in analytics
+@@ -419,7 +419,7 @@ public class FeatureLoader {
+                         boolean needRestartPref = pref.getBoolean("need_restart", false);
+                         boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
+                         if (Feature.DEBUG) {
+-                            XposedBridge.log("[WAE] Restart Check on RESUMED - Pref: " + needRestartPref + ", Global: " + needRestartGlobal + ", isShowing: " + isRestartDialogShowing);
++                            
+                         }
+                         
+                         if ((needRestartPref || needRestartGlobal) && !isRestartDialogShowing) {
+@@ -448,13 +448,13 @@ public class FeatureLoader {
+                             if (btnRestart.isEmpty()) btnRestart = "Restart WhatsApp";
+                             if (btnCancel.isEmpty()) btnCancel = "Cancel";
+ 
+-                            XposedBridge.log("[WAE] Restart dialog - Msg: '" + msg + "', Btn: '" + btnRestart + "'");
++                            
+                             
+                             new AlertDialogWpp(activity)
+                                     .setTitle("Restart Required")
+                                     .setMessage(msg)
+                                     .setPositiveButton(btnRestart, (dialog, which) -> {
+-                                        XposedBridge.log("[WAE] User clicked RESTART WHATSAPP");
++                                        
+                                         isRestartDialogShowing = false;
+                                         pref.edit().putBoolean("need_restart", false)
+                                             .remove("pending_restart_changes").apply();
+@@ -477,7 +477,7 @@ public class FeatureLoader {
+                 if (pref.getBoolean("update_check", true)) {
+                     if (!hasCheckedThisSession[0]) {
+                         hasCheckedThisSession[0] = true;
+-                        XposedBridge.log("[WAE] Scheduling startup update check...");
++                        
+                         activity.getWindow().getDecorView().postDelayed(() -> {
+                             try {
+                                 CompletableFuture.runAsync(new UpdateChecker(activity));
+@@ -524,9 +524,9 @@ public class FeatureLoader {
+         BroadcastReceiver restartManualReceiver = new BroadcastReceiver() {
+             @Override
+             public void onReceive(Context context, Intent intent) {
+-                XposedBridge.log("[WAE] MANUAL_RESTART broadcast received");
++                
+                 WppCore.setPrivBooleanSync("need_restart", true);
+-                XposedBridge.log("[WAE] Global need_restart set to true via broadcast");
++                
+             }
+         };
+         ContextCompat.registerReceiver(mApp, restartManualReceiver,
+@@ -539,7 +539,7 @@ public class FeatureLoader {
+             public void onReceive(Context context, Intent intent) {
+                 if (UnobfuscatorCache.getInstance() != null) {
+                     UnobfuscatorCache.getInstance().clearCache();
+-                    XposedBridge.log("WaEnhancer: Obfuscate cache cleared via broadcast");
++                    
+                 }
+             }
+         };
+@@ -681,7 +681,7 @@ public class FeatureLoader {
+                 VideoNoteAttachment.class
+         };
+         if (Feature.DEBUG) {
+-            XposedBridge.log("Loading Plugins");
++            
+         }
+         var executorService = Executors.newWorkStealingPool(Math.min(Runtime.getRuntime().availableProcessors(), 4));
+         var times = java.util.Collections.synchronizedList(new ArrayList<String>());
+@@ -711,7 +711,7 @@ public class FeatureLoader {
+         executorService.shutdown();
+         try {
+             if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+-                XposedBridge.log("WAE: Features failed to load within 5 seconds");
++                
+             }
+         } catch (InterruptedException e) {
+             XposedBridge.log(e);
+@@ -719,7 +719,7 @@ public class FeatureLoader {
+         if (DebugFeature.DEBUG) {
+             for (var time : times) {
+                 if (time != null)
+-                    XposedBridge.log(time);
++                    
+             }
+         }
+     }
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/WppCore.java b/app/src/main/java/com/waenhancer/xposed/core/WppCore.java
+index 07c6ac1c..ad2cada8 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/WppCore.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/WppCore.java
+@@ -137,7 +137,7 @@ public class WppCore {
+                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                     mConversationDelegate = param.thisObject;
+                     if (Utils.DEBUG) {
+-                        XposedBridge.log("WAE: Captured conversation delegate: " + mConversationDelegate.getClass().getName());
++                        
+                     }
+                 }
+             });
+@@ -226,7 +226,7 @@ public class WppCore {
+     private static boolean tryConnectBridge(BaseClient baseClient) throws Exception {
+         try {
+             if (Utils.DEBUG) {
+-                XposedBridge.log("Trying to connect to " + baseClient.getClass().getSimpleName());
++                
+             }
+             client = baseClient;
+             CompletableFuture<Boolean> canLoadFuture = baseClient.connect();
+@@ -245,7 +245,7 @@ public class WppCore {
+             String jidRawString = (String) XposedHelpers.callMethod(userJidRaw, "getRawString");
+             if (jidRawString == null) {
+                 if (Utils.DEBUG) {
+-                    XposedBridge.log("WppCore.sendMessage - could not get rawString from jid: " + userJidRaw);
++                    
+                 }
+                 Utils.showToast("Error: could not find JID", Toast.LENGTH_SHORT);
+                 return false;
+@@ -253,12 +253,12 @@ public class WppCore {
+             // Strip device suffix if LID: e.g. "4306.0:0@lid" -> "4306@lid"
+             jidRawString = jidRawString.replaceFirst("\\.[\\d:]+@", "@");
+             if (Utils.DEBUG) {
+-                XposedBridge.log("WppCore.sendMessage - jidRawString: " + jidRawString);
++                
+             }
+ 
+             return sendMessage(jidRawString, message);
+         } catch (Exception e) {
+-            XposedBridge.log("WppCore.sendMessage(Object) failed: " + e);
++            
+             Utils.showToast("Error in sending message: " + e.getMessage(), Toast.LENGTH_SHORT);
+             return false;
+         }
+@@ -301,19 +301,17 @@ public class WppCore {
+                         android.app.RemoteInput.addResultsToIntent(remoteInputs, fillIn, results);
+                         action.actionIntent.send(Utils.getApplication(), 0, fillIn);
+                         if (Utils.DEBUG) {
+-                            XposedBridge.log(
+-                                    "WppCore.sendMessageViaNotification - sent to [" + contactName + "] via RemoteInput!");
++                            
+                         }
+                         return true;
+                     }
+                 }
+             }
+             if (Utils.DEBUG) {
+-                XposedBridge.log("WppCore.sendMessageViaNotification - no WA notification with title=[" + contactName
+-                        + "]. Total=" + notifications.length);
++                
+             }
+         } catch (Exception e) {
+-            XposedBridge.log("WppCore.sendMessageViaNotification error: " + e);
++            
+         }
+         return false;
+     }
+@@ -348,18 +346,18 @@ public class WppCore {
+                         android.app.RemoteInput.addResultsToIntent(remoteInputs, fillIn, results);
+                         action.actionIntent.send(Utils.getApplication(), 0, fillIn);
+                         if (Utils.DEBUG) {
+-                            XposedBridge.log("WppCore.sendMessage - sent via RemoteInput (jid match)!");
++                            
+                         }
+                         return true;
+                     }
+                 }
+             }
+             if (Utils.DEBUG) {
+-                XposedBridge.log("WppCore.sendMessage - no matching WA notification for jid=" + jidOrNumber);
++                
+             }
+             return false;
+         } catch (Exception e) {
+-            XposedBridge.log("WppCore.sendMessage error: " + e);
++            
+             return false;
+         }
+     }
+@@ -410,7 +408,7 @@ public class WppCore {
+         try {
+             actionUser = Unobfuscator.loadActionUser(loader);
+             if (Utils.DEBUG) {
+-                XposedBridge.log("ActionUser: " + actionUser.getName());
++                
+             }
+             XposedBridge.hookAllConstructors(actionUser, new XC_MethodHook() {
+                 @Override
+@@ -431,13 +429,12 @@ public class WppCore {
+                                 f.setAccessible(true);
+                                 Object val = f.get(oneKs);
+                                 if (Utils.DEBUG) {
+-                                    XposedBridge.log("WppCore.A00-hook: 1Ks." + f.getName() + " = " + val
+-                                            + " [class=" + (val == null ? "null" : val.getClass().getName()) + "]");
++                                    
+                                 }
+                             }
+                         }
+                         if (Utils.DEBUG) {
+-                            XposedBridge.log("WppCore.A00-hook: message arg = " + param.args[1]);
++                            
+                         }
+                     }
+                 });
+@@ -661,7 +658,7 @@ public class WppCore {
+             return null;
+         try {
+             if (mCachedMessageStore == null) {
+-                XposedBridge.log("CachedMessageStore is null");
++                
+                 return null;
+             }
+             return cachedMessageStoreKey.invoke(mCachedMessageStore, messageKey);
+@@ -747,7 +744,7 @@ public class WppCore {
+                 cachedUserJid = jid;
+                 cachedActivityHash = currentHash;
+                 if (Utils.DEBUG) {
+-                    XposedBridge.log("WAE: Resolved JID " + jid.getPhoneNumber() + " in " + (System.currentTimeMillis() - start) + "ms");
++                    
+                 }
+                 return jid;
+             }
+@@ -763,13 +760,13 @@ public class WppCore {
+         }
+         long start = System.currentTimeMillis();
+         if (Utils.DEBUG) {
+-            XposedBridge.log("WAE: ensureConversationJidResolvers started");
++            
+         }
+         try {
+             if (conversationDelegateField == null) {
+                 conversationDelegateField = Unobfuscator.loadConversationDelegateField(loader);
+                 if (Utils.DEBUG) {
+-                    XposedBridge.log("WAE: conversationDelegateField found: " + (conversationDelegateField != null));
++                    
+                 }
+             }
+         } catch (Exception e) {
+@@ -779,14 +776,14 @@ public class WppCore {
+             if (conversationJidField == null) {
+                 conversationJidField = Unobfuscator.loadUserJidConversationDelegate(loader);
+                 if (Utils.DEBUG) {
+-                    XposedBridge.log("WAE: conversationJidField found: " + (conversationJidField != null));
++                    
+                 }
+             }
+         } catch (Exception e) {
+             XposedBridge.log("WAE: Error loading conversationJidField: " + e.getMessage());
+         }
+         if (Utils.DEBUG) {
+-            XposedBridge.log("WAE: ensureConversationJidResolvers finished in " + (System.currentTimeMillis() - start) + "ms");
++            
+         }
+     }
+ 
+@@ -965,7 +962,7 @@ public class WppCore {
+             if (file.exists()) return file;
+         }
+ 
+-        XposedBridge.log("WAE: WppCore: getContactPhotoFile: No photo found for " + jid + " in " + datafolder);
++        
+         return null;
+     }
+ 
+@@ -1132,7 +1129,7 @@ public class WppCore {
+                     if (client == null) {
+                         throw new Exception("Bridge client not initialized");
+                     }
+-                    XposedBridge.log("Bridge disconnected. Trying automatic synchronous reconnect");
++                    
+                     boolean reconnected = false;
+                     try {
+                         reconnected = Boolean.TRUE.equals(client.connect().get(4, TimeUnit.SECONDS));
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/components/AlertDialogWpp.java b/app/src/main/java/com/waenhancer/xposed/core/components/AlertDialogWpp.java
+index b5b2a088..cabba81c 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/components/AlertDialogWpp.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/components/AlertDialogWpp.java
+@@ -64,7 +64,7 @@ public class AlertDialogWpp {
+                 return;
+             }
+             Class<?> alertDialogClass = getAlertDialog.getReturnType();
+-            XposedBridge.log("[WAE] AlertDialogWpp: Initializing with class " + alertDialogClass.getName());
++            
+ 
+             // Try to find methods by name first (more reliable if not obfuscated)
+             setMessageMethod = null;
+@@ -76,13 +76,13 @@ public class AlertDialogWpp {
+                     method -> method.getParameterCount() == 1 && 
+                     method.getParameterTypes()[0].equals(CharSequence.class));
+             }
+-            if (setMessageMethod != null) XposedBridge.log("[WAE] AlertDialogWpp: Found setMessageMethod: " + setMessageMethod.getName());
++            if (setMessageMethod != null) 
+ 
+             setItemsMethod = ReflectionUtils.findMethodUsingFilterIfExists(alertDialogClass,
+                     method -> method.getParameterCount() == 2 &&
+                     ((method.getParameterTypes()[0].equals(DialogInterface.OnClickListener.class) && CharSequence[].class.isAssignableFrom(method.getParameterTypes()[1])) ||
+                      (CharSequence[].class.isAssignableFrom(method.getParameterTypes()[0]) && method.getParameterTypes()[1].equals(DialogInterface.OnClickListener.class))));
+-            if (setItemsMethod != null) XposedBridge.log("[WAE] AlertDialogWpp: Found setItemsMethod: " + setItemsMethod.getName());
++            if (setItemsMethod != null) 
+ 
+             setMultiChoiceItemsMethod = ReflectionUtils.findMethodUsingFilterIfExists(alertDialogClass,
+                     method -> method.getParameterCount() == 3 &&
+@@ -96,7 +96,7 @@ public class AlertDialogWpp {
+                     method.getParameterCount() == 2 && 
+                     ((method.getParameterTypes()[0].equals(DialogInterface.OnClickListener.class) && CharSequence.class.isAssignableFrom(method.getParameterTypes()[1])) ||
+                      (CharSequence.class.isAssignableFrom(method.getParameterTypes()[0]) && method.getParameterTypes()[1].equals(DialogInterface.OnClickListener.class))));
+-                XposedBridge.log("[WAE] AlertDialogWpp: Found " + buttons.length + " button methods");
++                
+             } catch (Exception ignored) {}
+ 
+             setNegativeButtonMethod = null;
+@@ -104,7 +104,7 @@ public class AlertDialogWpp {
+             setPositiveButtonMethod = null;
+ 
+             for (java.lang.reflect.Method m : buttons) {
+-                XposedBridge.log("[WAE] AlertDialogWpp: Button candidate: " + m.getName() + " (" + Arrays.toString(m.getParameterTypes()) + ")");
++                
+                 if (m.getName().equals("setNegativeButton")) setNegativeButtonMethod = m;
+                 else if (m.getName().equals("setNeutralButton")) setNeutralButtonMethod = m;
+                 else if (m.getName().equals("setPositiveButton")) setPositiveButtonMethod = m;
+@@ -125,11 +125,11 @@ public class AlertDialogWpp {
+                     setNeutralButtonMethod = buttons[1];
+                 }
+                 
+-                XposedBridge.log("[WAE] AlertDialogWpp: Using button fallback mapping (Pos=" + setPositiveButtonMethod.getName() + ")");
++                
+             }
+ 
+             isAvailable = true;
+-            XposedBridge.log("[WAE] AlertDialogWpp initialized successfully");
++            
+             logClassMethods(alertDialogClass);
+         } catch (Throwable e) {
+             isAvailable = false;
+@@ -139,11 +139,11 @@ public class AlertDialogWpp {
+     }
+ 
+     private static void logClassMethods(Class<?> clazz) {
+-        XposedBridge.log("[WAE] --- Methods for " + clazz.getName() + " ---");
++        
+         for (Method m : clazz.getDeclaredMethods()) {
+-            XposedBridge.log("[WAE] " + m.getReturnType().getSimpleName() + " " + m.getName() + "(" + Arrays.toString(m.getParameterTypes()) + ")");
++            
+         }
+-        XposedBridge.log("[WAE] ---------------------------------------");
++        
+     }
+ 
+ 
+@@ -154,7 +154,7 @@ public class AlertDialogWpp {
+             try {
+                 mAlertDialogWpp = getAlertDialog.invoke(null, context);
+             } catch (Exception e) {
+-                XposedBridge.log("[WAE] AlertDialogWpp instance failed, using system fallback");
++                
+                 mIsUsingSystem = true;
+             }
+         } else {
+@@ -321,7 +321,7 @@ public class AlertDialogWpp {
+                     XposedHelpers.callMethod(mAlertDialogWpp, methodName, listener, text);
+                     success = true;
+                 } catch (Throwable t2) {
+-                    XposedBridge.log("[WAE] AlertDialogWpp button failed: " + methodName + ", falling back to system");
++                    
+                     mIsUsingSystem = true;
+                     // Apply to system builder so it's ready if we switch
+                     if (methodName.equals("setPositiveButton")) mAlertDialog.setPositiveButton(text, listener);
+@@ -950,7 +950,7 @@ public class AlertDialogWpp {
+             try {
+                 mCreate = (Dialog) XposedHelpers.callMethod(mAlertDialogWpp, "create");
+             } catch (Throwable t) {
+-                XposedBridge.log("[WAE] AlertDialogWpp.create() failed, using system fallback");
++                
+                 mCreate = mAlertDialog.create();
+             }
+         }
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/components/FMessageWpp.java b/app/src/main/java/com/waenhancer/xposed/core/components/FMessageWpp.java
+index ad905ee6..490b1aff 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/components/FMessageWpp.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/components/FMessageWpp.java
+@@ -78,9 +78,7 @@ public class FMessageWpp {
+                 keyIdField = ReflectionUtils.getFieldByType(Key.TYPE, String.class);
+                 keyFromMeField = ReflectionUtils.getFieldByType(Key.TYPE, boolean.class);
+                 keyRemoteJidField = ReflectionUtils.getFieldByExtendType(Key.TYPE, UserJid.TYPE_JID);
+-                XposedBridge.log("[WAE] Key fields initialized: ID=" + (keyIdField != null ? keyIdField.getName() : "null") +
+-                        ", fromMe=" + (keyFromMeField != null ? keyFromMeField.getName() : "null") +
+-                        ", remoteJid=" + (keyRemoteJidField != null ? keyRemoteJidField.getName() : "null"));
++                
+             }
+         } catch (Exception e) {
+             XposedBridge.log(e);
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/components/WaContactWpp.java b/app/src/main/java/com/waenhancer/xposed/core/components/WaContactWpp.java
+index f2d82f2d..72453a4d 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/components/WaContactWpp.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/components/WaContactWpp.java
+@@ -71,7 +71,7 @@ public record WaContactWpp(Object mInstance) {
+                         Object instance = m.invoke(null);
+                         if (instance != null) {
+                             mInstanceGetWaContact = instance;
+-                            XposedBridge.log("WAE: WaContactWpp: Captured instance via static method: " + m.getName());
++                            
+                             break;
+                         }
+                     } catch (Exception ignored) {
+@@ -84,11 +84,11 @@ public record WaContactWpp(Object mInstance) {
+                     @Override
+                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                         mInstanceGetWaContact = param.thisObject;
+-                        XposedBridge.log("WAE: WaContactWpp: Captured instance via constructor");
++                        
+                     }
+                 });
+             } else {
+-                XposedBridge.log("WAE: WaContactWpp: Instance already captured, skipping constructor hook");
++                
+             }
+ 
+             getProfilePhoto = Unobfuscator.loadGetProfilePhotoMethod(classLoader);
+@@ -146,7 +146,7 @@ public record WaContactWpp(Object mInstance) {
+ 
+     public static WaContactWpp getWaContactFromJid(FMessageWpp.UserJid userJid) {
+         if (mInstanceGetWaContact == null) {
+-            XposedBridge.log("WAE: WaContactWpp: mInstanceGetWaContact is NULL. ContactManager not initialized?");
++            
+             return null;
+         }
+         try {
+@@ -157,14 +157,14 @@ public record WaContactWpp(Object mInstance) {
+ 
+             // Fallback to phoneJid if userJid lookup failed or userJid was null
+             if (contact == null && userJid.phoneJid != null) {
+-                XposedBridge.log("WAE: WaContactWpp: userJid lookup failed, trying phoneJid");
++                
+                 contact = getWaContactMethod.invoke(mInstanceGetWaContact, userJid.phoneJid);
+             }
+ 
+             if (contact != null) {
+                 return new WaContactWpp(contact);
+             } else {
+-                XposedBridge.log("WAE: WaContactWpp: Contact lookup returned null for " + userJid);
++                
+             }
+         } catch (Exception e) {
+             XposedBridge.log(e);
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/db/DelMessageStore.java b/app/src/main/java/com/waenhancer/xposed/core/db/DelMessageStore.java
+index f71422ff..f214b00c 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/db/DelMessageStore.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/db/DelMessageStore.java
+@@ -97,8 +97,7 @@ public class DelMessageStore extends SQLiteOpenHelper {
+         // recreate the base schema. This clears the deleted-message history stored by
+         // this fork, but WhatsApp's own data is in a separate database and is
+         // unaffected.
+-        android.util.Log.w("WaEnhancer",
+-                "delmessages.db downgrade from " + oldVersion + " to " + newVersion + ". Recreating schema.");
++        
+         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_DELETED_FOR_ME);
+         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS delmessages");
+         onCreate(sqLiteDatabase);
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/db/MessageStore.java b/app/src/main/java/com/waenhancer/xposed/core/db/MessageStore.java
+index b77960b1..0e1f7f41 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/db/MessageStore.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/db/MessageStore.java
+@@ -193,7 +193,7 @@ public class MessageStore {
+         try {
+             if (sqLiteDatabase == null) return;
+             if (sqLiteDatabase.isReadOnly()) {
+-                XposedBridge.log("Cannot execute SQL because database is opened in read-only mode: " + sql);
++                
+                 return;
+             }
+             sqLiteDatabase.execSQL(sql);
+@@ -204,10 +204,10 @@ public class MessageStore {
+ 
+     public void storeMessageRead(String messageId) {
+         if (sqLiteDatabase == null) return;
+-        XposedBridge.log("storeMessageRead: " + messageId);
++        
+         try {
+             if (sqLiteDatabase.isReadOnly()) {
+-                XposedBridge.log("Cannot storeMessageRead because database is opened in read-only mode for key: " + messageId);
++                
+                 return;
+             }
+             sqLiteDatabase.execSQL("UPDATE message SET status = 1 WHERE key_id = \"" + messageId + "\"");
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/devkit/Unobfuscator.java b/app/src/main/java/com/waenhancer/xposed/core/devkit/Unobfuscator.java
+index 81a6cb28..0e6b4c5c 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/devkit/Unobfuscator.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/devkit/Unobfuscator.java
+@@ -1006,13 +1006,13 @@ public class Unobfuscator {
+     public synchronized static Field loadConversationDelegateField(ClassLoader loader) throws Exception {
+         return UnobfuscatorCache.getInstance().getField(loader, () -> {
+             long start = System.currentTimeMillis();
+-            XposedBridge.log("WAE: Scanning for ConversationDelegateField...");
++            
+             String[] anchors = {"conversation/createconversation", "conversation/create", "conversation/refresh", "conversation/onCreate"};
+             Class<?> conversation = XposedHelpers.findClass("com.whatsapp.Conversation", loader);
+             Class<?> conversationFragment = XposedHelpers.findClassIfExists("com.whatsapp.ConversationFragment", loader);
+ 
+             for (String anchor : anchors) {
+-                XposedBridge.log("WAE: Trying anchor: " + anchor);
++                
+                 Class<?>[] classes = findAllClassUsingStrings(loader, StringMatchType.Contains, anchor);
+                 if (classes == null) continue;
+ 
+@@ -1020,7 +1020,7 @@ public class Unobfuscator {
+                     // Try direct field in Conversation
+                     Field field = ReflectionUtils.getFieldByExtendType(conversation, clazz);
+                     if (field != null) {
+-                        XposedBridge.log("WAE: Found via Conversation in " + (System.currentTimeMillis() - start) + "ms");
++                        
+                         return field;
+                     }
+ 
+@@ -1028,7 +1028,7 @@ public class Unobfuscator {
+                     if (conversationFragment != null) {
+                         field = ReflectionUtils.getFieldByExtendType(conversationFragment, clazz);
+                         if (field != null) {
+-                            XposedBridge.log("WAE: Found via ConversationFragment in " + (System.currentTimeMillis() - start) + "ms");
++                            
+                             return field;
+                         }
+                     }
+@@ -1040,7 +1040,7 @@ public class Unobfuscator {
+                             continue;
+                         Field field1 = ReflectionUtils.getFieldByExtendType(fType, clazz);
+                         if (field1 != null) {
+-                            XposedBridge.log("WAE: Found via Conversation nested delegate in " + (System.currentTimeMillis() - start) + "ms");
++                            
+                             return field1;
+                         }
+                     }
+@@ -1064,19 +1064,19 @@ public class Unobfuscator {
+     public synchronized static Field loadUserJidConversationDelegate(ClassLoader loader) throws Exception {
+         return UnobfuscatorCache.getInstance().getField(loader, () -> {
+             long start = System.currentTimeMillis();
+-            XposedBridge.log("WAE: Scanning for UserJidConversationDelegate...");
++            
+             String[] anchors = {"conversation/createconversation", "conversation/create", "conversation/refresh"};
+             Class<?> jidClass = Unobfuscator.findFirstClassUsingName(loader, StringMatchType.EndsWith, "jid.Jid");
+ 
+             for (String anchor : anchors) {
+-                XposedBridge.log("WAE: Trying anchor: " + anchor);
++                
+                 Class<?>[] classes = findAllClassUsingStrings(loader, StringMatchType.Contains, anchor);
+                 if (classes == null) continue;
+ 
+                 for (Class<?> clazz : classes) {
+                     Field field = ReflectionUtils.getFieldByExtendType(clazz, jidClass);
+                     if (field != null) {
+-                        XposedBridge.log("WAE: Found UserJidConversationDelegate in " + (System.currentTimeMillis() - start) + "ms");
++                        
+                         return field;
+                     }
+                 }
+@@ -1932,7 +1932,7 @@ public class Unobfuscator {
+                 // Fallback 1: Find the class that uses name_in_group AND has getFMessage()
+                 // Then find the render/bind method within that class
+                 int nameInGroupId = Utils.getID("name_in_group", "id");
+-                XposedBridge.log("GroupAdmin: Starting getFMessage-based trace for ID=" + nameInGroupId);
++                
+                 if (nameInGroupId > 0) {
+                     var globalResults = dexkit.findMethod(FindMethod.create()
+                             .matcher(MethodMatcher.create().addUsingNumber(nameInGroupId)));
+@@ -1963,7 +1963,7 @@ public class Unobfuscator {
+ 
+                         if (hasFMessage && android.view.View.class.isAssignableFrom(cls)) {
+                             targetClass = cls;
+-                            XposedBridge.log("GroupAdmin: Target class found: " + cls.getName());
++                            
+                             break;
+                         }
+                     }
+@@ -1999,9 +1999,9 @@ public class Unobfuscator {
+                             
+                             if (!bindMethods.isEmpty()) {
+                                 method = bindMethods.get(0).getMethodInstance(loader);
+-                                XposedBridge.log("GroupAdmin: Selected bind method: " + method.getName() + " in " + targetClass.getName() + " (static=" + Modifier.isStatic(method.getModifiers()) + ")");
++                                
+                             } else {
+-                                XposedBridge.log("GroupAdmin: No standard bind method found in " + targetClass.getName());
++                                
+                             }
+                         }
+                     }
+@@ -2053,7 +2053,7 @@ public class Unobfuscator {
+                 if (invokeMethod.getParameterCount() != 2 || invokeMethod.getReturnType() != boolean.class)
+                     continue;
+                 if (invokeMethod.getParameterTypes()[1].getName().contains("jid.UserJid")) {
+-                    XposedBridge.log("FIND: " + invokeMethod);
++                    
+                     return invokeMethod;
+                 }
+ 
+@@ -3277,9 +3277,9 @@ public class Unobfuscator {
+ 
+             // Verbose logging if all search strategies fail for easy future troubleshooting
+             try {
+-                XposedBridge.log("[WAE] WaContactDisplayName method lookup failed. Listing all methods of " + waContactClass.getName() + ":");
++                
+                 for (var m : waContactClass.getDeclaredMethods()) {
+-                    XposedBridge.log("[WAE] Method: " + m.getName() + " params: " + m.getParameterCount() + " return: " + m.getReturnType().getName() + " static: " + java.lang.reflect.Modifier.isStatic(m.getModifiers()));
++                    
+                 }
+             } catch (Throwable ignored) {}
+ 
+diff --git a/app/src/main/java/com/waenhancer/xposed/core/devkit/UnobfuscatorCache.java b/app/src/main/java/com/waenhancer/xposed/core/devkit/UnobfuscatorCache.java
+index 6f4909ce..16b8932c 100644
+--- a/app/src/main/java/com/waenhancer/xposed/core/devkit/UnobfuscatorCache.java
++++ b/app/src/main/java/com/waenhancer/xposed/core/devkit/UnobfuscatorCache.java
+@@ -214,7 +214,7 @@ public class UnobfuscatorCache {
+                 });
+             }
+             latch.await(); // Wait for all threads to finish
+-            Utils.log("String cache saved in " + (System.currentTimeMillis() - currentTime) + "ms");
++            
+         } catch (Exception e) {
+             Utils.log(e);
+         } finally {
+@@ -228,7 +228,7 @@ public class UnobfuscatorCache {
+             System.gc();
+         }
+         search = search.toLowerCase().replaceAll("\\s", "");
+-        Utils.log("need search obsfucate: " + search);
++        
+         return reverseResourceMap.get(search);
+     }
+ 
+diff --git a/app/src/main/java/com/waenhancer/xposed/downgrade/Patch.java b/app/src/main/java/com/waenhancer/xposed/downgrade/Patch.java
+index 5bdc3278..5d80644c 100644
+--- a/app/src/main/java/com/waenhancer/xposed/downgrade/Patch.java
++++ b/app/src/main/java/com/waenhancer/xposed/downgrade/Patch.java
+@@ -99,7 +99,7 @@ public class Patch {
+                 });
+                 break;
+             default:
+-                XposedBridge.log("W/Patch Unsupported Version of Android " + Build.VERSION.SDK_INT);
++                
+                 break;
+         }
+     }
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/customization/ChatScrollButtons.java b/app/src/main/java/com/waenhancer/xposed/features/customization/ChatScrollButtons.java
+index b2db9517..0fce2279 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/customization/ChatScrollButtons.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/customization/ChatScrollButtons.java
+@@ -61,14 +61,14 @@ public class ChatScrollButtons extends Feature {
+             // Find the conversation root layout
+             ViewGroup conversationRootLayout = rootView.findViewById(Utils.getID("conversation_root_layout", "id"));
+             if (conversationRootLayout == null) {
+-                XposedBridge.log("ChatScrollButtons: conversation_root_layout not found");
++                
+                 return;
+             }
+ 
+             // Find the message list view (ListView with android.R.id.list)
+             ListView messagesList = findMessagesList(conversationRootLayout);
+             if (messagesList == null) {
+-                XposedBridge.log("ChatScrollButtons: messagesList not found");
++                
+                 return;
+             }
+ 
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/customization/FilterGroups.java b/app/src/main/java/com/waenhancer/xposed/features/customization/FilterGroups.java
+index 50756fa5..11e3b085 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/customization/FilterGroups.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/customization/FilterGroups.java
+@@ -211,10 +211,10 @@ public class FilterGroups extends Feature {
+             }
+             if (index == -1 && list.size() > position) {
+                 index = position;
+-                XposedBridge.log("FilterGroups: falling back to filter index " + index + " for " + name);
++                
+             }
+             if (index == -1) {
+-                XposedBridge.log("FilterGroups: filter entry not found for " + name);
++                
+                 return;
+             }
+             ReflectionUtils.callMethod(methodSetFilter, mFilterInstance, index);
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/customization/SeparateGroup.java b/app/src/main/java/com/waenhancer/xposed/features/customization/SeparateGroup.java
+index 80a52305..5b3cef8c 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/customization/SeparateGroup.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/customization/SeparateGroup.java
+@@ -49,7 +49,7 @@ public class SeparateGroup extends Feature {
+ 
+         if (!prefs.getBoolean("separategroups", false)) return;
+         if (!isSupportedVersion()) {
+-            XposedBridge.log("SeparateGroup: WhatsApp update disabled the runtime hooks for Separate Groups; feature temporarily disabled");
++            
+             return;
+         }
+ 
+@@ -145,7 +145,7 @@ public class SeparateGroup extends Feature {
+                         if (enableCountMethod.getDeclaringClass().isInstance(param.thisObject)) {
+                             enableCountMethod.invoke(param.thisObject, param.args[0], instance1, tabs.indexOf(GROUPS));
+                         } else {
+-                            XposedBridge.log("SeparateGroup: Invalid receiver for enableCountMethod: " + param.thisObject.getClass().getName());
++                            
+                         }
+                     }
+                 }
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/general/AntiRevoke.java b/app/src/main/java/com/waenhancer/xposed/features/general/AntiRevoke.java
+index 68b8076a..2c009d75 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/general/AntiRevoke.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/general/AntiRevoke.java
+@@ -217,7 +217,7 @@ public class AntiRevoke extends Feature {
+     private void addAntiRevokeSqlHooks() {
+         int antiRevokeValue = Integer.parseInt(prefs.getString("antirevoke", "0"));
+         if (antiRevokeValue == 0) {
+-            XposedBridge.log("WAE: Anti-revoke disabled in preferences, skipping SQL hooks");
++            
+             return;
+         }
+ 
+@@ -256,8 +256,7 @@ public class AntiRevoke extends Feature {
+                                     // Block delete only for incoming messages (from_me=0) 
+                                     // that are normal messages (not already type 15)
+                                     if (fromMe == 0 && msgType != 15) {
+-                                        XposedBridge.log("WAE: BLOCKED DELETE of incoming message _id=" + msgId + 
+-                                            " key=" + keyId + " type=" + msgType);
++                                        
+                                         recentDeletedIds.add(msgId);
+                                         
+                                         // Record the revocation for UI display (red icon + timestamp)
+@@ -275,7 +274,7 @@ public class AntiRevoke extends Feature {
+                                                 phoneNumber = jidCursor.getString(0); // user column = phone number
+                                                 String rawString = jidCursor.getString(1);
+                                                 jidCursor.close();
+-                                                XposedBridge.log("WAE: JID resolved: user=" + phoneNumber + " raw=" + rawString);
++                                                
+                                                 // Fallback: if user column is empty, parse from raw_string
+                                                 if (phoneNumber == null || phoneNumber.isEmpty()) {
+                                                     if (rawString != null && rawString.contains("@")) {
+@@ -300,7 +299,7 @@ public class AntiRevoke extends Feature {
+                                                         Collections.synchronizedSet(new java.util.HashSet<>())).add(keyId);
+                                                 }
+                                                 
+-                                                XposedBridge.log("WAE: Recorded revocation: key=" + keyId + " jid=" + phoneNumber);
++                                                
+                                                 
+                                                 // Refresh the conversation UI if it's currently open
+                                                 try {
+@@ -351,14 +350,14 @@ public class AntiRevoke extends Feature {
+                         // Block insertion of revocation placeholders (type=15) for incoming messages
+                         if (msgType != null && msgType == 15 && fromMe != null && fromMe == 0) {
+                             String keyId = cv.getAsString("key_id");
+-                            XposedBridge.log("WAE: BLOCKED INSERT of revocation placeholder type=15 key=" + keyId);
++                            
+                             param.setResult(-1L); // Return fake row ID, block the insert
+                         }
+                     } catch (Throwable ignored) {}
+                 }
+             });
+ 
+-            XposedBridge.log("WAE: Anti-revoke SQL hooks installed successfully");
++            
+         } catch (Exception e) {
+             XposedBridge.log("WAE: Failed to install anti-revoke SQL hooks: " + e.getMessage());
+         }
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/general/Others.java b/app/src/main/java/com/waenhancer/xposed/features/general/Others.java
+index b4a68c3d..c198fede 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/general/Others.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/general/Others.java
+@@ -75,7 +75,7 @@ public class Others extends Feature {
+     @Override
+     public void doHook() throws Exception {
+         if (DEBUG) {
+-            XposedBridge.log("[WAE_Others] doHook() started");
++            
+         }
+ 
+         // receivedIncomingTimestamp
+@@ -331,7 +331,7 @@ public class Others extends Feature {
+         logDebug("disablePhotoProfileStatus", Unobfuscator.getMethodDescriptor(method));
+         logDebug("disablePhotoProfileStatus Field", Unobfuscator.getFieldDescriptor(field));
+         if (field == null) {
+-            XposedBridge.log("WaEnhancer: disablePhotoProfileStatus skipped because refresh status field was not found");
++            
+             return;
+         }
+         XposedBridge.hookMethod(method, new XC_MethodHook() {
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/general/RecoverDeleteForMe.java b/app/src/main/java/com/waenhancer/xposed/features/general/RecoverDeleteForMe.java
+index 48d6b5b9..765c8387 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/general/RecoverDeleteForMe.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/general/RecoverDeleteForMe.java
+@@ -37,13 +37,13 @@ public class RecoverDeleteForMe extends Feature {
+                 Class<?>[] p = m.getParameterTypes();
+                 if (p.length == 3 && Collection.class.isAssignableFrom(p[1]) && p[2] == int.class) {
+                     targetMethod = m;
+-                    XposedBridge.log("WAE: Found potential DeleteForMe method: " + m.getName());
++                    
+                     break; // Assuming only one method matches this signature in CoreMessageStore
+                 }
+             }
+ 
+             if (targetMethod == null) {
+-                XposedBridge.log("WAE: RecoverDeleteForMe: A06 not found");
++                
+                 return;
+             }
+ 
+@@ -51,19 +51,19 @@ public class RecoverDeleteForMe extends Feature {
+                 @Override
+                 protected void beforeHookedMethod(MethodHookParam param) {
+                     try {
+-                        XposedBridge.log("WAE: A06 Fired!");
++                        
+                         Collection<?> msgs = (Collection<?>) param.args[1];
+                         if (msgs == null) {
+-                            XposedBridge.log("WAE: msgs is null");
++                            
+                             return;
+                         }
+                         if (msgs.isEmpty()) {
+-                            XposedBridge.log("WAE: msgs is empty");
++                            
+                             return;
+                         }
+                         Context ctx = Utils.getApplication();
+                         if (ctx == null) {
+-                            XposedBridge.log("WAE: Context is null");
++                            
+                             return;
+                         }
+                         // DelMessageStore store = DelMessageStore.getInstance(ctx); // No longer needed
+@@ -80,7 +80,7 @@ public class RecoverDeleteForMe extends Feature {
+                     }
+                 }
+             });
+-            XposedBridge.log("WAE: RecoverDeleteForMe hooked A06 OK");
++            
+ 
+         } catch (Exception e) {
+             XposedBridge.log("WAE: RecoverDeleteForMe init: " + e.getMessage());
+@@ -206,7 +206,7 @@ public class RecoverDeleteForMe extends Feature {
+             // Priority 2: WaContactWpp Internal Lookup (New Reliable Fallback)
+             if (contactName == null && chatJid != null) {
+                 try {
+-                    XposedBridge.log("WAE: Attempting WaContactWpp lookup for " + chatJid);
++                    
+                     FMessageWpp.UserJid userJidObj = new FMessageWpp.UserJid(chatJid);
+                     WaContactWpp waContact = WaContactWpp.getWaContactFromJid(userJidObj);
+                     if (waContact != null) {
+@@ -214,9 +214,9 @@ public class RecoverDeleteForMe extends Feature {
+                         if (contactName == null || contactName.isEmpty()) {
+                             contactName = waContact.getWaName();
+                         }
+-                        XposedBridge.log("WAE: WaContact result: " + contactName);
++                        
+                     } else {
+-                        XposedBridge.log("WAE: WaContactWpp returned null for " + chatJid);
++                        
+                     }
+                 } catch (Throwable t) {
+                     XposedBridge.log("WAE: WaContactWpp lookup failed: " + t.getMessage());
+@@ -326,8 +326,7 @@ public class RecoverDeleteForMe extends Feature {
+             String authority = com.waenhancer.BuildConfig.APPLICATION_ID + ".provider";
+             android.net.Uri uri = android.net.Uri.parse("content://" + authority + "/deleted_messages");
+             context.getContentResolver().insert(uri, values);
+-            XposedBridge.log("WAE: RecoverDeleteForMe saved via Provider: id=" + message.getKeyId() + " text="
+-                    + message.getTextContent());
++            
+         } catch (Exception e) {
+             XposedBridge.log("WAE: Failed to insert to provider: " + e.getMessage());
+             e.printStackTrace();
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/general/SeenTick.java b/app/src/main/java/com/waenhancer/xposed/features/general/SeenTick.java
+index fddb4b5a..917aadee 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/general/SeenTick.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/general/SeenTick.java
+@@ -170,7 +170,7 @@ public class SeenTick extends Feature {
+                 var object = list.get(position);
+                 object = ReflectionUtils.findFMessageInObject(object, FMessageWpp.TYPE, FMessageWpp.Key.TYPE, classLoader);
+                 if (object == null) {
+-                    XposedBridge.log("[WAE] SeenTick: Could not find FMessage in status object!");
++                    
+                     return;
+                 }
+                 var fMessage = new FMessageWpp(object);
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/general/ShowEditMessage.java b/app/src/main/java/com/waenhancer/xposed/features/general/ShowEditMessage.java
+index b2006635..5c993b9f 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/general/ShowEditMessage.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/general/ShowEditMessage.java
+@@ -113,7 +113,7 @@ public class ShowEditMessage extends Feature {
+ 
+                         // We only show/bind edit history if a native edited label is present, or if we have locally captured edit history
+                         if (nativeLabel != null || hasHistory) {
+-                            de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage: Binding edit history click for message ID: " + key.messageID + " (nativeLabel=" + (nativeLabel != null) + ", hasHistory=" + hasHistory + ")");
++                            de.robv.android.xposed.
+                             dumpTextViews(viewGroup);
+                             
+                             // Hide any previous custom injected Edited views first to handle fresh layouts
+@@ -128,7 +128,7 @@ public class ShowEditMessage extends Feature {
+                             }
+ 
+                             if (nativeLabel != null) {
+-                                de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage: Found edit history anchor view: id=" + nativeLabel.getId() + " text='" + nativeLabel.getText() + "'");
++                                de.robv.android.xposed.
+                                 bindHistoryClick(nativeLabel, key.messageID, strEmoji, false);
+ 
+                                 // Separate Clicks: We have a dedicated "Edited" label, so remove edit click listener from dateView to keep them completely separate!
+@@ -136,7 +136,7 @@ public class ShowEditMessage extends Feature {
+                                     Utils.setViewClickListener(dateView, "show_edit_message", null);
+                                 }
+                             } else {
+-                                de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage: Edit history anchor view not found in layout, injecting custom separate Edited view.");
++                                de.robv.android.xposed.
+                                 if (dateView != null) {
+                                     TextView injectedView = injectEditHistoryView(viewGroup, dateView, strEmoji);
+                                     if (injectedView != null) {
+@@ -175,7 +175,7 @@ public class ShowEditMessage extends Feature {
+                                     resName = tv.getResources().getResourceEntryName(tv.getId());
+                                 }
+                             } catch (Exception ignored) {}
+-                            de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage ID-DUMP: id=" + tv.getId() + ", resName=" + resName + ", text='" + tv.getText() + "'");
++                            de.robv.android.xposed.
+                         } else if (view instanceof ViewGroup) {
+                             ViewGroup vg = (ViewGroup) view;
+                             for (int i = 0; i < vg.getChildCount(); i++) {
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/general/Tasker.java b/app/src/main/java/com/waenhancer/xposed/features/general/Tasker.java
+index 81762fd7..ab4a43eb 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/general/Tasker.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/general/Tasker.java
+@@ -151,12 +151,12 @@ public class Tasker extends Feature {
+         @Override
+         public void onReceive(Context context, Intent intent) {
+             if (intent == null) return;
+-            XposedBridge.log("[WaEnhancerX] SenderMessageBroadcastReceiver onReceive triggered for action: " + intent.getAction());
++            
+             
+             if (intent.getExtras() != null) {
+                 for (String key : intent.getExtras().keySet()) {
+                     Object val = intent.getExtras().get(key);
+-                    XposedBridge.log("[WaEnhancerX] Intent Extra: " + key + " = " + val + " (class: " + (val != null ? val.getClass().getName() : "null") + ")");
++                    
+                 }
+             }
+ 
+@@ -174,20 +174,20 @@ public class Tasker extends Feature {
+                 }
+             }
+ 
+-            XposedBridge.log("[WaEnhancerX] Resolved inputs -> number: " + number + ", message: " + message);
++            
+ 
+             if (number == null || message == null) {
+-                XposedBridge.log("[WaEnhancerX] Aborting: number or message is null!");
++                
+                 return;
+             }
+ 
+             number = number.replaceAll("\\D", "");
+-            XposedBridge.log("[WaEnhancerX] Stripped target number: " + number);
++            
+ 
+             // Time-based deduplication
+             long now = System.currentTimeMillis();
+             if (Objects.equals(number, lastProcessedNumber) && Objects.equals(message, lastProcessedMessage) && (now - lastProcessedTime < 2000)) {
+-                XposedBridge.log("[WaEnhancerX] SenderMessageBroadcastReceiver: Ignored duplicate broadcast");
++                
+                 return;
+             }
+             lastProcessedNumber = number;
+@@ -200,9 +200,9 @@ public class Tasker extends Feature {
+             if (sent) {
+                 // Mark successful notification-reply so the Conversation hook can skip
+                 lastNotificationReplyTime = System.currentTimeMillis();
+-                XposedBridge.log("[WaEnhancerX] Message sent via notification reply for " + number);
++                
+             } else {
+-                XposedBridge.log("[WaEnhancerX] No active notification for " + number + ". Launching Conversation fallback.");
++                
+                 try {
+                     Intent activityIntent = new Intent();
+                     activityIntent.setClassName(context.getPackageName(), "com.whatsapp.Conversation");
+@@ -218,7 +218,7 @@ public class Tasker extends Feature {
+                     );
+                     context.startActivity(activityIntent);
+                 } catch (Exception e) {
+-                    XposedBridge.log("[WaEnhancerX] Failed to launch Conversation fallback: " + e);
++                    
+                 }
+             }
+         }
+@@ -246,7 +246,7 @@ public class Tasker extends Feature {
+                     android.content.Intent intent = activity.getIntent();
+                     if (intent != null && intent.hasExtra("wae_auto_send_message")) {
+                         final String msgToSend = intent.getStringExtra("wae_auto_send_message");
+-                        XposedBridge.log("[WaEnhancerX] Hooked Conversation onCreate with wae_auto_send_message: " + msgToSend);
++                        
+                         
+                         // Make the activity invisible
+                         activity.overridePendingTransition(0, 0);
+@@ -274,7 +274,7 @@ public class Tasker extends Feature {
+ 
+     private static void autoSendTextAndFinish(final android.app.Activity activity, final String message, final int attemptsLeft) {
+         if (attemptsLeft <= 0) {
+-            XposedBridge.log("[WaEnhancerX] Headless send: exhausted all attempts. Dumping view hierarchy for debug:");
++            
+             try {
+                 dumpViewHierarchy(activity.getWindow().getDecorView(), 0);
+             } catch (Exception ignored) {}
+@@ -296,7 +296,7 @@ public class Tasker extends Feature {
+                     // 2. Find message entry EditText
+                     final android.widget.EditText inputField = findMessageInput(decorView);
+                     if (inputField == null) {
+-                        XposedBridge.log("[WaEnhancerX] Headless send: message input field not found, retrying... (" + attemptsLeft + ")");
++                        
+                         autoSendTextAndFinish(activity, message, attemptsLeft - 1);
+                         return;
+                     }
+@@ -314,7 +314,7 @@ public class Tasker extends Feature {
+                                 android.view.View sendBtn = findSendButton(activity, decorView);
+                                 if (sendBtn != null && sendBtn.isEnabled() && sendBtn.getVisibility() == android.view.View.VISIBLE) {
+                                     sendBtn.performClick();
+-                                    XposedBridge.log("[WaEnhancerX] Headless send: message sent successfully!");
++                                    
+                                     
+                                     new Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                                         @Override
+@@ -323,18 +323,18 @@ public class Tasker extends Feature {
+                                         }
+                                     }, 300);
+                                 } else {
+-                                    XposedBridge.log("[WaEnhancerX] Headless send: send button not ready, retrying... (" + attemptsLeft + ")");
++                                    
+                                     autoSendTextAndFinish(activity, message, attemptsLeft - 1);
+                                 }
+                             } catch (Exception e) {
+-                                XposedBridge.log("[WaEnhancerX] Headless send error: " + e);
++                                
+                                 autoSendTextAndFinish(activity, message, attemptsLeft - 1);
+                             }
+                         }
+                     }, 300); // Increased delay for send button
+ 
+                 } catch (Exception e) {
+-                    XposedBridge.log("[WaEnhancerX] Headless send loop error: " + e);
++                    
+                     autoSendTextAndFinish(activity, message, attemptsLeft - 1);
+                 }
+             }
+@@ -421,7 +421,7 @@ public class Tasker extends Feature {
+         if (root instanceof android.widget.TextView) {
+             sb.append(" text=").append(((android.widget.TextView) root).getText());
+         }
+-        XposedBridge.log("[WaEnhancerX] ViewHierarchy: " + sb.toString());
++        
+ 
+         if (root instanceof android.view.ViewGroup) {
+             android.view.ViewGroup group = (android.view.ViewGroup) root;
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/general/VideoNoteAttachment.java b/app/src/main/java/com/waenhancer/xposed/features/general/VideoNoteAttachment.java
+index 48ad4075..9472e9d5 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/general/VideoNoteAttachment.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/general/VideoNoteAttachment.java
+@@ -40,7 +40,7 @@ public class VideoNoteAttachment extends Feature {
+     private static volatile String pendingVideoNoteJid = null;
+ 
+     private static void logVideoNote(String message) {
+-        XposedBridge.log("WAE_VideoNote: " + message);
++        
+     }
+ 
+     public VideoNoteAttachment(ClassLoader loader, SharedPreferences preferences) {
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/listeners/MenuStatusListener.java b/app/src/main/java/com/waenhancer/xposed/features/listeners/MenuStatusListener.java
+index 38c07fc1..a3749a16 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/listeners/MenuStatusListener.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/listeners/MenuStatusListener.java
+@@ -104,9 +104,9 @@ public class MenuStatusListener extends Feature {
+                         });
+                     }
+                 } catch (Throwable t) {
+-                    XposedBridge.log("[WAE] MenuStatusListener error in hook: " + t);
++                    
+                     for (var element : t.getStackTrace()) {
+-                        XposedBridge.log("    at " + element.toString());
++                        
+                     }
+                 }
+             }
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/media/CallRecording.java b/app/src/main/java/com/waenhancer/xposed/features/media/CallRecording.java
+index e5354361..3b54ccf2 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/media/CallRecording.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/media/CallRecording.java
+@@ -142,7 +142,7 @@ public class CallRecording extends Feature {
+                 protected void afterHookedMethod(MethodHookParam param) {
+                     try {
+                         android.app.Activity activity = (android.app.Activity) param.thisObject;
+-                        XposedBridge.log("[Call Recording] onPrepareOptionsMenu hooked successfully on HomeActivity");
++                        
+                         
+                         reloadPrefs();
+                         boolean callsTabMenuEnabled = prefs.getBoolean("call_recording_calls_tab_menu", true);
+@@ -150,14 +150,14 @@ public class CallRecording extends Feature {
+                         boolean isCallsTab = false;
+                         if (callsTabMenuEnabled) {
+                             Object fragmentManager = XposedHelpers.callMethod(activity, "getSupportFragmentManager");
+-                            XposedBridge.log("[Call Recording] fragmentManager is " + (fragmentManager == null ? "null" : fragmentManager.getClass().getName()));
++                            
+                             java.util.List<?> fragments = null;
+ 
+                             if (fragmentManager != null) {
+                                 // Try 1: Direct getObjectField "mAdded"
+                                 try {
+                                     fragments = (java.util.List<?>) XposedHelpers.getObjectField(fragmentManager, "mAdded");
+-                                    XposedBridge.log("[Call Recording] Direct mAdded succeeded: " + (fragments == null ? "null" : fragments.size()));
++                                    
+                                 } catch (Throwable t) {
+                                     XposedBridge.log("[Call Recording] Direct mAdded failed: " + t.getMessage());
+                                 }
+@@ -166,7 +166,7 @@ public class CallRecording extends Feature {
+                                 if (fragments == null) {
+                                     try {
+                                         fragments = (java.util.List<?>) XposedHelpers.callMethod(fragmentManager, "getFragments");
+-                                        XposedBridge.log("[Call Recording] Direct call getFragments succeeded: " + (fragments == null ? "null" : fragments.size()));
++                                        
+                                     } catch (Throwable directT) {
+                                         XposedBridge.log("[Call Recording] Direct call getFragments failed: " + directT.getMessage());
+                                     }
+@@ -186,7 +186,7 @@ public class CallRecording extends Feature {
+                                                             Object first = list.get(0);
+                                                             if (first != null && first.getClass().getName().contains("Fragment")) {
+                                                                 fragments = list;
+-                                                                XposedBridge.log("[Call Recording] Method " + current.getSimpleName() + "#" + m.getName() + " succeeded: " + list.size());
++                                                                
+                                                                 break;
+                                                             }
+                                                         }
+@@ -216,7 +216,7 @@ public class CallRecording extends Feature {
+                                                             Object first = list.get(0);
+                                                             if (first != null && first.getClass().getName().contains("Fragment")) {
+                                                                 fragments = list;
+-                                                                XposedBridge.log("[Call Recording] Field " + current.getSimpleName() + "#" + f.getName() + " succeeded: " + list.size());
++                                                                
+                                                                 break;
+                                                             }
+                                                         }
+@@ -236,13 +236,13 @@ public class CallRecording extends Feature {
+                                 for (Object f : fragments) {
+                                     if (f != null) {
+                                         String className = f.getClass().getName();
+-                                        XposedBridge.log("[Call Recording] Active Fragment: " + className);
++                                        
+                                         if (className.endsWith("CallsHistoryFragment") || 
+                                             className.toLowerCase().contains("callshistory") || 
+                                             className.toLowerCase().contains("callsfragment") ||
+                                             (className.contains(".calling.") && className.endsWith("Fragment"))) {
+                                             
+-                                            XposedBridge.log("[Call Recording] Calls Fragment Found in active list: " + className);
++                                            
+                                             isCallsTab = true;
+                                             break;
+                                         }
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/media/DownloadProfile.java b/app/src/main/java/com/waenhancer/xposed/features/media/DownloadProfile.java
+index 40b56c0d..3ccb6946 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/media/DownloadProfile.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/media/DownloadProfile.java
+@@ -36,7 +36,7 @@ public class DownloadProfile extends Feature {
+         Class<?> profileClass;
+         try {
+             profileClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "ViewProfilePhoto");
+-            XposedBridge.log("WAE: DownloadProfile: Hooking class " + profileClass.getName());
++            
+         } catch (Exception e) {
+             XposedBridge.log("WAE: DownloadProfile: ViewProfilePhoto class not found: " + e.getMessage());
+             return;
+@@ -59,7 +59,7 @@ public class DownloadProfile extends Feature {
+ 
+                 item.setOnMenuItemClickListener(menuItem -> {
+                     try {
+-                        XposedBridge.log("WAE: DownloadProfile: Download clicked");
++                        
+                         Object fieldObj = null;
+                         
+                         // Strategy 1: Look for WaContactWpp.TYPE in fields of the activity and its superclasses
+@@ -76,29 +76,29 @@ public class DownloadProfile extends Feature {
+                         }
+ 
+                         if (fieldObj == null) {
+-                            XposedBridge.log("WAE: DownloadProfile: Could not find contact field in " + param.thisObject.getClass().getName());
++                            
+                             Utils.showToast("Error: Could not find contact information", 1);
+                             return true;
+                         }
+ 
+                         var waContact = new WaContactWpp(fieldObj);
+                         var userJid = waContact.getUserJid();
+-                        XposedBridge.log("WAE: DownloadProfile: UserJid resolved: " + userJid.getPhoneRawString());
++                        
+                         
+                         var file = waContact.getProfilePhoto();
+                         
+                         if (file == null || !file.exists()) {
+-                            XposedBridge.log("WAE: DownloadProfile: waContact.getProfilePhoto() returned null or non-existent file: " + file + ". Trying fallback...");
++                            
+                             file = WppCore.getContactPhotoFile(userJid.getPhoneRawString());
+                         }
+ 
+                         if (file == null || !file.exists()) {
+-                            XposedBridge.log("WAE: DownloadProfile: Profile photo file not found in any location. UserJid: " + userJid.getPhoneRawString());
++                            
+                             Utils.showToast("Error: Profile photo not found or not loaded yet", 1);
+                             return true;
+                         }
+                         
+-                        XposedBridge.log("WAE: DownloadProfile: Found photo at: " + file.getAbsolutePath());
++                        
+ 
+                         String destPath;
+                         try {
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/media/DownloadViewOnce.java b/app/src/main/java/com/waenhancer/xposed/features/media/DownloadViewOnce.java
+index 341d94eb..60dd60ff 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/media/DownloadViewOnce.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/media/DownloadViewOnce.java
+@@ -54,7 +54,7 @@ public class DownloadViewOnce extends Feature {
+                 @Override
+                 @SuppressLint("DiscouragedApi")
+                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+-                    if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: Media Activity menu hook triggered");
++                    if (DEBUG) 
+                     
+                     Object fmessageObj = null;
+                     var fields = ReflectionUtils.getFieldsByExtendType(param.thisObject.getClass(), FMessageWpp.TYPE);
+@@ -79,12 +79,12 @@ public class DownloadViewOnce extends Feature {
+                     }
+                     
+                     if (fmessageObj == null) {
+-                        if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: fmessageObj is null, aborting");
++                        if (DEBUG) 
+                         return;
+                     }
+                     
+                     FMessageWpp fMessage = new FMessageWpp(fmessageObj);
+-                    if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: Found message, isViewOnce=" + fMessage.isViewOnce());
++                    if (DEBUG) 
+ 
+                     // check media is view once
+                     if (!fMessage.isViewOnce()) return;
+@@ -117,7 +117,7 @@ public class DownloadViewOnce extends Feature {
+                     new XC_MethodHook() {
+                         @Override
+                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+-                            if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: ViewOnceViewerActivity menu hook triggered");
++                            if (DEBUG) 
+                             
+                             Menu menu = (Menu) param.args[0];
+                             
+@@ -133,12 +133,12 @@ public class DownloadViewOnce extends Feature {
+                                         var fieldType = ReflectionUtils.getFieldByType(param.thisObject.getClass(), keyClass);
+                                         var keyMessageObj = ReflectionUtils.getObjectField(fieldType, param.thisObject);
+                                         if (keyMessageObj == null) {
+-                                            if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: keyMessageObj is null");
++                                            if (DEBUG) 
+                                             return;
+                                         }
+                                         var fmessage = new FMessageWpp.Key(keyMessageObj).getFMessage();
+                                         if (fmessage == null) {
+-                                            if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: fmessage retrieved from key is null");
++                                            if (DEBUG) 
+                                             return;
+                                         }
+                                         var file = fmessage.getMediaFile();
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/others/ChatFilters.java b/app/src/main/java/com/waenhancer/xposed/features/others/ChatFilters.java
+index a1ca1388..8ed625dc 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/others/ChatFilters.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/others/ChatFilters.java
+@@ -42,13 +42,13 @@ public class ChatFilters extends Feature {
+         });
+         var methodSetFilter = ReflectionUtils.findMethodUsingFilter(filterAdaperClass, method -> method.getParameterCount() == 1 && method.getParameterTypes()[0].equals(int.class));
+         if (methodSetFilter == null) {
+-            XposedBridge.log("ChatFilters: methodSetFilter not found, skipping index guard hook");
++            
+             return;
+         }
+ 
+         var listField = ReflectionUtils.getFieldByType(methodSetFilter.getDeclaringClass(), List.class);
+         if (listField == null) {
+-            XposedBridge.log("ChatFilters: list field not found, skipping index guard hook");
++            
+             return;
+         }
+         listField.setAccessible(true);
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/others/EmbeddedSettingsDialogFragment.java b/app/src/main/java/com/waenhancer/xposed/features/others/EmbeddedSettingsDialogFragment.java
+index ceb04cae..4d95109f 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/others/EmbeddedSettingsDialogFragment.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/others/EmbeddedSettingsDialogFragment.java
+@@ -220,7 +220,7 @@ public class EmbeddedSettingsDialogFragment extends DialogFragment {
+                     Object transaction = de.robv.android.xposed.XposedHelpers.callMethod(fm, "beginTransaction");
+                     de.robv.android.xposed.XposedHelpers.callMethod(transaction, "add", dialog, "wae_embedded_settings");
+                     de.robv.android.xposed.XposedHelpers.callMethod(transaction, "commitAllowingStateLoss");
+-                    de.robv.android.xposed.XposedBridge.log("[WaEnhancer] Successfully embedded Settings UI into host Activity");
++                    de.robv.android.xposed.
+                     return;
+                 } catch (Throwable t) {
+                     de.robv.android.xposed.XposedBridge.log(
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/others/MenuHome.java b/app/src/main/java/com/waenhancer/xposed/features/others/MenuHome.java
+index e7b4e519..3e5b77f0 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/others/MenuHome.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/others/MenuHome.java
+@@ -64,7 +64,7 @@ public class MenuHome extends Feature {
+     private void InsertOpenWae(Menu menu, Activity activity) {
+         try {
+             var entryPoint = getSafeString("open_wae", "1");
+-            XposedBridge.log("[WaEnhancer] MenuHome: entryPoint is " + entryPoint + " in " + activity.getClass().getSimpleName());
++            
+             if (!"1".equals(entryPoint)) return;
+ 
+             String title = "WaEnhancerX Settings";
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/others/SettingsInjector.java b/app/src/main/java/com/waenhancer/xposed/features/others/SettingsInjector.java
+index 21ac3dc9..0a6a6845 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/others/SettingsInjector.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/others/SettingsInjector.java
+@@ -47,7 +47,7 @@ public class SettingsInjector extends Feature {
+                 String entryPoint = getSafeString("open_wae", "1");
+                 
+                 // Log for debugging sync issues
+-                XposedBridge.log("[WaEnhancer] SettingsInjector: Active in " + activity.getClass().getSimpleName() + ", entryPoint=" + entryPoint);
++                
+                 
+                 if (!"2".equals(entryPoint)) return;
+ 
+@@ -77,7 +77,7 @@ public class SettingsInjector extends Feature {
+         boolean isSettings = isSettingsActivity(activity, decor);
+         if (!isSettings) return;
+ 
+-        XposedBridge.log("[WaEnhancer] SettingsInjector: Confirmed Settings Activity: " + activity.getClass().getSimpleName());
++        
+ 
+         // 2. Tile Injection (In RecyclerView)
+         injectTile(decor, activity);
+@@ -152,7 +152,7 @@ public class SettingsInjector extends Feature {
+     private void injectTile(ViewGroup decor, Activity activity) {
+         ViewGroup rv = findRecyclerView(decor);
+         if (rv == null) {
+-            XposedBridge.log("[WaEnhancer] SettingsInjector: Could not find RecyclerView for Tile injection");
++            
+             return;
+         }
+ 
+@@ -169,7 +169,7 @@ public class SettingsInjector extends Feature {
+                 View tile = createTile(activity);
+                 addHeader.setAccessible(true);
+                 addHeader.invoke(adapter, tile);
+-                XposedBridge.log("[WaEnhancer] SettingsInjector: Tile injected via Adapter." + addHeader.getName());
++                
+             } else {
+                 // Direct Layout Injection (Top of RV)
+                 ViewGroup parent = (ViewGroup) rv.getParent();
+@@ -177,7 +177,7 @@ public class SettingsInjector extends Feature {
+                     View tile = createTile(activity);
+                     int index = parent.indexOfChild(rv);
+                     parent.addView(tile, index);
+-                    XposedBridge.log("[WaEnhancer] SettingsInjector: Tile injected via Layout (index " + index + ")");
++                    
+                 }
+             }
+         } catch (Throwable t) {
+@@ -212,7 +212,7 @@ public class SettingsInjector extends Feature {
+                     MenuHome.showWaeSettingsDialog(activity);
+                     return true;
+                 });
+-                XposedBridge.log("[WaEnhancer] SettingsInjector: Toolbar menu item injected.");
++                
+             }
+         } catch (Throwable t) {
+             XposedBridge.log("[WaEnhancer] SettingsInjector: Toolbar error: " + t.getMessage());
+diff --git a/app/src/main/java/com/waenhancer/xposed/features/privacy/CallPrivacy.java b/app/src/main/java/com/waenhancer/xposed/features/privacy/CallPrivacy.java
+index df9f486a..5022a6a1 100644
+--- a/app/src/main/java/com/waenhancer/xposed/features/privacy/CallPrivacy.java
++++ b/app/src/main/java/com/waenhancer/xposed/features/privacy/CallPrivacy.java
+@@ -142,9 +142,9 @@ public class CallPrivacy extends Feature {
+             case BACKLIST:
+                 if (customprivacy.optBoolean("BlockCall", false)) return true;
+                 var callBlockList = prefs.getString("call_block_contacts", "[]");
+-                de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy BACKLIST callBlockList: " + callBlockList);
++                de.robv.android.xposed.
+                 var blockList = Arrays.stream(callBlockList.substring(1, callBlockList.length() - 1).split(", ")).map(String::trim).collect(Collectors.toCollection(ArrayList::new));
+-                de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy BACKLIST blockList size: " + blockList.size());
++                de.robv.android.xposed.
+                 for (var blockNumber : blockList) {
+                     if (!TextUtils.isEmpty(blockNumber)) {
+                         String cleanBlockNumber = blockNumber;
+@@ -160,11 +160,11 @@ public class CallPrivacy extends Feature {
+                         }
+                         String phoneRaw = userJid.getPhoneRawString();
+                         String userRaw = userJid.getUserRawString();
+-                        de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy comparing incoming caller phoneRaw: " + phoneRaw + ", userRaw: " + userRaw + ", cleanPhoneNumber: " + cleanPhoneNumber + " with blockNumber: " + blockNumber + ", cleanBlockNumber: " + cleanBlockNumber);
++                        de.robv.android.xposed.
+                         if (Objects.equals(phoneRaw, blockNumber) ||
+                                 Objects.equals(userRaw, blockNumber) ||
+                                 (cleanPhoneNumber != null && Objects.equals(cleanPhoneNumber, cleanBlockNumber))) {
+-                            de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy MATCH FOUND! Blocking call.");
++                            de.robv.android.xposed.
+                             return true;
+                         }
+                     }
+@@ -172,7 +172,7 @@ public class CallPrivacy extends Feature {
+                 return false;
+             case WHITELIST:
+                 var callWhiteList = prefs.getString("call_white_contacts", "[]");
+-                de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy WHITELIST callWhiteList: " + callWhiteList);
++                de.robv.android.xposed.
+                 var whiteList = Arrays.stream(callWhiteList.substring(1, callWhiteList.length() - 1).split(", ")).map(String::trim).collect(Collectors.toCollection(ArrayList::new));
+                 for (var whiteNumber : whiteList) {
+                     if (!TextUtils.isEmpty(whiteNumber)) {
+@@ -189,11 +189,11 @@ public class CallPrivacy extends Feature {
+                         }
+                         String phoneRaw = userJid.getPhoneRawString();
+                         String userRaw = userJid.getUserRawString();
+-                        de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy comparing incoming caller phoneRaw: " + phoneRaw + ", userRaw: " + userRaw + ", cleanPhoneNumber: " + cleanPhoneNumber + " with whiteNumber: " + whiteNumber + ", cleanWhiteNumber: " + cleanWhiteNumber);
++                        de.robv.android.xposed.
+                         if (Objects.equals(phoneRaw, whiteNumber) ||
+                                 Objects.equals(userRaw, whiteNumber) ||
+                                 (cleanPhoneNumber != null && Objects.equals(cleanPhoneNumber, cleanWhiteNumber))) {
+-                            de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy MATCH FOUND in WHITELIST! Allowing call.");
++                            de.robv.android.xposed.
+                             return false;
+                         }
+                     }
+diff --git a/app/src/main/java/com/waenhancer/xposed/permission/AndroidPermissions.java b/app/src/main/java/com/waenhancer/xposed/permission/AndroidPermissions.java
+index 01d9ae2f..11a33363 100644
+--- a/app/src/main/java/com/waenhancer/xposed/permission/AndroidPermissions.java
++++ b/app/src/main/java/com/waenhancer/xposed/permission/AndroidPermissions.java
+@@ -74,7 +74,7 @@ public class AndroidPermissions {
+                                 Object bp = XposedHelpers.callMethod(mSettings, "getPermission", newPermission);
+                                 XposedHelpers.callMethod(mState, "grantRuntimePermission", bp, userId);
+ //                                XposedHelpers.callMethod(mState, "grantInstallPermission", bp);
+-                                XposedBridge.log("Added " + newPermission + " permission to " + packageName);
++                                
+                             }
+                         }
+                     }
+@@ -146,14 +146,14 @@ public class AndroidPermissions {
+                         for (String newPermission : sdk30Permissions) {
+                             if (!permissions.contains(newPermission)) {
+                                 permissions.add(newPermission);
+-                                XposedBridge.log("Added " + newPermission + " permission to " + pkgName);
++                                
+                             }
+                         }
+                     } else {
+                         for (String newPermission : newPermissions) {
+                             if (!permissions.contains(newPermission)) {
+                                 permissions.add(newPermission);
+-                                XposedBridge.log("Added " + newPermission + " permission to " + pkgName);
++                                
+                             }
+                         }
+                     }
+diff --git a/app/src/main/java/com/waenhancer/xposed/spoofer/HookBL.java b/app/src/main/java/com/waenhancer/xposed/spoofer/HookBL.java
+index 37438108..722a3959 100644
+--- a/app/src/main/java/com/waenhancer/xposed/spoofer/HookBL.java
++++ b/app/src/main/java/com/waenhancer/xposed/spoofer/HookBL.java
+@@ -469,7 +469,7 @@ public final class HookBL {
+             if (!xmlContent.isEmpty()) {
+                 try {
+                     parseBootloaderSpooferXml(xmlContent);
+-                    XposedBridge.log("Successfully loaded custom bootloader spoofer keys");
++                    
+                 } catch (Throwable t) {
+                     XposedBridge.log(t);
+                     Utils.showToast("Error parsing custom bootloader spoofer XML: " + t.getMessage(), 1);
+diff --git a/app/src/main/java/com/waenhancer/xposed/utils/DebugUtils.java b/app/src/main/java/com/waenhancer/xposed/utils/DebugUtils.java
+index 9f15ad95..ad12b347 100644
+--- a/app/src/main/java/com/waenhancer/xposed/utils/DebugUtils.java
++++ b/app/src/main/java/com/waenhancer/xposed/utils/DebugUtils.java
+@@ -12,8 +12,8 @@ import de.robv.android.xposed.XposedHelpers;
+ public class DebugUtils {
+     public static void debugFields(Class<?> cls, Object thisObject) {
+         if (cls == null) return;
+-        XposedBridge.log("------------------------------------");
+-        XposedBridge.log("DEBUG FIELDS: Class " + cls.getName() + " -> Object " + thisObject);
++        
++        
+         for (var field : cls.getDeclaredFields()) {
+             try {
+                 field.setAccessible(true);
+@@ -22,7 +22,7 @@ public class DebugUtils {
+                 if (value != null && value.getClass().isArray()) {
+                     value = Arrays.toString((Object[]) value);
+                 }
+-                XposedBridge.log("FIELD: " + name + " -> TYPE: " + field.getType().getName() + " -> VALUE: " + value);
++                
+             } catch (Exception ignored) {
+             }
+         }
+@@ -37,12 +37,12 @@ public class DebugUtils {
+         return new XC_MethodHook() {
+             @Override
+             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+-                XposedBridge.log("-----------------HOOKED DEBUG START-----------------------------");
+-                XposedBridge.log("DEBUG CLASS: " + param.method.getDeclaringClass().getName() + "->" + param.method.getName() + ": " + param.thisObject);
++                
++                
+ 
+                 if (printArgs) {
+                     debugArgs(param.args);
+-                    XposedBridge.log("Return value: " + (param.getResult() == null ? null : param.getResult().getClass().getName()) + " -> VALUE: " + param.getResult());
++                    
+                 }
+ 
+                 if (printFields) {
+@@ -55,18 +55,18 @@ public class DebugUtils {
+ 
+                 if (printTrace) {
+                     for (var trace : Thread.currentThread().getStackTrace()) {
+-                        XposedBridge.log("TRACE: " + trace.toString());
++                        
+                     }
+                 }
+ 
+-                XposedBridge.log("-----------------HOOKED DEBUG END-----------------------------\n\n");
++                
+             }
+         };
+     }
+ 
+     public static void debugArgs(Object[] args) {
+         for (var i = 0; i < args.length; i++) {
+-            XposedBridge.log("ARG[" + i + "]: " + (args[i] == null ? null : args[i].getClass().getName()) + " -> VALUE: " + parseValue(args[i]));
++            
+         }
+     }
+ 
+@@ -103,12 +103,12 @@ public class DebugUtils {
+ 
+ 
+     public static void debugMethods(Class<?> cls, Object thisObject) {
+-        XposedBridge.log("DEBUG METHODS: Class " + cls.getName());
++        
+         for (var method : cls.getDeclaredMethods()) {
+             if (method.getParameterCount() > 0 || method.getReturnType() == void.class) continue;
+             try {
+                 method.setAccessible(true);
+-                XposedBridge.log("METHOD: " + method.getName() + " -> VALUE: " + method.invoke(thisObject));
++                
+             } catch (Exception ignored) {
+             }
+         }
+@@ -116,7 +116,7 @@ public class DebugUtils {
+ 
+     public static void debugObject(Object srj) {
+         if (srj == null) return;
+-        XposedBridge.log("DEBUG OBJECT: " + srj.getClass().getName());
++        
+         debugFields(srj.getClass(), srj);
+         debugMethods(srj.getClass(), srj);
+     }
+diff --git a/app/src/main/java/com/waenhancer/xposed/utils/DesignUtils.java b/app/src/main/java/com/waenhancer/xposed/utils/DesignUtils.java
+index b8c6c3e5..76fa2af6 100644
+--- a/app/src/main/java/com/waenhancer/xposed/utils/DesignUtils.java
++++ b/app/src/main/java/com/waenhancer/xposed/utils/DesignUtils.java
+@@ -229,7 +229,7 @@ public class DesignUtils {
+             if (context == null) {
+                 boolean systemNight = isNightModeBySystem();
+                 int waTheme = Utils.getDefaultTheme();
+-                // XposedBridge.log("[WAE] DesignUtils: No context, systemNight=" + systemNight + ", waTheme=" + waTheme);
++                // 
+                 return waTheme <= 0 ? systemNight : waTheme == 2;
+             }
+             
+diff --git a/app/src/main/java/com/waenhancer/xposed/utils/ReflectionUtils.java b/app/src/main/java/com/waenhancer/xposed/utils/ReflectionUtils.java
+index b380042f..f03851f5 100644
+--- a/app/src/main/java/com/waenhancer/xposed/utils/ReflectionUtils.java
++++ b/app/src/main/java/com/waenhancer/xposed/utils/ReflectionUtils.java
+@@ -444,7 +444,7 @@ public class ReflectionUtils {
+             }
+ 
+             if (debug) {
+-                XposedBridge.log("[WAE-DEBUG] Extracted Key details - id: " + id + ", fromMe: " + fromMe + ", Jid: " + (remoteJid != null ? remoteJid.toString() : "null"));
++                
+             }
+ 
+             if (id != null && fromMe != null && remoteJid != null) {
+@@ -452,7 +452,7 @@ public class ReflectionUtils {
+                 if (realKeyClass != null) {
+                     Object realKey = XposedHelpers.newInstance(realKeyClass, remoteJid, id, fromMe);
+                     if (debug) {
+-                        XposedBridge.log("[WAE-DEBUG] Successfully created real Key: " + realKey);
++                        
+                     }
+                     return realKey;
+                 }
+@@ -480,7 +480,7 @@ public class ReflectionUtils {
+ 
+         boolean debug = object.getClass().getName().contains("8hO");
+         if (debug) {
+-            XposedBridge.log("[WAE-DEBUG] findFMessageInObject starting for: " + object.getClass().getName() + " | fMessageClass: " + (fMessageClass != null ? fMessageClass.getName() : "null") + " | keyClass: " + (keyClass != null ? keyClass.getName() : "null"));
++            
+         }
+ 
+         // 1. Search for a direct field of type fMessageClass
+@@ -489,7 +489,7 @@ public class ReflectionUtils {
+             if (field != null) {
+                 Object val = getObjectField(field, object);
+                 if (val != null && fMessageClass.isInstance(val)) {
+-                    if (debug) XposedBridge.log("[WAE-DEBUG] Found direct fMessage field: " + field.getName());
++                    if (debug) 
+                     return val;
+                 }
+             }
+@@ -501,7 +501,7 @@ public class ReflectionUtils {
+             if (field != null) {
+                 Object val = getObjectField(field, object);
+                 if (val != null && keyClass.isInstance(val)) {
+-                    if (debug) XposedBridge.log("[WAE-DEBUG] Found direct key field: " + field.getName());
++                    if (debug) 
+                     try {
+                         Object fmsg = com.waenhancer.xposed.core.WppCore.getFMessageFromKey(val);
+                         if (fmsg != null) return fmsg;
+@@ -514,7 +514,7 @@ public class ReflectionUtils {
+         Class<?> currentClass = object.getClass();
+         while (currentClass != null && currentClass != Object.class) {
+             if (debug) {
+-                XposedBridge.log("[WAE-DEBUG] Scanning class level: " + currentClass.getName());
++                
+             }
+             List<Field> fields = getCachedDeclaredFields(currentClass);
+             for (Field field : fields) {
+@@ -525,15 +525,15 @@ public class ReflectionUtils {
+                 try {
+                     Object nestedObj = field.get(object);
+                     if (debug) {
+-                        XposedBridge.log("[WAE-DEBUG] Field: " + field.getName() + " (" + field.getType().getName() + ") = " + (nestedObj != null ? nestedObj.getClass().getName() : "null"));
++                        
+                         if (nestedObj != null && nestedObj.getClass().getName().contains("8gx")) {
+-                            XposedBridge.log("[WAE-DEBUG] Dumping fields of 8gx class:");
++                            
+                             for (Field f : getCachedDeclaredFields(nestedObj.getClass())) {
+                                 f.setAccessible(true);
+                                 try {
+-                                    XposedBridge.log("[WAE-DEBUG]   8gx Field: " + f.getName() + " (" + f.getType().getName() + ") = " + f.get(nestedObj));
++                                    
+                                 } catch (Exception e) {
+-                                    XposedBridge.log("[WAE-DEBUG]   8gx Field read error: " + f.getName() + " -> " + e);
++                                    
+                                 }
+                             }
+                         }
+@@ -544,18 +544,18 @@ public class ReflectionUtils {
+                             return nestedContainerMatch;
+                         }
+                         if (fMessageClass != null && fMessageClass.isInstance(nestedObj)) {
+-                            if (debug) XposedBridge.log("[WAE-DEBUG] Match fMessageClass directly on nestedObj!");
++                            if (debug) 
+                             return nestedObj;
+                         }
+                         if (fMessageClass != null) {
+                             Field nestedFMsgField = getFieldByExtendType(nestedObj.getClass(), fMessageClass);
+                             if (debug) {
+-                                XposedBridge.log("[WAE-DEBUG] getFieldByExtendType for fMessageClass: " + (nestedFMsgField != null ? nestedFMsgField.getName() : "null"));
++                                
+                             }
+                             if (nestedFMsgField != null) {
+                                 Object val = getObjectField(nestedFMsgField, nestedObj);
+                                 if (val != null && fMessageClass.isInstance(val)) {
+-                                    if (debug) XposedBridge.log("[WAE-DEBUG] Match fMessageClass inside nestedObj field!");
++                                    if (debug) 
+                                     return val;
+                                 }
+                             }
+@@ -576,7 +576,7 @@ public class ReflectionUtils {
+                                         }
+                                     }
+                                     if (isKey) {
+-                                        if (debug) XposedBridge.log("[WAE-DEBUG] Found Key object: " + nestedKeyField.getName() + " (" + val.getClass().getName() + "). Converting if needed...");
++                                        if (debug) 
+                                         Object targetKey = val;
+                                         if (keyClass != null && !keyClass.isInstance(val)) {
+                                             targetKey = convertToRealKey(val, classLoader, debug);
+diff --git a/app/src/main/java/com/waenhancer/xposed/utils/Utils.java b/app/src/main/java/com/waenhancer/xposed/utils/Utils.java
+index 5dbfa512..df8f0e7b 100644
+--- a/app/src/main/java/com/waenhancer/xposed/utils/Utils.java
++++ b/app/src/main/java/com/waenhancer/xposed/utils/Utils.java
+@@ -296,7 +296,7 @@ public class Utils {
+     public static void log(String message) {
+         if (!DEBUG) return;
+         try {
+-            XposedBridge.log(message);
++            
+         } catch (NoClassDefFoundError | NoSuchMethodError e) {
+             // Fallback logging not available
+         }
+@@ -313,7 +313,7 @@ public class Utils {
+ 
+     public static void logError(String message) {
+         try {
+-            XposedBridge.log("[WAE_ERROR] " + message);
++            
+         } catch (NoClassDefFoundError | NoSuchMethodError e) {
+         }
+     }
+@@ -480,7 +480,7 @@ public class Utils {
+           .append(view.getClass().getName())
+           .append(" (id: ").append(idName).append(")");
+           
+-        XposedBridge.log("[WaEnhancer] UI Dump: " + sb.toString());
++        
+         
+         if (view instanceof android.view.ViewGroup) {
+             android.view.ViewGroup group = (android.view.ViewGroup) view;
+diff --git a/app/src/main/java/com/waenhancer/xposed/utils/XResManager.java b/app/src/main/java/com/waenhancer/xposed/utils/XResManager.java
+index f55d839c..8c241d9c 100644
+--- a/app/src/main/java/com/waenhancer/xposed/utils/XResManager.java
++++ b/app/src/main/java/com/waenhancer/xposed/utils/XResManager.java
+@@ -42,7 +42,7 @@ public class XResManager {
+         if (hostResources != null && moduleResources != null) {
+             try {
+                 if (!(hostResources instanceof android.content.res.XResources)) {
+-                    // XposedBridge.log("[WAE] XResManager: hostResources is not XResources yet!");
++                    // 
+                     return moduleId;
+                 }
+                 // Use reflection since hostResources is android.content.res.Resources at compile time
+diff --git a/changelog.txt b/changelog.txt
+index ed9bb2d6..8ad0fff1 100644
+--- a/changelog.txt
++++ b/changelog.txt
+@@ -1,5 +1,5 @@
+ [Added]
+-- Support upto version 2.26.21 for WA/WB
++- Support upto version 2.26.20 for WA/WB
+ 
+ [Improvements]
+ - Performance improvements

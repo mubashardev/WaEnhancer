@@ -61,14 +61,14 @@ public class ChatScrollButtons extends Feature {
             // Find the conversation root layout
             ViewGroup conversationRootLayout = rootView.findViewById(Utils.getID("conversation_root_layout", "id"));
             if (conversationRootLayout == null) {
-                XposedBridge.log("ChatScrollButtons: conversation_root_layout not found");
+                ;
                 return;
             }
 
             // Find the message list view (ListView with android.R.id.list)
             ListView messagesList = findMessagesList(conversationRootLayout);
             if (messagesList == null) {
-                XposedBridge.log("ChatScrollButtons: messagesList not found");
+                ;
                 return;
             }
 

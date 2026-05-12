@@ -220,7 +220,7 @@ public class EmbeddedSettingsDialogFragment extends DialogFragment {
                     Object transaction = de.robv.android.xposed.XposedHelpers.callMethod(fm, "beginTransaction");
                     de.robv.android.xposed.XposedHelpers.callMethod(transaction, "add", dialog, "wae_embedded_settings");
                     de.robv.android.xposed.XposedHelpers.callMethod(transaction, "commitAllowingStateLoss");
-                    de.robv.android.xposed.XposedBridge.log("[WaEnhancer] Successfully embedded Settings UI into host Activity");
+                    ;
                     return;
                 } catch (Throwable t) {
                     de.robv.android.xposed.XposedBridge.log(

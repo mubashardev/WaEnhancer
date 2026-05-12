@@ -49,7 +49,7 @@ public class LogService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && ACTION_STOP.equals(intent.getAction())) {
-            Log.d(TAG, "Stop action received via intent");
+            ;
             LogManager.setLoggingEnabled(this, false);
             stopSelf();
             return START_NOT_STICKY;
@@ -59,7 +59,7 @@ public class LogService extends Service {
             isRunning = true;
             startForeground(NOTIFICATION_ID, createNotification());
             startStreaming();
-            Log.d(TAG, "LogService started");
+            ;
         }
 
         return START_STICKY;

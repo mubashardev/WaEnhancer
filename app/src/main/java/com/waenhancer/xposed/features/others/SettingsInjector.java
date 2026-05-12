@@ -47,7 +47,7 @@ public class SettingsInjector extends Feature {
                 String entryPoint = getSafeString("open_wae", "1");
                 
                 // Log for debugging sync issues
-                XposedBridge.log("[WaEnhancer] SettingsInjector: Active in " + activity.getClass().getSimpleName() + ", entryPoint=" + entryPoint);
+                ;
                 
                 if (!"2".equals(entryPoint)) return;
 
@@ -77,7 +77,7 @@ public class SettingsInjector extends Feature {
         boolean isSettings = isSettingsActivity(activity, decor);
         if (!isSettings) return;
 
-        XposedBridge.log("[WaEnhancer] SettingsInjector: Confirmed Settings Activity: " + activity.getClass().getSimpleName());
+        ;
 
         // 2. Tile Injection (In RecyclerView)
         injectTile(decor, activity);
@@ -152,7 +152,7 @@ public class SettingsInjector extends Feature {
     private void injectTile(ViewGroup decor, Activity activity) {
         ViewGroup rv = findRecyclerView(decor);
         if (rv == null) {
-            XposedBridge.log("[WaEnhancer] SettingsInjector: Could not find RecyclerView for Tile injection");
+            ;
             return;
         }
 
@@ -169,7 +169,7 @@ public class SettingsInjector extends Feature {
                 View tile = createTile(activity);
                 addHeader.setAccessible(true);
                 addHeader.invoke(adapter, tile);
-                XposedBridge.log("[WaEnhancer] SettingsInjector: Tile injected via Adapter." + addHeader.getName());
+                ;
             } else {
                 // Direct Layout Injection (Top of RV)
                 ViewGroup parent = (ViewGroup) rv.getParent();
@@ -177,7 +177,7 @@ public class SettingsInjector extends Feature {
                     View tile = createTile(activity);
                     int index = parent.indexOfChild(rv);
                     parent.addView(tile, index);
-                    XposedBridge.log("[WaEnhancer] SettingsInjector: Tile injected via Layout (index " + index + ")");
+                    ;
                 }
             }
         } catch (Throwable t) {
@@ -212,7 +212,7 @@ public class SettingsInjector extends Feature {
                     MenuHome.showWaeSettingsDialog(activity);
                     return true;
                 });
-                XposedBridge.log("[WaEnhancer] SettingsInjector: Toolbar menu item injected.");
+                ;
             }
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancer] SettingsInjector: Toolbar error: " + t.getMessage());

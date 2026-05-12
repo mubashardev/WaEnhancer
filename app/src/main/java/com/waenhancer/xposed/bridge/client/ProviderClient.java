@@ -63,7 +63,7 @@ public class ProviderClient extends BaseClient {
                 if (binder != null) {
                     service = WaeIIFace.Stub.asInterface(binder);
                     if (service != null && service.asBinder().pingBinder()) {
-                        XposedBridge.log("" + service);
+                        ;
 
                         connected = true;
                     }

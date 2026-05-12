@@ -1006,13 +1006,13 @@ public class Unobfuscator {
     public synchronized static Field loadConversationDelegateField(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getField(loader, () -> {
             long start = System.currentTimeMillis();
-            XposedBridge.log("WAE: Scanning for ConversationDelegateField...");
+            ;
             String[] anchors = {"conversation/createconversation", "conversation/create", "conversation/refresh", "conversation/onCreate"};
             Class<?> conversation = XposedHelpers.findClass("com.whatsapp.Conversation", loader);
             Class<?> conversationFragment = XposedHelpers.findClassIfExists("com.whatsapp.ConversationFragment", loader);
 
             for (String anchor : anchors) {
-                XposedBridge.log("WAE: Trying anchor: " + anchor);
+                ;
                 Class<?>[] classes = findAllClassUsingStrings(loader, StringMatchType.Contains, anchor);
                 if (classes == null) continue;
 
@@ -1020,7 +1020,7 @@ public class Unobfuscator {
                     // Try direct field in Conversation
                     Field field = ReflectionUtils.getFieldByExtendType(conversation, clazz);
                     if (field != null) {
-                        XposedBridge.log("WAE: Found via Conversation in " + (System.currentTimeMillis() - start) + "ms");
+                        ;
                         return field;
                     }
 
@@ -1028,7 +1028,7 @@ public class Unobfuscator {
                     if (conversationFragment != null) {
                         field = ReflectionUtils.getFieldByExtendType(conversationFragment, clazz);
                         if (field != null) {
-                            XposedBridge.log("WAE: Found via ConversationFragment in " + (System.currentTimeMillis() - start) + "ms");
+                            ;
                             return field;
                         }
                     }
@@ -1040,7 +1040,7 @@ public class Unobfuscator {
                             continue;
                         Field field1 = ReflectionUtils.getFieldByExtendType(fType, clazz);
                         if (field1 != null) {
-                            XposedBridge.log("WAE: Found via Conversation nested delegate in " + (System.currentTimeMillis() - start) + "ms");
+                            ;
                             return field1;
                         }
                     }
@@ -1064,19 +1064,19 @@ public class Unobfuscator {
     public synchronized static Field loadUserJidConversationDelegate(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getField(loader, () -> {
             long start = System.currentTimeMillis();
-            XposedBridge.log("WAE: Scanning for UserJidConversationDelegate...");
+            ;
             String[] anchors = {"conversation/createconversation", "conversation/create", "conversation/refresh"};
             Class<?> jidClass = Unobfuscator.findFirstClassUsingName(loader, StringMatchType.EndsWith, "jid.Jid");
 
             for (String anchor : anchors) {
-                XposedBridge.log("WAE: Trying anchor: " + anchor);
+                ;
                 Class<?>[] classes = findAllClassUsingStrings(loader, StringMatchType.Contains, anchor);
                 if (classes == null) continue;
 
                 for (Class<?> clazz : classes) {
                     Field field = ReflectionUtils.getFieldByExtendType(clazz, jidClass);
                     if (field != null) {
-                        XposedBridge.log("WAE: Found UserJidConversationDelegate in " + (System.currentTimeMillis() - start) + "ms");
+                        ;
                         return field;
                     }
                 }
@@ -1932,7 +1932,7 @@ public class Unobfuscator {
                 // Fallback 1: Find the class that uses name_in_group AND has getFMessage()
                 // Then find the render/bind method within that class
                 int nameInGroupId = Utils.getID("name_in_group", "id");
-                XposedBridge.log("GroupAdmin: Starting getFMessage-based trace for ID=" + nameInGroupId);
+                ;
                 if (nameInGroupId > 0) {
                     var globalResults = dexkit.findMethod(FindMethod.create()
                             .matcher(MethodMatcher.create().addUsingNumber(nameInGroupId)));
@@ -1963,7 +1963,7 @@ public class Unobfuscator {
 
                         if (hasFMessage && android.view.View.class.isAssignableFrom(cls)) {
                             targetClass = cls;
-                            XposedBridge.log("GroupAdmin: Target class found: " + cls.getName());
+                            ;
                             break;
                         }
                     }
@@ -1999,9 +1999,9 @@ public class Unobfuscator {
                             
                             if (!bindMethods.isEmpty()) {
                                 method = bindMethods.get(0).getMethodInstance(loader);
-                                XposedBridge.log("GroupAdmin: Selected bind method: " + method.getName() + " in " + targetClass.getName() + " (static=" + Modifier.isStatic(method.getModifiers()) + ")");
+                                ;
                             } else {
-                                XposedBridge.log("GroupAdmin: No standard bind method found in " + targetClass.getName());
+                                ;
                             }
                         }
                     }
@@ -2053,7 +2053,7 @@ public class Unobfuscator {
                 if (invokeMethod.getParameterCount() != 2 || invokeMethod.getReturnType() != boolean.class)
                     continue;
                 if (invokeMethod.getParameterTypes()[1].getName().contains("jid.UserJid")) {
-                    XposedBridge.log("FIND: " + invokeMethod);
+                    ;
                     return invokeMethod;
                 }
 
@@ -3279,7 +3279,7 @@ public class Unobfuscator {
             try {
                 XposedBridge.log("[WAE] WaContactDisplayName method lookup failed. Listing all methods of " + waContactClass.getName() + ":");
                 for (var m : waContactClass.getDeclaredMethods()) {
-                    XposedBridge.log("[WAE] Method: " + m.getName() + " params: " + m.getParameterCount() + " return: " + m.getReturnType().getName() + " static: " + java.lang.reflect.Modifier.isStatic(m.getModifiers()));
+                    ;
                 }
             } catch (Throwable ignored) {}
 

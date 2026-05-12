@@ -40,7 +40,7 @@ public class VideoNoteAttachment extends Feature {
     private static volatile String pendingVideoNoteJid = null;
 
     private static void logVideoNote(String message) {
-        XposedBridge.log("WAE_VideoNote: " + message);
+        ;
     }
 
     public VideoNoteAttachment(ClassLoader loader, SharedPreferences preferences) {

@@ -211,10 +211,10 @@ public class FilterGroups extends Feature {
             }
             if (index == -1 && list.size() > position) {
                 index = position;
-                XposedBridge.log("FilterGroups: falling back to filter index " + index + " for " + name);
+                ;
             }
             if (index == -1) {
-                XposedBridge.log("FilterGroups: filter entry not found for " + name);
+                ;
                 return;
             }
             ReflectionUtils.callMethod(methodSetFilter, mFilterInstance, index);

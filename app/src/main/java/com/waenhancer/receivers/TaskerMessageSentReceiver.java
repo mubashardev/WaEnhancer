@@ -10,18 +10,18 @@ public class TaskerMessageSentReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "TaskerMessageSentReceiver onReceive triggered");
+        ;
         if (intent == null) return;
 
         String number = intent.getStringExtra("number");
         String message = intent.getStringExtra("message");
 
         if (number == null || message == null) {
-            Log.d(TAG, "Aborting: number or message is null");
+            ;
             return;
         }
 
-        Log.d(TAG, "Forwarding com.waenhancer.MESSAGE_SENT: number=" + number + ", message=" + message);
+        ;
 
         // Forward broadcast to WhatsApp packages for handling inside the hooked process
         forwardBroadcast(context, "com.whatsapp", number, message);

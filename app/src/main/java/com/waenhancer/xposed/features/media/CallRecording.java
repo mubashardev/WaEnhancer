@@ -142,7 +142,7 @@ public class CallRecording extends Feature {
                 protected void afterHookedMethod(MethodHookParam param) {
                     try {
                         android.app.Activity activity = (android.app.Activity) param.thisObject;
-                        XposedBridge.log("[Call Recording] onPrepareOptionsMenu hooked successfully on HomeActivity");
+                        ;
                         
                         reloadPrefs();
                         boolean callsTabMenuEnabled = prefs.getBoolean("call_recording_calls_tab_menu", true);
@@ -150,14 +150,14 @@ public class CallRecording extends Feature {
                         boolean isCallsTab = false;
                         if (callsTabMenuEnabled) {
                             Object fragmentManager = XposedHelpers.callMethod(activity, "getSupportFragmentManager");
-                            XposedBridge.log("[Call Recording] fragmentManager is " + (fragmentManager == null ? "null" : fragmentManager.getClass().getName()));
+                            ;
                             java.util.List<?> fragments = null;
 
                             if (fragmentManager != null) {
                                 // Try 1: Direct getObjectField "mAdded"
                                 try {
                                     fragments = (java.util.List<?>) XposedHelpers.getObjectField(fragmentManager, "mAdded");
-                                    XposedBridge.log("[Call Recording] Direct mAdded succeeded: " + (fragments == null ? "null" : fragments.size()));
+                                    ;
                                 } catch (Throwable t) {
                                     XposedBridge.log("[Call Recording] Direct mAdded failed: " + t.getMessage());
                                 }
@@ -166,7 +166,7 @@ public class CallRecording extends Feature {
                                 if (fragments == null) {
                                     try {
                                         fragments = (java.util.List<?>) XposedHelpers.callMethod(fragmentManager, "getFragments");
-                                        XposedBridge.log("[Call Recording] Direct call getFragments succeeded: " + (fragments == null ? "null" : fragments.size()));
+                                        ;
                                     } catch (Throwable directT) {
                                         XposedBridge.log("[Call Recording] Direct call getFragments failed: " + directT.getMessage());
                                     }
@@ -186,7 +186,7 @@ public class CallRecording extends Feature {
                                                             Object first = list.get(0);
                                                             if (first != null && first.getClass().getName().contains("Fragment")) {
                                                                 fragments = list;
-                                                                XposedBridge.log("[Call Recording] Method " + current.getSimpleName() + "#" + m.getName() + " succeeded: " + list.size());
+                                                                ;
                                                                 break;
                                                             }
                                                         }
@@ -216,7 +216,7 @@ public class CallRecording extends Feature {
                                                             Object first = list.get(0);
                                                             if (first != null && first.getClass().getName().contains("Fragment")) {
                                                                 fragments = list;
-                                                                XposedBridge.log("[Call Recording] Field " + current.getSimpleName() + "#" + f.getName() + " succeeded: " + list.size());
+                                                                ;
                                                                 break;
                                                             }
                                                         }
@@ -236,13 +236,13 @@ public class CallRecording extends Feature {
                                 for (Object f : fragments) {
                                     if (f != null) {
                                         String className = f.getClass().getName();
-                                        XposedBridge.log("[Call Recording] Active Fragment: " + className);
+                                        ;
                                         if (className.endsWith("CallsHistoryFragment") || 
                                             className.toLowerCase().contains("callshistory") || 
                                             className.toLowerCase().contains("callsfragment") ||
                                             (className.contains(".calling.") && className.endsWith("Fragment"))) {
                                             
-                                            XposedBridge.log("[Call Recording] Calls Fragment Found in active list: " + className);
+                                            ;
                                             isCallsTab = true;
                                             break;
                                         }

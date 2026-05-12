@@ -38,7 +38,7 @@ public class HookProvider extends ContentProvider {
     @Nullable
     @Override
     public Bundle call(@NonNull String method, @Nullable String arg, @Nullable Bundle extras) {
-        android.util.Log.d("WAE_Provider", "HookProvider.call: method=" + method + ", arg=" + arg);
+        ;
         
         int callingUid = android.os.Binder.getCallingUid();
         long token = android.os.Binder.clearCallingIdentity();
@@ -71,7 +71,7 @@ public class HookProvider extends ContentProvider {
             if ("record_event".equals(method) && extras != null) {
                 String eventName = extras.getString("event_name");
                 Bundle params = extras.getBundle("params");
-                android.util.Log.d("WAE_Provider", "record_event received: " + eventName);
+                ;
                 if (eventName != null) {
                     com.waenhancer.utils.AnalyticsManager.logEvent(context, eventName, params);
                 }
@@ -105,10 +105,10 @@ public class HookProvider extends ContentProvider {
             }
             if (method.equals("get_all_preferences")) {
                 var all = prefs.getAll();
-                android.util.Log.d("WAE_Provider", "Serving " + all.size() + " preferences to caller (UID: " + callingUid + ")");
+                ;
                 // Dump keys for diagnosis
                 for (String k : all.keySet()) {
-                    android.util.Log.v("WAE_Provider", "  Key: " + k + " = " + all.get(k));
+                    ;
                 }
                 Bundle result = new Bundle();
                 result.putSerializable("prefs", new HashMap<>(all));
@@ -117,7 +117,7 @@ public class HookProvider extends ContentProvider {
             if ("put_preference".equals(method) && extras != null) {
                 String key = extras.getString("key");
                 String type = extras.getString("type");
-                android.util.Log.d("WAE_Provider", "Writing preference: " + key + " (from UID: " + callingUid + ")");
+                ;
                 if (key == null || type == null) {
                     return null;
                 }

@@ -12,8 +12,8 @@ import de.robv.android.xposed.XposedHelpers;
 public class DebugUtils {
     public static void debugFields(Class<?> cls, Object thisObject) {
         if (cls == null) return;
-        XposedBridge.log("------------------------------------");
-        XposedBridge.log("DEBUG FIELDS: Class " + cls.getName() + " -> Object " + thisObject);
+        ;
+        ;
         for (var field : cls.getDeclaredFields()) {
             try {
                 field.setAccessible(true);
@@ -22,7 +22,7 @@ public class DebugUtils {
                 if (value != null && value.getClass().isArray()) {
                     value = Arrays.toString((Object[]) value);
                 }
-                XposedBridge.log("FIELD: " + name + " -> TYPE: " + field.getType().getName() + " -> VALUE: " + value);
+                ;
             } catch (Exception ignored) {
             }
         }
@@ -37,12 +37,12 @@ public class DebugUtils {
         return new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                XposedBridge.log("-----------------HOOKED DEBUG START-----------------------------");
-                XposedBridge.log("DEBUG CLASS: " + param.method.getDeclaringClass().getName() + "->" + param.method.getName() + ": " + param.thisObject);
+                ;
+                ;
 
                 if (printArgs) {
                     debugArgs(param.args);
-                    XposedBridge.log("Return value: " + (param.getResult() == null ? null : param.getResult().getClass().getName()) + " -> VALUE: " + param.getResult());
+                    ;
                 }
 
                 if (printFields) {
@@ -55,18 +55,18 @@ public class DebugUtils {
 
                 if (printTrace) {
                     for (var trace : Thread.currentThread().getStackTrace()) {
-                        XposedBridge.log("TRACE: " + trace.toString());
+                        ;
                     }
                 }
 
-                XposedBridge.log("-----------------HOOKED DEBUG END-----------------------------\n\n");
+                ;
             }
         };
     }
 
     public static void debugArgs(Object[] args) {
         for (var i = 0; i < args.length; i++) {
-            XposedBridge.log("ARG[" + i + "]: " + (args[i] == null ? null : args[i].getClass().getName()) + " -> VALUE: " + parseValue(args[i]));
+            ;
         }
     }
 
@@ -108,7 +108,7 @@ public class DebugUtils {
             if (method.getParameterCount() > 0 || method.getReturnType() == void.class) continue;
             try {
                 method.setAccessible(true);
-                XposedBridge.log("METHOD: " + method.getName() + " -> VALUE: " + method.invoke(thisObject));
+                ;
             } catch (Exception ignored) {
             }
         }

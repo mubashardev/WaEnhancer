@@ -217,7 +217,7 @@ public class AntiRevoke extends Feature {
     private void addAntiRevokeSqlHooks() {
         int antiRevokeValue = Integer.parseInt(prefs.getString("antirevoke", "0"));
         if (antiRevokeValue == 0) {
-            XposedBridge.log("WAE: Anti-revoke disabled in preferences, skipping SQL hooks");
+            ;
             return;
         }
 
@@ -256,8 +256,7 @@ public class AntiRevoke extends Feature {
                                     // Block delete only for incoming messages (from_me=0) 
                                     // that are normal messages (not already type 15)
                                     if (fromMe == 0 && msgType != 15) {
-                                        XposedBridge.log("WAE: BLOCKED DELETE of incoming message _id=" + msgId + 
-                                            " key=" + keyId + " type=" + msgType);
+                                        ;
                                         recentDeletedIds.add(msgId);
                                         
                                         // Record the revocation for UI display (red icon + timestamp)
@@ -275,7 +274,7 @@ public class AntiRevoke extends Feature {
                                                 phoneNumber = jidCursor.getString(0); // user column = phone number
                                                 String rawString = jidCursor.getString(1);
                                                 jidCursor.close();
-                                                XposedBridge.log("WAE: JID resolved: user=" + phoneNumber + " raw=" + rawString);
+                                                ;
                                                 // Fallback: if user column is empty, parse from raw_string
                                                 if (phoneNumber == null || phoneNumber.isEmpty()) {
                                                     if (rawString != null && rawString.contains("@")) {
@@ -300,7 +299,7 @@ public class AntiRevoke extends Feature {
                                                         Collections.synchronizedSet(new java.util.HashSet<>())).add(keyId);
                                                 }
                                                 
-                                                XposedBridge.log("WAE: Recorded revocation: key=" + keyId + " jid=" + phoneNumber);
+                                                ;
                                                 
                                                 // Refresh the conversation UI if it's currently open
                                                 try {
@@ -351,7 +350,7 @@ public class AntiRevoke extends Feature {
                         // Block insertion of revocation placeholders (type=15) for incoming messages
                         if (msgType != null && msgType == 15 && fromMe != null && fromMe == 0) {
                             String keyId = cv.getAsString("key_id");
-                            XposedBridge.log("WAE: BLOCKED INSERT of revocation placeholder type=15 key=" + keyId);
+                            ;
                             param.setResult(-1L); // Return fake row ID, block the insert
                         }
                     } catch (Throwable ignored) {}

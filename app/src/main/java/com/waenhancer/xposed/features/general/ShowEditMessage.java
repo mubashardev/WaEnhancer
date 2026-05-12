@@ -113,7 +113,7 @@ public class ShowEditMessage extends Feature {
 
                         // We only show/bind edit history if a native edited label is present, or if we have locally captured edit history
                         if (nativeLabel != null || hasHistory) {
-                            de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage: Binding edit history click for message ID: " + key.messageID + " (nativeLabel=" + (nativeLabel != null) + ", hasHistory=" + hasHistory + ")");
+                            ;
                             dumpTextViews(viewGroup);
                             
                             // Hide any previous custom injected Edited views first to handle fresh layouts
@@ -128,7 +128,7 @@ public class ShowEditMessage extends Feature {
                             }
 
                             if (nativeLabel != null) {
-                                de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage: Found edit history anchor view: id=" + nativeLabel.getId() + " text='" + nativeLabel.getText() + "'");
+                                ;
                                 bindHistoryClick(nativeLabel, key.messageID, strEmoji, false);
 
                                 // Separate Clicks: We have a dedicated "Edited" label, so remove edit click listener from dateView to keep them completely separate!
@@ -136,7 +136,7 @@ public class ShowEditMessage extends Feature {
                                     Utils.setViewClickListener(dateView, "show_edit_message", null);
                                 }
                             } else {
-                                de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage: Edit history anchor view not found in layout, injecting custom separate Edited view.");
+                                ;
                                 if (dateView != null) {
                                     TextView injectedView = injectEditHistoryView(viewGroup, dateView, strEmoji);
                                     if (injectedView != null) {

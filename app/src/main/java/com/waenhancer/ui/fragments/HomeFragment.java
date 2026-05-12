@@ -71,7 +71,7 @@ public class HomeFragment extends BaseFragment {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String pkg = intent.getStringExtra("PKG");
-                Log.d("WAE_STATUS", "Received RECEIVER_WPP broadcast from: " + pkg);
+                ;
                 try {
                     if (FeatureLoader.PACKAGE_WPP.equals(pkg))
                         receiverBroadcastWpp(context, intent);
@@ -536,7 +536,7 @@ public class HomeFragment extends BaseFragment {
         boolean hookEnabled = com.waenhancer.utils.ModuleStatus.isModuleActive();
         boolean heartbeatEnabled = hasRecentModuleHeartbeat();
         
-        Log.d("WAE_STATUS", "checkStateWpp: framework=" + frameworkPresent + ", hook=" + hookEnabled + ", heartbeat=" + heartbeatEnabled);
+        ;
         
         updateModuleStatusUi(frameworkPresent, hookEnabled, heartbeatEnabled);
         
@@ -690,7 +690,7 @@ public class HomeFragment extends BaseFragment {
     }
 
     private static void checkWpp(FragmentActivity activity) {
-        Log.d("WAE_STATUS", "Sending CHECK_WPP broadcast to " + BuildConfig.APPLICATION_ID);
+        ;
         Intent checkWpp = new Intent(BuildConfig.APPLICATION_ID + ".CHECK_WPP");
         // Ensure broadcast reaches WhatsApp even if it is in background/stopped state (Android 14+)
         checkWpp.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
@@ -769,7 +769,7 @@ public class HomeFragment extends BaseFragment {
         long diff = System.currentTimeMillis() - lastSeen;
         // Expiry threshold: 24 hours for persistent status even if WhatsApp is force-stopped
         boolean active = diff < 24 * 60 * 60 * 1000L;
-        Log.v("WAE_STATUS", "Heartbeat check: lastSeen=" + lastSeen + ", diff=" + (diff/1000) + "s, active=" + active);
+        ;
         return active;
     }
 

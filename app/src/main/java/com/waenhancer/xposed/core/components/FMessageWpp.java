@@ -78,9 +78,7 @@ public class FMessageWpp {
                 keyIdField = ReflectionUtils.getFieldByType(Key.TYPE, String.class);
                 keyFromMeField = ReflectionUtils.getFieldByType(Key.TYPE, boolean.class);
                 keyRemoteJidField = ReflectionUtils.getFieldByExtendType(Key.TYPE, UserJid.TYPE_JID);
-                XposedBridge.log("[WAE] Key fields initialized: ID=" + (keyIdField != null ? keyIdField.getName() : "null") +
-                        ", fromMe=" + (keyFromMeField != null ? keyFromMeField.getName() : "null") +
-                        ", remoteJid=" + (keyRemoteJidField != null ? keyRemoteJidField.getName() : "null"));
+                ;
             }
         } catch (Exception e) {
             XposedBridge.log(e);

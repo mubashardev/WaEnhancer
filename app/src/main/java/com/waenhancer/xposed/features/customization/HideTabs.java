@@ -2,6 +2,7 @@ package com.waenhancer.xposed.features.customization;
 
 import static com.waenhancer.xposed.features.customization.SeparateGroup.tabs;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -75,21 +76,27 @@ public class HideTabs extends Feature {
         var loadTabFrameClass = Unobfuscator.loadTabFrameClass(classLoader);
         logDebug(loadTabFrameClass);
 
-        XposedBridge.hookAllMethods(FrameLayout.class, "onMeasure", new XC_MethodHook() {
+        // OPTIMIZED: Replaced expensive FrameLayout.onMeasure hook (runs on EVERY view measure)
+        // with onViewAttachedToWindow which only runs once per view lifecycle
+        // This significantly improves tab switching performance
+        XposedHelpers.findAndHookMethod(FrameLayout.class, "onAttachedToWindow", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 if (!loadTabFrameClass.isInstance(param.thisObject)) return;
+                var view = (View) param.thisObject;
+                // Hide tab frame if only one tab visible
                 if (tabs != null) {
                     var arr = new ArrayList<>(tabs);
                     arr.removeAll(hideTabsList);
                     if (arr.size() == 1) {
-                        ((View) param.thisObject).setVisibility(View.GONE);
+                        view.setVisibility(View.GONE);
                     }
                 }
+                // Hide specific tab items
                 for (var item : hideTabsList) {
-                    View view;
-                    if ((view = ((View) param.thisObject).findViewById(item)) != null) {
-                        view.setVisibility(View.GONE);
+                    View tabView = view.findViewById(item);
+                    if (tabView != null) {
+                        tabView.setVisibility(View.GONE);
                     }
                 }
             }
@@ -101,6 +108,21 @@ public class HideTabs extends Feature {
                 Class<?> TabsPagerClass = WppCore.getTabsPagerClass(classLoader);
                 var tabsField = ReflectionUtils.getFieldByType(param.thisObject.getClass(), TabsPagerClass);
                 mTabPagerInstance = tabsField.get(param.thisObject);
+
+                // Also apply hiding immediately in onCreate for faster initial render
+                if (mTabPagerInstance != null) {
+                    try {
+                        var contentView = ((Activity) param.thisObject).findViewById(android.R.id.content);
+                        if (contentView != null) {
+                            for (var item : hideTabsList) {
+                                View tabView = contentView.findViewById(item);
+                                if (tabView != null) {
+                                    tabView.setVisibility(View.GONE);
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
             }
         });
 

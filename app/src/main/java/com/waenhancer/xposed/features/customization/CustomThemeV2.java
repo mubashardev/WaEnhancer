@@ -119,16 +119,37 @@ public class CustomThemeV2 extends Feature {
     @Override
     public void doHook() throws Throwable {
         properties = Utils.getProperties(prefs, "custom_css", "custom_filters");
-        hookTheme();
-        hookWallpaper();
-        XposedBridge.hookAllMethods(XposedHelpers.findClass("android.app.ActivityThread", classLoader),
-                "handleRelaunchActivity", new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        loadAndApplyColors();
-                        loadAndApplyColorsWallpaper();
-                    }
-                });
+
+        // PERFORMANCE OPTIMIZATION: Check if any theming features are enabled
+        // Skip expensive hooks if no theming is active
+        boolean changeColorEnabled = prefs.getBoolean("changecolor", false);
+        boolean customWallpaper = prefs.getBoolean("wallpaper", false);
+        boolean hasColorProperties = properties.containsKey("change_colors") ||
+                properties.containsKey("primary_color") ||
+                properties.containsKey("text_color") ||
+                properties.containsKey("background_color");
+        boolean hasWallpaperProperties = properties.containsKey("wallpaper") ||
+                properties.containsKey("wallpaper_alpha");
+
+        boolean themingEnabled = changeColorEnabled || customWallpaper || hasColorProperties || hasWallpaperProperties;
+
+        // Only install expensive hooks if theming is actually enabled
+        if (themingEnabled) {
+            hookTheme();
+            hookWallpaper();
+            // Also hook activity restart to reapply colors after configuration changes
+            XposedBridge.hookAllMethods(XposedHelpers.findClass("android.app.ActivityThread", classLoader),
+                    "handleRelaunchActivity", new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            loadAndApplyColors();
+                            loadAndApplyColorsWallpaper();
+                        }
+                    });
+        } else {
+            // Log only in debug mode - theming is disabled so skip expensive hooks
+            logDebug("Theming disabled - skipping expensive theme hooks for performance");
+        }
     }
 
     private void loadAndApplyColorsWallpaper() {
@@ -219,7 +240,9 @@ public class CustomThemeV2 extends Feature {
                 });
 
         var loadTabFrameClass = Unobfuscator.loadTabFrameClass(classLoader);
-        XposedHelpers.findAndHookMethod(FrameLayout.class, "onMeasure", int.class, int.class, new XC_MethodHook() {
+        // OPTIMIZED: Replaced expensive FrameLayout.onMeasure with onAttachedToWindow
+        // This runs once per view instead of on every measure cycle
+        XposedHelpers.findAndHookMethod(FrameLayout.class, "onAttachedToWindow", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 if (!loadTabFrameClass.isInstance(param.thisObject))

@@ -409,13 +409,11 @@ public class FeatureLoader {
                         
                         // Record screen view in analytics
                         com.waenhancer.utils.AnalyticsManager.logScreenView(activity, activityName);
-                        
-                        if (pref instanceof de.robv.android.xposed.XSharedPreferences) {
-                            ((de.robv.android.xposed.XSharedPreferences) pref).reload();
-                        } else if (pref instanceof com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) {
-                            ((com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) pref).reload();
-                        }
-                        
+
+                        // REMOVED: Per-activity preference reload - was causing significant lag on every tab switch
+                        // Preferences are already reloaded via registered preference change listener (line 227-229)
+                        // No need to reload on every activity resume - this was the main performance bottleneck
+
                         boolean needRestartPref = pref.getBoolean("need_restart", false);
                         boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
                         if (Feature.DEBUG) {

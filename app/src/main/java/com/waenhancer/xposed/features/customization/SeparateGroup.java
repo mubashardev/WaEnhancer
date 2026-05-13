@@ -19,11 +19,13 @@ import com.waenhancer.xposed.utils.ReflectionUtils;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,6 +48,8 @@ public class SeparateGroup extends Feature {
     private static volatile int cachedChatCount = 0;
     private static volatile int cachedGroupCount = 0;
     private static volatile boolean unreadRefreshInFlight = false;
+    private static final WeakHashMap<List<?>, FilterCacheEntry> FILTER_CACHE = new WeakHashMap<>();
+    private static final HashMap<Class<?>, Method> JID_SERVER_METHOD_CACHE = new HashMap<>();
 
     public SeparateGroup(ClassLoader loader, SharedPreferences preferences) {
         super(loader, preferences);
@@ -143,7 +147,7 @@ public class SeparateGroup extends Feature {
 
     private void refreshUnreadCountsAsync(boolean force) {
         long now = System.currentTimeMillis();
-        if (!force && now - lastUnreadRefreshAt < 1500) {
+        if (!force && now - lastUnreadRefreshAt < 4000) {
             return;
         }
         if (unreadRefreshInFlight) {
@@ -334,9 +338,28 @@ public class SeparateGroup extends Feature {
         if (!Objects.equals(tabChat, thiz) && !Objects.equals(tabGroup, thiz)) {
             return chatsList;
         }
-        var editableChatList = new ArrayListFilter(Objects.equals(tabGroup, thiz));
-        editableChatList.addAll(chatsList);
-        return editableChatList;
+        boolean isGroupTab = Objects.equals(tabGroup, thiz);
+        synchronized (FILTER_CACHE) {
+            var cached = FILTER_CACHE.get(chatsList);
+            if (cached != null && cached.sourceSize == chatsList.size()) {
+                return isGroupTab ? cached.groupList : cached.chatList;
+            }
+        }
+
+        var groupList = new ArrayListFilter(true);
+        var chatList = new ArrayListFilter(false);
+        for (Object chat : chatsList) {
+            if (groupList.matches(chat)) {
+                groupList.addDirect(chat);
+            } else {
+                chatList.addDirect(chat);
+            }
+        }
+
+        synchronized (FILTER_CACHE) {
+            FILTER_CACHE.put(chatsList, new FilterCacheEntry(chatsList.size(), chatList, groupList));
+        }
+        return isGroupTab ? groupList : chatList;
     }
 
     private void hookTabList() throws Exception {
@@ -382,25 +405,56 @@ public class SeparateGroup extends Feature {
         @Override
         public boolean addAll(@NonNull Collection c) {
             for (var chat : c) {
-                if (checkGroup(chat)) {
-                    super.add(chat);
+                if (matches(chat)) {
+                    addDirect(chat);
                 }
             }
             return true;
         }
 
-        private boolean checkGroup(Object chat) {
+        private boolean matches(Object chat) {
+            return checkGroup(chat) == isGroup;
+        }
+
+        private void addDirect(Object chat) {
+            super.add(chat);
+        }
+
+        private static boolean checkGroup(Object chat) {
             var jid = getObjectField(chat, "A00");
             if (jid == null) jid = getObjectField(chat, "A01");
             if (jid == null) return true;
-            if (XposedHelpers.findMethodExactIfExists(jid.getClass(), "getServer") != null) {
-                var server = (String) callMethod(jid, "getServer");
-                if (isGroup) {
-                    return server.equals("broadcast") || server.equals("g.us");
+            Method getServerMethod;
+            synchronized (JID_SERVER_METHOD_CACHE) {
+                getServerMethod = JID_SERVER_METHOD_CACHE.get(jid.getClass());
+                if (getServerMethod == null) {
+                    getServerMethod = XposedHelpers.findMethodExactIfExists(jid.getClass(), "getServer");
+                    if (getServerMethod != null) {
+                        getServerMethod.setAccessible(true);
+                        JID_SERVER_METHOD_CACHE.put(jid.getClass(), getServerMethod);
+                    }
                 }
-                return server.equals("s.whatsapp.net") || server.equals("lid");
+            }
+            if (getServerMethod != null) {
+                try {
+                    var server = (String) getServerMethod.invoke(jid);
+                    return "broadcast".equals(server) || "g.us".equals(server);
+                } catch (Throwable ignored) {
+                }
             }
             return true;
+        }
+    }
+
+    private static class FilterCacheEntry {
+        final int sourceSize;
+        final List chatList;
+        final List groupList;
+
+        FilterCacheEntry(int sourceSize, List chatList, List groupList) {
+            this.sourceSize = sourceSize;
+            this.chatList = chatList;
+            this.groupList = groupList;
         }
     }
 

@@ -366,24 +366,20 @@ public class CustomView extends Feature {
 
 
     private void registerHooks() {
-        XposedHelpers.findAndHookMethod(View.class, "onAttachedToWindow", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                View view = (View) param.thisObject;
-                int id = view.getId();
-                // Fast path: skip views with no ID or no matching CSS rules.
-                // This avoids expensive rule lookups for the vast majority of views.
-                if (id <= 0) return;
-                if (!mapIds.containsKey(id) && !leafMapIds.containsKey(id)) return;
-                applyRulesForView(view);
+        WppCore.addListenerActivity((activity, type) -> {
+            if (type != WppCore.ActivityChangeState.ChangeType.CREATED) {
+                return;
             }
-        });
-
-        XposedHelpers.findAndHookMethod(View.class, "onDetachedFromWindow", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                processedViews.remove((View) param.thisObject);
+            View root = activity.findViewById(android.R.id.content);
+            if (root == null) {
+                return;
             }
+            processedViews.clear();
+            applyRulesRecursively(root);
+            root.post(() -> {
+                processedViews.clear();
+                applyRulesRecursively(root);
+            });
         });
 
         final int VISIBILITY_MASK = 0x0000000C;
@@ -397,6 +393,16 @@ public class CustomView extends Feature {
                 param.args[0] = ((int) param.args[0] & ~VISIBILITY_MASK) | forced;
             }
         });
+    }
+
+    private void applyRulesRecursively(View view) {
+        applyRulesForView(view);
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                applyRulesRecursively(group.getChildAt(i));
+            }
+        }
     }
 
 

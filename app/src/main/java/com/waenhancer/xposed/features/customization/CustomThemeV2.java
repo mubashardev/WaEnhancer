@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
@@ -56,6 +57,8 @@ public class CustomThemeV2 extends Feature {
     // Pre-computed set of source color ints for O(1) rejection in hot hooks.
     // Populated after loadAndApplyColors() so hooks can skip unmatched colors instantly.
     private static final Set<Integer> sourceColorInts = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    private static final Set<Object> processedDrawableStates = java.util.Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Set<View> processedWallpaperFrames = java.util.Collections.newSetFromMap(new WeakHashMap<>());
     // Cached ID for conversations_row_message_count to avoid repeated lookups
     private static int cachedMsgCountId = 0;
 
@@ -238,6 +241,7 @@ public class CustomThemeV2 extends Feature {
                         if (checkNotHomeActivity())
                             return;
                         var viewGroup = (ViewGroup) param.getResult();
+                        if (viewGroup == null) return;
                         replaceColors(viewGroup, wallAlpha);
                     }
                 });
@@ -249,6 +253,12 @@ public class CustomThemeV2 extends Feature {
                 var viewGroup = (ViewGroup) param.thisObject;
                 if (checkNotHomeActivity())
                     return;
+                synchronized (processedWallpaperFrames) {
+                    if (processedWallpaperFrames.contains(viewGroup)) {
+                        return;
+                    }
+                    processedWallpaperFrames.add(viewGroup);
+                }
                 var background = viewGroup.getBackground();
                 replaceColor(background, navAlpha);
             }
@@ -295,6 +305,15 @@ public class CustomThemeV2 extends Feature {
                 }
                 var drawable = (Drawable) param.getResult();
                 if (drawable == null) return;
+                var constantState = drawable.getConstantState();
+                if (constantState != null) {
+                    synchronized (processedDrawableStates) {
+                        if (processedDrawableStates.contains(constantState)) {
+                            return;
+                        }
+                        processedDrawableStates.add(constantState);
+                    }
+                }
                 replaceColor(drawable, IColors.colors);
             }
         });
@@ -428,6 +447,12 @@ public class CustomThemeV2 extends Feature {
         // Pre-compute integer set of source colors for O(1) rejection in hot hooks.
         // This avoids toString() conversion + HashMap.get() on every hook invocation.
         sourceColorInts.clear();
+        synchronized (processedDrawableStates) {
+            processedDrawableStates.clear();
+        }
+        synchronized (processedWallpaperFrames) {
+            processedWallpaperFrames.clear();
+        }
         for (String key : IColors.colors.keySet()) {
             try {
                 if (key.startsWith("#") && key.length() == 9) {

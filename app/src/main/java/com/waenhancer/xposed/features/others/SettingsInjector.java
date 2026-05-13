@@ -4,10 +4,14 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 
@@ -27,6 +31,8 @@ import de.robv.android.xposed.XposedHelpers;
  * Injects BOTH a Tile (row) and a Toolbar menu item as a backup.
  */
 public class SettingsInjector extends Feature {
+    private static final String SETTINGS_TAB_ACTIVITY = "com.whatsapp.settings.ui.SettingsTabActivity";
+    private static final int VIEW_ID_WAE_SETTINGS = 10001;
     private final Set<Integer> processedActivities = new HashSet<>();
     private static final int MENU_ID_WAE_SETTINGS = 9999;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -39,14 +45,13 @@ public class SettingsInjector extends Feature {
     public void doHook() throws Throwable {
         final Class<?> settingsActivityClass;
         try {
-            settingsActivityClass = Unobfuscator.loadSettingsActivityClass(classLoader);
+            Class<?> directClass = XposedHelpers.findClassIfExists(SETTINGS_TAB_ACTIVITY, classLoader);
+            settingsActivityClass = directClass != null ? directClass : Unobfuscator.loadSettingsActivityClass(classLoader);
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancer] SettingsInjector disabled: unable to resolve settings activity");
             return;
         }
-        if (settingsActivityClass == null) {
-            return;
-        }
+        if (settingsActivityClass == null) return;
 
         XC_MethodHook menuHook = new XC_MethodHook() {
             @Override
@@ -67,11 +72,13 @@ public class SettingsInjector extends Feature {
                 Activity activity = (Activity) param.thisObject;
                 String entryPoint = getSafeString("open_wae", "1");
                 if ("0".equals(entryPoint)) return;
+                injectToolbarButton(activity);
                 int hash = System.identityHashCode(activity);
                 if (!processedActivities.add(hash)) return;
                 mainHandler.post(() -> {
                     try {
                         activity.invalidateOptionsMenu();
+                        injectToolbarButton(activity);
                     } catch (Throwable ignored) {}
                 });
             }
@@ -83,6 +90,84 @@ public class SettingsInjector extends Feature {
                 processedActivities.remove(System.identityHashCode(param.thisObject));
             }
         });
+    }
+
+    private void injectToolbarButton(Activity activity) {
+        try {
+            ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root == null) return;
+
+            ViewGroup toolbar = findToolbar(root);
+            if (toolbar != null) {
+                if (toolbar.findViewById(VIEW_ID_WAE_SETTINGS) != null) return;
+                ImageView button = createSettingsButton(activity);
+                button.setId(VIEW_ID_WAE_SETTINGS);
+                int size = dp(activity, 24);
+                int margin = dp(activity, 16);
+                ViewGroup.MarginLayoutParams params =
+                        new ViewGroup.MarginLayoutParams(size, size);
+                params.topMargin = margin / 2;
+                params.bottomMargin = margin / 2;
+                params.rightMargin = margin;
+                button.setLayoutParams(params);
+                toolbar.addView(button);
+                return;
+            }
+
+            if (root.findViewById(VIEW_ID_WAE_SETTINGS) != null || !(root instanceof FrameLayout)) return;
+            ImageView floatingButton = createSettingsButton(activity);
+            floatingButton.setId(VIEW_ID_WAE_SETTINGS);
+            int size = dp(activity, 40);
+            int margin = dp(activity, 12);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(size, size, Gravity.TOP | Gravity.END);
+            params.topMargin = margin;
+            params.rightMargin = margin;
+            ((FrameLayout) root).addView(floatingButton, params);
+        } catch (Throwable t) {
+            XposedBridge.log("[WaEnhancer] SettingsInjector: direct button error: " + t.getMessage());
+        }
+    }
+
+    private ImageView createSettingsButton(Activity activity) {
+        ImageView button = new ImageView(activity);
+        button.setClickable(true);
+        button.setFocusable(true);
+        button.setContentDescription("WaEnhancerX Settings");
+        button.setPadding(dp(activity, 4), dp(activity, 4), dp(activity, 4), dp(activity, 4));
+        var icon = DesignUtils.getDrawableByName("ic_settings");
+        if (icon != null) {
+            icon.setTint(0xff8696a0);
+            button.setImageDrawable(icon);
+        }
+        button.setOnClickListener(v -> MenuHome.showWaeSettingsDialog(activity));
+        return button;
+    }
+
+    private ViewGroup findToolbar(View view) {
+        if (!(view instanceof ViewGroup)) {
+            return null;
+        }
+        ViewGroup group = (ViewGroup) view;
+        String className = group.getClass().getName();
+        String simpleName = group.getClass().getSimpleName();
+        if (simpleName.contains("Toolbar") || className.contains("toolbar") || className.contains("Toolbar")) {
+            return group;
+        }
+        for (int i = 0; i < group.getChildCount(); i++) {
+            ViewGroup found = findToolbar(group.getChildAt(i));
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private int dp(Activity activity, int value) {
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                value,
+                activity.getResources().getDisplayMetrics()
+        );
     }
 
     private void injectToolbarMenu(Menu menu, Activity activity) {

@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.WeakHashMap;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
@@ -49,6 +50,8 @@ public class CustomToolbar extends Feature {
 
     private String mDateExpiration;
     private static Method onMenuItemSelected;
+    private static final WeakHashMap<Object, View> TAB_TOOLBAR_TARGETS = new WeakHashMap<>();
+    private static volatile boolean tabVisibilityHookInstalled = false;
 
     public CustomToolbar(ClassLoader loader, SharedPreferences preferences) {
         super(loader, preferences);
@@ -265,16 +268,25 @@ public class CustomToolbar extends Feature {
         }
 
         private void setupTabVisibilityHook(Object tabInstance, LinearLayout toolbarLayout) {
-            XposedBridge.hookMethod(onMenuItemSelected, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    if (tabInstance != param.thisObject) return;
-
-                    var currentIndex = (int) param.args[0];
-                    var visibility = currentIndex == 0 ? View.VISIBLE : View.GONE;
-                    toolbarLayout.setVisibility(visibility);
-                }
-            });
+            if (tabInstance == null || toolbarLayout == null) return;
+            TAB_TOOLBAR_TARGETS.put(tabInstance, toolbarLayout);
+            if (tabVisibilityHookInstalled) return;
+            synchronized (CustomToolbar.class) {
+                if (tabVisibilityHookInstalled) return;
+                XposedBridge.hookMethod(onMenuItemSelected, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        var toolbarTarget = TAB_TOOLBAR_TARGETS.get(param.thisObject);
+                        if (toolbarTarget == null) return;
+                        var currentIndex = (int) param.args[0];
+                        var visibility = currentIndex == 0 ? View.VISIBLE : View.GONE;
+                        if (toolbarTarget.getVisibility() != visibility) {
+                            toolbarTarget.setVisibility(visibility);
+                        }
+                    }
+                });
+                tabVisibilityHookInstalled = true;
+            }
         }
     }
 }

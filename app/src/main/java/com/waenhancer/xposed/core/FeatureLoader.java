@@ -28,6 +28,10 @@ import com.waenhancer.xposed.core.components.WaContactWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.core.devkit.UnobfuscatorCache;
 import com.waenhancer.xposed.features.customization.BubbleColors;
+import com.waenhancer.xposed.features.media.StatusDownload;
+import com.waenhancer.xposed.features.general.AntiRevoke;
+import com.waenhancer.xposed.features.media.CallRecording;
+import com.waenhancer.xposed.features.media.AutoStatusForward;
 import com.waenhancer.xposed.features.customization.ChatScrollButtons;
 import com.waenhancer.xposed.features.customization.ContactBlockedVerify;
 import com.waenhancer.xposed.features.customization.CustomThemeV2;
@@ -361,6 +365,11 @@ public class FeatureLoader {
             ResId.initLocal(mApp);
             initComponents(loader, providerPrefs);
             plugins(loader, providerPrefs, packageInfo.versionName);
+
+            // Setup lazy feature loading system
+            registerLazyFeatures();
+            setupLazyFeatureTriggers(loader, providerPrefs);
+
             sendEnabledBroadcast(mApp);
             
             var timemillis2 = System.currentTimeMillis() - timemillis;
@@ -609,6 +618,57 @@ public class FeatureLoader {
         });
     }
 
+    /**
+     * Register features that can be loaded lazily (on-demand)
+     * These features only load when triggered rather than at startup
+     */
+    private static void registerLazyFeatures() {
+        // Status download - loads when viewing status
+        FeatureRegistry.registerLazyFeature("Status Download", StatusDownload.class,
+                FeatureRegistry.TriggerType.ACTIVITY_RESUMED, "StatusActivity", true);
+
+        // Anti-revoke - loads when a message is deleted
+        FeatureRegistry.registerLazyFeature("Anti Revoke", AntiRevoke.class,
+                FeatureRegistry.TriggerType.MESSAGE_DELETED, null, true);
+
+        // Auto status forward - loads when viewing status
+        FeatureRegistry.registerLazyFeature("Auto Status Forward", AutoStatusForward.class,
+                FeatureRegistry.TriggerType.STATUS_VIEW, null, true);
+
+        // Call recording - loads when call starts
+        FeatureRegistry.registerLazyFeature("Call Recording", CallRecording.class,
+                FeatureRegistry.TriggerType.CALL_STARTED, null, true);
+
+        XposedBridge.log("[FeatureRegistry] Registered " + FeatureRegistry.getRegisteredCount() + " lazy features");
+    }
+
+    /**
+     * Setup activity listeners for lazy feature triggering
+     */
+    private static void setupLazyFeatureTriggers(@NonNull ClassLoader loader, @NonNull android.content.SharedPreferences pref) {
+        // Only setup triggers if lazy loading is enabled
+        boolean lazyLoadingEnabled = pref.getBoolean("lazy_feature_loading", false);
+        if (!lazyLoadingEnabled) {
+            return;
+        }
+
+        WppCore.addListenerActivity((activity, state) -> {
+            if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
+                String activityName = activity.getClass().getSimpleName();
+
+                // Try to activate any lazy features matching this activity
+                FeatureRegistry.activateFeature(
+                        FeatureRegistry.TriggerType.ACTIVITY_RESUMED,
+                        activityName,
+                        loader,
+                        pref
+                );
+            }
+        });
+
+        XposedBridge.log("[FeatureRegistry] Lazy feature triggers initialized");
+    }
+
     private static void plugins(@NonNull ClassLoader loader, @NonNull android.content.SharedPreferences pref,
             @NonNull String versionWpp) throws Exception {
 
@@ -683,7 +743,17 @@ public class FeatureLoader {
         }
         var executorService = Executors.newWorkStealingPool(Math.min(Runtime.getRuntime().availableProcessors(), 4));
         var times = java.util.Collections.synchronizedList(new ArrayList<String>());
+
+        // Check if lazy loading is enabled
+        boolean lazyLoadingEnabled = pref.getBoolean("lazy_feature_loading", false);
+
         for (var classe : classes) {
+            // Skip lazy features if lazy loading is enabled - they'll load on-demand
+            if (lazyLoadingEnabled && FeatureRegistry.isLazyFeature(classe.getSimpleName())) {
+                XposedBridge.log("[FeatureLoader] Skipping " + classe.getSimpleName() + " (lazy loading enabled)");
+                continue;
+            }
+
             CompletableFuture.runAsync(() -> {
                 var timemillis = System.currentTimeMillis();
                 try {

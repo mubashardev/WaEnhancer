@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
@@ -39,6 +41,11 @@ public class SeparateGroup extends Feature {
     public static final int GROUPS = 500;
     public static ArrayList<Integer> tabs = new ArrayList<>();
     public static HashMap<Integer, Object> tabInstances = new HashMap<>();
+    private static final ExecutorService COUNT_EXECUTOR = Executors.newSingleThreadExecutor();
+    private static volatile long lastUnreadRefreshAt = 0L;
+    private static volatile int cachedChatCount = 0;
+    private static volatile int cachedGroupCount = 0;
+    private static volatile boolean unreadRefreshInFlight = false;
 
     public SeparateGroup(ClassLoader loader, SharedPreferences preferences) {
         super(loader, preferences);
@@ -108,47 +115,76 @@ public class SeparateGroup extends Feature {
             @SuppressLint({"Range", "Recycle"})
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 var indexTab = (int) param.args[2];
-                if (indexTab == tabs.indexOf(CHATS)) {
-                    var chatCount = 0;
-                    var groupCount = 0;
-                    synchronized (SeparateGroup.class) {
-                        var db = MessageStore.getInstance().getDatabase();
-                        var sql = "SELECT * FROM chat WHERE unseen_message_count != 0";
-                        var cursor = db.rawQuery(sql, null);
-                        while (cursor.moveToNext()) {
-                            int jid = cursor.getInt(cursor.getColumnIndex("jid_row_id"));
-                            int groupType = cursor.getInt(cursor.getColumnIndex("group_type"));
-                            int archived = cursor.getInt(cursor.getColumnIndex("archived"));
-                            int chatLocked = cursor.getInt(cursor.getColumnIndex("chat_lock"));
-                            if (archived != 0 || (groupType != 0 && groupType != 6) || chatLocked != 0) continue;
-                            var sql2 = "SELECT * FROM jid WHERE _id == ?";
-                            var cursor1 = db.rawQuery(sql2, new String[]{String.valueOf(jid)});
-                            if (!cursor1.moveToFirst()) continue;
-                            var server = cursor1.getString(cursor1.getColumnIndex("server"));
-                            if (server.equals("g.us")) {
-                                groupCount++;
-                            } else {
-                                chatCount++;
-                            }
-                            cursor1.close();
-                        }
-                        cursor.close();
-                    }
-                    if (tabs.contains(CHATS) && tabInstances.containsKey(CHATS)) {
-                        var instance12 = chatCount <= 0 ? constructor3.newInstance() : constructor2.newInstance(chatCount);
-                        var instance22 = constructor1.newInstance(instance12);
-                        param.args[1] = instance22;
-                    }
-                    if (tabs.contains(GROUPS) && tabInstances.containsKey(GROUPS)) {
-                        var instance2 = groupCount <= 0 ? constructor3.newInstance() : constructor2.newInstance(groupCount);
-                        var instance1 = constructor1.newInstance(instance2);
-                        if (enableCountMethod.getDeclaringClass().isInstance(param.thisObject)) {
-                            enableCountMethod.invoke(param.thisObject, param.args[0], instance1, tabs.indexOf(GROUPS));
-                        } else {
-                            ;
-                        }
-                    }
+                int chatsIndex = tabs.indexOf(CHATS);
+                int groupsIndex = tabs.indexOf(GROUPS);
+                if (indexTab != chatsIndex && indexTab != groupsIndex) {
+                    return;
                 }
+
+                refreshUnreadCountsAsync(false);
+
+                if (indexTab == chatsIndex && tabs.contains(CHATS) && tabInstances.containsKey(CHATS)) {
+                    var instance12 = cachedChatCount <= 0
+                            ? constructor3.newInstance()
+                            : constructor2.newInstance(cachedChatCount);
+                    param.args[1] = constructor1.newInstance(instance12);
+                    return;
+                }
+
+                if (indexTab == groupsIndex && tabs.contains(GROUPS) && tabInstances.containsKey(GROUPS)) {
+                    var instance2 = cachedGroupCount <= 0
+                            ? constructor3.newInstance()
+                            : constructor2.newInstance(cachedGroupCount);
+                    param.args[1] = constructor1.newInstance(instance2);
+                }
+            }
+        });
+    }
+
+    private void refreshUnreadCountsAsync(boolean force) {
+        long now = System.currentTimeMillis();
+        if (!force && now - lastUnreadRefreshAt < 1500) {
+            return;
+        }
+        if (unreadRefreshInFlight) {
+            return;
+        }
+        unreadRefreshInFlight = true;
+        COUNT_EXECUTOR.execute(() -> {
+            int chatCount = 0;
+            int groupCount = 0;
+            try {
+                synchronized (SeparateGroup.class) {
+                    var db = MessageStore.getInstance().getDatabase();
+                    var cursor = db.rawQuery("SELECT * FROM chat WHERE unseen_message_count != 0", null);
+                    while (cursor.moveToNext()) {
+                        int jid = cursor.getInt(cursor.getColumnIndex("jid_row_id"));
+                        int groupType = cursor.getInt(cursor.getColumnIndex("group_type"));
+                        int archived = cursor.getInt(cursor.getColumnIndex("archived"));
+                        int chatLocked = cursor.getInt(cursor.getColumnIndex("chat_lock"));
+                        if (archived != 0 || (groupType != 0 && groupType != 6) || chatLocked != 0) continue;
+                        var cursor1 = db.rawQuery("SELECT * FROM jid WHERE _id == ?", new String[]{String.valueOf(jid)});
+                        if (!cursor1.moveToFirst()) {
+                            cursor1.close();
+                            continue;
+                        }
+                        var server = cursor1.getString(cursor1.getColumnIndex("server"));
+                        if ("g.us".equals(server)) {
+                            groupCount++;
+                        } else {
+                            chatCount++;
+                        }
+                        cursor1.close();
+                    }
+                    cursor.close();
+                }
+                cachedChatCount = chatCount;
+                cachedGroupCount = groupCount;
+                lastUnreadRefreshAt = System.currentTimeMillis();
+            } catch (Throwable t) {
+                logDebug("SeparateGroup unread refresh failed", t);
+            } finally {
+                unreadRefreshInFlight = false;
             }
         });
     }
@@ -315,6 +351,7 @@ public class SeparateGroup extends Feature {
                 if (!tabs.contains(GROUPS)) {
                     tabs.add(tabs.isEmpty() ? 0 : 1, GROUPS);
                 }
+                refreshUnreadCountsAsync(true);
             }
         });
     }

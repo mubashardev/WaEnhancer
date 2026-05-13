@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 
@@ -73,35 +72,6 @@ public class HideTabs extends Feature {
             }
         });
 
-        var loadTabFrameClass = Unobfuscator.loadTabFrameClass(classLoader);
-        logDebug(loadTabFrameClass);
-
-        // OPTIMIZED: Replaced expensive FrameLayout.onMeasure hook (runs on EVERY view measure)
-        // with onViewAttachedToWindow which only runs once per view lifecycle
-        // This significantly improves tab switching performance
-        XposedHelpers.findAndHookMethod(FrameLayout.class, "onAttachedToWindow", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (!loadTabFrameClass.isInstance(param.thisObject)) return;
-                var view = (View) param.thisObject;
-                // Hide tab frame if only one tab visible
-                if (tabs != null) {
-                    var arr = new ArrayList<>(tabs);
-                    arr.removeAll(hideTabsList);
-                    if (arr.size() == 1) {
-                        view.setVisibility(View.GONE);
-                    }
-                }
-                // Hide specific tab items
-                for (var item : hideTabsList) {
-                    View tabView = view.findViewById(item);
-                    if (tabView != null) {
-                        tabView.setVisibility(View.GONE);
-                    }
-                }
-            }
-        });
-
         XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onCreate", Bundle.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -114,6 +84,14 @@ public class HideTabs extends Feature {
                     try {
                         var contentView = ((Activity) param.thisObject).findViewById(android.R.id.content);
                         if (contentView != null) {
+                            if (tabs != null) {
+                                var arr = new ArrayList<>(tabs);
+                                arr.removeAll(hideTabsList);
+                                View tabFrame = contentView.findViewById(android.R.id.tabs);
+                                if (tabFrame != null && arr.size() == 1) {
+                                    tabFrame.setVisibility(View.GONE);
+                                }
+                            }
                             for (var item : hideTabsList) {
                                 View tabView = contentView.findViewById(item);
                                 if (tabView != null) {
@@ -139,21 +117,6 @@ public class HideTabs extends Feature {
                 }
             }
         });
-
-        XposedHelpers.findAndHookMethod("androidx.viewpager.widget.ViewPager", classLoader, "addView", classLoader.loadClass("android.view.View"), int.class, classLoader.loadClass("android.view.ViewGroup$LayoutParams"),
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        if (param.thisObject != mTabPagerInstance) return;
-                        for (var item : hideTabsList) {
-                            var index = tabs.indexOf(item);
-                            if (index == -1) continue;
-                            if ((int) param.args[1] == index) {
-                                ((View) param.args[0]).setVisibility(View.GONE);
-                            }
-                        }
-                    }
-                });
     }
 
     @NonNull

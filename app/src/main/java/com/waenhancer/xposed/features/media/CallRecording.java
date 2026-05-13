@@ -67,11 +67,6 @@ public class CallRecording extends Feature {
 
     @Override
     public void doHook() throws Throwable {
-        if (!prefs.getBoolean("call_recording_enable", false)) {
-            logDebug("WaEnhancer: Call Recording is disabled");
-            return;
-        }
-
         logDebug("WaEnhancer: Call Recording feature initializing...");
         hookCallStateChanges();
     }
@@ -103,6 +98,10 @@ public class CallRecording extends Feature {
                 XposedBridge.hookAllMethods(clsCallEventCallback, "soundPortCreated", new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
+                        reloadPrefs();
+                        if (!prefs.getBoolean("call_recording_enable", false)) {
+                            return;
+                        }
                         logDebug("WaEnhancer: soundPortCreated - will record after 3s");
                         extractUserJid(param.thisObject);
                         isCallConnected.set(true);
@@ -139,15 +138,18 @@ public class CallRecording extends Feature {
         try {
             XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onPrepareOptionsMenu", android.view.Menu.class, new XC_MethodHook() {
                 @Override
-                protected void afterHookedMethod(MethodHookParam param) {
-                    try {
-                        android.app.Activity activity = (android.app.Activity) param.thisObject;
-                        ;
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        try {
+                            android.app.Activity activity = (android.app.Activity) param.thisObject;
+                            reloadPrefs();
+                            boolean recordingEnabled = prefs.getBoolean("call_recording_enable", false);
+                            boolean callsTabMenuEnabled = prefs.getBoolean("call_recording_calls_tab_menu", true);
+                            if (!recordingEnabled) {
+                                ((android.view.Menu) param.args[0]).removeItem(1338);
+                                return;
+                            }
                         
-                        reloadPrefs();
-                        boolean callsTabMenuEnabled = prefs.getBoolean("call_recording_calls_tab_menu", true);
-                        
-                        boolean isCallsTab = false;
+                            boolean isCallsTab = false;
                         if (callsTabMenuEnabled) {
                             Object fragmentManager = XposedHelpers.callMethod(activity, "getSupportFragmentManager");
                             ;

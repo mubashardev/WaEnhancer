@@ -112,6 +112,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
@@ -133,6 +134,7 @@ public class FeatureLoader {
     private static final java.util.concurrent.CountDownLatch loadLatch = new java.util.concurrent.CountDownLatch(1);
     private static volatile boolean isLoaded = false;
     private static boolean isRestartDialogShowing = false;
+    private static final AtomicLong lastRestartCheckMs = new AtomicLong(0);
 
     public final static String PACKAGE_WPP = "com.whatsapp";
     public final static String PACKAGE_BUSINESS = "com.whatsapp.w4b";
@@ -220,17 +222,12 @@ public class FeatureLoader {
 
                         PackageManager packageManager = mApp.getPackageManager();
                         
-                        // Initialize ProviderSharedPreferences for live settings sync
+                        // Use provider-backed prefs in the hooked process so changes made in the
+                        // manager app can propagate without relying on stale XSharedPreferences snapshots.
                         var localBridgePrefs = mApp.getSharedPreferences("wae_bridge_prefs", Context.MODE_PRIVATE);
                         var providerPrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(mApp, localBridgePrefs, pref);
                         Utils.xprefs = providerPrefs;
-                        if (Feature.DEBUG) {
-                            ;
-                        }
-                        
-                        if (pref instanceof XSharedPreferences) {
-                            ((XSharedPreferences) pref).registerOnSharedPreferenceChangeListener((sharedPreferences, s) -> ((XSharedPreferences) pref).reload());
-                        }
+
                         PackageInfo packageInfo = packageManager.getPackageInfo(mApp.getPackageName(), 0);
 
                         ;
@@ -404,31 +401,32 @@ public class FeatureLoader {
 
         WppCore.addListenerActivity((activity, state) -> {
             if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
-                
-                // Refresh preferences to pick up live changes from the manager app
-                // Wrap in post() to ensure we don't interfere with the immediate activity resume cycle
+                if (!isHomeActivity(activity)) {
+                    return;
+                }
+
                 activity.getWindow().getDecorView().post(() -> {
                     try {
-                        String activityName = activity.getClass().getSimpleName();
-                        String fullName = activity.getClass().getName();
-                        String superName = activity.getClass().getSuperclass() != null ? activity.getClass().getSuperclass().getName() : "null";
-                        if (Feature.DEBUG) {
-                            ;
+                        if (pref instanceof XSharedPreferences) {
+                            ((XSharedPreferences) pref).reload();
                         }
-                        
-                        // Record screen view in analytics
-                        com.waenhancer.utils.AnalyticsManager.logScreenView(activity, activityName);
 
-                        // REMOVED: Per-activity preference reload - was causing significant lag on every tab switch
-                        // Preferences are already reloaded via registered preference change listener (line 227-229)
-                        // No need to reload on every activity resume - this was the main performance bottleneck
+                        long now = System.currentTimeMillis();
+                        long previous = lastRestartCheckMs.get();
+                        if (now - previous < 1500 || !lastRestartCheckMs.compareAndSet(previous, now)) {
+                            return;
+                        }
 
                         boolean needRestartPref = pref.getBoolean("need_restart", false);
                         boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
-                        if (Feature.DEBUG) {
-                            ;
+                        java.util.Set<String> changes = pref.getStringSet("pending_restart_changes", null);
+                        boolean hasPendingChanges = changes != null && !changes.isEmpty();
+
+                        if (!needRestartPref && !hasPendingChanges && needRestartGlobal) {
+                            WppCore.setPrivBooleanSync("need_restart", false);
+                            return;
                         }
-                        
+
                         if ((needRestartPref || needRestartGlobal) && !isRestartDialogShowing) {
                             isRestartDialogShowing = true;
                             String msg = getModuleString(ResId.string.restart_wpp);
@@ -437,7 +435,6 @@ public class FeatureLoader {
                             
                             // Enhance message with changed items if possible
                             try {
-                                java.util.Set<String> changes = pref.getStringSet("pending_restart_changes", null);
                                 if (changes != null && !changes.isEmpty()) {
                                     StringBuilder sb = new StringBuilder();
                                     if (msg.isEmpty()) msg = "WhatsApp needs to be restarted to apply the following changes:";
@@ -461,23 +458,22 @@ public class FeatureLoader {
                                     .setTitle("Restart Required")
                                     .setMessage(msg)
                                     .setPositiveButton(btnRestart, (dialog, which) -> {
-                                        ;
                                         isRestartDialogShowing = false;
                                         pref.edit().putBoolean("need_restart", false)
-                                            .remove("pending_restart_changes").apply();
+                                                .remove("pending_restart_changes").apply();
                                         WppCore.setPrivBooleanSync("need_restart", false);
                                         Utils.doRestart(activity);
                                     })
                                     .setNegativeButton(btnCancel, (dialog, which) -> {
                                         isRestartDialogShowing = false;
                                         pref.edit().putBoolean("need_restart", false)
-                                            .remove("pending_restart_changes").apply();
+                                                .remove("pending_restart_changes").apply();
                                         WppCore.setPrivBooleanSync("need_restart", false);
                                     })
                                     .show();
                         }
                     } catch (Throwable e) {
-                        XposedBridge.log("[WAE] Error during post-resume pref reload: " + e.getMessage());
+                        XposedBridge.log("[WAE] Error during post-resume home check: " + e.getMessage());
                     }
                 });
 
@@ -583,6 +579,10 @@ public class FeatureLoader {
         Utils.showSnackbar(WppCore.mCurrentActivity, "Hooks loaded in " + loadedTimeStr);
     }
 
+    private static boolean isHomeActivity(@NonNull Activity activity) {
+        return "HomeActivity".equals(activity.getClass().getSimpleName());
+    }
+
     public static void checkLoading(Activity activity) {
         if (isLoaded || activity == null) return;
         
@@ -623,21 +623,16 @@ public class FeatureLoader {
      * These features only load when triggered rather than at startup
      */
     private static void registerLazyFeatures() {
-        // Status download - loads when viewing status
-        FeatureRegistry.registerLazyFeature("Status Download", StatusDownload.class,
-                FeatureRegistry.TriggerType.ACTIVITY_RESUMED, "StatusActivity", true);
+        // Conversation-only features do not need to load during home startup.
+        FeatureRegistry.registerLazyFeature("Audio Transcript", AudioTranscript.class,
+                FeatureRegistry.TriggerType.CONVERSATION_OPENED, null, true);
 
-        // Anti-revoke - loads when a message is deleted
-        FeatureRegistry.registerLazyFeature("Anti Revoke", AntiRevoke.class,
-                FeatureRegistry.TriggerType.MESSAGE_DELETED, null, true);
+        FeatureRegistry.registerLazyFeature("Video Note Attachment", VideoNoteAttachment.class,
+                FeatureRegistry.TriggerType.CONVERSATION_OPENED, null, true);
 
-        // Auto status forward - loads when viewing status
-        FeatureRegistry.registerLazyFeature("Auto Status Forward", AutoStatusForward.class,
-                FeatureRegistry.TriggerType.STATUS_VIEW, null, true);
-
-        // Call recording - loads when call starts
-        FeatureRegistry.registerLazyFeature("Call Recording", CallRecording.class,
-                FeatureRegistry.TriggerType.CALL_STARTED, null, true);
+        // Settings screen injection is only relevant after home is available.
+        FeatureRegistry.registerLazyFeature("Settings Injector", SettingsInjector.class,
+                FeatureRegistry.TriggerType.ACTIVITY_RESUMED, "HomeActivity", false);
 
         XposedBridge.log("[FeatureRegistry] Registered " + FeatureRegistry.getRegisteredCount() + " lazy features");
     }
@@ -647,15 +642,24 @@ public class FeatureLoader {
      */
     private static void setupLazyFeatureTriggers(@NonNull ClassLoader loader, @NonNull android.content.SharedPreferences pref) {
         // Only setup triggers if lazy loading is enabled
-        boolean lazyLoadingEnabled = pref.getBoolean("lazy_feature_loading", false);
+        boolean lazyLoadingEnabled = pref.getBoolean("lazy_feature_loading", true);
         if (!lazyLoadingEnabled) {
             return;
         }
 
         WppCore.addListenerActivity((activity, state) -> {
-            if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
-                String activityName = activity.getClass().getSimpleName();
+            String activityName = activity.getClass().getSimpleName();
 
+            if (state == WppCore.ActivityChangeState.ChangeType.CREATED) {
+                FeatureRegistry.activateFeature(
+                        FeatureRegistry.TriggerType.ACTIVITY_CREATED,
+                        activityName,
+                        loader,
+                        pref
+                );
+            }
+
+            if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
                 // Try to activate any lazy features matching this activity
                 FeatureRegistry.activateFeature(
                         FeatureRegistry.TriggerType.ACTIVITY_RESUMED,
@@ -663,6 +667,33 @@ public class FeatureLoader {
                         loader,
                         pref
                 );
+
+                if (activityName.contains("Status")) {
+                    FeatureRegistry.activateFeature(
+                            FeatureRegistry.TriggerType.STATUS_VIEW,
+                            activityName,
+                            loader,
+                            pref
+                    );
+                }
+
+                if (activityName.contains("Call")) {
+                    FeatureRegistry.activateFeature(
+                            FeatureRegistry.TriggerType.CALL_STARTED,
+                            activityName,
+                            loader,
+                            pref
+                    );
+                }
+
+                if (activityName.contains("Conversation") || activityName.contains("Chat")) {
+                    FeatureRegistry.activateFeature(
+                            FeatureRegistry.TriggerType.CONVERSATION_OPENED,
+                            activityName,
+                            loader,
+                            pref
+                    );
+                }
             }
         });
 
@@ -745,7 +776,7 @@ public class FeatureLoader {
         var times = java.util.Collections.synchronizedList(new ArrayList<String>());
 
         // Check if lazy loading is enabled
-        boolean lazyLoadingEnabled = pref.getBoolean("lazy_feature_loading", false);
+        boolean lazyLoadingEnabled = pref.getBoolean("lazy_feature_loading", true);
 
         for (var classe : classes) {
             // Skip lazy features if lazy loading is enabled - they'll load on-demand

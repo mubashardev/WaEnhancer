@@ -129,65 +129,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                 XposedBridge.log(t);
             }
 
-            installGlobalEnvironmentHooks(lpparam);
             disableSecureFlag();
-        }
-    }
-
-    private void installGlobalEnvironmentHooks(XC_LoadPackage.LoadPackageParam lpparam) {
-        // Hook Resources.getText and getLayout to translate module resource IDs
-        // to host-mapped IDs when embedded fragments inflate their layouts.
-        // Only these two methods need hooking — getString/getDrawable/getColor
-        // are NOT hooked globally because both WhatsApp and the module use the
-        // same 0x7f prefix, causing fatal ID collisions.
-        final ThreadLocal<Boolean> inResourceHook = new ThreadLocal<>();
-        XC_MethodHook resourceHook = new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                int id = (int) param.args[0];
-                // Fast path: skip host resources and zero IDs
-                if (id <= 0 || (id & 0xFF000000) != 0x7F000000) return;
-
-                // Fast path: skip if we know it's not one of our resources, or if valid IDs list is not populated yet
-                if (XResManager.validModuleIds.isEmpty() || !XResManager.validModuleIds.contains(id)) return;
-
-                if (Boolean.TRUE.equals(inResourceHook.get())) return;
-
-                // Verify the call actually originates from the module to avoid WhatsApp ID collisions
-                boolean isFromModule = false;
-                for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
-                    if (element.getClassName().startsWith("com.waenhancer.")) {
-                        isFromModule = true;
-                        break;
-                    }
-                }
-                if (!isFromModule) return;
-
-                inResourceHook.set(true);
-                try {
-                    int translatedId = XResManager.getHostId(id);
-                    if (translatedId != id) {
-                        param.args[0] = translatedId;
-                    }
-                } finally {
-                    inResourceHook.remove();
-                }
-            }
-        };
-
-        try {
-            XposedHelpers.findAndHookMethod(android.content.res.Resources.class, "getText", int.class, resourceHook);
-        } catch (Throwable t) {
-            XposedBridge.log("[WAE] Failed to hook Resources.getText: " + t.getMessage());
-        }
-        try {
-            XposedHelpers.findAndHookMethod(android.content.res.Resources.class, "getLayout", int.class, resourceHook);
-        } catch (Throwable t) {
-            XposedBridge.log("[WAE] Failed to hook Resources.getLayout: " + t.getMessage());
-        }
-
-        if (Utils.DEBUG) {
-            XposedBridge.log("[WAE] Global resource translation hooks installed.");
         }
     }
 

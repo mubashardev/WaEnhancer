@@ -36,13 +36,12 @@ public class StatusDownload extends Feature {
     }
 
     public void doHook() throws Exception {
-        if (!prefs.getBoolean("downloadstatus", false))
-            return;
-
         var downloadStatus = new MenuStatusListener.OnMenuItemStatusListener() {
 
             @Override
             public MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex) {
+                reloadPrefs();
+                if (!prefs.getBoolean("downloadstatus", false)) return null;
                 if (menu.findItem(R.string.download) != null) return null;
                 var fMessage = fMessageList.get(currentIndex);
                 if (fMessage.getKey().isFromMe) return null;
@@ -52,6 +51,8 @@ public class StatusDownload extends Feature {
 
             @Override
             public void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex) {
+                reloadPrefs();
+                if (!prefs.getBoolean("downloadstatus", false)) return;
                 var fMessage = fMessageList.get(currentIndex);
                 downloadFile(fMessage, fragmentInstance, currentIndex);
             }
@@ -62,6 +63,8 @@ public class StatusDownload extends Feature {
 
             @Override
             public MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex) {
+                reloadPrefs();
+                if (!prefs.getBoolean("downloadstatus", false)) return null;
                 var fMessage = fMessageList.get(currentIndex);
                 if (fMessage.getKey().isFromMe) return null;
                 if (menu.findItem(R.string.share_as_status) != null) return null;
@@ -70,6 +73,8 @@ public class StatusDownload extends Feature {
 
             @Override
             public void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex) {
+                reloadPrefs();
+                if (!prefs.getBoolean("downloadstatus", false)) return;
                 var fMessageWpp = fMessageList.get(currentIndex);
                 sharedStatus(fMessageWpp, fragmentInstance, currentIndex);
             }

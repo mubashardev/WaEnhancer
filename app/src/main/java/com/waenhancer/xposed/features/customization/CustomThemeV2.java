@@ -21,7 +21,6 @@ import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -118,6 +117,10 @@ public class CustomThemeV2 extends Feature {
 
     @Override
     public void doHook() throws Throwable {
+        if (prefs.getBoolean("lite_mode", false)) {
+            return;
+        }
+
         properties = Utils.getProperties(prefs, "custom_css", "custom_filters");
 
         // PERFORMANCE OPTIMIZATION: Check if any theming features are enabled
@@ -240,13 +243,9 @@ public class CustomThemeV2 extends Feature {
                 });
 
         var loadTabFrameClass = Unobfuscator.loadTabFrameClass(classLoader);
-        // OPTIMIZED: Replaced expensive FrameLayout.onMeasure with onAttachedToWindow
-        // This runs once per view instead of on every measure cycle
-        XposedHelpers.findAndHookMethod(FrameLayout.class, "onAttachedToWindow", new XC_MethodHook() {
+        XposedBridge.hookAllMethods(loadTabFrameClass, "onAttachedToWindow", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (!loadTabFrameClass.isInstance(param.thisObject))
-                    return;
                 var viewGroup = (ViewGroup) param.thisObject;
                 if (checkNotHomeActivity())
                     return;

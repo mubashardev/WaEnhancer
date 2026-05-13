@@ -240,16 +240,17 @@ public class SeenTick extends Feature {
         } else {
 
             MenuStatusListener.registerStatusListener(
-                    new MenuStatusListener.onMenuItemStatusListener() {
+                    new MenuStatusListener.OnMenuItemStatusListener() {
                         @Override
-                        public MenuItem addMenu(Menu menu, FMessageWpp fMessage) {
+                        public MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex) {
                             if (menu.findItem(R.string.send_blue_tick) != null) return null;
+                            var fMessage = fMessageList.get(currentIndex);
                             if (fMessage.getKey().isFromMe) return null;
                             return menu.add(0, R.string.send_blue_tick, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.send_blue_tick, "Send blue tick"));
                         }
 
                         @Override
-                        public void onClick(MenuItem item, Object fragmentInstance, FMessageWpp fMessageWpp) {
+                        public void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex) {
                             sendBlueTickStatus(currentJid);
                             Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.sending_read_blue_tick, "Sending read receipt..."), Toast.LENGTH_SHORT);
                         }
@@ -295,26 +296,21 @@ public class SeenTick extends Feature {
         }
 
         MenuStatusListener.registerStatusListener(
-                new MenuStatusListener.onMenuItemStatusListener() {
+                new MenuStatusListener.OnMenuItemStatusListener() {
                     @Override
-                    public MenuItem addMenu(Menu menu, FMessageWpp fMessage) {
+                    public MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex) {
                         if (menu.findItem(R.string.read_all_mark_as_read) != null) return null;
+                        var fMessage = fMessageList.get(currentIndex);
                         if (fMessage.getKey().isFromMe) return null;
                         return menu.add(0, R.string.read_all_mark_as_read, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.read_all_mark_as_read, "Read all (Mark as read)"));
                     }
 
                     @Override
-                    public void onClick(MenuItem item, Object fragmentInstance, FMessageWpp fMessageWpp) {
+                    public void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex) {
                         try {
                             statuses.clear();
-                            var listStatusField = ReflectionUtils.getFieldByExtendType(fragmentInstance.getClass(), List.class);
-                            var listStatus = (List) listStatusField.get(fragmentInstance);
-                            for (int i = 0; i < listStatus.size(); i++) {
-                                var obj = listStatus.get(i);
-                                if (obj == null) continue;
-                                obj = ReflectionUtils.findFMessageInObject(obj, FMessageWpp.TYPE, FMessageWpp.Key.TYPE, classLoader);
-                                if (obj == null) continue;
-                                var fMessage = new FMessageWpp(obj);
+                            for (FMessageWpp fMessage : fMessageList) {
+                                if (fMessage == null) continue;
                                 var messageId = fMessage.getKey().messageID;
                                 if (!fMessage.getKey().isFromMe) {
                                     statuses.add(fMessage);

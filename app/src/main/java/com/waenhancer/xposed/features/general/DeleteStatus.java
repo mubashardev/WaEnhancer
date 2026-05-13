@@ -1,7 +1,5 @@
 package com.waenhancer.xposed.features.general;
 
-import static com.waenhancer.xposed.features.listeners.MenuStatusListener.menuStatuses;
-
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,9 +17,9 @@ import com.waenhancer.R;
 import org.luckypray.dexkit.query.enums.StringMatchType;
 
 import java.lang.reflect.Field;
+import java.util.List;
 
 import android.content.SharedPreferences;
-import de.robv.android.xposed.XSharedPreferences;
 
 public class DeleteStatus extends Feature {
 
@@ -38,18 +36,20 @@ public class DeleteStatus extends Feature {
         Class<?> StatusDeleteDialogFragmentClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, ".StatusDeleteDialogFragment");
         Field fieldBundle = ReflectionUtils.getFieldByType(fragmentloader, Bundle.class);
 
-        var item = new MenuStatusListener.onMenuItemStatusListener() {
+        var item = new MenuStatusListener.OnMenuItemStatusListener() {
 
             @Override
-            public MenuItem addMenu(Menu menu, FMessageWpp fMessage) {
+            public MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex) {
                 if (menu.findItem(R.string.delete_for_me) != null) return null;
+                var fMessage = fMessageList.get(currentIndex);
                 if (fMessage.getKey().isFromMe) return null;
                 return menu.add(0, R.string.delete_for_me, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.delete_for_me, "Delete for me"));
             }
 
             @Override
-            public void onClick(MenuItem item, Object fragmentInstance, FMessageWpp fMessage) {
+            public void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex) {
                 try {
+                    var fMessage = fMessageList.get(currentIndex);
                     var status = StatusDeleteDialogFragmentClass.newInstance();
                     var key = fMessage.getKey();
                     var bundle = getBundle(key);

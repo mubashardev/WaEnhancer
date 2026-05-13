@@ -71,6 +71,8 @@ public class WppCore {
     private static Field meManagerPhoneJidField;
     private static Object meManagerInstance;
     private static Object mConversationDelegate;
+    private static Method statusToMessageMethod;
+    private static Object statusToMessageMapper;
 
     public static void Initialize(ClassLoader loader, android.content.SharedPreferences pref) throws Exception {
         waePrefs = pref;
@@ -146,6 +148,7 @@ public class WppCore {
 
         // Load wa database
         loadWADatabase();
+        hookStatusToMessageMapper(loader);
 
         if (!pref.getBoolean("lite_mode", false)) {
             CompletableFuture.runAsync(() -> {
@@ -1179,6 +1182,45 @@ public class WppCore {
             XposedBridge.log(e);
         }
         return null;
+    }
+
+    private static void hookStatusToMessageMapper(ClassLoader loader) {
+        try {
+            statusToMessageMethod = Unobfuscator.loadFStatusToFMessage(loader);
+            XposedBridge.hookAllConstructors(statusToMessageMethod.getDeclaringClass(), new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    statusToMessageMapper = param.thisObject;
+                }
+            });
+        } catch (Exception e) {
+            XposedBridge.log("WAE: hookStatusToMessageMapper failed: " + e.getMessage());
+        }
+    }
+
+    public static Object getFMessageFromFStatus(Object status) {
+        if (status == null) return null;
+        try {
+            ensureStatusToMessageMapperCreated();
+            Object mapper = statusToMessageMapper;
+            Method method = statusToMessageMethod;
+            if (mapper == null || method == null) {
+                return null;
+            }
+            return method.invoke(mapper, status);
+        } catch (Exception e) {
+            XposedBridge.log(e);
+            return null;
+        }
+    }
+
+    private static void ensureStatusToMessageMapperCreated() {
+        if (statusToMessageMapper == null && statusToMessageMethod != null) {
+            try {
+                statusToMessageMethod.getDeclaringClass().getDeclaredConstructor().newInstance();
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     public interface ActivityChangeState {

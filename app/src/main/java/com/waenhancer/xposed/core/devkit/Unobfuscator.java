@@ -829,6 +829,14 @@ public class Unobfuscator {
         });
     }
 
+    public static Method loadFStatusToFMessage(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> findFirstMethodUsingStrings(
+                classLoader,
+                StringMatchType.Contains,
+                "mapFStatusToFMessageForForwarding"
+        ));
+    }
+
     // TODO: Classes and methods to ViewOnce
 
     public synchronized static Method[] loadViewOnceMethod(ClassLoader classLoader) throws Exception {

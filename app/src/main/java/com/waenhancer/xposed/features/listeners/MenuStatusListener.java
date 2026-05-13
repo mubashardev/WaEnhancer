@@ -6,31 +6,68 @@ import android.view.MenuItem;
 import androidx.annotation.NonNull;
 
 import com.waenhancer.xposed.core.Feature;
+import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.ReflectionUtils;
 
-import org.luckypray.dexkit.query.enums.StringMatchType;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 
 public class MenuStatusListener extends Feature {
 
-    public static HashSet<onMenuItemStatusListener> menuStatuses = new HashSet<>();
+    public static final LinkedHashSet<OnMenuItemStatusListener> menuStatuses = new LinkedHashSet<>();
 
-    public static synchronized void registerStatusListener(onMenuItemStatusListener listener) {
+    public static final ArrayList<FMessageWpp> currentStatusList = new ArrayList<>();
+
+    public static int currentIndex = -1;
+
+    public static LinkedHashSet<OnMenuItemStatusListener> getMenuStatuses() {
+        return menuStatuses;
+    }
+
+    public static synchronized void registerStatusListener(OnMenuItemStatusListener listener) {
         menuStatuses.removeIf(l -> l.getClass().getName().equals(listener.getClass().getName()));
         menuStatuses.add(listener);
+    }
+
+    public static FMessageWpp getFMessageFromStatusData(Object obj) {
+        if (obj == null) return null;
+
+        // Try direct FMessage field first
+        Field fMessageField = ReflectionUtils.findFieldUsingFilterIfExists(obj.getClass(),
+                f -> FMessageWpp.TYPE != null && FMessageWpp.TYPE.isAssignableFrom(f.getType()));
+        if (fMessageField != null) {
+            Object fMessageObj = ReflectionUtils.getObjectField(fMessageField, obj);
+            if (fMessageObj != null) {
+                return new FMessageWpp(fMessageObj);
+            }
+        }
+
+        // Try via FStatus -> FMessage mapper
+        try {
+            java.lang.reflect.Method mapMethod = Unobfuscator.loadFStatusToFMessage(obj.getClass().getClassLoader());
+            Class<?> fStatusClass = mapMethod.getParameterTypes()[0];
+            Field fStatusField = ReflectionUtils.findFieldUsingFilterIfExists(obj.getClass(),
+                    f -> fStatusClass.isAssignableFrom(f.getType()));
+            if (fStatusField != null) {
+                Object fStatusObj = fStatusField.get(obj);
+                Object fMessageObj = WppCore.getFMessageFromFStatus(fStatusObj);
+                if (fMessageObj != null) {
+                    return new FMessageWpp(fMessageObj);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+
+        return null;
     }
 
     public MenuStatusListener(@NonNull ClassLoader classLoader, @NonNull SharedPreferences preferences) {
@@ -41,29 +78,37 @@ public class MenuStatusListener extends Feature {
     public void doHook() throws Throwable {
         var menuStatusMethod = Unobfuscator.loadMenuStatusMethod(classLoader);
         var menuManagerClass = Unobfuscator.loadMenuManagerClass(classLoader);
-        Class<?> statusPlaybackContactFragmentClass = resolveStatusPlaybackContactFragmentClass();
-        Class<?> statusPlaybackBaseFragmentClass = resolveStatusPlaybackBaseFragmentClass(statusPlaybackContactFragmentClass);
+
+        Class<?> statusPlaybackBaseFragmentClass =
+                classLoader.loadClass("com.whatsapp.status.playback.fragment.StatusPlaybackBaseFragment");
+        Class<?> statusPlaybackContactFragmentClass =
+                classLoader.loadClass("com.whatsapp.status.playback.fragment.StatusPlaybackContactFragment");
+        Field listStatusField = ReflectionUtils.getFieldByExtendType(
+                statusPlaybackContactFragmentClass,
+                List.class);
 
         XposedBridge.hookMethod(menuStatusMethod, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 try {
-                    var fieldObjects = getAllFieldValues(param.thisObject);
+                    var fieldObjects = new ArrayList<>();
+                    for (Field field : menuStatusMethod.getDeclaringClass().getDeclaredFields()) {
+                        Object value = ReflectionUtils.getObjectField(field, param.thisObject);
+                        if (value != null) {
+                            fieldObjects.add(value);
+                        }
+                    }
 
                     Object fragmentInstance;
                     if (param.thisObject != null && statusPlaybackContactFragmentClass.isInstance(param.thisObject)) {
                         fragmentInstance = param.thisObject;
                     } else {
                         fragmentInstance = fieldObjects.stream()
-                                .filter(Objects::nonNull)
-                                .filter(obj -> statusPlaybackContactFragmentClass.isInstance(obj) || statusPlaybackBaseFragmentClass.isInstance(obj))
+                                .filter(obj -> statusPlaybackBaseFragmentClass.isInstance(obj))
                                 .findFirst()
                                 .orElse(null);
                     }
-                    if (fragmentInstance == null) {
-                        logDebug("MenuStatusListener: fragmentInstance is null");
-                        return;
-                    }
+                    if (fragmentInstance == null) return;
 
                     Menu menu;
                     if (param.args.length > 0 && param.args[0] instanceof Menu) {
@@ -73,169 +118,41 @@ public class MenuStatusListener extends Feature {
                         var menuField = ReflectionUtils.getFieldByExtendType(menuManagerClass, Menu.class);
                         menu = menuField == null ? null : (Menu) ReflectionUtils.getObjectField(menuField, menuManager);
                     }
-                    if (menu == null) {
-                        logDebug("MenuStatusListener: menu is null");
-                        return;
-                    }
+                    if (menu == null) return;
 
-                    Object object = resolveCurrentStatusObject(fragmentInstance);
-                    if (object == null) {
-                        logDebug("MenuStatusListener: unable to resolve current status object");
-                        return;
-                    }
+                    int index = (int) XposedHelpers.getObjectField(fragmentInstance, "A00");
+                    @SuppressWarnings("unchecked")
+                    List<?> listStatus = (List<?>) listStatusField.get(fragmentInstance);
+                    if (listStatus == null || listStatus.isEmpty()) return;
 
-                    for (onMenuItemStatusListener menuStatus : menuStatuses) {
-                        Object fMessageObject = ReflectionUtils.findFMessageInObject(object, FMessageWpp.TYPE, FMessageWpp.Key.TYPE, classLoader);
-                        FMessageWpp fMessage = fMessageObject != null ? new FMessageWpp(fMessageObject) : null;
-                        var menuItem = fMessage != null ? menuStatus.addMenu(menu, fMessage) : menuStatus.addRawMenu(menu, object);
-                        if (menuItem == null) continue;
-                        CharSequence title = menuItem.getTitle();
-                        if (title == null || title.length() == 0) {
-                            menu.removeItem(menuItem.getItemId());
-                            continue;
+                    List<FMessageWpp> fMessageList = new ArrayList<>();
+                    for (Object obj : listStatus) {
+                        FMessageWpp fMsg = getFMessageFromStatusData(obj);
+                        if (fMsg != null) {
+                            fMessageList.add(fMsg);
                         }
+                    }
+
+                    currentStatusList.clear();
+                    currentStatusList.addAll(fMessageList);
+                    currentIndex = index;
+
+                    if (index < 0 || index >= fMessageList.size()) return;
+
+                    for (OnMenuItemStatusListener menuStatus : menuStatuses) {
+                        var menuItem = menuStatus.addMenu(menu, fMessageList, index);
+                        if (menuItem == null) continue;
+
                         menuItem.setOnMenuItemClickListener(item -> {
-                            if (fMessage != null) {
-                                menuStatus.onClick(item, fragmentInstance, fMessage);
-                            } else {
-                                menuStatus.onRawClick(item, fragmentInstance, object);
-                            }
+                            menuStatus.onClick(item, fragmentInstance, fMessageList, index);
                             return true;
                         });
                     }
                 } catch (Throwable t) {
                     XposedBridge.log("[WAE] MenuStatusListener error in hook: " + t);
-                    for (var element : t.getStackTrace()) {
-                        XposedBridge.log("    at " + element.toString());
-                    }
                 }
             }
         });
-    }
-
-    private Class<?> resolveStatusPlaybackContactFragmentClass() throws Exception {
-        try {
-            return Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith,
-                    "StatusPlaybackContactFragment");
-        } catch (Throwable ignored) {
-            return Unobfuscator.loadStatusActivePage(classLoader).getDeclaringClass();
-        }
-    }
-
-    private Class<?> resolveStatusPlaybackBaseFragmentClass(Class<?> contactClass) {
-        try {
-            return Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith,
-                    "StatusPlaybackBaseFragment");
-        } catch (Throwable ignored) {
-            return contactClass != null && contactClass.getSuperclass() != null ? contactClass.getSuperclass() : Object.class;
-        }
-    }
-
-    private static final java.util.concurrent.ConcurrentHashMap<Class<?>, List<Field>> classFieldsCache = new java.util.concurrent.ConcurrentHashMap<>();
-
-    private List<Object> getAllFieldValues(Object instance) {
-        if (instance == null) return List.of();
-        
-        List<Field> fields = classFieldsCache.computeIfAbsent(instance.getClass(), clazz -> {
-            List<Field> list = new ArrayList<>();
-            Class<?> current = clazz;
-            while (current != null && current != Object.class) {
-                for (Field field : current.getDeclaredFields()) {
-                    field.setAccessible(true);
-                    list.add(field);
-                }
-                current = current.getSuperclass();
-            }
-            return list;
-        });
-
-        List<Object> values = new ArrayList<>();
-        for (Field field : fields) {
-            Object value = ReflectionUtils.getObjectField(field, instance);
-            if (value != null) {
-                values.add(value);
-            }
-        }
-        return values;
-    }
-
-    private Object resolveCurrentStatusObject(Object fragmentInstance) {
-        if (fragmentInstance == null) return null;
-
-        Object directMatch = ReflectionUtils.findFMessageInObject(fragmentInstance, FMessageWpp.TYPE, FMessageWpp.Key.TYPE, classLoader);
-        if (directMatch != null) {
-            return directMatch;
-        }
-
-        List<Field> listFields = ReflectionUtils.getFieldsByExtendType(fragmentInstance.getClass(), List.class);
-        List<Field> indexFields = ReflectionUtils.getFieldsByType(fragmentInstance.getClass(), int.class);
-
-        for (Field listField : listFields) {
-            Object value = ReflectionUtils.getObjectField(listField, fragmentInstance);
-            if (!(value instanceof List<?> listStatus) || listStatus.isEmpty()) {
-                continue;
-            }
-
-            Object indexedObject = resolveStatusObjectByIndex(fragmentInstance, listStatus, indexFields);
-            if (indexedObject != null) {
-                return indexedObject;
-            }
-
-            if (listStatus.size() == 1) {
-                return listStatus.get(0);
-            }
-        }
-
-        for (Object fieldObject : getAllFieldValues(fragmentInstance)) {
-            Object nestedMatch = ReflectionUtils.findFMessageInObject(fieldObject, FMessageWpp.TYPE, FMessageWpp.Key.TYPE, classLoader);
-            if (nestedMatch != null) {
-                return nestedMatch;
-            }
-        }
-
-        return null;
-    }
-
-    private Object resolveStatusObjectByIndex(Object fragmentInstance, List<?> listStatus, List<Field> indexFields) {
-        for (String preferredFieldName : new String[]{"A00", "A01", "A02", "A03", "A04", "A05"}) {
-            for (Field field : indexFields) {
-                if (preferredFieldName.equals(field.getName())) {
-                    Object candidate = getStatusObjectFromIndexField(field, fragmentInstance, listStatus);
-                    if (candidate != null) {
-                        return candidate;
-                    }
-                }
-            }
-        }
-
-        for (Field field : indexFields) {
-            Object candidate = getStatusObjectFromIndexField(field, fragmentInstance, listStatus);
-            if (candidate != null) {
-                return candidate;
-            }
-        }
-
-        return null;
-    }
-
-    private Object getStatusObjectFromIndexField(Field field, Object fragmentInstance, List<?> listStatus) {
-        try {
-            int index = field.getInt(fragmentInstance);
-            if (index < 0 || index >= listStatus.size()) {
-                return null;
-            }
-
-            Object candidate = listStatus.get(index);
-            if (candidate == null) {
-                return null;
-            }
-
-            return ReflectionUtils.findFMessageInObject(candidate, FMessageWpp.TYPE, FMessageWpp.Key.TYPE, classLoader) != null
-                    ? candidate
-                    : null;
-        } catch (Throwable ignored) {
-            return null;
-        }
     }
 
     @NonNull
@@ -244,17 +161,10 @@ public class MenuStatusListener extends Feature {
         return "Menu Status";
     }
 
-    public abstract static class onMenuItemStatusListener {
+    public abstract static class OnMenuItemStatusListener {
 
-        public abstract MenuItem addMenu(Menu menu, FMessageWpp fMessage);
+        public abstract MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex);
 
-        public abstract void onClick(MenuItem item, Object fragmentInstance, FMessageWpp fMessageWpp);
-
-        public MenuItem addRawMenu(Menu menu, Object statusObject) {
-            return null;
-        }
-
-        public void onRawClick(MenuItem item, Object fragmentInstance, Object statusObject) {
-        }
+        public abstract void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex);
     }
 }

@@ -69,6 +69,7 @@ public class Others extends Feature {
     private static final Set<String> dumpedMessageRowViews = ConcurrentHashMap.newKeySet();
     private static final String PRIMARY_DEVICE_EMOJI = " \uD83D\uDCF1";
     private static final String LINKED_DEVICE_EMOJI = " \uD83D\uDDA5\uFE0F";
+    private static volatile boolean messageDeviceSourceConversationActive = false;
 
     public static HashMap<Integer, Boolean> propsBoolean = new HashMap<>();
     public static HashMap<Integer, Integer> propsInteger = new HashMap<>();
@@ -222,7 +223,9 @@ public class Others extends Feature {
 
 
         hookProps();
-        hookSearchbar(filterChats);
+        if (!Objects.equals(filterChats, "2")) {
+            hookSearchbar(filterChats);
+        }
 
         if (disable_sensor_proximity) {
             disableSensorProximity();
@@ -270,6 +273,18 @@ public class Others extends Feature {
         debugDumpMessageMetadata();
         
         if (prefs.getBoolean("message_device_source", true)) {
+            WppCore.addListenerActivity((activity, state) -> {
+                String simpleName = activity.getClass().getSimpleName();
+                if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
+                    messageDeviceSourceConversationActive = "Conversation".equals(simpleName);
+                    return;
+                }
+                if ("Conversation".equals(simpleName) &&
+                        (state == WppCore.ActivityChangeState.ChangeType.PAUSED
+                                || state == WppCore.ActivityChangeState.ChangeType.ENDED)) {
+                    messageDeviceSourceConversationActive = false;
+                }
+            });
             hookMessageDeviceSourceTextView();
             messageDeviceSourceTag();
         }
@@ -310,15 +325,36 @@ public class Others extends Feature {
         propsBoolean.put(13408, true);
 
         Class<?> filterView = Unobfuscator.loadChatFilterView(classLoader);
-        setupViewVisibilityHooks();
         XposedBridge.hookAllConstructors(filterView, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var view = (View) param.thisObject;
                 view.setVisibility(View.GONE);
-                FORCE_HIDDEN_VIEWS.put(view, true);
             }
         });
+
+        // Avoid global View hooks on home startup: keep this scoped to chat filter views only.
+        try {
+            XposedHelpers.findAndHookMethod(filterView, "setVisibility", int.class, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if ((int) param.args[0] != View.GONE) {
+                        param.args[0] = View.GONE;
+                    }
+                }
+            });
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            XposedHelpers.findAndHookMethod(filterView, "onAttachedToWindow", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    ((View) param.thisObject).setVisibility(View.GONE);
+                }
+            });
+        } catch (Throwable ignored) {
+        }
     }
 
     private void setupViewVisibilityHooks() {
@@ -705,12 +741,10 @@ public class Others extends Feature {
     }
 
     private void hookMessageDeviceSourceTextView() {
-        XposedBridge.hookAllMethods(TextView.class, "setText", new XC_MethodHook() {
+        XC_MethodHook setTextHook = new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                // Optimization: Only run this hook if we are in a Conversation activity
-                Activity activity = WppCore.getCurrentActivity();
-                if (activity == null || !activity.getClass().getSimpleName().equals("Conversation")) return;
+                if (!messageDeviceSourceConversationActive) return;
 
                 if (!(param.thisObject instanceof TextView textView)) return;
                 Object suffixObj = XposedHelpers.getAdditionalInstanceField(textView, DEVICE_SOURCE_SUFFIX_FIELD);
@@ -731,7 +765,25 @@ public class Others extends Feature {
                     XposedHelpers.setAdditionalInstanceField(textView, DEVICE_SOURCE_GUARD_FIELD, false);
                 }
             }
-        });
+        };
+
+        try {
+            Method internalSetText = ReflectionUtils.findMethodUsingFilter(TextView.class,
+                    method -> method.getName().equals("setText")
+                            && method.getParameterCount() == 4
+                            && method.getParameterTypes()[0] == CharSequence.class
+                            && method.getParameterTypes()[1] == TextView.BufferType.class
+                            && method.getParameterTypes()[2] == boolean.class
+                            && method.getParameterTypes()[3] == int.class);
+            if (internalSetText != null) {
+                XposedBridge.hookMethod(internalSetText, setTextHook);
+                return;
+            }
+        } catch (Throwable t) {
+            logDebug("message_device_source setText hook fallback", t);
+        }
+
+        XposedBridge.hookAllMethods(TextView.class, "setText", setTextHook);
     }
 
     private static Animation cachedAnimationObject = null;

@@ -1,10 +1,25 @@
 [Added]
-- Support upto version 2.26.21 for WA/WB
+- Support for WhatsApp and WhatsApp Business up to version 2.26.21
+- See which device a message was sent from (Phone, Web)
+- Redesigned "Online" status indicator with new colors and styles
+- Tasker support for automated message sending and history tracking
+- Improved crash reporting to help us fix bugs faster
+- Custom update frequency settings and better "View Once" media saving
+- Quick access to settings via a new toolbar shortcut
+- Improved menus and alerts that look more like native WhatsApp
+- Significantly faster app startup and smoother feature loading
 
 [Improvements]
-- Menus improvements
-- Performance optimizations
-- Tasker com.waenhancer.MESSAGE_SENT [Under Development]
+- Improved settings menu stability and reliability
+- Major performance boost with less lag and smoother scrolling
+- More reliable status media downloading for latest versions
+- Better contact matching for features like "Hide Read Receipts"
+- Improved handling of bulk status downloads
+- More efficient internal settings synchronization
 
 [Fixes]
-- Fixed Anti-Revoke (Message + Status) according to latest WhatsApp logic
+- Updated Deleted Message and Status protection to work with latest WhatsApp logic
+- Fixed an issue causing repeated "Restart Required" messages
+- Fixed several potential crashes in group management features
+- Added missing text for various notifications
+- Cleaned up internal debug logs and temporary files

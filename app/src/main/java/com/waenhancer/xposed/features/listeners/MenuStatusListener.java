@@ -2,6 +2,8 @@ package com.waenhancer.xposed.features.listeners;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
+import android.graphics.drawable.Drawable;
 
 import androidx.annotation.NonNull;
 
@@ -9,7 +11,9 @@ import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
+import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ReflectionUtils;
+import com.waenhancer.R;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -139,14 +143,39 @@ public class MenuStatusListener extends Feature {
 
                     if (index < 0 || index >= fMessageList.size()) return;
 
+                    SubMenu waeSubMenu = null;
                     for (OnMenuItemStatusListener menuStatus : menuStatuses) {
-                        var menuItem = menuStatus.addMenu(menu, fMessageList, index);
+                        // Create submenu on demand to avoid empty menus
+                        if (waeSubMenu == null) {
+                            String waeTitle = "WaEnhancerX";
+                            try {
+                                String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.app_name, "WaEnhancerX");
+                                if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                                    waeTitle = moduleTitle;
+                                }
+                            } catch (Exception ignored) {}
+
+                            waeSubMenu = menu.addSubMenu(0, 0x7EAD0012, 0, waeTitle);
+                            Drawable waeIcon = DesignUtils.getDrawableByName("ic_settings");
+                            if (waeIcon != null) {
+                                waeIcon.setTint(0xff8696a0);
+                                waeSubMenu.getItem().setIcon(waeIcon);
+                            }
+                        }
+
+                        var menuItem = menuStatus.addMenu(waeSubMenu, fMessageList, index);
                         if (menuItem == null) continue;
 
                         menuItem.setOnMenuItemClickListener(item -> {
                             menuStatus.onClick(item, fragmentInstance, fMessageList, index);
                             return true;
                         });
+                    }
+                    
+                    // Cleanup if empty (though on-demand creation above should handle most cases, 
+                    // some listeners might return null after addMenu was called if they were the only one)
+                    if (waeSubMenu != null && !waeSubMenu.hasVisibleItems()) {
+                        menu.removeItem(0x7EAD0012);
                     }
                 } catch (Throwable t) {
                     XposedBridge.log("[WAE] MenuStatusListener error in hook: " + t);

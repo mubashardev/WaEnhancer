@@ -633,7 +633,7 @@ index 4e0490a7..1dd4372c 100644
              public void onReceive(Context context, Intent intent) {
                  if (UnobfuscatorCache.getInstance() != null) {
                      UnobfuscatorCache.getInstance().clearCache();
--                    XposedBridge.log("WaEnhancer: Obfuscate cache cleared via broadcast");
+-                    XposedBridge.log("WAEX: Obfuscate cache cleared via broadcast");
 +                    
                  }
              }
@@ -1352,7 +1352,7 @@ index b4a68c3d..c198fede 100644
          logDebug("disablePhotoProfileStatus", Unobfuscator.getMethodDescriptor(method));
          logDebug("disablePhotoProfileStatus Field", Unobfuscator.getFieldDescriptor(field));
          if (field == null) {
--            XposedBridge.log("WaEnhancer: disablePhotoProfileStatus skipped because refresh status field was not found");
+-            XposedBridge.log("WAEX: disablePhotoProfileStatus skipped because refresh status field was not found");
 +            
              return;
          }

@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 
 import com.waenhancer.listeners.OnMultiClickListener;
 import com.waenhancer.xposed.core.Feature;
+import com.waenhancer.xposed.core.PerfLogger;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.features.general.Others;
@@ -31,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.WeakHashMap;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
@@ -49,6 +51,8 @@ public class CustomToolbar extends Feature {
 
     private String mDateExpiration;
     private static Method onMenuItemSelected;
+    private static final WeakHashMap<Object, View> TAB_TOOLBAR_TARGETS = new WeakHashMap<>();
+    private static volatile boolean tabVisibilityHookInstalled = false;
 
     public CustomToolbar(ClassLoader loader, SharedPreferences preferences) {
         super(loader, preferences);
@@ -139,6 +143,7 @@ public class CustomToolbar extends Feature {
 
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            long perfStart = PerfLogger.start();
             var homeActivity = (Activity) param.thisObject;
             ViewGroup toolbar = homeActivity.findViewById(Utils.getID("toolbar", "id"));
             var logo = toolbar.findViewById(Utils.getID("toolbar_logo", "id"));
@@ -159,6 +164,7 @@ public class CustomToolbar extends Feature {
 
             hideOriginalLogo(homeActivity, logo);
             setupTabVisibilityHook(tabInstance, toolbarLayout);
+            PerfLogger.end("CustomToolbar.homeOnCreate", perfStart, 1);
         }
 
         private Object getTabInstance(Activity homeActivity) throws Exception {
@@ -265,16 +271,27 @@ public class CustomToolbar extends Feature {
         }
 
         private void setupTabVisibilityHook(Object tabInstance, LinearLayout toolbarLayout) {
-            XposedBridge.hookMethod(onMenuItemSelected, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    if (tabInstance != param.thisObject) return;
-
-                    var currentIndex = (int) param.args[0];
-                    var visibility = currentIndex == 0 ? View.VISIBLE : View.GONE;
-                    toolbarLayout.setVisibility(visibility);
-                }
-            });
+            if (tabInstance == null || toolbarLayout == null) return;
+            TAB_TOOLBAR_TARGETS.put(tabInstance, toolbarLayout);
+            if (tabVisibilityHookInstalled) return;
+            synchronized (CustomToolbar.class) {
+                if (tabVisibilityHookInstalled) return;
+                XposedBridge.hookMethod(onMenuItemSelected, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        long perfStart = PerfLogger.start();
+                        var toolbarTarget = TAB_TOOLBAR_TARGETS.get(param.thisObject);
+                        if (toolbarTarget == null) return;
+                        var currentIndex = (int) param.args[0];
+                        var visibility = currentIndex == 0 ? View.VISIBLE : View.GONE;
+                        if (toolbarTarget.getVisibility() != visibility) {
+                            toolbarTarget.setVisibility(visibility);
+                        }
+                        PerfLogger.end("CustomToolbar.onMenuItemSelected", perfStart, 1);
+                    }
+                });
+                tabVisibilityHookInstalled = true;
+            }
         }
     }
 }

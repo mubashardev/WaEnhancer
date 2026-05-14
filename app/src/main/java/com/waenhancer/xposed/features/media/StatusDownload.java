@@ -114,7 +114,7 @@ public class StatusDownload extends Feature {
                 String authority = Utils.getApplication().getPackageName() + ".fileprovider";
                 mediaUri = FileProvider.getUriForFile(Utils.getApplication(), authority, file);
             } catch (IllegalArgumentException e) {
-                XposedBridge.log("WaEnhancer: FileProvider failed for " + file.getAbsolutePath() + ": " + e.getMessage());
+                XposedBridge.log("WAEX: FileProvider failed for " + file.getAbsolutePath() + ": " + e.getMessage());
                 mediaUri = Uri.fromFile(file);
             }
 
@@ -130,7 +130,7 @@ public class StatusDownload extends Feature {
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             WppCore.getCurrentActivity().startActivity(intent);
         } catch (Throwable e) {
-            XposedBridge.log("WaEnhancer: sharedStatus error: " + e.getMessage());
+            XposedBridge.log("WAEX: sharedStatus error: " + e.getMessage());
             Utils.showToast(e.getMessage(), Toast.LENGTH_SHORT);
         }
     }

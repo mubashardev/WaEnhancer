@@ -4,6 +4,15 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
+import android.graphics.drawable.Drawable;
+import android.content.Intent;
+import android.net.Uri;
+import android.text.InputType;
+import android.view.Gravity;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -17,303 +26,339 @@ import com.waenhancer.xposed.utils.XResManager;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class MenuHome extends Feature {
 
-    public static final int MENU_ID_RESTART = 0x7EAE0001;
-    public static final int MENU_ID_DND = 0x7EAE0002;
-    public static final int MENU_ID_GHOST = 0x7EAE0003;
-    public static final int MENU_ID_FREEZE = 0x7EAE0004;
-    public static final int MENU_ID_OPEN_WAE = 0x7EAE0005;
+    private static final int MENU_ID_OPEN_WAE = 0x7EAE0001;
+    private static final int MENU_ID_RESTART = 0x7EAE0002;
+    private static final int MENU_ID_GHOST = 0x7EAE0003;
+    private static final int MENU_ID_DND = 0x7EAE0004;
+    private static final int MENU_ID_FREEZE = 0x7EAE0005;
+    private static final int MENU_ID_SUBMENU = 0x7EAE0006;
+    private static final int MENU_ID_NEW_CHAT = 0x7EAE0007;
+    private static final int MENU_ID_RECORDINGS = 0x7EAE0008;
 
-    public static HashSet<HomeMenuItem> menuItems = new LinkedHashSet<>();
-
+    public static final LinkedHashSet<HomeMenuItem> menuItems = new LinkedHashSet<>();
 
     public MenuHome(@NonNull ClassLoader classLoader, @NonNull SharedPreferences preferences) {
         super(classLoader, preferences);
     }
 
+    private static String cachedRestartLabel = null;
+    private static Drawable cachedRestartIcon = null;
+    private static String cachedWaeTitle = null;
+    private static Drawable cachedWaeIcon = null;
+    
+    private static Drawable cachedGhostOnIcon = null;
+    private static Drawable cachedGhostOffIcon = null;
+    private static Drawable cachedDndOnIcon = null;
+    private static Drawable cachedDndOffIcon = null;
+    private static Drawable cachedFreezeOnIcon = null;
+    private static Drawable cachedFreezeOffIcon = null;
+    
+    private static Drawable cachedNewChatIcon = null;
+    private static Drawable cachedRecordingsIcon = null;
+
+    private static boolean internalItemsAdded = false;
+
     @Override
     public void doHook() throws Throwable {
-        menuItems.clear();
-        hookMenu();
-        var action = prefs.getBoolean("buttonaction", true);
+        // Pre-cache strings and drawables to avoid lookups during menu preparation
+        try {
+            cachedRestartLabel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_whatsapp, "Restart WhatsApp");
+            cachedRestartIcon = DesignUtils.getDrawable(R.drawable.refresh);
+            
+            cachedWaeTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings, "WaEnhancerX Settings");
+            cachedWaeIcon = DesignUtils.getDrawableByName("ic_settings");
+            if (cachedWaeIcon != null) cachedWaeIcon.setTint(0xff8696a0);
 
-        // restart button
-        menuItems.add((menu, activity) -> InsertRestartButton(menu, activity, action));
+            cachedGhostOnIcon = DesignUtils.getDrawable(R.drawable.ghost_enabled);
+            cachedGhostOffIcon = DesignUtils.getDrawable(R.drawable.ghost_disabled);
+            cachedDndOnIcon = DesignUtils.getDrawable(R.drawable.airplane_enabled);
+            cachedDndOffIcon = DesignUtils.getDrawable(R.drawable.airplane_disabled);
+            cachedFreezeOnIcon = DesignUtils.getDrawable(R.drawable.eye_enabled);
+            cachedFreezeOffIcon = DesignUtils.getDrawable(R.drawable.eye_disabled);
+            
+            int iconTint = 0xff8696a0;
+            if (cachedGhostOnIcon != null) cachedGhostOnIcon.setTint(iconTint);
+            if (cachedGhostOffIcon != null) cachedGhostOffIcon.setTint(iconTint);
+            if (cachedDndOnIcon != null) cachedDndOnIcon.setTint(iconTint);
+            if (cachedDndOffIcon != null) cachedDndOffIcon.setTint(iconTint);
+            if (cachedFreezeOnIcon != null) cachedFreezeOnIcon.setTint(iconTint);
+            if (cachedFreezeOffIcon != null) cachedFreezeOffIcon.setTint(iconTint);
+            
+            cachedNewChatIcon = DesignUtils.getDrawableByName("vec_ic_chat_add");
+            if (cachedNewChatIcon == null) cachedNewChatIcon = DesignUtils.getDrawable(R.drawable.ic_contacts);
+            if (cachedNewChatIcon != null) cachedNewChatIcon.setTint(iconTint);
+            
+            cachedRecordingsIcon = DesignUtils.getDrawable(R.drawable.ic_privacy); // Fallback icon
+            if (cachedRecordingsIcon != null) cachedRecordingsIcon.setTint(iconTint);
 
-        // dnd mode
-        menuItems.add((menu, activity) -> InsertDNDOption(menu, activity, action));
+        } catch (Throwable e) {
+            logDebug("Error pre-caching menu resources: " + e.getMessage());
+        }
 
-        // ghost mode
-        menuItems.add((menu, activity) -> InsertGhostModeOption(menu, activity, action));
+        var buttonAction = prefs.getBoolean("buttonaction", true);
 
-        // freeze last seen
-        menuItems.add((menu, activity) -> InsertFreezeLastSeenOption(menu, activity, action));
-
-        // open WAE
-        menuItems.add(this::InsertOpenWae);
-
+        synchronized (menuItems) {
+            if (!internalItemsAdded) {
+                menuItems.add(this::InsertOpenWae);
+                menuItems.add((menu, activity) -> InsertGhostModeOption(menu, activity, buttonAction));
+                menuItems.add((menu, activity) -> InsertDNDOption(menu, activity, buttonAction));
+                menuItems.add((menu, activity) -> InsertFreezeLastSeenOption(menu, activity, buttonAction));
+                menuItems.add(this::InsertNewChat);
+                menuItems.add(this::InsertManageRecordings);
+                menuItems.add((menu, activity) -> InsertRestartButton(menu, activity, false));
+                internalItemsAdded = true;
+            }
+        }
+        hookMenu(buttonAction);
     }
 
     private void InsertOpenWae(Menu menu, Activity activity) {
-        try {
-            var entryPoint = getSafeString("open_wae", "1");
-            ;
-            if (!"1".equals(entryPoint)) return;
+        if (!prefs.getBoolean("wa_enhancer_button", true)) return;
+        if (menu.findItem(MENU_ID_OPEN_WAE) != null) return;
 
-            String title = "WaEnhancerX Settings";
-            try {
-                if (XResManager.moduleResources != null) {
-                    String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings, "WaEnhancerX Settings");
-                    if (moduleTitle != null && !moduleTitle.isEmpty()) {
-                        title = moduleTitle;
-                    }
-                }
-            } catch (Exception ignored) {}
-            if (menu.findItem(MENU_ID_OPEN_WAE) != null) return;
-            var itemMenu = menu.add(0, MENU_ID_OPEN_WAE, 9999, " " + title);
-            var iconDraw = DesignUtils.getDrawableByName("ic_settings");
-            if (iconDraw != null) {
-                iconDraw.setTint(0xff8696a0);
-                itemMenu.setIcon(iconDraw);
-            }
-            itemMenu.setOnMenuItemClickListener(item -> {
-                showWaeSettingsDialog(activity);
-                return true;
-            });
-        } catch (Throwable t) {
-            XposedBridge.log("[WaEnhancer] Failed to insert menu item: " + t.getMessage());
-        }
+        String title = cachedWaeTitle != null ? cachedWaeTitle : "WaEnhancerX Settings";
+        var itemMenu = menu.add(0, MENU_ID_OPEN_WAE, 0, title);
+        
+        itemMenu.setOnMenuItemClickListener(item -> {
+            Utils.openModule(activity);
+            return true;
+        });
     }
 
-    /**
-     * Show WaEnhancerX settings embedded inside the host WhatsApp activity.
-     * Delegates to {@link EmbeddedSettingsDialogFragment#show(Activity)} which
-     * handles all cross-process safety, fallback, and back-stack management.
-     */
-    public static void showWaeSettingsDialog(Activity activity) {
-        try {
-            EmbeddedSettingsDialogFragment.show(activity);
-        } catch (Throwable t) {
-            XposedBridge.log("[WaEnhancer] showWaeSettingsDialog failed: " + t.getMessage());
-            Utils.showToast("Could not open WaEnhancerX Settings", android.widget.Toast.LENGTH_SHORT);
-        }
-    }
-
-    private void InsertGhostModeOption(Menu menu, Activity activity, boolean newSettings) {
-        var ghostmode = WppCore.getPrivBoolean("ghostmode", false);
-        if (!prefs.getBoolean("ghostmode", true)) {
-            if (ghostmode) {
-                WppCore.setPrivBooleanSync("ghostmode", false);
-                Utils.doRestart(activity);
-            }
-            return;
-        }
-        String ghostLabel = "Ghost Mode";
-        try {
-            if (XResManager.moduleResources != null) {
-                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode, "Ghost Mode");
-                if (moduleString != null && !moduleString.isEmpty()) {
-                    ghostLabel = moduleString;
-                }
-            }
-        } catch (Exception ignored) {}
+    private void InsertGhostModeOption(Menu menu, Activity activity, boolean buttonAction) {
+        if (!prefs.getBoolean("ghostmode", true)) return;
         if (menu.findItem(MENU_ID_GHOST) != null) return;
-        var itemMenu = menu.add(0, MENU_ID_GHOST, 0, ghostLabel);
 
+        boolean ghostmode = WppCore.getPrivBoolean("ghostmode", false);
+        String title = "Ghost Mode (" + (ghostmode ? "ON" : "OFF") + ")";
         try {
-            var iconDraw = DesignUtils.getDrawable(ghostmode ? R.drawable.ghost_enabled : R.drawable.ghost_disabled);
-            if (iconDraw != null) {
-                iconDraw.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
-                itemMenu.setIcon(iconDraw);
+            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode_s, "Ghost Mode");
+            if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                title = String.format(moduleTitle, ghostmode ? "ON" : "OFF");
             }
         } catch (Exception ignored) {}
-        if (newSettings) {
+
+        var itemMenu = menu.add(0, MENU_ID_GHOST, 1, title);
+        if (buttonAction && !(menu instanceof SubMenu)) {
+            Drawable icon = ghostmode ? cachedGhostOnIcon : cachedGhostOffIcon;
+            if (icon != null) itemMenu.setIcon(icon);
             itemMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
-        itemMenu.setOnMenuItemClickListener(item -> {
-            String gmTitle = "Ghost Mode (" + (ghostmode ? "ON" : "OFF") + ")";
-            String gmMsg = "Toggle ghost mode";
-            String disableStr = "Disable";
-            String enableStr = "Enable";
-            try {
-                if (XResManager.moduleResources != null) {
-                    try {
-                        gmTitle = XResManager.moduleResources.getString(R.string.ghost_mode_s, (ghostmode ? "ON" : "OFF"));
-                    } catch (Exception ignored1) {}
-                    gmMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode_message, gmMsg);
-                    disableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.disable, disableStr);
-                    enableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.enable, enableStr);
-                }
-            } catch (Exception ignored) {}
-            new AlertDialogWpp(activity).setTitle(gmTitle).
-                    setMessage(gmMsg)
-                    .setPositiveButton(disableStr, (dialog, which) -> {
-                        WppCore.setPrivBooleanSync("ghostmode", false);
-                        Utils.doRestart(activity);
-                    })
-                    .setNegativeButton(enableStr, (dialog, which) -> {
-                        WppCore.setPrivBooleanSync("ghostmode", true);
-                        Utils.doRestart(activity);
-                    }).show();
-            return true;
 
+        final String finalTitle = title;
+        itemMenu.setOnMenuItemClickListener(item -> {
+            boolean current = WppCore.getPrivBoolean("ghostmode", false);
+            showToggleDialog(activity, finalTitle, "ghostmode", current);
+            return true;
         });
+    }
+
+    private void InsertDNDOption(Menu menu, Activity activity, boolean buttonAction) {
+        if (!prefs.getBoolean("show_dndmode", true)) return;
+        if (menu.findItem(MENU_ID_DND) != null) return;
+
+        boolean dndmode = WppCore.getPrivBoolean("dndmode", false);
+        String title = "DND Mode (" + (dndmode ? "ON" : "OFF") + ")";
+        try {
+            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_s, "DND Mode");
+            if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                title = String.format(moduleTitle, dndmode ? "ON" : "OFF");
+            }
+        } catch (Exception ignored) {}
+
+        var itemMenu = menu.add(0, MENU_ID_DND, 2, title);
+        if (buttonAction && !(menu instanceof SubMenu)) {
+            Drawable icon = dndmode ? cachedDndOnIcon : cachedDndOffIcon;
+            if (icon != null) itemMenu.setIcon(icon);
+            itemMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        }
+
+        final String finalTitleDnd = title;
+        itemMenu.setOnMenuItemClickListener(item -> {
+            boolean current = WppCore.getPrivBoolean("dndmode", false);
+            showToggleDialog(activity, finalTitleDnd, "dndmode", current);
+            return true;
+        });
+    }
+
+    private void InsertFreezeLastSeenOption(Menu menu, Activity activity, boolean buttonAction) {
+        if (!prefs.getBoolean("show_freezeLastSeen", true)) return;
+        if (menu.findItem(MENU_ID_FREEZE) != null) return;
+
+        boolean freeze = WppCore.getPrivBoolean("freeze_last_seen", false);
+        String title = "Freeze Last Seen (" + (freeze ? "ON" : "OFF") + ")";
+        try {
+            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freeze_last_seen_s, "Freeze Last Seen");
+            if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                title = String.format(moduleTitle, freeze ? "ON" : "OFF");
+            }
+        } catch (Exception ignored) {}
+
+        var itemMenu = menu.add(0, MENU_ID_FREEZE, 3, title);
+        if (buttonAction && !(menu instanceof SubMenu)) {
+            Drawable icon = freeze ? cachedFreezeOnIcon : cachedFreezeOffIcon;
+            if (icon != null) itemMenu.setIcon(icon);
+            itemMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        }
+
+        final String finalTitleFreeze = title;
+        itemMenu.setOnMenuItemClickListener(item -> {
+            boolean current = WppCore.getPrivBoolean("freeze_last_seen", false);
+            showToggleDialog(activity, finalTitleFreeze, "freeze_last_seen", current);
+            return true;
+        });
+    }
+
+    private void InsertNewChat(Menu menu, Activity activity) {
+        if (!prefs.getBoolean("newchat", true)) return;
+        if (menu.findItem(MENU_ID_NEW_CHAT) != null) return;
+
+        String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.new_chat, "New Chat");
+        var itemMenu = menu.add(0, MENU_ID_NEW_CHAT, 10, title);
+
+        itemMenu.setOnMenuItemClickListener(item -> {
+            var view = new LinearLayout(activity);
+            view.setGravity(Gravity.CENTER);
+            view.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+            var edt = new EditText(view.getContext());
+            edt.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1.0f));
+            edt.setMaxLines(1);
+            edt.setInputType(InputType.TYPE_CLASS_PHONE);
+            edt.setTransformationMethod(null);
+            edt.setHint(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.number_with_country_code, "Number with country code"));
+            view.addView(edt);
+
+            new AlertDialogWpp(activity)
+                .setTitle(title)
+                .setView(view)
+                .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message, "Message"), (dialog, which) -> {
+                    var number = edt.getText().toString();
+                    var numberFomatted = number.replaceAll("[+\\-()/\\s]", "");
+                    var intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse("https://wa.me/" + numberFomatted));
+                    intent.setPackage(Utils.getApplication().getPackageName());
+                    activity.startActivity(intent);
+                })
+                .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel, "Cancel"), null)
+                .show();
+            return true;
+        });
+    }
+
+    private void InsertManageRecordings(Menu menu, Activity activity) {
+        if (!prefs.getBoolean("call_recording_enable", false)) return;
+        if (menu.findItem(MENU_ID_RECORDINGS) != null) return;
+
+        String title = "Manage Recordings";
+        try {
+            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.manage_recordings, "Manage Recordings");
+            if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                title = moduleTitle;
+            }
+        } catch (Exception ignored) {}
+
+        var itemMenu = menu.add(0, MENU_ID_RECORDINGS, 11, title);
+
+        itemMenu.setOnMenuItemClickListener(item -> {
+            try {
+                Intent intent = new Intent();
+                intent.setClassName(com.waenhancer.BuildConfig.APPLICATION_ID, "com.waenhancer.activities.RecordingsActivity");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                activity.startActivity(intent);
+            } catch (Throwable t) {
+                Utils.showToast("Failed to open Recordings Manager", Toast.LENGTH_SHORT);
+            }
+            return true;
+        });
+    }
+
+    private void showToggleDialog(Activity activity, String title, String key, boolean current) {
+        new AlertDialogWpp(activity)
+            .setTitle(title)
+            .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_wpp, 
+                "It is necessary to restart WhatsApp for the changes in WaEnhancer X to take effect.\n\nDo you want to restart?"))
+            .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(android.R.string.ok, "OK"), (dialog, which) -> {
+                WppCore.setPrivBooleanSync(key, !current);
+                Utils.doRestart(activity);
+            })
+            .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(android.R.string.cancel, "Cancel"), null)
+            .show();
     }
 
     private void InsertRestartButton(Menu menu, Activity activity, boolean newSettings) {
         if (!prefs.getBoolean("restartbutton", true)) return;
-        android.graphics.drawable.Drawable iconDraw = null;
-        try { iconDraw = DesignUtils.getDrawable(R.drawable.refresh); } catch (Exception ignored) {}
-        if (iconDraw != null) iconDraw.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
-        String restartLabel = "Restart WhatsApp";
-        try {
-            if (XResManager.moduleResources != null) {
-                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_whatsapp, "Restart WhatsApp");
-                if (moduleString != null && !moduleString.isEmpty()) {
-                    restartLabel = moduleString;
-                }
-            }
-        } catch (Exception ignored) {}
         if (menu.findItem(MENU_ID_RESTART) != null) return;
-        var itemMenu = menu.add(0, MENU_ID_RESTART, 0, restartLabel);
-        if (iconDraw != null) itemMenu.setIcon(iconDraw);
-        if (newSettings) {
+
+        String restartLabel = cachedRestartLabel != null ? cachedRestartLabel : "Restart WhatsApp";
+        var itemMenu = menu.add(0, MENU_ID_RESTART, 4, restartLabel);
+        
+        if (newSettings && !(menu instanceof SubMenu)) {
+            if (cachedRestartIcon != null) {
+                cachedRestartIcon.setTint(DesignUtils.getPrimaryTextColor());
+                itemMenu.setIcon(cachedRestartIcon);
+            }
             itemMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        } else if (!(menu instanceof SubMenu)) {
+            if (cachedRestartIcon != null) {
+                cachedRestartIcon.setTint(0xff8696a0);
+                itemMenu.setIcon(cachedRestartIcon);
+            }
         }
+        
         itemMenu.setOnMenuItemClickListener(item -> {
             Utils.doRestart(activity);
             return true;
         });
     }
 
-    @SuppressLint({"DiscouragedApi", "UseCompatLoadingForDrawables", "ApplySharedPref"})
-    private void InsertDNDOption(Menu menu, Activity activity, boolean newSettings) {
-        var dndmode = WppCore.getPrivBoolean("dndmode", false);
-        if (!prefs.getBoolean("show_dndmode", false)) {
-            if (WppCore.getPrivBoolean("dndmode", false)) {
-                WppCore.setPrivBooleanSync("dndmode", false);
-                Utils.doRestart(activity);
-            }
-            return;
-        }
-        String dndTitle = "DND Mode";
-        try {
-            if (XResManager.moduleResources != null) {
-                String moduleString = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title, "DND Mode");
-                if (moduleString != null && !moduleString.isEmpty()) {
-                    dndTitle = moduleString;
-                }
-            }
-        } catch (Exception ignored) {}
-        if (menu.findItem(MENU_ID_DND) != null) return;
-        var item = menu.add(0, MENU_ID_DND, 0, dndTitle);
-        try {
-            var drawable = DesignUtils.getDrawable(dndmode ? R.drawable.airplane_enabled : R.drawable.airplane_disabled);
-            if (drawable != null) {
-                drawable.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
-                item.setIcon(drawable);
-            }
-        } catch (Exception ignored) {}
-        if (newSettings) {
-            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        }
-        item.setOnMenuItemClickListener(menuItem -> {
-            String dTitle = "DND Mode (" + (dndmode ? "ON" : "OFF") + ")";
-            String dMsg = "When Do Not Disturb mode is on, you will be unable to send or receive messages";
-            String disableStr = "Disable";
-            String enableStr = "Enable";
-            try {
-                if (XResManager.moduleResources != null) {
-                    dTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_title, "DND Mode") + " (" + (dndmode ? "ON" : "OFF") + ")";
-                    dMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_message, dMsg);
-                    disableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.disable, disableStr);
-                    enableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.enable, enableStr);
-                }
-            } catch (Exception ignored) {}
-            new AlertDialogWpp(activity)
-                    .setTitle(dTitle)
-                    .setMessage(dMsg)
-                    .setPositiveButton(disableStr, (dialog, which) -> {
-                        WppCore.setPrivBooleanSync("dndmode", false);
-                        Utils.doRestart(activity);
-                    })
-                    .setNegativeButton(enableStr, (dialog, which) -> {
-                        WppCore.setPrivBooleanSync("dndmode", true);
-                        Utils.doRestart(activity);
-                    })
-                    .create().show();
-            return true;
-        });
-    }
-
-    private void InsertFreezeLastSeenOption(Menu menu, Activity activity, boolean newSettings) {
-        var freezelastseen = WppCore.getPrivBoolean("freezelastseen", false);
-        if (!prefs.getBoolean("show_freezeLastSeen", true)) {
-            if (freezelastseen) {
-                WppCore.setPrivBooleanSync("freezelastseen", false);
-                Utils.doRestart(activity);
-            }
-            return;
-        }
-
-        String flsTitle = "Freeze Last Seen";
-        try { if (XResManager.moduleResources != null) flsTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_title, "Freeze Last Seen"); } catch (Exception ignored) {}
-        if (menu.findItem(MENU_ID_FREEZE) != null) return;
-        MenuItem item = menu.add(0, MENU_ID_FREEZE, 0, flsTitle);
-        try {
-            var drawable = DesignUtils.getDrawable(freezelastseen ? R.drawable.eye_enabled : R.drawable.eye_disabled);
-            if (drawable != null) {
-                drawable.setTint(newSettings ? DesignUtils.getPrimaryTextColor() : 0xff8696a0);
-                item.setIcon(drawable);
-            }
-        } catch (Exception ignored) {}
-        if (newSettings) {
-            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        }
-        item.setOnMenuItemClickListener(menuItem -> {
-            String fTitle = "Freeze Last Seen (" + (freezelastseen ? "ON" : "OFF") + ")";
-            String fMsg = "When Freeze Last Seen is on, you will be unable to see others last seen time or online";
-            String disableStr = "Disable";
-            String enableStr = "Enable";
-            try {
-                if (XResManager.moduleResources != null) {
-                    fTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_title, "Freeze Last Seen") + " (" + (freezelastseen ? "ON" : "OFF") + ")";
-                    fMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freezelastseen_message, fMsg);
-                    disableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.disable, disableStr);
-                    enableStr = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.enable, enableStr);
-                }
-            } catch (Exception ignored) {}
-            new AlertDialogWpp(activity)
-                    .setTitle(fTitle)
-                    .setMessage(fMsg)
-                    .setPositiveButton(disableStr, (dialog, which) -> {
-                        WppCore.setPrivBooleanSync("freezelastseen", false);
-                        Utils.doRestart(activity);
-                    })
-                    .setNegativeButton(enableStr, (dialog, which) -> {
-                        WppCore.setPrivBooleanSync("freezelastseen", true);
-                        Utils.doRestart(activity);
-                    })
-                    .create().show();
-            return true;
-        });
-    }
-
-    private void hookMenu() {
+    private void hookMenu(boolean buttonAction) {
         XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onCreateOptionsMenu", Menu.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var menu = (Menu) param.args[0];
                 var activity = (Activity) param.thisObject;
+                
+                // Only inject if it's HomeActivity to avoid pollution of other menus
+                if (!activity.getClass().getSimpleName().equals("HomeActivity")) return;
+
+                // Create or find the WaEnhancerX submenu
+                var subMenuItem = menu.findItem(MENU_ID_SUBMENU);
+                SubMenu subMenu;
+                if (subMenuItem == null) {
+                    String waeTitle = "WaEnhancerX";
+                    try {
+                        String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.app_name, "WaEnhancerX");
+                        if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                            waeTitle = moduleTitle;
+                        }
+                    } catch (Exception ignored) {}
+
+                    subMenu = menu.addSubMenu(0, MENU_ID_SUBMENU, 0, waeTitle);
+                    var item = subMenu.getItem();
+                    if (cachedWaeIcon != null) {
+                        item.setIcon(cachedWaeIcon);
+                    }
+                    
+                    // If buttonAction is enabled, show the WaEnhancerX submenu icon on the toolbar
+                    if (buttonAction) {
+                        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                    }
+                } else {
+                    subMenu = subMenuItem.getSubMenu();
+                }
+
+                // Inject all items into the submenu. 
+                // We pass 'false' for buttonAction inside the submenu to keep it clean (no nested icons on toolbar).
                 for (var menuItem : MenuHome.menuItems) {
-                    menuItem.addMenu(menu, activity);
+                    menuItem.addMenu(subMenu, activity);
                 }
             }
         });
@@ -326,8 +371,6 @@ public class MenuHome extends Feature {
     }
 
     public interface HomeMenuItem {
-
         void addMenu(Menu menu, Activity activity);
-
     }
 }

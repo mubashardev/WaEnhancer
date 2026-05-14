@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -15,7 +16,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.ArrayList;
+
 import androidx.annotation.NonNull;
+
 
 import com.waenhancer.adapter.CustomPrivacyAdapter;
 import com.waenhancer.xposed.core.Feature;
@@ -34,13 +41,17 @@ import org.luckypray.dexkit.query.enums.StringMatchType;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
 
 public class CustomPrivacy extends Feature {
+    private static final int MENU_ID_CUSTOM_PRIVACY = 0x7EAE0007;
+    private static final String CONVERSATIONS_FRAGMENT = "ConversationsFragment";
     private Method chatUserJidMethod;
     private Method groupUserJidMethod;
 
@@ -113,9 +124,8 @@ public class CustomPrivacy extends Feature {
         if (type == 0) return;
 
         var icon = DesignUtils.resizeDrawable(DesignUtils.getDrawable(R.drawable.ic_privacy), Utils.dipToPixels(24), Utils.dipToPixels(24));
-        icon.setTint(0xff8696a0);
+        if (icon != null) icon.setTint(0xff8696a0);
         MenuHome.menuItems.add((menu, activity) -> {
-            int MENU_ID_CUSTOM_PRIVACY = 0x7EAE0007;
             if (menu.findItem(MENU_ID_CUSTOM_PRIVACY) != null) return;
             String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.custom_privacy, "Custom Privacy");
             if (title == null || title.isEmpty()) {
@@ -127,6 +137,7 @@ public class CustomPrivacy extends Feature {
             });
         });
     }
+
 
     private View createItemView(Activity activity, String title, String summary, Drawable icon) {
         LinearLayout mainLayout = new LinearLayout(activity);

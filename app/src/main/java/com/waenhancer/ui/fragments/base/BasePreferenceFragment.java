@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Build;
 import android.os.Bundle;
@@ -228,7 +229,24 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                 android.util.Log.e("WAE_Manager", "Failed to track change title: " + e.getMessage());
             }
 
-            mPrefs.edit().putBoolean("need_restart", true).apply();
+            // Notify the Xposed module that preferences have changed via both ContentProvider and Broadcast
+            try {
+                String authority = BuildConfig.APPLICATION_ID + ".hookprovider";
+                getContext().getContentResolver().notifyChange(
+                        Uri.parse("content://" + authority + "/preferences"), 
+                        null
+                );
+                
+                Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                intent.setPackage("com.whatsapp"); // Target WhatsApp if it's running
+                getContext().sendBroadcast(intent);
+                
+                Intent intent2 = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                intent2.setPackage("com.whatsapp.w4b"); // Target WhatsApp Business
+                getContext().sendBroadcast(intent2);
+            } catch (Exception ignored) {}
+
+            mPrefs.edit().putBoolean("need_restart", true).commit();
         }
 
         runWithoutRestartBroadcast(() -> chanceStates(s));
@@ -354,28 +372,28 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         setPreferenceState("showonlinetext", !freezelastseen);
         setPreferenceState("dotonline", !freezelastseen);
 
-        boolean separategroups = mPrefs.getBoolean("separategroups", false);
+        if (mPrefs.getBoolean("filtergroups", false)) {
+            runWithoutRestartBroadcast(() -> mPrefs.edit().putBoolean("filtergroups", false).apply());
+        }
         setPreferenceState("filtergroups", false); // Forced disabled
 
-        var filtergroups = mPrefs.getBoolean("filtergroups", false);
-
-        // Temporarily disable Separate Groups feature in settings and show explanation
-        boolean disableSeparateGroups = true;
+        // Keep this disabled for now because the underlying WhatsApp tab hooks
+        // still cause UI instability and swipe jank on recent test builds.
         var sepPref = findPreference("separategroups");
+        if (mPrefs.getBoolean("separategroups", false)) {
+            runWithoutRestartBroadcast(() -> mPrefs.edit().putBoolean("separategroups", false).apply());
+        }
         if (sepPref != null) {
             setPreferenceState("separategroups", false);
             sepPref.setSummary(getString(com.waenhancer.R.string.separate_groups_sum) + "\n\n" + getString(com.waenhancer.R.string.separate_groups_disabled_wa_update));
         } else {
             setPreferenceState("separategroups", false);
         }
-
-        var supported = isSeparateGroupSupported();
-        updateGroupPref("separategroups", supported, R.string.separate_groups_sum, R.string.separate_groups_unsupported_sum);
         // Fully disable FilterGroups due to technical instability
         setPreferenceState("filtergroups", false);
         var filterGroupsPreference = findPreference("filtergroups");
         if (filterGroupsPreference != null) {
-            filterGroupsPreference.setSummary(R.string.new_ui_group_filter_sum);
+            filterGroupsPreference.setSummary(R.string.new_ui_group_filter_unsupported_sum);
         }
 
         var callBlockContacts = findPreference("call_block_contacts");

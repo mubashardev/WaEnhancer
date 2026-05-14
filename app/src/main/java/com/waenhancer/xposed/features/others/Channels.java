@@ -76,14 +76,16 @@ public class Channels extends Feature {
             });
 
             if (channels) {
-                XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onPrepareOptionsMenu", Menu.class, new XC_MethodHook() {
+                XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onCreateOptionsMenu", Menu.class, new XC_MethodHook() {
                     @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         var menu = (Menu) param.args[0];
                         var id = Utils.getID("menuitem_create_newsletter", "id");
-                        var menuItem = menu.findItem(id);
-                        if (menuItem != null) {
-                            menuItem.setVisible(false);
+                        if (id > 0) {
+                            var menuItem = menu.findItem(id);
+                            if (menuItem != null) {
+                                menuItem.setVisible(false);
+                            }
                         }
                     }
                 });

@@ -14,6 +14,14 @@ public abstract class Feature {
     public final SharedPreferences prefs;
     public static boolean DEBUG = false;
 
+    // Global tracking to prevent hook leaks if doHook is called multiple times
+    private static final java.util.Set<java.lang.reflect.Member> hookedMethods = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+
+    protected boolean markHooked(java.lang.reflect.Member member) {
+        if (member == null) return false;
+        return hookedMethods.add(member);
+    }
+
     public Feature(@NonNull ClassLoader classLoader, @NonNull SharedPreferences preferences) {
         this.classLoader = classLoader;
         this.prefs = preferences;

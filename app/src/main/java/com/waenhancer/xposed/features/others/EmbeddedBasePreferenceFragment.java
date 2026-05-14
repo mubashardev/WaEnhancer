@@ -408,12 +408,25 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
         setPreferenceState("showonlinetext", !freezelastseen);
         setPreferenceState("dotonline", !freezelastseen);
 
-        boolean separategroups = mPrefs.getBoolean("separategroups", false);
+        if (mPrefs.getBoolean("filtergroups", false)) {
+            runWithoutRestartBroadcast(() -> mPrefs.edit().putBoolean("filtergroups", false).apply());
+        }
         setPreferenceState("filtergroups", false); // Forced disabled
+        Preference filterGroupsPreference = findPreference("filtergroups");
+        if (filterGroupsPreference != null) {
+            filterGroupsPreference.setSummary(R.string.new_ui_group_filter_unsupported_sum);
+        }
 
-        updateGroupPref("separategroups", isSeparateGroupSupported(),
-                R.string.separate_groups_sum,
-                R.string.separate_groups_unsupported_sum);
+        Preference separateGroupsPreference = findPreference("separategroups");
+        if (mPrefs.getBoolean("separategroups", false)) {
+            runWithoutRestartBroadcast(() -> mPrefs.edit().putBoolean("separategroups", false).apply());
+        }
+        setPreferenceState("separategroups", false);
+        if (separateGroupsPreference != null) {
+            separateGroupsPreference.setSummary(
+                    getString(R.string.separate_groups_sum) + "\n\n"
+                            + getString(R.string.separate_groups_disabled_wa_update));
+        }
 
         Preference callBlockContacts = findPreference("call_block_contacts");
         Preference callWhiteContacts = findPreference("call_white_contacts");

@@ -250,7 +250,7 @@
     <string name="antidisappearing_sum">Temporary messages will not be deleted for you</string>
     <string name="title_audio">Audio</string>
     <string name="android_version">Android SDK</string>
-    <string name="message_removed_on">This message was removed on %s.</string>
+    <string name="message_removed_on">Deleted on %s.</string>
     <string name="disable_default_emojis">Disable Default Emojis</string>
     <string name="theme_mode">Dark Theme WaEnhancer X</string>
     <string name="theme_mode_sum">Force a theme mode in the WaEnhancer X</string>
@@ -624,7 +624,7 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="update_alert_beta_only">Beta only</string>
     <string name="update_alert_both">Both (Stable and Beta)</string>
 
-    <string name="log_service_title">WaEnhancer Log Service</string>
+    <string name="log_service_title">WaEnhancerX Log Service</string>
     <string name="log_service_desc">Real-time logs are being captured in the background.</string>
     <string name="enable_downgrades">Upgrade/Downgrade via Root</string>
     <string name="downgrade">Downgrade</string>
@@ -648,4 +648,7 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="update_freq_24h">will be shown after 24 hours</string>
     <string name="update_freq_never">will never be shown</string>
     <string name="update_ignored_toast">Next update alert for %1$s %2$s</string>
+    <string name="dnd_mode_s">DND Mode [%s]</string>
+    <string name="freeze_last_seen_s">Freeze Last Seen [%s]</string>
+    <string name="manage_recordings">Manage Recordings</string>
 </resources>

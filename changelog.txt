@@ -2,5 +2,9 @@
 - Support upto version 2.26.21 for WA/WB
 
 [Improvements]
-- Improved IG Style Stories
-- WaEnhancerX Changelog Screen improved
+- Menus improvements
+- Performance optimizations
+- Tasker com.waenhancer.MESSAGE_SENT [Under Development]
+
+[Fixes]
+- Fixed Anti-Revoke (Message + Status) according to latest WhatsApp logic

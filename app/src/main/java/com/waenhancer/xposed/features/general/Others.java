@@ -8,11 +8,13 @@ import android.content.Intent;
 import android.os.BaseBundle;
 import android.os.Message;
 import android.os.PowerManager;
+import java.util.concurrent.CompletableFuture;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,12 +59,17 @@ public class Others extends Feature {
     private static final String DEVICE_SOURCE_SUFFIX_FIELD = "wae_device_source_suffix";
     private static final String DEVICE_SOURCE_GUARD_FIELD = "wae_device_source_guard";
 
+    private static final java.util.Set<Integer> HIDDEN_VIEW_IDS = java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+    private static final java.util.Map<Object, Boolean> FORCE_HIDDEN_VIEWS = new java.util.WeakHashMap<>();
+    private static volatile boolean viewVisibilityHooksInstalled = false;
+    private static volatile boolean drawerHookInstalled = false;
 
     private static java.lang.reflect.Field cachedAbsViewField;
     private static final Set<String> dumpedMessageIds = ConcurrentHashMap.newKeySet();
     private static final Set<String> dumpedMessageRowViews = ConcurrentHashMap.newKeySet();
     private static final String PRIMARY_DEVICE_EMOJI = " \uD83D\uDCF1";
     private static final String LINKED_DEVICE_EMOJI = " \uD83D\uDDA5\uFE0F";
+    private static volatile boolean messageDeviceSourceConversationActive = false;
 
     public static HashMap<Integer, Boolean> propsBoolean = new HashMap<>();
     public static HashMap<Integer, Integer> propsInteger = new HashMap<>();
@@ -216,7 +223,9 @@ public class Others extends Feature {
 
 
         hookProps();
-        hookSearchbar(filterChats);
+        if (!Objects.equals(filterChats, "2")) {
+            hookSearchbar(filterChats);
+        }
 
         if (disable_sensor_proximity) {
             disableSensorProximity();
@@ -231,6 +240,7 @@ public class Others extends Feature {
 
 
         if (filter_items != null && prefs.getBoolean("custom_filters", true)) {
+            setupViewVisibilityHooks();
             filterItems(filter_items);
         }
 
@@ -254,12 +264,30 @@ public class Others extends Feature {
 
         showOnline(showOnline);
 
-        animationList();
+        // Only initialize animation hook if an animation is actually selected
+        if (!Objects.equals(prefs.getString("animation_list", "default"), "default") || properties.containsKey("home_list_animation")) {
+            animationList();
+        }
 
         stampCopiedMessage();
         debugDumpMessageMetadata();
-        hookMessageDeviceSourceTextView();
-        messageDeviceSourceTag();
+        
+        if (prefs.getBoolean("message_device_source", true)) {
+            WppCore.addListenerActivity((activity, state) -> {
+                String simpleName = activity.getClass().getSimpleName();
+                if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
+                    messageDeviceSourceConversationActive = "Conversation".equals(simpleName);
+                    return;
+                }
+                if ("Conversation".equals(simpleName) &&
+                        (state == WppCore.ActivityChangeState.ChangeType.PAUSED
+                                || state == WppCore.ActivityChangeState.ChangeType.ENDED)) {
+                    messageDeviceSourceConversationActive = false;
+                }
+            });
+            hookMessageDeviceSourceTextView();
+            messageDeviceSourceTag();
+        }
 
         try {
             doubleTapReaction();
@@ -292,7 +320,6 @@ public class Others extends Feature {
     }
 
     private void disableHomeFilters() throws Exception {
-
         propsBoolean.put(15345, true);
         propsBoolean.put(13546, false);
         propsBoolean.put(13408, true);
@@ -303,16 +330,66 @@ public class Others extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var view = (View) param.thisObject;
                 view.setVisibility(View.GONE);
-                XposedHelpers.findAndHookMethod(View.class, "setVisibility", int.class, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        if (view == param.thisObject && (int) param.args[0] != View.GONE) {
-                            param.setResult(View.GONE);
-                        }
-                    }
-                });
             }
         });
+
+        // Avoid global View hooks on home startup: keep this scoped to chat filter views only.
+        try {
+            XposedHelpers.findAndHookMethod(filterView, "setVisibility", int.class, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if ((int) param.args[0] != View.GONE) {
+                        param.args[0] = View.GONE;
+                    }
+                }
+            });
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            XposedHelpers.findAndHookMethod(filterView, "onAttachedToWindow", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    ((View) param.thisObject).setVisibility(View.GONE);
+                }
+            });
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void setupViewVisibilityHooks() {
+        if (viewVisibilityHooksInstalled) return;
+        synchronized (Others.class) {
+            if (viewVisibilityHooksInstalled) return;
+            
+            XposedHelpers.findAndHookMethod(View.class, "onAttachedToWindow", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    if (HIDDEN_VIEW_IDS.isEmpty() && FORCE_HIDDEN_VIEWS.isEmpty()) return;
+                    
+                    View view = (View) param.thisObject;
+                    int id = view.getId();
+                    if ((id > 0 && HIDDEN_VIEW_IDS.contains(id)) || FORCE_HIDDEN_VIEWS.containsKey(view)) {
+                        view.setVisibility(View.GONE);
+                    }
+                }
+            });
+
+            XposedHelpers.findAndHookMethod(View.class, "setVisibility", int.class, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if (HIDDEN_VIEW_IDS.isEmpty() && FORCE_HIDDEN_VIEWS.isEmpty()) return;
+
+                    View view = (View) param.thisObject;
+                    int id = view.getId();
+                    if (((id > 0 && HIDDEN_VIEW_IDS.contains(id)) || FORCE_HIDDEN_VIEWS.containsKey(view)) 
+                            && (int) param.args[0] != View.GONE) {
+                        param.args[0] = View.GONE;
+                    }
+                }
+            });
+            viewVisibilityHooksInstalled = true;
+        }
     }
 
     private void disableAds() {
@@ -533,34 +610,37 @@ public class Others extends Feature {
             public void onItemBind(FMessageWpp fMessage, ViewGroup viewGroup) {
                 var dateTextView = (TextView) viewGroup.findViewById(Utils.getID("date", "id"));
                 if (dateTextView == null) return;
+                
                 var key = fMessage.getKey();
                 String messageId = key != null ? key.messageID : null;
-                XposedHelpers.setAdditionalInstanceField(dateTextView, "wae_device_source_message_id", messageId);
-                int resolvedDeviceId = resolveMessageDeviceId(messageId, fMessage);
-                XposedHelpers.setAdditionalInstanceField(dateTextView, DEVICE_SOURCE_SUFFIX_FIELD, getDeviceEmojiSuffix(resolvedDeviceId));
+                if (messageId == null) return;
 
-                dateTextView.post(() -> {
+                XposedHelpers.setAdditionalInstanceField(dateTextView, "wae_device_source_message_id", messageId);
+                
+                // Offload database lookup to a background thread
+                CompletableFuture.supplyAsync(() -> {
+                    return resolveMessageDeviceId(messageId, fMessage);
+                }).thenAcceptAsync(resolvedDeviceId -> {
                     Object currentId = XposedHelpers.getAdditionalInstanceField(dateTextView, "wae_device_source_message_id");
                     if (!Objects.equals(currentId, messageId)) return;
-                    if (DEBUG) {
-                        logDebug("MessageDeviceSourceBind", "messageId=" + messageId
-                                + ", deviceId=" + resolvedDeviceId
-                                + ", deviceJid=" + fMessage.getDeviceJid()
-                                + ", before=" + dateTextView.getText());
-                    }
+                    
+                    String suffix = getDeviceEmojiSuffix(resolvedDeviceId);
+                    XposedHelpers.setAdditionalInstanceField(dateTextView, DEVICE_SOURCE_SUFFIX_FIELD, suffix);
+                    
                     bindMessageDeviceSource(dateTextView, resolvedDeviceId);
-                    applyDeviceSourceToMatchingTextViews(viewGroup, dateTextView, getDeviceEmojiSuffix(resolvedDeviceId));
-                    if (DEBUG && messageId != null && dumpedMessageRowViews.add(messageId)) {
-                        logDebug("MessageDeviceSourceRowViews", dumpRowTextViews(viewGroup));
+                    // Optimized view update: only recurse if absolutely necessary
+                    if (!suffix.isEmpty()) {
+                        applyDeviceSourceToMatchingTextViews(viewGroup, dateTextView, suffix);
                     }
-                    if (DEBUG) {
-                        logDebug("MessageDeviceSourceApplied", "messageId=" + messageId
-                                + ", after=" + dateTextView.getText());
-                    }
-                });
+                }, executor); // Use a shared executor for UI updates
             }
         });
     }
+
+    private static final java.util.concurrent.Executor executor = action -> {
+        var handler = new android.os.Handler(android.os.Looper.getMainLooper());
+        handler.post(action);
+    };
 
     private int resolveMessageDeviceId(String messageId, FMessageWpp fMessage) {
         int liveDeviceId = fMessage.getDeviceId();
@@ -665,9 +745,11 @@ public class Others extends Feature {
     }
 
     private void hookMessageDeviceSourceTextView() {
-        XposedBridge.hookAllMethods(TextView.class, "setText", new XC_MethodHook() {
+        XC_MethodHook setTextHook = new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                if (!messageDeviceSourceConversationActive) return;
+
                 if (!(param.thisObject instanceof TextView textView)) return;
                 Object suffixObj = XposedHelpers.getAdditionalInstanceField(textView, DEVICE_SOURCE_SUFFIX_FIELD);
                 if (!(suffixObj instanceof String suffix) || suffix.isEmpty()) return;
@@ -687,21 +769,46 @@ public class Others extends Feature {
                     XposedHelpers.setAdditionalInstanceField(textView, DEVICE_SOURCE_GUARD_FIELD, false);
                 }
             }
-        });
+        };
+
+        try {
+            Method internalSetText = ReflectionUtils.findMethodUsingFilter(TextView.class,
+                    method -> method.getName().equals("setText")
+                            && method.getParameterCount() == 4
+                            && method.getParameterTypes()[0] == CharSequence.class
+                            && method.getParameterTypes()[1] == TextView.BufferType.class
+                            && method.getParameterTypes()[2] == boolean.class
+                            && method.getParameterTypes()[3] == int.class);
+            if (internalSetText != null) {
+                XposedBridge.hookMethod(internalSetText, setTextHook);
+                return;
+            }
+        } catch (Throwable t) {
+            logDebug("message_device_source setText hook fallback", t);
+        }
+
+        XposedBridge.hookAllMethods(TextView.class, "setText", setTextHook);
     }
 
+    private static Animation cachedAnimationObject = null;
+    private static String cachedAnimationName = null;
+
     private void animationList() throws Exception {
-        var animation = prefs.getString("animation_list", "default");
+        final String animation = prefs.getString("animation_list", "default");
+        if (animation.equals("default") && !properties.containsKey("home_list_animation")) return;
 
         var onChangeStatus = Unobfuscator.loadOnChangeStatus(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(onChangeStatus));
         var field1 = Unobfuscator.loadViewHolderField1(classLoader);
-        logDebug(Unobfuscator.getFieldDescriptor(field1));
         var absViewHolderClass = Unobfuscator.loadAbsViewHolder(classLoader);
+
         if (cachedAbsViewField == null) {
             cachedAbsViewField = ReflectionUtils.findFieldUsingFilter(absViewHolderClass, field -> field.getType() == View.class);
-            cachedAbsViewField.setAccessible(true);
+            if (cachedAbsViewField != null) {
+                cachedAbsViewField.setAccessible(true);
+            }
         }
+
+        if (cachedAbsViewField == null) return;
 
         XposedBridge.hookMethod(onChangeStatus, new XC_MethodHook() {
             @Override
@@ -709,13 +816,26 @@ public class Others extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var viewHolder = field1.get(param.thisObject);
                 var view = (View) cachedAbsViewField.get(viewHolder);
-                if (!Objects.equals(animation, "default")) {
-                    view.startAnimation(AnimationUtil.getAnimation(animation));
-                } else if (properties.containsKey("home_list_animation")) {
-                    var animation = AnimationUtil.getAnimation(properties.getProperty("home_list_animation"));
-                    if (animation != null) {
-                        view.startAnimation(animation);
+                if (view == null) return;
+
+                Animation anim = null;
+                String currentAnim = animation;
+                if (currentAnim.equals("default")) {
+                    currentAnim = properties.getProperty("home_list_animation");
+                }
+
+                if (currentAnim != null && !currentAnim.equals("default")) {
+                    synchronized (Others.class) {
+                        if (!currentAnim.equals(cachedAnimationName) || cachedAnimationObject == null) {
+                            cachedAnimationObject = AnimationUtil.getAnimation(currentAnim);
+                            cachedAnimationName = currentAnim;
+                        }
+                        anim = cachedAnimationObject;
                     }
+                }
+
+                if (anim != null && view.getAnimation() == null) {
+                    view.startAnimation(anim);
                 }
             }
         });
@@ -808,23 +928,12 @@ public class Others extends Feature {
 
     private void filterItems(String filterItems) {
         var itens = filterItems.split("\n");
-        var idsFilter = new java.util.HashSet<Integer>();
         for (String item : itens) {
             var id = Utils.getID(item, "id");
             if (id > 0) {
-                idsFilter.add(id);
+                HIDDEN_VIEW_IDS.add(id);
             }
         }
-        XposedHelpers.findAndHookMethod(View.class, "invalidate", boolean.class, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                var view = (View) param.thisObject;
-                var id = view.getId();
-                if (id > 0 && idsFilter.contains(id) && view.getVisibility() == View.VISIBLE) {
-                    view.setVisibility(View.GONE);
-                }
-            }
-        });
     }
 
     private void showOnline(boolean showOnline) throws Exception {
@@ -855,15 +964,16 @@ public class Others extends Feature {
         var dataUsageActivityClass = WppCore.getDataUsageActivityClass(classLoader);
         XposedBridge.hookMethod(methodPropsBoolean, new XC_MethodHook() {
             @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                var list = ReflectionUtils.findInstancesOfType(param.args, Integer.class);
-                int i = (int) list.get(0).second;
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Integer)) return;
+                int i = (int) param.args[0];
 
-                var propValue = propsBoolean.get(i);
+                Boolean propValue = propsBoolean.get(i);
                 if (propValue != null) {
                     // Fix Bug in Settings Data Usage
                     if (i == 4023) {
-                        if (ReflectionUtils.isCalledFromClass(dataUsageActivityClass)) return;
+                        Activity currentActivity = WppCore.getCurrentActivity();
+                        if (currentActivity != null && dataUsageActivityClass.isInstance(currentActivity)) return;
                     }
                     param.setResult(propValue);
                 }
@@ -875,8 +985,8 @@ public class Others extends Feature {
         XposedBridge.hookMethod(methodPropsInteger, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                var list = ReflectionUtils.findInstancesOfType(param.args, Integer.class);
-                int i = (int) list.get(0).second;
+                if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Integer)) return;
+                int i = (int) param.args[0];
                 var propValue = propsInteger.get(i);
                 if (propValue == null) return;
                 param.setResult(propValue);
@@ -952,13 +1062,16 @@ public class Others extends Feature {
         } catch (Throwable ignored) {
         }
 
-        XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onPrepareOptionsMenu", Menu.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onCreateOptionsMenu", Menu.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var menu = (Menu) param.args[0];
-                var item = menu.findItem(Utils.getID("menuitem_search", "id"));
-                if (item != null) {
-                    item.setVisible(Objects.equals(filterChats, "1"));
+                var searchId = Utils.getID("menuitem_search", "id");
+                if (searchId > 0) {
+                    var item = menu.findItem(searchId);
+                    if (item != null) {
+                        item.setVisible(Objects.equals(filterChats, "1"));
+                    }
                 }
             }
         });

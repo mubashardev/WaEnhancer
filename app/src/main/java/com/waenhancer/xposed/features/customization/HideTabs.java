@@ -1,7 +1,5 @@
 package com.waenhancer.xposed.features.customization;
 
-import static com.waenhancer.xposed.features.customization.SeparateGroup.tabs;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -10,6 +8,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 
 import com.waenhancer.xposed.core.Feature;
+import com.waenhancer.xposed.core.PerfLogger;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.ReflectionUtils;
@@ -20,12 +19,13 @@ import java.util.stream.Collectors;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class HideTabs extends Feature {
+    private static final int STATUS_TAB_ID = 300;
     private Object mTabPagerInstance;
+    private final ArrayList<Integer> currentTabs = new ArrayList<>();
 
     public HideTabs(@NonNull ClassLoader loader, @NonNull SharedPreferences preferences) {
         super(loader, preferences);
@@ -53,9 +53,13 @@ public class HideTabs extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var list = (List<Integer>) XposedHelpers.getStaticObjectField(home, ListField.getName());
                 for (var item : hideTabsList) {
-                    if (item != SeparateGroup.STATUS || !igstatus) {
+                    if (item != STATUS_TAB_ID || !igstatus) {
                         list.remove(item);
                     }
+                }
+                synchronized (currentTabs) {
+                    currentTabs.clear();
+                    currentTabs.addAll(list);
                 }
             }
         });
@@ -75,6 +79,7 @@ public class HideTabs extends Feature {
         XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onCreate", Bundle.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                long perfStart = PerfLogger.start();
                 Class<?> TabsPagerClass = WppCore.getTabsPagerClass(classLoader);
                 var tabsField = ReflectionUtils.getFieldByType(param.thisObject.getClass(), TabsPagerClass);
                 mTabPagerInstance = tabsField.get(param.thisObject);
@@ -84,8 +89,12 @@ public class HideTabs extends Feature {
                     try {
                         var contentView = ((Activity) param.thisObject).findViewById(android.R.id.content);
                         if (contentView != null) {
-                            if (tabs != null) {
-                                var arr = new ArrayList<>(tabs);
+                            ArrayList<Integer> tabsSnapshot;
+                            synchronized (currentTabs) {
+                                tabsSnapshot = new ArrayList<>(currentTabs);
+                            }
+                            if (!tabsSnapshot.isEmpty()) {
+                                var arr = new ArrayList<>(tabsSnapshot);
                                 arr.removeAll(hideTabsList);
                                 View tabFrame = contentView.findViewById(android.R.id.tabs);
                                 if (tabFrame != null && arr.size() == 1) {
@@ -101,6 +110,7 @@ public class HideTabs extends Feature {
                         }
                     } catch (Exception ignored) {}
                 }
+                PerfLogger.end("HideTabs.homeOnCreate", perfStart, 1);
             }
         });
 
@@ -110,11 +120,13 @@ public class HideTabs extends Feature {
         XposedBridge.hookMethod(onMenuItemSelected, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                long perfStart = PerfLogger.start();
                 if (param.thisObject == mTabPagerInstance) {
                     var index = (int) param.args[0];
                     var idxAtual = (int) XposedHelpers.callMethod(param.thisObject, "getCurrentItem");
                     param.args[0] = getNewTabIndex(hideTabsList, idxAtual, index);
                 }
+                PerfLogger.end("HideTabs.onMenuItemSelected", perfStart, 1);
             }
         });
     }
@@ -125,13 +137,36 @@ public class HideTabs extends Feature {
         return "Hide Tabs";
     }
 
-    public int getNewTabIndex(List hidetabs, int indexAtual, int index) {
-        if (tabs == null || tabs.size() <= index) return index;
-        var tabIsHidden = hidetabs.contains(tabs.get(index));
-        if (!tabIsHidden) return index;
-        var newIndex = index > indexAtual ? index + 1 : index - 1;
-        if (newIndex < 0) return 0;
-        if (newIndex >= tabs.size()) return indexAtual;
-        return getNewTabIndex(hidetabs, indexAtual, newIndex);
+    public int getNewTabIndex(List<?> hidetabs, int indexAtual, int index) {
+        ArrayList<Integer> tabsSnapshot;
+        synchronized (currentTabs) {
+            if (currentTabs.isEmpty()) {
+                return index;
+            }
+            tabsSnapshot = new ArrayList<>(currentTabs);
+        }
+        
+        int target = index;
+        int direction = index > indexAtual ? 1 : -1;
+        
+        while (target >= 0 && target < tabsSnapshot.size()) {
+            if (!hidetabs.contains(tabsSnapshot.get(target))) {
+                return target;
+            }
+            target += direction;
+        }
+        
+        // Fallback: search in opposite direction if we went out of bounds
+        if (target < 0 || target >= tabsSnapshot.size()) {
+            target = index - direction;
+            while (target >= 0 && target < tabsSnapshot.size()) {
+                if (!hidetabs.contains(tabsSnapshot.get(target))) {
+                    return target;
+                }
+                target -= direction;
+            }
+        }
+        
+        return indexAtual; // Final fallback
     }
 }

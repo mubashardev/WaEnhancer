@@ -205,7 +205,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
             Bundle result = callProvider("get_all_preferences", null);
             if (result == null) {
                 Utils.log("[WAE] ProviderSharedPreferences: Hydration failed (null result). Using fallback.");
-                ;
+                if (fallbackPrefs == null) return;
                 var editor = localPrefs.edit().clear();
                 for (Map.Entry<String, ?> entry : fallbackPrefs.getAll().entrySet()) {
                     Object value = entry.getValue();

@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
+import com.waenhancer.xposed.core.components.FStatusWpp;
 import com.waenhancer.xposed.core.db.DelMessageStore;
 import com.waenhancer.xposed.core.db.MessageStore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
@@ -53,40 +54,50 @@ public class AntiRevoke extends Feature {
         if (param.args == null || param.args.length == 0)
             return null;
 
-        if (FMessageWpp.TYPE.isInstance(param.args[0]))
-            return param.args[0];
-
-        if (param.args.length > 1) {
-            if (FMessageWpp.TYPE.isInstance(param.args[1]))
-                return param.args[1];
-            var FMessageField = ReflectionUtils.findFieldUsingFilterIfExists(param.args[1].getClass(),
-                    f -> FMessageWpp.TYPE.isAssignableFrom(f.getType()));
-            if (FMessageField != null) {
-                return FMessageField.get(param.args[1]);
-            }
+        for (Object arg : param.args) {
+            if (arg == null) continue;
+            if (FMessageWpp.TYPE.isInstance(arg)) return arg;
         }
 
-        var field = ReflectionUtils.findFieldUsingFilterIfExists(param.args[0].getClass(),
-                f -> f.getType() == FMessageWpp.TYPE);
-        if (field != null)
-            return field.get(param.args[0]);
+        Object arg0 = param.args[0];
+        if (arg0 == null) return null;
 
-        var field1 = ReflectionUtils.findFieldUsingFilterIfExists(param.args[0].getClass(),
+        // Try to find FMessage field in the object
+        var FMessageField = ReflectionUtils.findFieldUsingFilterIfExists(arg0.getClass(),
+                f -> FMessageWpp.TYPE.isAssignableFrom(f.getType()));
+        if (FMessageField != null) {
+            return FMessageField.get(arg0);
+        }
+
+        // Try status data logic
+        try {
+            var classLoader = arg0.getClass().getClassLoader();
+            if (classLoader != null) {
+                var mapFStatusToFMessage = Unobfuscator.loadFStatusToFMessage(classLoader);
+                var fStatusClass = mapFStatusToFMessage.getParameterTypes()[0];
+                var fStatusField = ReflectionUtils.findFieldUsingFilterIfExists(arg0.getClass(),
+                        f -> fStatusClass.isAssignableFrom(f.getType()));
+                if (fStatusField != null) {
+                    return WppCore.getFMessageFromFStatus(fStatusField.get(arg0));
+                }
+            }
+        } catch (Exception ignored) {}
+
+        var field1 = ReflectionUtils.findFieldUsingFilterIfExists(arg0.getClass(),
                 f -> f.getType() == FMessageWpp.Key.TYPE);
         if (field1 != null) {
-            var key = field1.get(param.args[0]);
+            var key = field1.get(arg0);
             return WppCore.getFMessageFromKey(key);
         }
         return null;
 
     }
 
-    private static void persistRevokedMessage(FMessageWpp fMessage) {
-        var messageKey = (String) XposedHelpers.getObjectField(fMessage.getObject(), "A01");
+    private static void persistRevokedMessage(FMessageWpp fMessage, String messageId) {
         var stripJID = fMessage.getKey().remoteJid.getPhoneNumber();
         Set<String> messages = getRevokedMessagesForJid(fMessage);
-        messages.add(messageKey);
-        DelMessageStore.getInstance(Utils.getApplication()).insertMessage(stripJID, messageKey,
+        messages.add(messageId);
+        DelMessageStore.getInstance(Utils.getApplication()).insertMessage(stripJID, messageId,
                 System.currentTimeMillis());
     }
 
@@ -114,6 +125,24 @@ public class AntiRevoke extends Feature {
         Class<?> statusPlaybackClass = Unobfuscator.loadStatusPlaybackViewClass(classLoader);
         logDebug(statusPlaybackClass);
 
+        var antiRevokeFStatusMethod = Unobfuscator.loadAntiRevokeFStatusMethod(classLoader);
+        logDebug(Unobfuscator.getMethodDescriptor(antiRevokeFStatusMethod));
+
+        XposedBridge.hookMethod(antiRevokeFStatusMethod, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                if (param.args == null || param.args.length < 2 || param.args[1] == null) return;
+                var fStatusKey = new FStatusWpp.FStatusKey(param.args[1]);
+                var fStatus = fStatusKey.fStatus;
+                if (fStatus == null) return;
+                var fMessage = fStatus.getFMessage();
+                if (fMessage == null) return;
+                if (!fStatusKey.isFromMe && handleRevocationAttempt(fMessage, fStatusKey.messageID) != 0) {
+                    param.setResult(0);
+                }
+            }
+        });
+
         XposedBridge.hookMethod(antiRevokeMessageMethod, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Exception {
@@ -123,7 +152,7 @@ public class AntiRevoke extends Feature {
                 var fMessage = new FMessageWpp(param.args[0]);
                 var messageKey = fMessage.getKey();
                 var deviceJid = fMessage.getDeviceJid();
-                var messageID = (String) XposedHelpers.getObjectField(fMessage.getObject(), "A01");
+                var messageID = messageKey.messageID;
 
                 if (WppCore.getPrivBoolean(messageID + "_delpass", false)) {
                     WppCore.removePrivKey(messageID + "_delpass");
@@ -141,10 +170,10 @@ public class AntiRevoke extends Feature {
                 // deviceJid is null (the common case for other participants) to be silently
                 // skipped.
                 if (messageKey.remoteJid.isGroup()) {
-                    if (!messageKey.isFromMe && handleRevocationAttempt(fMessage) != 0) {
+                    if (!messageKey.isFromMe && handleRevocationAttempt(fMessage, messageID) != 0) {
                         param.setResult(true);
                     }
-                } else if (!messageKey.isFromMe && handleRevocationAttempt(fMessage) != 0) {
+                } else if (!messageKey.isFromMe && handleRevocationAttempt(fMessage, messageID) != 0) {
                     param.setResult(true);
                 }
             }
@@ -420,6 +449,32 @@ public class AntiRevoke extends Feature {
                 toastMsg = String.format(toastFormat, date);
             }
 
+            if (antirevokeType.equals("antirevokestatus")) {
+                // Status playback UI: Use compound drawables for better placement stability
+                if (antirevokeValue == 1) { // Text indicator
+                    var dateText = dateTextView.getText().toString();
+                    var revokeNotice = (stringMessageDeleted != null ? stringMessageDeleted : "Deleted") + " | ";
+                    if (!dateText.contains(revokeNotice)) {
+                        dateTextView.setText(revokeNotice + dateText);
+                    }
+                } else if (antirevokeValue == 2) { // Icon indicator
+                    var drawable = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.deleted);
+                    dateTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null);
+                    dateTextView.setCompoundDrawablePadding(10);
+                }
+                
+                if (!toastMsg.isEmpty()) {
+                    final String finalToast = toastMsg;
+                    dateTextView.setOnClickListener(v -> Utils.showToast(finalToast, Toast.LENGTH_LONG));
+                }
+                
+                // Hide any leftover separate indicators
+                android.view.View indicator = parent.findViewWithTag("wae_revoke_indicator");
+                if (indicator != null) indicator.setVisibility(android.view.View.GONE);
+                
+                return;
+            }
+
             android.view.View indicator = parent.findViewWithTag("wae_revoke_indicator");
             if (indicator == null) {
                 if (antirevokeValue == 1) { // Text indicator
@@ -488,23 +543,22 @@ public class AntiRevoke extends Feature {
         }
     }
 
-    private int handleRevocationAttempt(FMessageWpp fMessage) {
+    private int handleRevocationAttempt(FMessageWpp fMessage, String messageId) {
         try {
             showRevocationToast(fMessage);
         } catch (Exception e) {
             log(e);
         }
-        String messageKey = (String) XposedHelpers.getObjectField(fMessage.getObject(), "A01");
         String stripJID = fMessage.getKey().remoteJid.getPhoneNumber();
         int revokeboolean = stripJID.equals("status") ? Integer.parseInt(prefs.getString("antirevokestatus", "0"))
                 : Integer.parseInt(prefs.getString("antirevoke", "0"));
         if (revokeboolean == 0)
             return revokeboolean;
         var messageRevokedList = getRevokedMessagesForJid(fMessage);
-        if (!messageRevokedList.contains(messageKey)) {
+        if (!messageRevokedList.contains(messageId)) {
             try {
                 CompletableFuture.runAsync(() -> {
-                    persistRevokedMessage(fMessage);
+                    persistRevokedMessage(fMessage, messageId);
                     try {
                         var mConversation = WppCore.getCurrentConversation();
                         if (mConversation != null

@@ -328,17 +328,19 @@ public class ReflectionUtils {
     }
 
     public static boolean isCalledFromString(String contains) {
-        var trace = Thread.currentThread().getStackTrace();
-        for (var element : trace) {
-            if (element.toString().contains(contains)) return true;
+        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+        // Skip getStackTrace, isCalledFromString
+        for (int i = 2; i < trace.length; i++) {
+            if (trace[i].toString().contains(contains)) return true;
         }
         return false;
     }
 
     public static boolean isCalledFromStrings(String... contains) {
-        var trace = Thread.currentThread().getStackTrace();
-        for (var element : trace) {
-            var s = element.toString();
+        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+        // Skip getStackTrace, isCalledFromStrings
+        for (int i = 2; i < trace.length; i++) {
+            String s = trace[i].toString();
             for (String c : contains) {
                 if (s.contains(c)) return true;
             }
@@ -359,15 +361,29 @@ public class ReflectionUtils {
         return false;
     }
 
+    /**
+     * @deprecated Use {@code WppCore.getCurrentActivity()} or other faster checks.
+     * This method is extremely slow as it generates a full stack trace.
+     * NEVER use this in hot paths like property hooks or list item binding.
+     */
+    @Deprecated
     public synchronized static boolean isCalledFromClass(Class<?> cls) {
-        var trace = Thread.currentThread().getStackTrace();
-        for (StackTraceElement stackTraceElement : trace) {
-            if (stackTraceElement.getClassName().equals(cls.getName()))
+        String targetClassName = cls.getName();
+        // Optimization: Use Throwable to get stack trace more efficiently in some JVMs
+        // or just iterate and compare strings to avoid object creation where possible.
+        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+        // Skip first 2-3 elements which are usually getStackTrace and isCalledFromClass
+        for (int i = 2; i < trace.length; i++) {
+            if (trace[i].getClassName().equals(targetClassName))
                 return true;
         }
         return false;
     }
 
+    /**
+     * @deprecated Use faster alternatives. Stack trace generation is slow.
+     */
+    @Deprecated
     public synchronized static boolean isCalledFromMethod(Method method) {
         var trace = Thread.currentThread().getStackTrace();
         for (StackTraceElement stackTraceElement : trace) {
@@ -463,59 +479,47 @@ public class ReflectionUtils {
         return null;
     }
 
+    private static final Map<String, List<String>> F_MESSAGE_PATH_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
     public static Object findFMessageInObject(Object object, Class<?> fMessageClass, Class<?> keyClass, ClassLoader classLoader) {
-        return findFMessageInObject(object, fMessageClass, keyClass, classLoader,
-                Collections.newSetFromMap(new IdentityHashMap<>()), 0);
+        if (object == null) return null;
+        if (fMessageClass != null && fMessageClass.isInstance(object)) return object;
+
+        String cacheKey = object.getClass().getName();
+        List<String> cachedPath = F_MESSAGE_PATH_CACHE.get(cacheKey);
+        if (cachedPath != null) {
+            Object current = object;
+            for (String fieldName : cachedPath) {
+                current = XposedHelpers.getObjectField(current, fieldName);
+                if (current == null) break;
+            }
+            if (current != null && fMessageClass.isInstance(current)) {
+                return current;
+            }
+            // Cache invalid, clear it
+            F_MESSAGE_PATH_CACHE.remove(cacheKey);
+        }
+
+        List<String> path = new ArrayList<>();
+        Object result = findFMessageInObject(object, fMessageClass, keyClass, classLoader,
+                Collections.newSetFromMap(new IdentityHashMap<>()), 0, path);
+        
+        if (result != null && !path.isEmpty()) {
+            F_MESSAGE_PATH_CACHE.put(cacheKey, new ArrayList<>(path));
+        }
+        return result;
     }
 
     private static Object findFMessageInObject(Object object, Class<?> fMessageClass, Class<?> keyClass,
-                                               ClassLoader classLoader, Set<Object> visited, int depth) {
+                                               ClassLoader classLoader, Set<Object> visited, int depth, List<String> path) {
         if (object == null) return null;
         if (depth > 4) return null;
         if (fMessageClass != null && fMessageClass.isInstance(object)) return object;
         if (!visited.add(object)) return null;
 
-        Object containerMatch = findFMessageInContainer(object, fMessageClass, keyClass, classLoader, visited, depth);
-        if (containerMatch != null) return containerMatch;
-
-        boolean debug = object.getClass().getName().contains("8hO");
-        if (debug) {
-            ;
-        }
-
-        // 1. Search for a direct field of type fMessageClass
-        if (fMessageClass != null) {
-            Field field = getFieldByExtendType(object.getClass(), fMessageClass);
-            if (field != null) {
-                Object val = getObjectField(field, object);
-                if (val != null && fMessageClass.isInstance(val)) {
-                    if (debug) ;
-                    return val;
-                }
-            }
-        }
-
-        // 2. Search for a field of type keyClass
-        if (keyClass != null) {
-            Field field = getFieldByExtendType(object.getClass(), keyClass);
-            if (field != null) {
-                Object val = getObjectField(field, object);
-                if (val != null && keyClass.isInstance(val)) {
-                    if (debug) ;
-                    try {
-                        Object fmsg = com.waenhancer.xposed.core.WppCore.getFMessageFromKey(val);
-                        if (fmsg != null) return fmsg;
-                    } catch (Exception ignored) {}
-                }
-            }
-        }
-
-        // 3. Class hierarchy nested search
+        // Specialized search for FMessage or Key paths
         Class<?> currentClass = object.getClass();
         while (currentClass != null && currentClass != Object.class) {
-            if (debug) {
-                XposedBridge.log("[WAE-DEBUG] Scanning class level: " + currentClass.getName());
-            }
             List<Field> fields = getCachedDeclaredFields(currentClass);
             for (Field field : fields) {
                 if (field.getType().isPrimitive() || field.getType().getName().startsWith("java.") || field.getType().getName().startsWith("android.")) {
@@ -524,106 +528,30 @@ public class ReflectionUtils {
                 field.setAccessible(true);
                 try {
                     Object nestedObj = field.get(object);
-                    if (debug) {
-                        ;
-                        if (nestedObj != null && nestedObj.getClass().getName().contains("8gx")) {
-                            ;
-                            for (Field f : getCachedDeclaredFields(nestedObj.getClass())) {
-                                f.setAccessible(true);
-                                try {
-                                    ;
-                                } catch (Exception e) {
-                                    XposedBridge.log("[WAE-DEBUG]   8gx Field read error: " + f.getName() + " -> " + e);
-                                }
-                            }
-                        }
+                    if (nestedObj == null) continue;
+                    
+                    path.add(field.getName());
+                    if (fMessageClass != null && fMessageClass.isInstance(nestedObj)) {
+                        return nestedObj;
                     }
-                    if (nestedObj != null) {
-                        Object nestedContainerMatch = findFMessageInContainer(nestedObj, fMessageClass, keyClass, classLoader, visited, depth + 1);
-                        if (nestedContainerMatch != null) {
-                            return nestedContainerMatch;
-                        }
-                        if (fMessageClass != null && fMessageClass.isInstance(nestedObj)) {
-                            if (debug) ;
-                            return nestedObj;
-                        }
-                        if (fMessageClass != null) {
-                            Field nestedFMsgField = getFieldByExtendType(nestedObj.getClass(), fMessageClass);
-                            if (debug) {
-                                ;
-                            }
-                            if (nestedFMsgField != null) {
-                                Object val = getObjectField(nestedFMsgField, nestedObj);
-                                if (val != null && fMessageClass.isInstance(val)) {
-                                    if (debug) ;
-                                    return val;
-                                }
-                            }
-                        }
-                        // Check fields of nestedObj for any Key (type-based OR toString-based)
-                        for (Field nestedKeyField : getCachedDeclaredFields(nestedObj.getClass())) {
-                            nestedKeyField.setAccessible(true);
-                            try {
-                                Object val = nestedKeyField.get(nestedObj);
-                                if (val != null) {
-                                    boolean isKey = false;
-                                    if (keyClass != null && keyClass.isInstance(val)) {
-                                        isKey = true;
-                                    } else {
-                                        String valStr = val.toString();
-                                        if (valStr != null && (valStr.startsWith("Key(id=") || valStr.startsWith("Key("))) {
-                                            isKey = true;
-                                        }
-                                    }
-                                    if (isKey) {
-                                        if (debug) ;
-                                        Object targetKey = val;
-                                        if (keyClass != null && !keyClass.isInstance(val)) {
-                                            targetKey = convertToRealKey(val, classLoader, debug);
-                                        }
-                                        if (targetKey != null) {
-                                            try {
-                                                Object fmsg = com.waenhancer.xposed.core.WppCore.getFMessageFromKey(targetKey);
-                                                if (fmsg != null) return fmsg;
-                                            } catch (Exception e) {
-                                                if (debug) XposedBridge.log("[WAE-DEBUG] Error getting message from key: " + e);
-                                            }
-                                        }
-                                    }
-                                }
-                            } catch (Exception ignored) {}
-                        }
-                        Object recursiveMatch = findFMessageInObject(nestedObj, fMessageClass, keyClass, classLoader, visited, depth + 1);
-                        if (recursiveMatch != null) {
-                            return recursiveMatch;
-                        }
+                    
+                    if (keyClass != null && keyClass.isInstance(nestedObj)) {
+                        try {
+                            Object fmsg = com.waenhancer.xposed.core.WppCore.getFMessageFromKey(nestedObj);
+                            if (fmsg != null) return fmsg;
+                        } catch (Exception ignored) {}
                     }
-                } catch (Exception e) {
-                    if (debug) XposedBridge.log("[WAE-DEBUG] Error reading field: " + field.getName() + " -> " + e);
-                }
+                    
+                    Object recursiveMatch = findFMessageInObject(nestedObj, fMessageClass, keyClass, classLoader, visited, depth + 1, path);
+                    if (recursiveMatch != null) {
+                        return recursiveMatch;
+                    }
+                    path.remove(path.size() - 1);
+                } catch (Exception ignored) {}
             }
             currentClass = currentClass.getSuperclass();
         }
 
-        return null;
-    }
-
-    private static Object findFMessageInContainer(Object object, Class<?> fMessageClass, Class<?> keyClass,
-                                                  ClassLoader classLoader, Set<Object> visited, int depth) {
-        if (object == null || depth > 4) return null;
-
-        if (object instanceof Iterable<?> iterable) {
-            for (Object item : iterable) {
-                Object match = findFMessageInObject(item, fMessageClass, keyClass, classLoader, visited, depth + 1);
-                if (match != null) return match;
-            }
-        } else if (object.getClass().isArray() && !object.getClass().getComponentType().isPrimitive()) {
-            Object[] array = (Object[]) object;
-            for (Object item : array) {
-                Object match = findFMessageInObject(item, fMessageClass, keyClass, classLoader, visited, depth + 1);
-                if (match != null) return match;
-            }
-        }
         return null;
     }
 

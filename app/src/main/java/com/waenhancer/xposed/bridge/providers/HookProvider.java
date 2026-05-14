@@ -30,9 +30,8 @@ public class HookProvider extends ContentProvider {
     private SharedPreferences getPrefs() {
         Context context = getContext();
         if (context == null) return null;
-        // Explicitly target the default preferences file used by the UI
-        String prefsName = context.getPackageName() + "_preferences";
-        return context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+        // Explicitly target the default preferences used by the UI to ensure 100% parity
+        return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     @Nullable

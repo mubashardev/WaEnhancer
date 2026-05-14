@@ -29,6 +29,7 @@ import androidx.core.content.ContextCompat;
 import com.waenhancer.utils.IColors;
 import com.waenhancer.views.WallpaperView;
 import com.waenhancer.xposed.core.Feature;
+import com.waenhancer.xposed.core.PerfLogger;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.DesignUtils;
@@ -40,6 +41,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
@@ -56,6 +58,8 @@ public class CustomThemeV2 extends Feature {
     // Pre-computed set of source color ints for O(1) rejection in hot hooks.
     // Populated after loadAndApplyColors() so hooks can skip unmatched colors instantly.
     private static final Set<Integer> sourceColorInts = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    private static final Set<Object> processedDrawableStates = java.util.Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Set<View> processedWallpaperFrames = java.util.Collections.newSetFromMap(new WeakHashMap<>());
     // Cached ID for conversations_row_message_count to avoid repeated lookups
     private static int cachedMsgCountId = 0;
 
@@ -235,10 +239,13 @@ public class CustomThemeV2 extends Feature {
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        long perfStart = PerfLogger.start();
                         if (checkNotHomeActivity())
                             return;
                         var viewGroup = (ViewGroup) param.getResult();
+                        if (viewGroup == null) return;
                         replaceColors(viewGroup, wallAlpha);
+                        PerfLogger.end("CustomThemeV2.fragmentView", perfStart, 1);
                     }
                 });
 
@@ -246,11 +253,19 @@ public class CustomThemeV2 extends Feature {
         XposedBridge.hookAllMethods(loadTabFrameClass, "onAttachedToWindow", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                long perfStart = PerfLogger.start();
                 var viewGroup = (ViewGroup) param.thisObject;
                 if (checkNotHomeActivity())
                     return;
+                synchronized (processedWallpaperFrames) {
+                    if (processedWallpaperFrames.contains(viewGroup)) {
+                        return;
+                    }
+                    processedWallpaperFrames.add(viewGroup);
+                }
                 var background = viewGroup.getBackground();
                 replaceColor(background, navAlpha);
+                PerfLogger.end("CustomThemeV2.tabFrameAttach", perfStart, 1);
             }
         });
 
@@ -282,6 +297,7 @@ public class CustomThemeV2 extends Feature {
         XposedBridge.hookAllMethods(resourceImpl, "loadDrawable", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                long perfStart = PerfLogger.start();
                 // Suppress Resources$NotFoundException from drawables with unsupported
                 // XML elements (e.g. 'gradient' class in $status_tile_overlay_sdk_24__0).
                 // Without this, the exception propagates through the hook and crashes WhatsApp.
@@ -295,7 +311,17 @@ public class CustomThemeV2 extends Feature {
                 }
                 var drawable = (Drawable) param.getResult();
                 if (drawable == null) return;
+                var constantState = drawable.getConstantState();
+                if (constantState != null) {
+                    synchronized (processedDrawableStates) {
+                        if (processedDrawableStates.contains(constantState)) {
+                            return;
+                        }
+                        processedDrawableStates.add(constantState);
+                    }
+                }
                 replaceColor(drawable, IColors.colors);
+                PerfLogger.end("CustomThemeV2.loadDrawable", perfStart, 1);
             }
         });
 
@@ -428,6 +454,12 @@ public class CustomThemeV2 extends Feature {
         // Pre-compute integer set of source colors for O(1) rejection in hot hooks.
         // This avoids toString() conversion + HashMap.get() on every hook invocation.
         sourceColorInts.clear();
+        synchronized (processedDrawableStates) {
+            processedDrawableStates.clear();
+        }
+        synchronized (processedWallpaperFrames) {
+            processedWallpaperFrames.clear();
+        }
         for (String key : IColors.colors.keySet()) {
             try {
                 if (key.startsWith("#") && key.length() == 9) {
@@ -538,10 +570,11 @@ public class CustomThemeV2 extends Feature {
     }
 
     private boolean checkNotApplyColor(int color) {
+        // Optimized: Avoid expensive stack trace inspection in hot path.
+        // The original logic was specifically for Conversation activity.
         var activity = WppCore.getCurrentActivity();
-        if (activity != null && activity.getClass().getSimpleName().equals("Conversation")
-                && ReflectionUtils.isCalledFromStrings("getValue")
-                && !ReflectionUtils.isCalledFromStrings("android.view")) {
+        if (activity != null && activity.getClass().getSimpleName().equals("Conversation")) {
+            // If it's a known background color we want to preserve in Conversation, skip.
             return color != 0xff12181c;
         }
         return false;

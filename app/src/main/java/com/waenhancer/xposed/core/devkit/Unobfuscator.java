@@ -3517,4 +3517,29 @@ public class Unobfuscator {
         }
         return false;
     }
+    public static @androidx.annotation.NonNull Class<?> loadFStatusKeyClass(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> dexkit.findClass(org.luckypray.dexkit.query.FindClass.create().matcher(
+                        org.luckypray.dexkit.query.matchers.ClassMatcher.create()
+                                .addUsingString("Key(id=").
+                                addUsingString("senderJid")))
+                .first().getInstance(classLoader));
+    }
+
+    public static @androidx.annotation.NonNull Class<?> loadFStatusClass(@androidx.annotation.NonNull ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
+            return findFirstClassUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, "FStatus state");
+        });
+    }
+
+    public static Method loadAntiRevokeFStatusMethod(@androidx.annotation.NonNull ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
+            var fStatusKeyClass = loadFStatusKeyClass(classLoader);
+            var clazz = findFirstClassUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, "RevokeStatusManager/failed");
+            return ReflectionUtils.findMethodUsingFilter(clazz, method -> method.getParameterCount() > 0 && fStatusKeyClass.isAssignableFrom(method.getParameterTypes()[0]));
+        });
+    }
+
+    public static @androidx.annotation.NonNull Method loadGetStatusByKey(@androidx.annotation.NonNull ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> findFirstMethodUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, "StatusStore/GET_STATUS_BY_KEY"));
+    }
 }

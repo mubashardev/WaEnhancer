@@ -151,6 +151,7 @@ public class WppCore {
         hookStatusToMessageMapper(loader);
 
         if (!pref.getBoolean("lite_mode", false)) {
+            com.waenhancer.xposed.core.components.FStatusWpp.initialize(loader);
             CompletableFuture.runAsync(() -> {
                 try {
                     initBridge(Utils.getApplication());

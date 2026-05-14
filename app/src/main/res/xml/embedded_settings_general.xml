@@ -58,20 +58,4 @@
             app:title="@string/show_hook_toast" />
 
     </PreferenceCategory>
-
-    <PreferenceCategory
-        app:iconSpaceReserved="false"
-        app:title="@string/wa_enhancer_embedded_settings">
-
-        <ListPreference
-            app:defaultValue="1"
-            app:entries="@array/wa_enhancer_entry_point_entries"
-            app:entryValues="@array/wa_enhancer_entry_point_values"
-            app:iconSpaceReserved="false"
-            app:key="open_wae"
-            app:summary="@string/wa_enhancer_embedded_settings_sum"
-            app:title="@string/wa_enhancer_embedded_settings" />
-
-    </PreferenceCategory>
-
 </PreferenceScreen>

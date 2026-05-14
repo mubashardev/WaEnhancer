@@ -1,5 +1,6 @@
 package com.waenhancer.xposed.features.privacy;
 
+import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -41,8 +42,9 @@ public class TagMessage extends Feature {
                 if (!prefs.getBoolean("hidetag", false)) return;
                 var arg = (long) param.args[0];
                 if (arg == 1) {
-                    if (ReflectionUtils.isCalledFromClass(forwardClass)) {
-                        param.args[0] = 0;
+                    Activity current = com.waenhancer.xposed.core.WppCore.getCurrentActivity();
+                    if (current != null && forwardClass.isInstance(current)) {
+                        param.args[0] = 0L;
                     }
                 }
             }

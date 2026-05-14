@@ -39,11 +39,9 @@ import com.waenhancer.xposed.features.customization.CustomThemeV2;
 import com.waenhancer.xposed.features.customization.CustomTime;
 import com.waenhancer.xposed.features.customization.CustomToolbar;
 import com.waenhancer.xposed.features.customization.CustomView;
-import com.waenhancer.xposed.features.customization.FilterGroups;
 import com.waenhancer.xposed.features.customization.HideSeenView;
 import com.waenhancer.xposed.features.customization.HideTabs;
 import com.waenhancer.xposed.features.customization.IGStatus;
-import com.waenhancer.xposed.features.customization.SeparateGroup;
 import com.waenhancer.xposed.features.customization.ShowOnline;
 import com.waenhancer.xposed.features.general.AntiRevoke;
 import com.waenhancer.xposed.features.general.CallType;
@@ -74,7 +72,6 @@ import com.waenhancer.xposed.features.others.ActivityController;
 import com.waenhancer.xposed.features.others.BackupRestore;
 import com.waenhancer.xposed.features.others.AudioTranscript;
 import com.waenhancer.xposed.features.others.Channels;
-import com.waenhancer.xposed.features.others.ChatFilters;
 import com.waenhancer.xposed.features.others.CopyStatus;
 import com.waenhancer.xposed.features.others.DebugFeature;
 import com.waenhancer.xposed.features.others.GoogleTranslate;
@@ -169,6 +166,8 @@ public class FeatureLoader {
     public static void start(@NonNull ClassLoader loader, @NonNull android.content.SharedPreferences pref, String sourceDir) {
         hostClassLoader = loader;
         Feature.DEBUG = pref.getBoolean("enablelogs", true);
+        // Perf logs are opt-in because hooks are hot-path
+        PerfLogger.setEnabled(pref.getBoolean("enable_perf_logs", false));
         Utils.DEBUG = Feature.DEBUG;
         Utils.xprefs = pref;
 
@@ -739,7 +738,6 @@ public class FeatureLoader {
                 ActivityController.class,
                 CustomThemeV2.class,
                 ChatLimit.class,
-                SeparateGroup.class,
                 ShowOnline.class,
                 DndMode.class,
                 FreezeLastSeen.class,
@@ -763,13 +761,11 @@ public class FeatureLoader {
                 CallType.class,
                 MediaPreview.class,
                 AutoStatusForward.class,
-                FilterGroups.class,
                 Tasker.class,
                 DeleteStatus.class,
                 DownloadViewOnce.class,
                 Channels.class,
                 DownloadProfile.class,
-                ChatFilters.class,
                 GroupAdmin.class,
                 Stickers.class,
                 CopyStatus.class,

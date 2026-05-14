@@ -1,7 +1,5 @@
 package com.waenhancer.xposed.features.customization;
 
-import static com.waenhancer.xposed.features.customization.SeparateGroup.tabs;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -21,12 +19,13 @@ import java.util.stream.Collectors;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class HideTabs extends Feature {
+    private static final int STATUS_TAB_ID = 300;
     private Object mTabPagerInstance;
+    private final ArrayList<Integer> currentTabs = new ArrayList<>();
 
     public HideTabs(@NonNull ClassLoader loader, @NonNull SharedPreferences preferences) {
         super(loader, preferences);
@@ -54,9 +53,13 @@ public class HideTabs extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var list = (List<Integer>) XposedHelpers.getStaticObjectField(home, ListField.getName());
                 for (var item : hideTabsList) {
-                    if (item != SeparateGroup.STATUS || !igstatus) {
+                    if (item != STATUS_TAB_ID || !igstatus) {
                         list.remove(item);
                     }
+                }
+                synchronized (currentTabs) {
+                    currentTabs.clear();
+                    currentTabs.addAll(list);
                 }
             }
         });
@@ -86,8 +89,12 @@ public class HideTabs extends Feature {
                     try {
                         var contentView = ((Activity) param.thisObject).findViewById(android.R.id.content);
                         if (contentView != null) {
-                            if (tabs != null) {
-                                var arr = new ArrayList<>(tabs);
+                            ArrayList<Integer> tabsSnapshot;
+                            synchronized (currentTabs) {
+                                tabsSnapshot = new ArrayList<>(currentTabs);
+                            }
+                            if (!tabsSnapshot.isEmpty()) {
+                                var arr = new ArrayList<>(tabsSnapshot);
                                 arr.removeAll(hideTabsList);
                                 View tabFrame = contentView.findViewById(android.R.id.tabs);
                                 if (tabFrame != null && arr.size() == 1) {
@@ -131,23 +138,29 @@ public class HideTabs extends Feature {
     }
 
     public int getNewTabIndex(List<?> hidetabs, int indexAtual, int index) {
-        if (tabs == null) return index;
+        ArrayList<Integer> tabsSnapshot;
+        synchronized (currentTabs) {
+            if (currentTabs.isEmpty()) {
+                return index;
+            }
+            tabsSnapshot = new ArrayList<>(currentTabs);
+        }
         
         int target = index;
         int direction = index > indexAtual ? 1 : -1;
         
-        while (target >= 0 && target < tabs.size()) {
-            if (!hidetabs.contains(tabs.get(target))) {
+        while (target >= 0 && target < tabsSnapshot.size()) {
+            if (!hidetabs.contains(tabsSnapshot.get(target))) {
                 return target;
             }
             target += direction;
         }
         
         // Fallback: search in opposite direction if we went out of bounds
-        if (target < 0 || target >= tabs.size()) {
+        if (target < 0 || target >= tabsSnapshot.size()) {
             target = index - direction;
-            while (target >= 0 && target < tabs.size()) {
-                if (!hidetabs.contains(tabs.get(target))) {
+            while (target >= 0 && target < tabsSnapshot.size()) {
+                if (!hidetabs.contains(tabsSnapshot.get(target))) {
                     return target;
                 }
                 target -= direction;

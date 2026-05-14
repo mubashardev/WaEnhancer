@@ -372,6 +372,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         setPreferenceState("showonlinetext", !freezelastseen);
         setPreferenceState("dotonline", !freezelastseen);
 
+        if (mPrefs.getBoolean("filtergroups", false)) {
+            runWithoutRestartBroadcast(() -> mPrefs.edit().putBoolean("filtergroups", false).apply());
+        }
         setPreferenceState("filtergroups", false); // Forced disabled
 
         // Keep this disabled for now because the underlying WhatsApp tab hooks
@@ -390,7 +393,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         setPreferenceState("filtergroups", false);
         var filterGroupsPreference = findPreference("filtergroups");
         if (filterGroupsPreference != null) {
-            filterGroupsPreference.setSummary(R.string.new_ui_group_filter_sum);
+            filterGroupsPreference.setSummary(R.string.new_ui_group_filter_unsupported_sum);
         }
 
         var callBlockContacts = findPreference("call_block_contacts");

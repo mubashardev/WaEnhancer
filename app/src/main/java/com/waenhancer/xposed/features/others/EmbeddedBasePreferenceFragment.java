@@ -408,7 +408,14 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
         setPreferenceState("showonlinetext", !freezelastseen);
         setPreferenceState("dotonline", !freezelastseen);
 
+        if (mPrefs.getBoolean("filtergroups", false)) {
+            runWithoutRestartBroadcast(() -> mPrefs.edit().putBoolean("filtergroups", false).apply());
+        }
         setPreferenceState("filtergroups", false); // Forced disabled
+        Preference filterGroupsPreference = findPreference("filtergroups");
+        if (filterGroupsPreference != null) {
+            filterGroupsPreference.setSummary(R.string.new_ui_group_filter_unsupported_sum);
+        }
 
         Preference separateGroupsPreference = findPreference("separategroups");
         if (mPrefs.getBoolean("separategroups", false)) {

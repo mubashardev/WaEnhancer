@@ -42,7 +42,13 @@ public class XResManager {
         if (hostResources != null && moduleResources != null) {
             try {
                 if (!(hostResources instanceof android.content.res.XResources)) {
-                    // ;
+                    return moduleId;
+                }
+                // Check if module resource exists before attempting to add
+                try {
+                    moduleResources.getResourceName(moduleId);
+                } catch (Exception e) {
+                    // Resource doesn't exist in module, skip mapping
                     return moduleId;
                 }
                 // Use reflection since hostResources is android.content.res.Resources at compile time
@@ -54,9 +60,7 @@ public class XResManager {
                     return newHostId;
                 }
             } catch (Throwable t) {
-                if (Utils.DEBUG) {
-                    XposedBridge.log("[WAE] XResManager: addResource failed: " + t.getMessage());
-                }
+                // Silently fail - resource mapping is optional
             }
         }
 

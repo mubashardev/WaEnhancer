@@ -1,3 +1,4 @@
 
 [Fixes]
 - Fixed WhatsApp Start Crash
+- Fixed View Once crash when download enabled

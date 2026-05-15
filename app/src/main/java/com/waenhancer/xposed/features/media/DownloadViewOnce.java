@@ -12,6 +12,7 @@ import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
+import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ReflectionUtils;
 import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
@@ -93,7 +94,7 @@ public class DownloadViewOnce extends Feature {
                     // Guard against duplicate entries
                     if (menu.findItem(MENU_ID_DOWNLOAD) != null) return;
                     
-                    MenuItem item = menu.add(0, MENU_ID_DOWNLOAD, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.download, "Download")).setIcon(R.drawable.download);
+                    MenuItem item = menu.add(0, MENU_ID_DOWNLOAD, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.download, "Download")).setIcon(DesignUtils.getDrawable(R.drawable.download));
                     item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                     item.setOnMenuItemClickListener(item1 -> {
                         try {
@@ -124,7 +125,7 @@ public class DownloadViewOnce extends Feature {
                             // Guard against duplicate entries
                             if (menu.findItem(MENU_ID_DOWNLOAD) != null) return;
                             
-                            MenuItem item = menu.add(0, MENU_ID_DOWNLOAD, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.download, "Download")).setIcon(R.drawable.download);
+                            MenuItem item = menu.add(0, MENU_ID_DOWNLOAD, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.download, "Download")).setIcon(DesignUtils.getDrawable(R.drawable.download));
                             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                             item.setOnMenuItemClickListener(item1 -> {
                                 CompletableFuture.runAsync(() -> {

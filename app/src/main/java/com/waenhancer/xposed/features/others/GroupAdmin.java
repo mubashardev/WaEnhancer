@@ -188,8 +188,19 @@ public class GroupAdmin extends Feature {
                     }
                     if (nameGroup == null) return;
 
-                    // Try to get the message bubble color
-                    int bubbleColor = Color.parseColor("#E8E8E8"); // default
+                    // Get bubble color based on current theme
+                    int bubbleColor;
+                    Context ctx = rowView.getContext();
+                    boolean isDarkMode = (ctx.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+
+                    // Default bubble colors by theme
+                    if (isDarkMode) {
+                        bubbleColor = Color.parseColor("#3B3B3B"); // Dark theme bubble
+                    } else {
+                        bubbleColor = Color.parseColor("#E8E8E8"); // Light theme bubble
+                    }
+
+                    // Try to get actual bubble view color
                     View bubbleView = rowView.findViewById(Utils.getID("bubble_row", "id"));
                     if (bubbleView == null) {
                         bubbleView = rowView.findViewById(Utils.getID("bubble", "id"));

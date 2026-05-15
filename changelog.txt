@@ -1,3 +1,5 @@
+[Improvements]
+- Improved Group Admin Icon UI (Better experience for saved/unsaved admin contacts)
 
 [Fixes]
 - Fixed WhatsApp Start Crash

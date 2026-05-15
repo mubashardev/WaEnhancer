@@ -187,11 +187,7 @@ public class GroupAdmin extends Feature {
 
                     // Find the name TextView directly
                     TextView nameTextView = findNameTextView(rowView);
-                    if (nameTextView == null) {
-                        XposedBridge.log("[GroupAdmin] nameTextView not found, rowView: " + rowView.getClass().getSimpleName());
-                        return;
-                    }
-                    XposedBridge.log("[GroupAdmin] Found nameTextView: " + nameTextView.getText());
+                    if (nameTextView == null) return;
 
                     String adminEmoji = prefs.getString("admin_emoji", "👑");
                     if (adminEmoji == null || adminEmoji.isEmpty()) adminEmoji = "👑";

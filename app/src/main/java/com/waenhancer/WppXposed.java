@@ -71,6 +71,15 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                 ;
             }
             XposedHelpers.findAndHookMethod("com.waenhancer.utils.ModuleStatus", lpparam.classLoader, "isModuleActive", XC_MethodReplacement.returnConstant(true));
+            // Make default SharedPreferences world-readable so XSharedPreferences
+            // can read them from WhatsApp's process without ContentProvider IPC.
+            // This is the critical hook that the competitor uses and we were missing.
+            @SuppressWarnings("deprecation")
+            int worldReadable = ContextWrapper.MODE_WORLD_READABLE;
+            XposedHelpers.findAndHookMethod(
+                    PreferenceManager.class.getName(), lpparam.classLoader,
+                    "getDefaultSharedPreferencesMode",
+                    XC_MethodReplacement.returnConstant(worldReadable));
             return;
         }
 

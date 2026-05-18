@@ -19,7 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.waenhancer.App;
-import com.waenhancer.xposed.bridge.client.ProviderSharedPreferences;
+
 import com.waenhancer.BuildConfig;
 import com.waenhancer.UpdateChecker;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
@@ -219,12 +219,21 @@ public class FeatureLoader {
                         }
 
                         PackageManager packageManager = mApp.getPackageManager();
-                        
-                        // Use provider-backed prefs in the hooked process so changes made in the
-                        // manager app can propagate without relying on stale XSharedPreferences snapshots.
-                        var localBridgePrefs = mApp.getSharedPreferences("wae_bridge_prefs", Context.MODE_PRIVATE);
-                        var providerPrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(mApp, localBridgePrefs, pref);
-                        Utils.xprefs = providerPrefs;
+
+                        // XSharedPreferences reads the prefs file directly from disk.
+                        // The file is world-readable because we hook getDefaultSharedPreferencesMode()
+                        // in WppXposed to return MODE_WORLD_READABLE.
+                        // Reload to get the freshest data at startup.
+                        if (pref instanceof XSharedPreferences) {
+                            ((XSharedPreferences) pref).reload();
+                        }
+                        Utils.xprefs = pref;
+
+                        // Auto-reload prefs when they change on disk
+                        if (pref instanceof XSharedPreferences) {
+                            final XSharedPreferences xpref = (XSharedPreferences) pref;
+                            xpref.registerOnSharedPreferenceChangeListener((sp, key) -> xpref.reload());
+                        }
 
                         PackageInfo packageInfo = packageManager.getPackageInfo(mApp.getPackageName(), 0);
 
@@ -259,7 +268,7 @@ public class FeatureLoader {
                             }
                             
                             // Execute loading synchronously to ensure hooks are applied before app continues
-                            load(loader, providerPrefs, packageInfo, sourceDir);
+                            load(loader, pref, packageInfo, sourceDir);
                         } catch (Throwable e) {
                             XposedBridge.log(e);
                             var error = new ErrorItem();
@@ -398,6 +407,12 @@ public class FeatureLoader {
         final boolean[] hasCheckedThisSession = {false};
 
         WppCore.addListenerActivity((activity, state) -> {
+            // On HomeActivity CREATE, verify that prefs file is readable
+            if (state == WppCore.ActivityChangeState.ChangeType.CREATED
+                    && "HomeActivity".equals(activity.getClass().getSimpleName())) {
+                checkPrefsReadable(pref, activity);
+            }
+
             if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
                 activity.getWindow().getDecorView().post(() -> {
                     long perfStart = PerfLogger.start();
@@ -410,21 +425,14 @@ public class FeatureLoader {
 
                         if (pref instanceof XSharedPreferences) {
                             ((XSharedPreferences) pref).reload();
-                        } else if (pref instanceof ProviderSharedPreferences) {
-                            ((ProviderSharedPreferences) pref).reload();
                         }
 
-                        boolean needRestartPref = pref.getBoolean("need_restart", false);
-                        boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
-                        java.util.Set<String> changes = pref.getStringSet("pending_restart_changes", null);
-                        boolean hasPendingChanges = changes != null && !changes.isEmpty();
+                        // Only check WppCore's local prefs for restart flag.
+                        // XSharedPreferences is READ-ONLY — we cannot clear flags there,
+                        // so we must not read them from there either.
+                        boolean needRestart = WppCore.getPrivBoolean("need_restart", false);
 
-                        if (!needRestartPref && !hasPendingChanges && needRestartGlobal) {
-                            WppCore.setPrivBooleanSync("need_restart", false);
-                            return;
-                        }
-
-                        if ((needRestartPref || needRestartGlobal) && !isRestartDialogShowing) {
+                        if (needRestart && !isRestartDialogShowing) {
                             if (isHomeActivity(activity)) {
                                 activity.invalidateOptionsMenu();
                             }
@@ -432,21 +440,6 @@ public class FeatureLoader {
                             String msg = getModuleString(ResId.string.restart_wpp);
                             String btnRestart = getModuleString(ResId.string.restart_whatsapp);
                             String btnCancel = getModuleString(android.R.string.cancel);
-                            
-                            // Enhance message with changed items if possible
-                            try {
-                                if (changes != null && !changes.isEmpty()) {
-                                    StringBuilder sb = new StringBuilder();
-                                    if (msg.isEmpty()) msg = "WhatsApp needs to be restarted to apply the following changes:";
-                                    else sb.append(msg).append("\n\n");
-                                    
-                                    sb.append("Changes:\n");
-                                    for (String change : changes) {
-                                        sb.append("• ").append(change).append("\n");
-                                    }
-                                    msg = sb.toString().trim();
-                                }
-                            } catch (Exception ignored) {}
 
                             if (msg.isEmpty()) msg = "WhatsApp needs to be restarted to apply your recent changes in WaEnhancer. Would you like to restart now?";
                             if (btnRestart.isEmpty()) btnRestart = "Restart WhatsApp";
@@ -457,15 +450,11 @@ public class FeatureLoader {
                                     .setMessage(msg)
                                     .setPositiveButton(btnRestart, (dialog, which) -> {
                                         isRestartDialogShowing = false;
-                                        pref.edit().putBoolean("need_restart", false)
-                                                .remove("pending_restart_changes").apply();
                                         WppCore.setPrivBooleanSync("need_restart", false);
                                         Utils.doRestart(activity);
                                     })
                                     .setNegativeButton(btnCancel, (dialog, which) -> {
                                         isRestartDialogShowing = false;
-                                        pref.edit().putBoolean("need_restart", false)
-                                                .remove("pending_restart_changes").apply();
                                         WppCore.setPrivBooleanSync("need_restart", false);
                                     })
                                     .show();
@@ -494,6 +483,32 @@ public class FeatureLoader {
         });
     }
 
+    /**
+     * Verify that XSharedPreferences can actually read preference data.
+     * LSPosed stores prefs at /data/misc/apexdata/ and serves them via its own bridge,
+     * so file-level permission checks give false positives. Instead, we check if
+     * XSharedPreferences.getAll() returns any data.
+     */
+    private static void checkPrefsReadable(android.content.SharedPreferences pref, Activity activity) {
+        if (!(pref instanceof XSharedPreferences)) return;
+        try {
+            XSharedPreferences xpref = (XSharedPreferences) pref;
+            xpref.reload();
+            var allPrefs = xpref.getAll();
+            if (allPrefs == null || allPrefs.isEmpty()) {
+                XposedBridge.log("[WAE] PREFS WARNING: XSharedPreferences returned empty data. "
+                        + "File: " + xpref.getFile().getAbsolutePath());
+                activity.runOnUiThread(() ->
+                        Toast.makeText(activity,
+                                "[WAE] Unable to read preferences. Ensure the module is enabled and restart your device.",
+                                Toast.LENGTH_LONG).show());
+            } else if (Feature.DEBUG) {
+                XposedBridge.log("[WAE] Prefs OK: " + allPrefs.size() + " entries loaded");
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAE] checkPrefsReadable failed: " + t.getMessage());
+        }
+    }
 
 
     private static void registerReceivers() {
@@ -549,16 +564,12 @@ public class FeatureLoader {
         ContextCompat.registerReceiver(mApp, clearCacheReceiver,
                 new IntentFilter(BuildConfig.APPLICATION_ID + ".CLEAR_OBFUSCATE_CACHE"), ContextCompat.RECEIVER_EXPORTED);
 
-        // Preference change receiver
+        // Preference change receiver — reload XSharedPreferences from disk
         BroadcastReceiver prefsChangedReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (Utils.xprefs != null) {
-                    if (Utils.xprefs instanceof com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) {
-                        ((com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) Utils.xprefs).reload();
-                    } else if (Utils.xprefs instanceof de.robv.android.xposed.XSharedPreferences) {
-                        ((de.robv.android.xposed.XSharedPreferences) Utils.xprefs).reload();
-                    }
+                if (Utils.xprefs instanceof de.robv.android.xposed.XSharedPreferences) {
+                    ((de.robv.android.xposed.XSharedPreferences) Utils.xprefs).reload();
                 }
             }
         };

@@ -1,5 +1,6 @@
-[Improvements]
-
-
 [Fixes]
+- Fixed Preferences not saving/loading
+- Fixed Hooks not applying
 - Fixed Revoked message indicator not showing
+- Fixed Crash when opening app
+- Fixed Crash when opening chat

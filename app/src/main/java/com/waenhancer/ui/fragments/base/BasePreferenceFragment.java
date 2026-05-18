@@ -397,8 +397,13 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
         var sepPref = findPreference("separategroups");
         if (sepPref != null) {
-            sepPref.setEnabled(true);
-            sepPref.setSummary(getString(com.waenhancer.R.string.separate_groups_sum));
+            if (com.waenhancer.BuildConfig.DEBUG) {
+                sepPref.setEnabled(true);
+                sepPref.setSummary(getString(com.waenhancer.R.string.separate_groups_sum));
+            } else {
+                setPreferenceState("separategroups", false);
+                sepPref.setSummary("Under development and will launch soon.");
+            }
         }
         // Fully disable FilterGroups due to technical instability
         setPreferenceState("filtergroups", false);

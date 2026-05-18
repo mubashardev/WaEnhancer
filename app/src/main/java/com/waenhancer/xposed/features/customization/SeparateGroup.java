@@ -45,6 +45,12 @@ public class SeparateGroup extends Feature {
 
     @Override
     public void doHook() {
+        if (!com.waenhancer.BuildConfig.DEBUG) {
+            return;
+        }
+        if (!prefs.getBoolean("separategroups", false)) {
+            return;
+        }
         try {
             // 1. Hook the ViewPager adapter to add an extra tab count (Groups cloned from Chats)
             Class<?> TabsPagerClass = WppCore.getTabsPagerClass(classLoader);

@@ -3482,6 +3482,17 @@ public class Unobfuscator {
 
     public synchronized static Class loadSettingsFragmentClass(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(loader, "SettingsFragment", () -> {
+            String[] names = {
+                "com.whatsapp.settings.SettingsFragment",
+                "com.whatsapp.settings.ui.SettingsFragment",
+                "com.whatsapp.settings.SettingsFragmentCompat",
+                "com.whatsapp.settings.ui.SettingsFragmentCompat"
+            };
+            for (String name : names) {
+                Class<?> clazz = XposedHelpers.findClassIfExists(name, loader);
+                if (clazz != null) return clazz;
+            }
+
             String[] settingsIdentifiers = {
                 "help_center_url", 
                 "setting_help", 

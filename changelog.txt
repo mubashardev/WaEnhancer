@@ -1,6 +1,11 @@
+[Improvements]
+- Opttimized performance
+
 [Fixes]
 - Fixed Preferences not saving/loading
 - Fixed Hooks not applying
 - Fixed Revoked message indicator not showing
 - Fixed Crash when opening app
 - Fixed Crash when opening chat
+
+Note: Force stop WhatsApp before updating the module. WhatsApp may take longer time to open on first launch.

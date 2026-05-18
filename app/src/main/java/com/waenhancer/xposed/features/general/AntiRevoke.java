@@ -432,7 +432,11 @@ public class AntiRevoke extends Feature {
                 var date = Objects.requireNonNull(DATE_FORMAT_THREAD_LOCAL.get()).format(new Date(timestamp));
                 dateTextView.getPaint().setUnderlineText(true);
                 dateTextView.setOnClickListener(v -> {
-                    String toastMessage = String.format(Utils.getApplication().getString(R.string.message_removed_on), date);
+                    String toastFormat = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message_removed_on);
+                    if (toastFormat == null || toastFormat.isEmpty() || !toastFormat.contains("%s")) {
+                        toastFormat = "Deleted on: %s"; // Fallback
+                    }
+                    String toastMessage = String.format(toastFormat, date);
                     Utils.showToast(toastMessage, Toast.LENGTH_LONG);
                 });
             }

@@ -120,11 +120,11 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                 try {
                     setupLogging(lpparam);
                 } catch (Throwable t) {
-                    XposedBridge.log("[WAE] Logging hook setup failed: " + t.getMessage());
+                    XposedBridge.log("[WAEX] Logging hook setup failed: " + t.getMessage());
                 }
             } else {
                 if (Utils.DEBUG) {
-                    XposedBridge.log("[WAE] Logging hooks skipped (logging_enabled=false)");
+                    XposedBridge.log("[WAEX] Logging hooks skipped (logging_enabled=false)");
                 }
             }
 
@@ -134,7 +134,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                     ;
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] CRITICAL ERROR in FeatureLoader.start: " + t.getMessage());
+                XposedBridge.log("[WAEX] CRITICAL ERROR in FeatureLoader.start: " + t.getMessage());
                 XposedBridge.log(t);
             }
 
@@ -219,7 +219,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                             }
                         });
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] Unable to hook Log.println_native: " + t.getMessage());
+                XposedBridge.log("[WAEX] Unable to hook Log.println_native: " + t.getMessage());
             }
             logHookInstalled = true;
         }
@@ -288,10 +288,10 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                 }
             }
             if (Utils.DEBUG) {
-                XposedBridge.log("[WAE] Valid module IDs populated: " + XResManager.validModuleIds.size());
+                XposedBridge.log("[WAEX] Valid module IDs populated: " + XResManager.validModuleIds.size());
             }
         } catch (Throwable t) {
-            XposedBridge.log("[WAE] Error populating valid IDs: " + t.getMessage());
+            XposedBridge.log("[WAEX] Error populating valid IDs: " + t.getMessage());
         }
     }
 
@@ -329,10 +329,10 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                 }
             }
             if (Utils.DEBUG) {
-                XposedBridge.log("[WAE] Resource mapping complete. Total mapped: " + count);
+                XposedBridge.log("[WAEX] Resource mapping complete. Total mapped: " + count);
             }
         } catch (Throwable t) {
-            XposedBridge.log("[WAE] Resource mapping error: " + t.getMessage());
+            XposedBridge.log("[WAEX] Resource mapping error: " + t.getMessage());
         }
     }
 

@@ -104,7 +104,7 @@ public class AlertDialogWpp {
             setPositiveButtonMethod = null;
 
             for (java.lang.reflect.Method m : buttons) {
-                XposedBridge.log("[WAE] AlertDialogWpp: Button candidate: " + m.getName() + " (" + Arrays.toString(m.getParameterTypes()) + ")");
+                XposedBridge.log("[WAEX] AlertDialogWpp: Button candidate: " + m.getName() + " (" + Arrays.toString(m.getParameterTypes()) + ")");
                 if (m.getName().equals("setNegativeButton")) setNegativeButtonMethod = m;
                 else if (m.getName().equals("setNeutralButton")) setNeutralButtonMethod = m;
                 else if (m.getName().equals("setPositiveButton")) setPositiveButtonMethod = m;
@@ -133,13 +133,13 @@ public class AlertDialogWpp {
             logClassMethods(alertDialogClass);
         } catch (Throwable e) {
             isAvailable = false;
-            XposedBridge.log("[WAE] AlertDialogWpp init failed: " + e.getMessage());
+            XposedBridge.log("[WAEX] AlertDialogWpp init failed: " + e.getMessage());
             XposedBridge.log(e);
         }
     }
 
     private static void logClassMethods(Class<?> clazz) {
-        XposedBridge.log("[WAE] --- Methods for " + clazz.getName() + " ---");
+        XposedBridge.log("[WAEX] --- Methods for " + clazz.getName() + " ---");
         for (Method m : clazz.getDeclaredMethods()) {
             ;
         }
@@ -154,7 +154,7 @@ public class AlertDialogWpp {
             try {
                 mAlertDialogWpp = getAlertDialog.invoke(null, context);
             } catch (Exception e) {
-                XposedBridge.log("[WAE] AlertDialogWpp instance failed, using system fallback");
+                XposedBridge.log("[WAEX] AlertDialogWpp instance failed, using system fallback");
                 mIsUsingSystem = true;
             }
         } else {
@@ -180,7 +180,7 @@ public class AlertDialogWpp {
             try {
                 XposedHelpers.callMethod(mAlertDialogWpp, "setTitle", title);
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] AlertDialogWpp setTitle failed on Wpp builder: " + t.getMessage());
+                XposedBridge.log("[WAEX] AlertDialogWpp setTitle failed on Wpp builder: " + t.getMessage());
             }
         }
         return this;
@@ -193,7 +193,7 @@ public class AlertDialogWpp {
             try {
                 XposedHelpers.callMethod(mAlertDialogWpp, "setTitle", getContext().getString(title));
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] AlertDialogWpp setTitle(int) failed on Wpp builder: " + t.getMessage());
+                XposedBridge.log("[WAEX] AlertDialogWpp setTitle(int) failed on Wpp builder: " + t.getMessage());
             }
         }
         return this;
@@ -217,7 +217,7 @@ public class AlertDialogWpp {
                     XposedHelpers.callMethod(mAlertDialogWpp, "setTitle", title);
                 }
             } catch (Throwable e) {
-                XposedBridge.log("[WAE] AlertDialogWpp setTitle(CharSequence) failed on Wpp builder: " + e.getMessage());
+                XposedBridge.log("[WAEX] AlertDialogWpp setTitle(CharSequence) failed on Wpp builder: " + e.getMessage());
             }
         }
         return this;
@@ -237,7 +237,7 @@ public class AlertDialogWpp {
                     XposedHelpers.callMethod(mAlertDialogWpp, "setMessage", message);
                 }
             } catch (Throwable e) {
-                XposedBridge.log("[WAE] AlertDialogWpp setMessage failed, falling back to system: " + e.getMessage());
+                XposedBridge.log("[WAEX] AlertDialogWpp setMessage failed, falling back to system: " + e.getMessage());
                 mIsUsingSystem = true;
             }
         }
@@ -260,7 +260,7 @@ public class AlertDialogWpp {
                     XposedHelpers.callMethod(mAlertDialogWpp, "setItems", items, listener);
                 }
             } catch (Throwable e) {
-                XposedBridge.log("[WAE] AlertDialogWpp setItems failed on Wpp builder: " + e.getMessage());
+                XposedBridge.log("[WAEX] AlertDialogWpp setItems failed on Wpp builder: " + e.getMessage());
             }
         }
         return this;
@@ -284,7 +284,7 @@ public class AlertDialogWpp {
                     XposedHelpers.callMethod(mAlertDialogWpp, "setMultiChoiceItems", items, checkedItems, listener);
                 }
             } catch (Exception e) {
-                XposedBridge.log("[WAE] AlertDialogWpp setMultiChoiceItems failed on Wpp builder: " + e.getMessage());
+                XposedBridge.log("[WAEX] AlertDialogWpp setMultiChoiceItems failed on Wpp builder: " + e.getMessage());
             }
         }
         return this;
@@ -321,7 +321,7 @@ public class AlertDialogWpp {
                     XposedHelpers.callMethod(mAlertDialogWpp, methodName, listener, text);
                     success = true;
                 } catch (Throwable t2) {
-                    XposedBridge.log("[WAE] AlertDialogWpp button failed: " + methodName + ", falling back to system");
+                    XposedBridge.log("[WAEX] AlertDialogWpp button failed: " + methodName + ", falling back to system");
                     mIsUsingSystem = true;
                     // Apply to system builder so it's ready if we switch
                     if (methodName.equals("setPositiveButton")) mAlertDialog.setPositiveButton(text, listener);
@@ -378,7 +378,7 @@ public class AlertDialogWpp {
             try {
                 XposedHelpers.callMethod(mAlertDialogWpp, "setView", view);
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] AlertDialogWpp setView failed on Wpp builder: " + t.getMessage());
+                XposedBridge.log("[WAEX] AlertDialogWpp setView failed on Wpp builder: " + t.getMessage());
             }
         }
         return this;
@@ -390,7 +390,7 @@ public class AlertDialogWpp {
             try {
                 XposedHelpers.callMethod(mAlertDialogWpp, "setCancelable", cancelable);
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] AlertDialogWpp setCancelable failed on Wpp builder: " + t.getMessage());
+                XposedBridge.log("[WAEX] AlertDialogWpp setCancelable failed on Wpp builder: " + t.getMessage());
             }
         }
         return this;
@@ -734,7 +734,7 @@ public class AlertDialogWpp {
                             android.view.ContextThemeWrapper themedContext = new android.view.ContextThemeWrapper(modContext, themeResId);
                             switchView = new com.google.android.material.materialswitch.MaterialSwitch(themedContext);
                         } catch (Throwable t) {
-                            de.robv.android.xposed.XposedBridge.log("[WAE] MaterialSwitch direct creation failed: " + t.getMessage());
+                            de.robv.android.xposed.XposedBridge.log("[WAEX] MaterialSwitch direct creation failed: " + t.getMessage());
                             try {
                                 switchView = (android.widget.CompoundButton) de.robv.android.xposed.XposedHelpers.newInstance(
                                         de.robv.android.xposed.XposedHelpers.findClass("com.google.android.material.materialswitch.MaterialSwitch", AlertDialogWpp.class.getClassLoader()), mContext);
@@ -940,7 +940,7 @@ public class AlertDialogWpp {
                 mCreate = dialog;
                 return mCreate;
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] BottomSheetDialog instantiation failed: " + t.getMessage());
+                XposedBridge.log("[WAEX] BottomSheetDialog instantiation failed: " + t.getMessage());
                 t.printStackTrace();
             }
         }
@@ -950,7 +950,7 @@ public class AlertDialogWpp {
             try {
                 mCreate = (Dialog) XposedHelpers.callMethod(mAlertDialogWpp, "create");
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] AlertDialogWpp.create() failed, using system fallback");
+                XposedBridge.log("[WAEX] AlertDialogWpp.create() failed, using system fallback");
                 mCreate = mAlertDialog.create();
             }
         }
@@ -974,7 +974,7 @@ public class AlertDialogWpp {
             d.show();
             return d;
         } catch (Throwable t) {
-            XposedBridge.log("[WAE] AlertDialogWpp.show() failed: " + t.getMessage());
+            XposedBridge.log("[WAEX] AlertDialogWpp.show() failed: " + t.getMessage());
             try {
                 Dialog d = mAlertDialog.show();
                 if (mIsBottomSheet) {

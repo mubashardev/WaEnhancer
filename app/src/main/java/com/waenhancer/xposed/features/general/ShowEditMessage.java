@@ -175,7 +175,7 @@ public class ShowEditMessage extends Feature {
                                     resName = tv.getResources().getResourceEntryName(tv.getId());
                                 }
                             } catch (Exception ignored) {}
-                            de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage ID-DUMP: id=" + tv.getId() + ", resName=" + resName + ", text='" + tv.getText() + "'");
+                            de.robv.android.xposed.XposedBridge.log("[WAEX] ShowEditMessage ID-DUMP: id=" + tv.getId() + ", resName=" + resName + ", text='" + tv.getText() + "'");
                         } else if (view instanceof ViewGroup) {
                             ViewGroup vg = (ViewGroup) view;
                             for (int i = 0; i < vg.getChildCount(); i++) {

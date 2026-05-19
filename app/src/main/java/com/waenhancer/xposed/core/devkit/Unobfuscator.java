@@ -1565,11 +1565,70 @@ public class Unobfuscator {
 
     public synchronized static Method loadChatLimitDelete2Method(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
+            // Strategy 1: Original dual-string search
             var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains, "pref_revoke_admin_nux",
                     "dialog/delete no messages");
-            if (method == null)
-                throw new RuntimeException("ChatLimitDelete2 method not found");
-            return method;
+            if (method != null) return method;
+
+            // Strategy 2: Try with "dialog/delete" variants (string may have changed)
+            method = findFirstMethodUsingStrings(loader, StringMatchType.Contains, "dialog/delete");
+            if (method != null) return method;
+
+            // Strategy 3: Try with just "pref_revoke_admin_nux"
+            method = findFirstMethodUsingStrings(loader, StringMatchType.Contains, "pref_revoke_admin_nux");
+            if (method != null) return method;
+
+            // Strategy 4: Structural approach - find callers of chatLimitDeleteMethod that use FMessage fields
+            try {
+                var chatLimitDeleteMethod = loadChatLimitDeleteMethod(loader);
+                var fmessageClass = loadFMessageClass(loader);
+                var fmessageClassName = fmessageClass.getName();
+                var methodData = dexkit.getMethodData(chatLimitDeleteMethod);
+                if (methodData != null) {
+                    var callers = methodData.getCallers();
+                    for (var caller : callers) {
+                        // Check if this caller uses FMessage long fields (the timestamp)
+                        var callerFields = caller.getUsingFields();
+                        boolean usesFMessageLong = false;
+                        for (var uField : callerFields) {
+                            var field = uField.getField();
+                            if (field.getDeclaredClass().getName().equals(fmessageClassName)
+                                    && field.getType().getName().equals(long.class.getName())) {
+                                usesFMessageLong = true;
+                                break;
+                            }
+                        }
+                        if (usesFMessageLong) {
+                            return caller.getMethodInstance(loader);
+                        }
+                    }
+                    // If no caller directly uses FMessage fields, check callers' callers
+                    for (var caller : callers) {
+                        var callerCallers = caller.getCallers();
+                        for (var cc : callerCallers) {
+                            var ccFields = cc.getUsingFields();
+                            boolean usesFMessageLong = false;
+                            for (var uField : ccFields) {
+                                var field = uField.getField();
+                                if (field.getDeclaredClass().getName().equals(fmessageClassName)
+                                        && field.getType().getName().equals(long.class.getName())) {
+                                    usesFMessageLong = true;
+                                    break;
+                                }
+                            }
+                            if (usesFMessageLong) {
+                                return cc.getMethodInstance(loader);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            // Strategy 5: Try alternate delete-related strings
+            method = findFirstMethodUsingStrings(loader, StringMatchType.Contains, "revoke_admin", "delete");
+            if (method != null) return method;
+
+            throw new RuntimeException("ChatLimitDelete2 method not found");
         });
     }
 
@@ -2795,16 +2854,84 @@ public class Unobfuscator {
     public static Field loadFmessageTimestampField(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getField(classLoader, () -> {
             var fmessageClass = loadFMessageClass(classLoader);
-            var chatLimitDelete2Method = Unobfuscator.loadChatLimitDelete2Method(classLoader);
-            var usingFields = dexkit.getMethodData(chatLimitDelete2Method).getUsingFields();
-            for (var uField : usingFields) {
-                var field = uField.getField();
-                if (field.getDeclaredClass().getName().equals(fmessageClass.getName())
-                        && field.getType().getName().equals(long.class.getName())) {
-                    return field.getFieldInstance(classLoader);
+            var fmessageClassName = fmessageClass.getName();
+
+            // Strategy 1: Original approach - find via chatLimitDelete2Method
+            try {
+                var chatLimitDelete2Method = Unobfuscator.loadChatLimitDelete2Method(classLoader);
+                var methodData = dexkit.getMethodData(chatLimitDelete2Method);
+                if (methodData != null) {
+                    var usingFields = methodData.getUsingFields();
+                    for (var uField : usingFields) {
+                        var field = uField.getField();
+                        if (field.getDeclaredClass().getName().equals(fmessageClassName)
+                                && field.getType().getName().equals(long.class.getName())) {
+                            return field.getFieldInstance(classLoader);
+                        }
+                    }
                 }
-            }
-            throw new RuntimeException("FMessage Timestamp method not found");
+            } catch (Exception ignored) {}
+
+            // Strategy 2: Find via chatLimitDeleteMethod's callers
+            try {
+                var chatLimitDeleteMethod = loadChatLimitDeleteMethod(classLoader);
+                var methodData = dexkit.getMethodData(chatLimitDeleteMethod);
+                if (methodData != null) {
+                    // Check callers of the time-check method for FMessage long field usage
+                    var callers = methodData.getCallers();
+                    for (var caller : callers) {
+                        var callerFields = caller.getUsingFields();
+                        for (var uField : callerFields) {
+                            var field = uField.getField();
+                            if (field.getDeclaredClass().getName().equals(fmessageClassName)
+                                    && field.getType().getName().equals(long.class.getName())) {
+                                return field.getFieldInstance(classLoader);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            // Strategy 3: Find via chatLimitDeleteMethod itself (it computes time from FMessage)
+            try {
+                var chatLimitDeleteMethod = loadChatLimitDeleteMethod(classLoader);
+                var methodData = dexkit.getMethodData(chatLimitDeleteMethod);
+                if (methodData != null) {
+                    var usingFields = methodData.getUsingFields();
+                    for (var uField : usingFields) {
+                        var field = uField.getField();
+                        if (field.getDeclaredClass().getName().equals(fmessageClassName)
+                                && field.getType().getName().equals(long.class.getName())) {
+                            return field.getFieldInstance(classLoader);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            // Strategy 4: Search FMessage class directly for timestamp-like long fields
+            // The timestamp field is typically accessed in methods using "message_timestamp" or "timestamp"
+            try {
+                var fmessageClassData = dexkit.getClassData(fmessageClass);
+                if (fmessageClassData != null) {
+                    var methods = fmessageClassData.getMethods();
+                    for (var m : methods) {
+                        if (m.isMethod() && m.getReturnType() != null
+                                && m.getReturnType().getName().equals(long.class.getName())
+                                && m.getParamCount() == 0) {
+                            var fields = m.getUsingFields();
+                            for (var uField : fields) {
+                                var field = uField.getField();
+                                if (field.getDeclaredClass().getName().equals(fmessageClassName)
+                                        && field.getType().getName().equals(long.class.getName())) {
+                                    return field.getFieldInstance(classLoader);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            throw new RuntimeException("FMessage Timestamp field not found");
         });
     }
 
@@ -2913,7 +3040,7 @@ public class Unobfuscator {
                     }
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] loadWaContactClass - Strategy 1 (loadGetWaContactMethod) failed: " + t.getMessage());
+                XposedBridge.log("[WAEX] loadWaContactClass - Strategy 1 (loadGetWaContactMethod) failed: " + t.getMessage());
             }
 
             // Strategy 2: Fallback to searching using "problematic contact:"
@@ -2923,7 +3050,7 @@ public class Unobfuscator {
                     return cls;
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] loadWaContactClass - Strategy 2 (problematic contact:) failed: " + t.getMessage());
+                XposedBridge.log("[WAEX] loadWaContactClass - Strategy 2 (problematic contact:) failed: " + t.getMessage());
             }
 
             throw new ClassNotFoundException("WaContact Class not found using all search strategies");
@@ -3027,15 +3154,21 @@ public class Unobfuscator {
             var method = loadVerifyKeyItemConstructor(classLoader);
             var callers = dexkit.getMethodData(method).getCallers();
             var resultMethod = callers.stream().filter(i -> i.isMethod() && i.getDeclaredClassName().contains("IdentityVerificationActivity")).findFirst().orElse(null);
-            var usingNumbers = resultMethod.getUsingNumbers();
-            var findMagicNumber = false;
-            for (var i = 0; i < usingNumbers.size(); i++) {
-                var n = usingNumbers.get(i);
-                if (n.intValue() == 2966) {
-                    findMagicNumber = true;
-                } else if (findMagicNumber) {
-                    return n;
+            if (resultMethod == null)
+                throw new RuntimeException("VerifyKey IdentityVerificationActivity caller not found");
+            try {
+                var usingNumbers = resultMethod.getUsingNumbers();
+                var findMagicNumber = false;
+                for (var i = 0; i < usingNumbers.size(); i++) {
+                    var n = usingNumbers.get(i);
+                    if (n.intValue() == 2966) {
+                        findMagicNumber = true;
+                    } else if (findMagicNumber) {
+                        return n;
+                    }
                 }
+            } catch (UnsatisfiedLinkError e) {
+                throw new RuntimeException("DexKit native method getUsingNumbers not available: " + e.getMessage(), e);
             }
             throw new RuntimeException("VerifyKey int not found");
         });
@@ -3184,7 +3317,7 @@ public class Unobfuscator {
                     }
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] updateContactWAName method search error: " + t.getMessage());
+                XposedBridge.log("[WAEX] updateContactWAName method search error: " + t.getMessage());
             }
 
             // Strategy 2: Fallback to searching ContactManagerDatabase/updateGroupInfo for any String fields of WaContact
@@ -3204,7 +3337,7 @@ public class Unobfuscator {
                     }
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] updateGroupInfo field search error: " + t.getMessage());
+                XposedBridge.log("[WAEX] updateGroupInfo field search error: " + t.getMessage());
             }
 
             // Strategy 3: Dynamic reflection fallback on WaContact class
@@ -3218,7 +3351,7 @@ public class Unobfuscator {
                     }
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] WaContact class reflection search error for field: " + t.getMessage());
+                XposedBridge.log("[WAEX] WaContact class reflection search error for field: " + t.getMessage());
             }
 
             throw new NoSuchMethodException("WaContactGetWaName field not found after trying all search strategies");
@@ -3252,7 +3385,7 @@ public class Unobfuscator {
                     }
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] updateGroupInfo method search error: " + t.getMessage());
+                XposedBridge.log("[WAEX] updateGroupInfo method search error: " + t.getMessage());
             }
 
             // Strategy 2: Search in methods matching "ContactManagerDatabase/updateContactWAName"
@@ -3278,7 +3411,7 @@ public class Unobfuscator {
                     }
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] updateContactWAName method search error: " + t.getMessage());
+                XposedBridge.log("[WAEX] updateContactWAName method search error: " + t.getMessage());
             }
 
             // Strategy 3: Dynamic reflection fallback on WaContact class (supporting String & CharSequence, and any access modifier)
@@ -3291,12 +3424,12 @@ public class Unobfuscator {
                     }
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] WaContact class reflection search error: " + t.getMessage());
+                XposedBridge.log("[WAEX] WaContact class reflection search error: " + t.getMessage());
             }
 
             // Verbose logging if all search strategies fail for easy future troubleshooting
             try {
-                XposedBridge.log("[WAE] WaContactDisplayName method lookup failed. Listing all methods of " + waContactClass.getName() + ":");
+                XposedBridge.log("[WAEX] WaContactDisplayName method lookup failed. Listing all methods of " + waContactClass.getName() + ":");
                 for (var m : waContactClass.getDeclaredMethods()) {
                     ;
                 }

@@ -19,7 +19,7 @@ index 7e485667..e670398f 100644
      @Override
      public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
          if (Utils.DEBUG) {
--            XposedBridge.log("[WAE] handleLoadPackage: " + lpparam.packageName + " (process: " + lpparam.processName + ")");
+-            XposedBridge.log("[WAEX] handleLoadPackage: " + lpparam.packageName + " (process: " + lpparam.processName + ")");
 +            
          }
          var packageName = lpparam.packageName;
@@ -27,7 +27,7 @@ index 7e485667..e670398f 100644
  
          if (packageName.equals(BuildConfig.APPLICATION_ID)) {
              if (Utils.DEBUG) {
--                XposedBridge.log("[WAE] Hooking module's own process: " + packageName);
+-                XposedBridge.log("[WAEX] Hooking module's own process: " + packageName);
 +                
              }
              XposedHelpers.findAndHookMethod("com.waenhancer.utils.ModuleStatus", lpparam.classLoader, "isModuleActive", XC_MethodReplacement.returnConstant(true));
@@ -35,7 +35,7 @@ index 7e485667..e670398f 100644
          }
  
          if (Utils.DEBUG) {
--            XposedBridge.log("[WAE] Checking if target is WhatsApp or Business");
+-            XposedBridge.log("[WAEX] Checking if target is WhatsApp or Business");
 +            
          }
  
@@ -44,13 +44,13 @@ index 7e485667..e670398f 100644
          boolean isOriginal = App.isOriginalPackage();
  
          if (Utils.DEBUG) {
--            XposedBridge.log("[WAE] isWpp: " + isWpp + ", isBusiness: " + isBusiness + ", isOriginal: " + isOriginal);
+-            XposedBridge.log("[WAEX] isWpp: " + isWpp + ", isBusiness: " + isBusiness + ", isOriginal: " + isOriginal);
 +            
          }
  
          if ((isWpp && isOriginal) || isBusiness) {
              if (Utils.DEBUG) {
--                XposedBridge.log("[WAE] Target verified. Starting FeatureLoader...");
+-                XposedBridge.log("[WAEX] Target verified. Starting FeatureLoader...");
 +                
              }
  
@@ -59,7 +59,7 @@ index 7e485667..e670398f 100644
                  }
              } else {
                  if (Utils.DEBUG) {
--                    XposedBridge.log("[WAE] Logging hooks skipped (logging_enabled=false)");
+-                    XposedBridge.log("[WAEX] Logging hooks skipped (logging_enabled=false)");
 +                    
                  }
              }
@@ -67,16 +67,16 @@ index 7e485667..e670398f 100644
              try {
                  FeatureLoader.start(classLoader, getPref(), lpparam.appInfo.sourceDir);
                  if (Utils.DEBUG) {
--                    XposedBridge.log("[WAE] FeatureLoader.start completed successfully");
+-                    XposedBridge.log("[WAEX] FeatureLoader.start completed successfully");
 +                    
                  }
              } catch (Throwable t) {
-                 XposedBridge.log("[WAE] CRITICAL ERROR in FeatureLoader.start: " + t.getMessage());
+                 XposedBridge.log("[WAEX] CRITICAL ERROR in FeatureLoader.start: " + t.getMessage());
 @@ -187,7 +187,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
          }
  
          if (Utils.DEBUG) {
--            XposedBridge.log("[WAE] Global resource translation hooks installed.");
+-            XposedBridge.log("[WAEX] Global resource translation hooks installed.");
 +            
          }
      }
@@ -85,20 +85,20 @@ index 7e485667..e670398f 100644
                  }
              }
              if (Utils.DEBUG) {
--                XposedBridge.log("[WAE] Valid module IDs populated: " + XResManager.validModuleIds.size());
+-                XposedBridge.log("[WAEX] Valid module IDs populated: " + XResManager.validModuleIds.size());
 +                
              }
          } catch (Throwable t) {
-             XposedBridge.log("[WAE] Error populating valid IDs: " + t.getMessage());
+             XposedBridge.log("[WAEX] Error populating valid IDs: " + t.getMessage());
 @@ -365,7 +365,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                  }
              }
              if (Utils.DEBUG) {
--                XposedBridge.log("[WAE] Background resource mapping complete. Total: " + XResManager.moduleToHostIdMap.size());
+-                XposedBridge.log("[WAEX] Background resource mapping complete. Total: " + XResManager.moduleToHostIdMap.size());
 +                
              }
          } catch (Throwable t) {
-             XposedBridge.log("[WAE] Resource mapping background error: " + t.getMessage());
+             XposedBridge.log("[WAEX] Resource mapping background error: " + t.getMessage());
 diff --git a/app/src/main/java/com/waenhancer/activities/CallRecordingSettingsActivity.java b/app/src/main/java/com/waenhancer/activities/CallRecordingSettingsActivity.java
 index df223ec6..e5d94f24 100644
 --- a/app/src/main/java/com/waenhancer/activities/CallRecordingSettingsActivity.java
@@ -287,23 +287,23 @@ index c23b0402..414f6bcc 100644
      private final SharedPreferences fallbackPrefs;
  
      public ProviderSharedPreferences(Context context, SharedPreferences localPrefs, SharedPreferences fallbackPrefs) {
--        Utils.log("[WAE] ProviderSharedPreferences: Initializing...");
+-        Utils.log("[WAEX] ProviderSharedPreferences: Initializing...");
 +        
          this.context = context;
          this.localPrefs = localPrefs;
          this.fallbackPrefs = fallbackPrefs;
 @@ -46,13 +46,13 @@ public class ProviderSharedPreferences implements SharedPreferences {
          } catch (Throwable t) {
-             Utils.log("[WAE] ProviderSharedPreferences: Observer registration critical failure: " + t.getMessage());
+             Utils.log("[WAEX] ProviderSharedPreferences: Observer registration critical failure: " + t.getMessage());
          }
--        Utils.log("[WAE] ProviderSharedPreferences: Initialization complete. Local cache size: " + localPrefs.getAll().size());
+-        Utils.log("[WAEX] ProviderSharedPreferences: Initialization complete. Local cache size: " + localPrefs.getAll().size());
 +        
      }
  
      private void registerObserver() {
          String authority = BuildConfig.APPLICATION_ID + AUTHORITY_SUFFIX;
          try {
--            Utils.log("[WAE] ProviderSharedPreferences: Registering observer for authority: " + authority);
+-            Utils.log("[WAEX] ProviderSharedPreferences: Registering observer for authority: " + authority);
 +            
              context.getContentResolver().registerContentObserver(
                      Uri.parse("content://" + authority + "/preferences"),
@@ -312,23 +312,23 @@ index c23b0402..414f6bcc 100644
                              long now = System.currentTimeMillis();
                              if (now - lastHydration > 500) {
                                  lastHydration = now;
--                                Utils.log("[WAE] ProviderSharedPreferences: Preferences changed, re-hydrating...");
+-                                Utils.log("[WAEX] ProviderSharedPreferences: Preferences changed, re-hydrating...");
 +                                
                                  hydrateFromProvider();
                              }
                          }
                      }
              );
--            Utils.log("[WAE] ProviderSharedPreferences: Observer registered successfully");
+-            Utils.log("[WAEX] ProviderSharedPreferences: Observer registered successfully");
 +            
          } catch (Throwable e) {
-             Utils.log("[WAE] ProviderSharedPreferences: Failed to register observer: " + e.getMessage());
+             Utils.log("[WAEX] ProviderSharedPreferences: Failed to register observer: " + e.getMessage());
              // Try legacy
 @@ -171,7 +171,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
      }
  
      public void reload() {
--        Utils.log("[WAE] ProviderSharedPreferences: Manual reload requested");
+-        Utils.log("[WAEX] ProviderSharedPreferences: Manual reload requested");
 +        
          hydrateFromProvider();
      }
@@ -337,12 +337,12 @@ index c23b0402..414f6bcc 100644
          }
          lastHydrationTime = now;
          try {
--            Utils.log("[WAE] ProviderSharedPreferences: Starting hydration...");
+-            Utils.log("[WAEX] ProviderSharedPreferences: Starting hydration...");
 +            
              Bundle result = callProvider("get_all_preferences", null);
              if (result == null) {
--                Utils.log("[WAE] ProviderSharedPreferences: Hydration failed (null result). Using fallback.");
--                Utils.log("[WAE] ProviderSharedPreferences: Fallback cache size: " + fallbackPrefs.getAll().size());
+-                Utils.log("[WAEX] ProviderSharedPreferences: Hydration failed (null result). Using fallback.");
+-                Utils.log("[WAEX] ProviderSharedPreferences: Fallback cache size: " + fallbackPrefs.getAll().size());
 +                
 +                
                  var editor = localPrefs.edit().clear();
@@ -352,7 +352,7 @@ index c23b0402..414f6bcc 100644
                  editor.commit();
                  return;
              }
--            Utils.log("[WAE] ProviderSharedPreferences: Received preferences bundle from provider");
+-            Utils.log("[WAEX] ProviderSharedPreferences: Received preferences bundle from provider");
 +            
              Serializable serializable = result.getSerializable("prefs");
              if (!(serializable instanceof Map)) {
@@ -379,7 +379,7 @@ index c23b0402..414f6bcc 100644
          }
  
          private void syncToProvider(String key, Object value) {
--            de.robv.android.xposed.XposedBridge.log("[WAE] ProviderSharedPreferences: Putting preference: " + key + " = " + value);
+-            de.robv.android.xposed.XposedBridge.log("[WAEX] ProviderSharedPreferences: Putting preference: " + key + " = " + value);
 +            de.robv.android.xposed.
              Bundle extras = new Bundle();
              extras.putString("key", key);
@@ -388,7 +388,7 @@ index c23b0402..414f6bcc 100644
          String[] authorities = new String[] { BuildConfig.APPLICATION_ID + AUTHORITY_SUFFIX, AUTHORITY_LEGACY, "com.waenhancer.provider" };
          for (String authority : authorities) {
              try {
--                Utils.log("[WAE] ProviderSharedPreferences: Calling provider: " + method + " (Authority: " + authority + ")");
+-                Utils.log("[WAEX] ProviderSharedPreferences: Calling provider: " + method + " (Authority: " + authority + ")");
 +                
                  Bundle result = context.getContentResolver().call(
                          Uri.parse("content://" + authority),
@@ -396,15 +396,15 @@ index c23b0402..414f6bcc 100644
                          null,
                          extras);
                  if (result != null) {
--                    Utils.log("[WAE] ProviderSharedPreferences: Call successful for: " + authority);
+-                    Utils.log("[WAEX] ProviderSharedPreferences: Call successful for: " + authority);
 +                    
                      return result;
                  } else {
--                    Utils.log("[WAE] ProviderSharedPreferences: Call returned null for: " + authority);
+-                    Utils.log("[WAEX] ProviderSharedPreferences: Call returned null for: " + authority);
 +                    
                  }
              } catch (Throwable e) {
-                 Utils.log("[WAE] ProviderSharedPreferences: Call error (" + authority + "): " + e.getMessage());
+                 Utils.log("[WAEX] ProviderSharedPreferences: Call error (" + authority + "): " + e.getMessage());
 diff --git a/app/src/main/java/com/waenhancer/xposed/bridge/providers/HookProvider.java b/app/src/main/java/com/waenhancer/xposed/bridge/providers/HookProvider.java
 index bd5d195e..ba52a78e 100644
 --- a/app/src/main/java/com/waenhancer/xposed/bridge/providers/HookProvider.java
@@ -503,12 +503,12 @@ index 4e0490a7..1dd4372c 100644
  
                          String processName = Application.getProcessName();
                          if (Feature.DEBUG) {
--                            XposedBridge.log("[WAE] callApplicationOnCreate for: " + mApp.getPackageName() + " (process: " + processName + ")");
+-                            XposedBridge.log("[WAEX] callApplicationOnCreate for: " + mApp.getPackageName() + " (process: " + processName + ")");
 +                            
                          }
  
                          if (!Objects.equals(processName, mApp.getPackageName())) {
--                            XposedBridge.log("[WAE] Skipping secondary process. Expected: " + mApp.getPackageName() + ", Actual: " + processName);
+-                            XposedBridge.log("[WAEX] Skipping secondary process. Expected: " + mApp.getPackageName() + ", Actual: " + processName);
 +                            
                              return;
                          }
@@ -517,7 +517,7 @@ index 4e0490a7..1dd4372c 100644
                          if (pref.getBoolean("bootloader_spoofer", false)) {
                              HookBL.hook(loader, pref);
                              if (Feature.DEBUG) {
--                                XposedBridge.log("[WAE] Bootloader Spoofer Injected");
+-                                XposedBridge.log("[WAEX] Bootloader Spoofer Injected");
 +                                
                              }
                          }
@@ -526,7 +526,7 @@ index 4e0490a7..1dd4372c 100644
                          var providerPrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(mApp, localBridgePrefs, pref);
                          Utils.xprefs = providerPrefs;
                          if (Feature.DEBUG) {
--                            XposedBridge.log("[WAE] ProviderSharedPreferences initialized with " + providerPrefs.getAll().size() + " preferences");
+-                            XposedBridge.log("[WAEX] ProviderSharedPreferences initialized with " + providerPrefs.getAll().size() + " preferences");
 +                            
                          }
                          
@@ -544,7 +544,7 @@ index 4e0490a7..1dd4372c 100644
                                          return (packageInfo.versionName + ".").startsWith(target);
                                      });
                              if (Feature.DEBUG) {
--                                XposedBridge.log("[WAE] Version verification result for " + packageInfo.versionName + ": isSupported=" + isSupported);
+-                                XposedBridge.log("[WAEX] Version verification result for " + packageInfo.versionName + ": isSupported=" + isSupported);
 +                                
                              }
                              if (!isSupported) {
@@ -560,7 +560,7 @@ index 4e0490a7..1dd4372c 100644
              UnobfuscatorCache.init(mApp);
              SharedPreferencesWrapper.hookInit(mApp.getClassLoader());
  
--            XposedBridge.log("[WAE] Initializing components and plugins using ProviderSharedPreferences...");
+-            XposedBridge.log("[WAEX] Initializing components and plugins using ProviderSharedPreferences...");
 +            
              ResId.initLocal(mApp);
              initComponents(loader, providerPrefs);
@@ -569,7 +569,7 @@ index 4e0490a7..1dd4372c 100644
              var timemillis2 = System.currentTimeMillis() - timemillis;
              loadedTimeStr = String.format(java.util.Locale.US, "%.2fs", timemillis2 / 1000.0);
              if (Feature.DEBUG) {
--                XposedBridge.log("[WAE] Loaded Hooks in " + loadedTimeStr);
+-                XposedBridge.log("[WAEX] Loaded Hooks in " + loadedTimeStr);
 +                
              }
              
@@ -578,7 +578,7 @@ index 4e0490a7..1dd4372c 100644
                          String fullName = activity.getClass().getName();
                          String superName = activity.getClass().getSuperclass() != null ? activity.getClass().getSuperclass().getName() : "null";
                          if (Feature.DEBUG) {
--                            XposedBridge.log("[WAE] Activity RESUMED: " + activityName + " (Full Class Name: " + fullName + " | Superclass: " + superName + ")");
+-                            XposedBridge.log("[WAEX] Activity RESUMED: " + activityName + " (Full Class Name: " + fullName + " | Superclass: " + superName + ")");
 +                            
                          }
                          
@@ -587,7 +587,7 @@ index 4e0490a7..1dd4372c 100644
                          boolean needRestartPref = pref.getBoolean("need_restart", false);
                          boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
                          if (Feature.DEBUG) {
--                            XposedBridge.log("[WAE] Restart Check on RESUMED - Pref: " + needRestartPref + ", Global: " + needRestartGlobal + ", isShowing: " + isRestartDialogShowing);
+-                            XposedBridge.log("[WAEX] Restart Check on RESUMED - Pref: " + needRestartPref + ", Global: " + needRestartGlobal + ", isShowing: " + isRestartDialogShowing);
 +                            
                          }
                          
@@ -596,14 +596,14 @@ index 4e0490a7..1dd4372c 100644
                              if (btnRestart.isEmpty()) btnRestart = "Restart WhatsApp";
                              if (btnCancel.isEmpty()) btnCancel = "Cancel";
  
--                            XposedBridge.log("[WAE] Restart dialog - Msg: '" + msg + "', Btn: '" + btnRestart + "'");
+-                            XposedBridge.log("[WAEX] Restart dialog - Msg: '" + msg + "', Btn: '" + btnRestart + "'");
 +                            
                              
                              new AlertDialogWpp(activity)
                                      .setTitle("Restart Required")
                                      .setMessage(msg)
                                      .setPositiveButton(btnRestart, (dialog, which) -> {
--                                        XposedBridge.log("[WAE] User clicked RESTART WHATSAPP");
+-                                        XposedBridge.log("[WAEX] User clicked RESTART WHATSAPP");
 +                                        
                                          isRestartDialogShowing = false;
                                          pref.edit().putBoolean("need_restart", false)
@@ -612,7 +612,7 @@ index 4e0490a7..1dd4372c 100644
                  if (pref.getBoolean("update_check", true)) {
                      if (!hasCheckedThisSession[0]) {
                          hasCheckedThisSession[0] = true;
--                        XposedBridge.log("[WAE] Scheduling startup update check...");
+-                        XposedBridge.log("[WAEX] Scheduling startup update check...");
 +                        
                          activity.getWindow().getDecorView().postDelayed(() -> {
                              try {
@@ -621,10 +621,10 @@ index 4e0490a7..1dd4372c 100644
          BroadcastReceiver restartManualReceiver = new BroadcastReceiver() {
              @Override
              public void onReceive(Context context, Intent intent) {
--                XposedBridge.log("[WAE] MANUAL_RESTART broadcast received");
+-                XposedBridge.log("[WAEX] MANUAL_RESTART broadcast received");
 +                
                  WppCore.setPrivBooleanSync("need_restart", true);
--                XposedBridge.log("[WAE] Global need_restart set to true via broadcast");
+-                XposedBridge.log("[WAEX] Global need_restart set to true via broadcast");
 +                
              }
          };
@@ -858,7 +858,7 @@ index b5b2a088..cabba81c 100644
                  return;
              }
              Class<?> alertDialogClass = getAlertDialog.getReturnType();
--            XposedBridge.log("[WAE] AlertDialogWpp: Initializing with class " + alertDialogClass.getName());
+-            XposedBridge.log("[WAEX] AlertDialogWpp: Initializing with class " + alertDialogClass.getName());
 +            
  
              // Try to find methods by name first (more reliable if not obfuscated)
@@ -867,14 +867,14 @@ index b5b2a088..cabba81c 100644
                      method -> method.getParameterCount() == 1 && 
                      method.getParameterTypes()[0].equals(CharSequence.class));
              }
--            if (setMessageMethod != null) XposedBridge.log("[WAE] AlertDialogWpp: Found setMessageMethod: " + setMessageMethod.getName());
+-            if (setMessageMethod != null) XposedBridge.log("[WAEX] AlertDialogWpp: Found setMessageMethod: " + setMessageMethod.getName());
 +            if (setMessageMethod != null) 
  
              setItemsMethod = ReflectionUtils.findMethodUsingFilterIfExists(alertDialogClass,
                      method -> method.getParameterCount() == 2 &&
                      ((method.getParameterTypes()[0].equals(DialogInterface.OnClickListener.class) && CharSequence[].class.isAssignableFrom(method.getParameterTypes()[1])) ||
                       (CharSequence[].class.isAssignableFrom(method.getParameterTypes()[0]) && method.getParameterTypes()[1].equals(DialogInterface.OnClickListener.class))));
--            if (setItemsMethod != null) XposedBridge.log("[WAE] AlertDialogWpp: Found setItemsMethod: " + setItemsMethod.getName());
+-            if (setItemsMethod != null) XposedBridge.log("[WAEX] AlertDialogWpp: Found setItemsMethod: " + setItemsMethod.getName());
 +            if (setItemsMethod != null) 
  
              setMultiChoiceItemsMethod = ReflectionUtils.findMethodUsingFilterIfExists(alertDialogClass,
@@ -883,7 +883,7 @@ index b5b2a088..cabba81c 100644
                      method.getParameterCount() == 2 && 
                      ((method.getParameterTypes()[0].equals(DialogInterface.OnClickListener.class) && CharSequence.class.isAssignableFrom(method.getParameterTypes()[1])) ||
                       (CharSequence.class.isAssignableFrom(method.getParameterTypes()[0]) && method.getParameterTypes()[1].equals(DialogInterface.OnClickListener.class))));
--                XposedBridge.log("[WAE] AlertDialogWpp: Found " + buttons.length + " button methods");
+-                XposedBridge.log("[WAEX] AlertDialogWpp: Found " + buttons.length + " button methods");
 +                
              } catch (Exception ignored) {}
  
@@ -892,7 +892,7 @@ index b5b2a088..cabba81c 100644
              setPositiveButtonMethod = null;
  
              for (java.lang.reflect.Method m : buttons) {
--                XposedBridge.log("[WAE] AlertDialogWpp: Button candidate: " + m.getName() + " (" + Arrays.toString(m.getParameterTypes()) + ")");
+-                XposedBridge.log("[WAEX] AlertDialogWpp: Button candidate: " + m.getName() + " (" + Arrays.toString(m.getParameterTypes()) + ")");
 +                
                  if (m.getName().equals("setNegativeButton")) setNegativeButtonMethod = m;
                  else if (m.getName().equals("setNeutralButton")) setNeutralButtonMethod = m;
@@ -901,12 +901,12 @@ index b5b2a088..cabba81c 100644
                      setNeutralButtonMethod = buttons[1];
                  }
                  
--                XposedBridge.log("[WAE] AlertDialogWpp: Using button fallback mapping (Pos=" + setPositiveButtonMethod.getName() + ")");
+-                XposedBridge.log("[WAEX] AlertDialogWpp: Using button fallback mapping (Pos=" + setPositiveButtonMethod.getName() + ")");
 +                
              }
  
              isAvailable = true;
--            XposedBridge.log("[WAE] AlertDialogWpp initialized successfully");
+-            XposedBridge.log("[WAEX] AlertDialogWpp initialized successfully");
 +            
              logClassMethods(alertDialogClass);
          } catch (Throwable e) {
@@ -915,13 +915,13 @@ index b5b2a088..cabba81c 100644
      }
  
      private static void logClassMethods(Class<?> clazz) {
--        XposedBridge.log("[WAE] --- Methods for " + clazz.getName() + " ---");
+-        XposedBridge.log("[WAEX] --- Methods for " + clazz.getName() + " ---");
 +        
          for (Method m : clazz.getDeclaredMethods()) {
--            XposedBridge.log("[WAE] " + m.getReturnType().getSimpleName() + " " + m.getName() + "(" + Arrays.toString(m.getParameterTypes()) + ")");
+-            XposedBridge.log("[WAEX] " + m.getReturnType().getSimpleName() + " " + m.getName() + "(" + Arrays.toString(m.getParameterTypes()) + ")");
 +            
          }
--        XposedBridge.log("[WAE] ---------------------------------------");
+-        XposedBridge.log("[WAEX] ---------------------------------------");
 +        
      }
  
@@ -930,7 +930,7 @@ index b5b2a088..cabba81c 100644
              try {
                  mAlertDialogWpp = getAlertDialog.invoke(null, context);
              } catch (Exception e) {
--                XposedBridge.log("[WAE] AlertDialogWpp instance failed, using system fallback");
+-                XposedBridge.log("[WAEX] AlertDialogWpp instance failed, using system fallback");
 +                
                  mIsUsingSystem = true;
              }
@@ -939,7 +939,7 @@ index b5b2a088..cabba81c 100644
                      XposedHelpers.callMethod(mAlertDialogWpp, methodName, listener, text);
                      success = true;
                  } catch (Throwable t2) {
--                    XposedBridge.log("[WAE] AlertDialogWpp button failed: " + methodName + ", falling back to system");
+-                    XposedBridge.log("[WAEX] AlertDialogWpp button failed: " + methodName + ", falling back to system");
 +                    
                      mIsUsingSystem = true;
                      // Apply to system builder so it's ready if we switch
@@ -948,7 +948,7 @@ index b5b2a088..cabba81c 100644
              try {
                  mCreate = (Dialog) XposedHelpers.callMethod(mAlertDialogWpp, "create");
              } catch (Throwable t) {
--                XposedBridge.log("[WAE] AlertDialogWpp.create() failed, using system fallback");
+-                XposedBridge.log("[WAEX] AlertDialogWpp.create() failed, using system fallback");
 +                
                  mCreate = mAlertDialog.create();
              }
@@ -961,7 +961,7 @@ index ad905ee6..490b1aff 100644
                  keyIdField = ReflectionUtils.getFieldByType(Key.TYPE, String.class);
                  keyFromMeField = ReflectionUtils.getFieldByType(Key.TYPE, boolean.class);
                  keyRemoteJidField = ReflectionUtils.getFieldByExtendType(Key.TYPE, UserJid.TYPE_JID);
--                XposedBridge.log("[WAE] Key fields initialized: ID=" + (keyIdField != null ? keyIdField.getName() : "null") +
+-                XposedBridge.log("[WAEX] Key fields initialized: ID=" + (keyIdField != null ? keyIdField.getName() : "null") +
 -                        ", fromMe=" + (keyFromMeField != null ? keyFromMeField.getName() : "null") +
 -                        ", remoteJid=" + (keyRemoteJidField != null ? keyRemoteJidField.getName() : "null"));
 +                
@@ -1174,10 +1174,10 @@ index 81a6cb28..0e6b4c5c 100644
  
              // Verbose logging if all search strategies fail for easy future troubleshooting
              try {
--                XposedBridge.log("[WAE] WaContactDisplayName method lookup failed. Listing all methods of " + waContactClass.getName() + ":");
+-                XposedBridge.log("[WAEX] WaContactDisplayName method lookup failed. Listing all methods of " + waContactClass.getName() + ":");
 +                
                  for (var m : waContactClass.getDeclaredMethods()) {
--                    XposedBridge.log("[WAE] Method: " + m.getName() + " params: " + m.getParameterCount() + " return: " + m.getReturnType().getName() + " static: " + java.lang.reflect.Modifier.isStatic(m.getModifiers()));
+-                    XposedBridge.log("[WAEX] Method: " + m.getName() + " params: " + m.getParameterCount() + " return: " + m.getReturnType().getName() + " static: " + java.lang.reflect.Modifier.isStatic(m.getModifiers()));
 +                    
                  }
              } catch (Throwable ignored) {}
@@ -1449,7 +1449,7 @@ index fddb4b5a..917aadee 100644
                  var object = list.get(position);
                  object = ReflectionUtils.findFMessageInObject(object, FMessageWpp.TYPE, FMessageWpp.Key.TYPE, classLoader);
                  if (object == null) {
--                    XposedBridge.log("[WAE] SeenTick: Could not find FMessage in status object!");
+-                    XposedBridge.log("[WAEX] SeenTick: Could not find FMessage in status object!");
 +                    
                      return;
                  }
@@ -1462,7 +1462,7 @@ index b2006635..5c993b9f 100644
  
                          // We only show/bind edit history if a native edited label is present, or if we have locally captured edit history
                          if (nativeLabel != null || hasHistory) {
--                            de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage: Binding edit history click for message ID: " + key.messageID + " (nativeLabel=" + (nativeLabel != null) + ", hasHistory=" + hasHistory + ")");
+-                            de.robv.android.xposed.XposedBridge.log("[WAEX] ShowEditMessage: Binding edit history click for message ID: " + key.messageID + " (nativeLabel=" + (nativeLabel != null) + ", hasHistory=" + hasHistory + ")");
 +                            de.robv.android.xposed.
                              dumpTextViews(viewGroup);
                              
@@ -1471,7 +1471,7 @@ index b2006635..5c993b9f 100644
                              }
  
                              if (nativeLabel != null) {
--                                de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage: Found edit history anchor view: id=" + nativeLabel.getId() + " text='" + nativeLabel.getText() + "'");
+-                                de.robv.android.xposed.XposedBridge.log("[WAEX] ShowEditMessage: Found edit history anchor view: id=" + nativeLabel.getId() + " text='" + nativeLabel.getText() + "'");
 +                                de.robv.android.xposed.
                                  bindHistoryClick(nativeLabel, key.messageID, strEmoji, false);
  
@@ -1480,7 +1480,7 @@ index b2006635..5c993b9f 100644
                                      Utils.setViewClickListener(dateView, "show_edit_message", null);
                                  }
                              } else {
--                                de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage: Edit history anchor view not found in layout, injecting custom separate Edited view.");
+-                                de.robv.android.xposed.XposedBridge.log("[WAEX] ShowEditMessage: Edit history anchor view not found in layout, injecting custom separate Edited view.");
 +                                de.robv.android.xposed.
                                  if (dateView != null) {
                                      TextView injectedView = injectEditHistoryView(viewGroup, dateView, strEmoji);
@@ -1489,7 +1489,7 @@ index b2006635..5c993b9f 100644
                                      resName = tv.getResources().getResourceEntryName(tv.getId());
                                  }
                              } catch (Exception ignored) {}
--                            de.robv.android.xposed.XposedBridge.log("[WAE] ShowEditMessage ID-DUMP: id=" + tv.getId() + ", resName=" + resName + ", text='" + tv.getText() + "'");
+-                            de.robv.android.xposed.XposedBridge.log("[WAEX] ShowEditMessage ID-DUMP: id=" + tv.getId() + ", resName=" + resName + ", text='" + tv.getText() + "'");
 +                            de.robv.android.xposed.
                          } else if (view instanceof ViewGroup) {
                              ViewGroup vg = (ViewGroup) view;
@@ -1647,7 +1647,7 @@ index 38c07fc1..a3749a16 100644
                          });
                      }
                  } catch (Throwable t) {
--                    XposedBridge.log("[WAE] MenuStatusListener error in hook: " + t);
+-                    XposedBridge.log("[WAEX] MenuStatusListener error in hook: " + t);
 +                    
                      for (var element : t.getStackTrace()) {
 -                        XposedBridge.log("    at " + element.toString());
@@ -1793,7 +1793,7 @@ index 341d94eb..60dd60ff 100644
                  @Override
                  @SuppressLint("DiscouragedApi")
                  protected void afterHookedMethod(MethodHookParam param) throws Throwable {
--                    if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: Media Activity menu hook triggered");
+-                    if (DEBUG) XposedBridge.log("[WAEX] DownloadViewOnce: Media Activity menu hook triggered");
 +                    if (DEBUG) 
                      
                      Object fmessageObj = null;
@@ -1802,13 +1802,13 @@ index 341d94eb..60dd60ff 100644
                      }
                      
                      if (fmessageObj == null) {
--                        if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: fmessageObj is null, aborting");
+-                        if (DEBUG) XposedBridge.log("[WAEX] DownloadViewOnce: fmessageObj is null, aborting");
 +                        if (DEBUG) 
                          return;
                      }
                      
                      FMessageWpp fMessage = new FMessageWpp(fmessageObj);
--                    if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: Found message, isViewOnce=" + fMessage.isViewOnce());
+-                    if (DEBUG) XposedBridge.log("[WAEX] DownloadViewOnce: Found message, isViewOnce=" + fMessage.isViewOnce());
 +                    if (DEBUG) 
  
                      // check media is view once
@@ -1817,7 +1817,7 @@ index 341d94eb..60dd60ff 100644
                      new XC_MethodHook() {
                          @Override
                          protected void afterHookedMethod(MethodHookParam param) throws Throwable {
--                            if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: ViewOnceViewerActivity menu hook triggered");
+-                            if (DEBUG) XposedBridge.log("[WAEX] DownloadViewOnce: ViewOnceViewerActivity menu hook triggered");
 +                            if (DEBUG) 
                              
                              Menu menu = (Menu) param.args[0];
@@ -1826,13 +1826,13 @@ index 341d94eb..60dd60ff 100644
                                          var fieldType = ReflectionUtils.getFieldByType(param.thisObject.getClass(), keyClass);
                                          var keyMessageObj = ReflectionUtils.getObjectField(fieldType, param.thisObject);
                                          if (keyMessageObj == null) {
--                                            if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: keyMessageObj is null");
+-                                            if (DEBUG) XposedBridge.log("[WAEX] DownloadViewOnce: keyMessageObj is null");
 +                                            if (DEBUG) 
                                              return;
                                          }
                                          var fmessage = new FMessageWpp.Key(keyMessageObj).getFMessage();
                                          if (fmessage == null) {
--                                            if (DEBUG) XposedBridge.log("[WAE] DownloadViewOnce: fmessage retrieved from key is null");
+-                                            if (DEBUG) XposedBridge.log("[WAEX] DownloadViewOnce: fmessage retrieved from key is null");
 +                                            if (DEBUG) 
                                              return;
                                          }
@@ -1949,10 +1949,10 @@ index df9f486a..5022a6a1 100644
              case BACKLIST:
                  if (customprivacy.optBoolean("BlockCall", false)) return true;
                  var callBlockList = prefs.getString("call_block_contacts", "[]");
--                de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy BACKLIST callBlockList: " + callBlockList);
+-                de.robv.android.xposed.XposedBridge.log("[WAEX] CallPrivacy BACKLIST callBlockList: " + callBlockList);
 +                de.robv.android.xposed.
                  var blockList = Arrays.stream(callBlockList.substring(1, callBlockList.length() - 1).split(", ")).map(String::trim).collect(Collectors.toCollection(ArrayList::new));
--                de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy BACKLIST blockList size: " + blockList.size());
+-                de.robv.android.xposed.XposedBridge.log("[WAEX] CallPrivacy BACKLIST blockList size: " + blockList.size());
 +                de.robv.android.xposed.
                  for (var blockNumber : blockList) {
                      if (!TextUtils.isEmpty(blockNumber)) {
@@ -1961,12 +1961,12 @@ index df9f486a..5022a6a1 100644
                          }
                          String phoneRaw = userJid.getPhoneRawString();
                          String userRaw = userJid.getUserRawString();
--                        de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy comparing incoming caller phoneRaw: " + phoneRaw + ", userRaw: " + userRaw + ", cleanPhoneNumber: " + cleanPhoneNumber + " with blockNumber: " + blockNumber + ", cleanBlockNumber: " + cleanBlockNumber);
+-                        de.robv.android.xposed.XposedBridge.log("[WAEX] CallPrivacy comparing incoming caller phoneRaw: " + phoneRaw + ", userRaw: " + userRaw + ", cleanPhoneNumber: " + cleanPhoneNumber + " with blockNumber: " + blockNumber + ", cleanBlockNumber: " + cleanBlockNumber);
 +                        de.robv.android.xposed.
                          if (Objects.equals(phoneRaw, blockNumber) ||
                                  Objects.equals(userRaw, blockNumber) ||
                                  (cleanPhoneNumber != null && Objects.equals(cleanPhoneNumber, cleanBlockNumber))) {
--                            de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy MATCH FOUND! Blocking call.");
+-                            de.robv.android.xposed.XposedBridge.log("[WAEX] CallPrivacy MATCH FOUND! Blocking call.");
 +                            de.robv.android.xposed.
                              return true;
                          }
@@ -1975,7 +1975,7 @@ index df9f486a..5022a6a1 100644
                  return false;
              case WHITELIST:
                  var callWhiteList = prefs.getString("call_white_contacts", "[]");
--                de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy WHITELIST callWhiteList: " + callWhiteList);
+-                de.robv.android.xposed.XposedBridge.log("[WAEX] CallPrivacy WHITELIST callWhiteList: " + callWhiteList);
 +                de.robv.android.xposed.
                  var whiteList = Arrays.stream(callWhiteList.substring(1, callWhiteList.length() - 1).split(", ")).map(String::trim).collect(Collectors.toCollection(ArrayList::new));
                  for (var whiteNumber : whiteList) {
@@ -1984,12 +1984,12 @@ index df9f486a..5022a6a1 100644
                          }
                          String phoneRaw = userJid.getPhoneRawString();
                          String userRaw = userJid.getUserRawString();
--                        de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy comparing incoming caller phoneRaw: " + phoneRaw + ", userRaw: " + userRaw + ", cleanPhoneNumber: " + cleanPhoneNumber + " with whiteNumber: " + whiteNumber + ", cleanWhiteNumber: " + cleanWhiteNumber);
+-                        de.robv.android.xposed.XposedBridge.log("[WAEX] CallPrivacy comparing incoming caller phoneRaw: " + phoneRaw + ", userRaw: " + userRaw + ", cleanPhoneNumber: " + cleanPhoneNumber + " with whiteNumber: " + whiteNumber + ", cleanWhiteNumber: " + cleanWhiteNumber);
 +                        de.robv.android.xposed.
                          if (Objects.equals(phoneRaw, whiteNumber) ||
                                  Objects.equals(userRaw, whiteNumber) ||
                                  (cleanPhoneNumber != null && Objects.equals(cleanPhoneNumber, cleanWhiteNumber))) {
--                            de.robv.android.xposed.XposedBridge.log("[WAE] CallPrivacy MATCH FOUND in WHITELIST! Allowing call.");
+-                            de.robv.android.xposed.XposedBridge.log("[WAEX] CallPrivacy MATCH FOUND in WHITELIST! Allowing call.");
 +                            de.robv.android.xposed.
                              return false;
                          }
@@ -2131,7 +2131,7 @@ index b8c6c3e5..76fa2af6 100644
              if (context == null) {
                  boolean systemNight = isNightModeBySystem();
                  int waTheme = Utils.getDefaultTheme();
--                // XposedBridge.log("[WAE] DesignUtils: No context, systemNight=" + systemNight + ", waTheme=" + waTheme);
+-                // XposedBridge.log("[WAEX] DesignUtils: No context, systemNight=" + systemNight + ", waTheme=" + waTheme);
 +                // 
                  return waTheme <= 0 ? systemNight : waTheme == 2;
              }
@@ -2284,7 +2284,7 @@ index f55d839c..8c241d9c 100644
          if (hostResources != null && moduleResources != null) {
              try {
                  if (!(hostResources instanceof android.content.res.XResources)) {
--                    // XposedBridge.log("[WAE] XResManager: hostResources is not XResources yet!");
+-                    // XposedBridge.log("[WAEX] XResManager: hostResources is not XResources yet!");
 +                    // 
                      return moduleId;
                  }

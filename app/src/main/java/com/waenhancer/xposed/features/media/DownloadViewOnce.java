@@ -150,7 +150,7 @@ public class DownloadViewOnce extends Feature {
                                         var userJid = fmessage.getKey().remoteJid;
                                         downloadFile(userJid, file);
                                     } catch (Exception e) {
-                                        XposedBridge.log("[WAE] DownloadViewOnce Error: " + e.getMessage());
+                                        XposedBridge.log("[WAEX] DownloadViewOnce Error: " + e.getMessage());
                                         Utils.showToast(e.getMessage(), Toast.LENGTH_LONG);
                                     }
                                 });

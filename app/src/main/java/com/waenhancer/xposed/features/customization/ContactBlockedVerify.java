@@ -83,7 +83,9 @@ public class ContactBlockedVerify extends Feature {
         initProfilePhotoCallbacks(dialerProfilePictureLoader);
 
         var verifyKeyStrategy = buildVerifyKeyStrategy();
-        registerActivityListener(verifyKeyStrategy.callbackInterface, verifyKeyStrategy.invoker);
+        if (verifyKeyStrategy != null) {
+            registerActivityListener(verifyKeyStrategy.callbackInterface, verifyKeyStrategy.invoker);
+        }
     }
 
     @NonNull
@@ -97,17 +99,22 @@ public class ContactBlockedVerify extends Feature {
             };
             return new VerifyKeyStrategy(callbackInterface, invoker);
         } catch (Exception ignored) {
-            Constructor<?> verifyKeyItemConstructor = Unobfuscator.loadVerifyKeyItemConstructor(classLoader);
-            Constructor<?> verifyKeyRunnableConstructor = Unobfuscator.loadVerifyKeyRunnableConstructor(classLoader);
-            log(verifyKeyRunnableConstructor);
-            var number = Unobfuscator.loadVerifyKeyInt(classLoader);
-            var callbackInterface = verifyKeyItemConstructor.getParameterTypes()[0];
-            VerifyKeyInvoker invoker = (proxyInstance, jids) -> {
-                var instance = verifyKeyItemConstructor.newInstance(proxyInstance, jids);
-                var runInstance = (Runnable) verifyKeyRunnableConstructor.newInstance(instance, number);
-                CompletableFuture.runAsync(runInstance);
-            };
-            return new VerifyKeyStrategy(callbackInterface, invoker);
+            try {
+                Constructor<?> verifyKeyItemConstructor = Unobfuscator.loadVerifyKeyItemConstructor(classLoader);
+                Constructor<?> verifyKeyRunnableConstructor = Unobfuscator.loadVerifyKeyRunnableConstructor(classLoader);
+                log(verifyKeyRunnableConstructor);
+                var number = Unobfuscator.loadVerifyKeyInt(classLoader);
+                var callbackInterface = verifyKeyItemConstructor.getParameterTypes()[0];
+                VerifyKeyInvoker invoker = (proxyInstance, jids) -> {
+                    var instance = verifyKeyItemConstructor.newInstance(proxyInstance, jids);
+                    var runInstance = (Runnable) verifyKeyRunnableConstructor.newInstance(instance, number);
+                    CompletableFuture.runAsync(runInstance);
+                };
+                return new VerifyKeyStrategy(callbackInterface, invoker);
+            } catch (Exception e) {
+                logDebug("Both verify key strategies failed: " + e.getMessage());
+                return null;
+            }
         }
     }
 

@@ -438,7 +438,7 @@ public class FMessageWpp {
                     }
                 } catch (Throwable ignored) {}
             } catch (Exception e) {
-                XposedBridge.log("[WAE] Error initializing FMessageWpp.Key: " + e.getMessage());
+                XposedBridge.log("[WAEX] Error initializing FMessageWpp.Key: " + e.getMessage());
                 // Fallback to old hardcoded names if dynamic resolution fails (though unlikely to help if it fails)
                 try {
                     this.messageID = (String) XposedHelpers.getObjectField(key, "A01");

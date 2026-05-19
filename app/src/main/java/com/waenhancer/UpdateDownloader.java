@@ -182,7 +182,7 @@ public class UpdateDownloader {
             try {
                 modContext = activity.createPackageContext(BuildConfig.APPLICATION_ID, Context.CONTEXT_IGNORE_SECURITY);
             } catch (Exception e) {
-                de.robv.android.xposed.XposedBridge.log("[WAE] Error creating package context: " + e.getMessage());
+                de.robv.android.xposed.XposedBridge.log("[WAEX] Error creating package context: " + e.getMessage());
             }
         }
 

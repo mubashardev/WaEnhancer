@@ -39,14 +39,14 @@ public class ProviderSharedPreferences implements SharedPreferences {
         try {
             hydrateFromProvider();
         } catch (Throwable t) {
-            Utils.log("[WAE] ProviderSharedPreferences: Hydration critical failure: " + t.getMessage());
+            Utils.log("[WAEX] ProviderSharedPreferences: Hydration critical failure: " + t.getMessage());
         }
         try {
             registerObserver();
         } catch (Throwable t) {
-            Utils.log("[WAE] ProviderSharedPreferences: Observer registration critical failure: " + t.getMessage());
+            Utils.log("[WAEX] ProviderSharedPreferences: Observer registration critical failure: " + t.getMessage());
         }
-        Utils.log("[WAE] ProviderSharedPreferences: Initialization complete. Local cache size: " + localPrefs.getAll().size());
+        Utils.log("[WAEX] ProviderSharedPreferences: Initialization complete. Local cache size: " + localPrefs.getAll().size());
     }
 
     private void registerObserver() {
@@ -71,7 +71,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
             );
             ;
         } catch (Throwable e) {
-            Utils.log("[WAE] ProviderSharedPreferences: Failed to register observer: " + e.getMessage());
+            Utils.log("[WAEX] ProviderSharedPreferences: Failed to register observer: " + e.getMessage());
             // Try legacy
             if (!authority.equals(AUTHORITY_LEGACY)) {
                 try {
@@ -204,7 +204,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
             ;
             Bundle result = callProvider("get_all_preferences", null);
             if (result == null) {
-                Utils.log("[WAE] ProviderSharedPreferences: Hydration failed (null result). Using fallback.");
+                Utils.log("[WAEX] ProviderSharedPreferences: Hydration failed (null result). Using fallback.");
                 if (fallbackPrefs == null) return;
                 var editor = localPrefs.edit().clear();
                 for (Map.Entry<String, ?> entry : fallbackPrefs.getAll().entrySet()) {
@@ -406,7 +406,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
                     ;
                 }
             } catch (Throwable e) {
-                Utils.log("[WAE] ProviderSharedPreferences: Call error (" + authority + "): " + e.getMessage());
+                Utils.log("[WAEX] ProviderSharedPreferences: Call error (" + authority + "): " + e.getMessage());
             }
         }
         return null;

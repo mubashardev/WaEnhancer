@@ -327,14 +327,14 @@ public class FeatureLoader {
                                                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                                         activity.startActivity(intent);
                                                     } catch (Throwable t) {
-                                                        XposedBridge.log("[WAE] Failed to open ChangelogActivity: " + t.getMessage());
+                                                        XposedBridge.log("[WAEX] Failed to open ChangelogActivity: " + t.getMessage());
                                                     }
                                                     dialog.dismiss();
                                                 })
                                         .show();
                             } catch (Throwable e) {
                                 // Prevent error dialog from blocking UpdateChecker
-                                XposedBridge.log("[WAE] Error showing error dialog: " + e.getMessage());
+                                XposedBridge.log("[WAEX] Error showing error dialog: " + e.getMessage());
                                 e.printStackTrace();
                             }
                         }
@@ -392,7 +392,7 @@ public class FeatureLoader {
                 triggerLoadedFeedback();
             });
         } catch (Throwable e) {
-            XposedBridge.log("[WAE] Error in background load: " + e.getMessage());
+            XposedBridge.log("[WAEX] Error in background load: " + e.getMessage());
             XposedBridge.log(e);
         }
     }
@@ -485,7 +485,7 @@ public class FeatureLoader {
                                     .show();
                         }
                     } catch (Throwable e) {
-                        XposedBridge.log("[WAE] Error during activity resume check: " + e.getMessage());
+                        XposedBridge.log("[WAEX] Error during activity resume check: " + e.getMessage());
                     } finally {
                         PerfLogger.end("FeatureLoader.activityResumeCheck", perfStart, 1);
                     }
@@ -499,7 +499,7 @@ public class FeatureLoader {
                             try {
                                 CompletableFuture.runAsync(new UpdateChecker(activity));
                             } catch (Throwable e) {
-                                XposedBridge.log("[WAE] Error launching UpdateChecker: " + e.getMessage());
+                                XposedBridge.log("[WAEX] Error launching UpdateChecker: " + e.getMessage());
                             }
                         }, 5000);
                     }
@@ -521,17 +521,17 @@ public class FeatureLoader {
             xpref.reload();
             var allPrefs = xpref.getAll();
             if (allPrefs == null || allPrefs.isEmpty()) {
-                XposedBridge.log("[WAE] PREFS WARNING: XSharedPreferences returned empty data. "
+                XposedBridge.log("[WAEX] PREFS WARNING: XSharedPreferences returned empty data. "
                         + "File: " + xpref.getFile().getAbsolutePath());
                 activity.runOnUiThread(() ->
                         Toast.makeText(activity,
-                                "[WAE] Unable to read preferences. Ensure the module is enabled and restart your device.",
+                                "[WAEX] Unable to read preferences. Ensure the module is enabled and restart your device.",
                                 Toast.LENGTH_LONG).show());
             } else if (Feature.DEBUG) {
-                XposedBridge.log("[WAE] Prefs OK: " + allPrefs.size() + " entries loaded");
+                XposedBridge.log("[WAEX] Prefs OK: " + allPrefs.size() + " entries loaded");
             }
         } catch (Throwable t) {
-            XposedBridge.log("[WAE] checkPrefsReadable failed: " + t.getMessage());
+            XposedBridge.log("[WAEX] checkPrefsReadable failed: " + t.getMessage());
         }
     }
 
@@ -681,7 +681,7 @@ public class FeatureLoader {
                     } catch (Throwable ignored) {}
                 }).start();
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] Failed to show loading dialog: " + t.getMessage());
+                XposedBridge.log("[WAEX] Failed to show loading dialog: " + t.getMessage());
             }
         });
     }
@@ -905,7 +905,7 @@ public class FeatureLoader {
                     showBetaWarningDialogInHost(activity, currentPackage);
                 }
             } catch (Exception e) {
-                XposedBridge.log("[WAE] Error checking beta in host: " + e.getMessage());
+                XposedBridge.log("[WAEX] Error checking beta in host: " + e.getMessage());
             }
         });
     }
@@ -936,7 +936,7 @@ public class FeatureLoader {
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 activity.startActivity(intent);
                             } catch (Exception e) {
-                                XposedBridge.log("[WAE] Failed to open beta URL: " + e.getMessage());
+                                XposedBridge.log("[WAEX] Failed to open beta URL: " + e.getMessage());
                             }
                             dialog.dismiss();
                         })
@@ -947,7 +947,7 @@ public class FeatureLoader {
                         .setCancelable(false)
                         .show();
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] Error showing beta dialog in host: " + t.getMessage());
+                XposedBridge.log("[WAEX] Error showing beta dialog in host: " + t.getMessage());
             }
         });
     }

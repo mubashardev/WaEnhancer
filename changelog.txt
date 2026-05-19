@@ -2,6 +2,5 @@
 - Optimized performance
 
 [Fixes]
-- Fixed Hide Tabs showing hidden tabs during swipe
-- Fixed compatibility errors
-- Fixed CustomThemeV2 errors
+- Fixed ChatLimit Plugin error
+- Fixed ContactBlockedVerify Plugin error

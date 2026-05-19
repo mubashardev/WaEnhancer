@@ -178,7 +178,7 @@ public class MenuStatusListener extends Feature {
                         menu.removeItem(0x7EAD0012);
                     }
                 } catch (Throwable t) {
-                    XposedBridge.log("[WAE] MenuStatusListener error in hook: " + t);
+                    XposedBridge.log("[WAEX] MenuStatusListener error in hook: " + t);
                 }
             }
         });

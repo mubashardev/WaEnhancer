@@ -1,5 +1,6 @@
 [Improvements]
-- Opttimized performance
+- Optimized performance
 
 [Fixes]
 - Fixed Hide Tabs showing hidden tabs during swipe
+- Fixed compatibility errors

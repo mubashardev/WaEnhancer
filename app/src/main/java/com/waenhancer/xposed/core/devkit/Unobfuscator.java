@@ -190,11 +190,22 @@ public class Unobfuscator {
         return UnobfuscatorCache.getInstance().getClass(classLoader, name, () -> {
             var result = dexkit.findClass(FindClass.create().matcher(ClassMatcher.create().className(name, type)))
                     .firstOrNull();
-            if (result == null)
+            if (result == null) {
+                if (name.contains("PhoneUserJid")) {
+                    XposedBridge.log("WAE: PhoneUserJid class not found. Falling back to UserJid class.");
+                    String fallbackName = name.replace("PhoneUserJid", "UserJid");
+                    var fallbackResult = dexkit.findClass(FindClass.create().matcher(ClassMatcher.create().className(fallbackName, type)))
+                            .firstOrNull();
+                    if (fallbackResult != null) {
+                        return fallbackResult.getInstance(classLoader);
+                    }
+                }
                 throw new ClassNotFoundException("Class not found: " + name);
+            }
             return result.getInstance(classLoader);
         });
     }
+
 
     public synchronized static String getMethodDescriptor(Method method) {
         if (method == null)

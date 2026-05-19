@@ -59,7 +59,7 @@ public class SettingsInjector extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
                 String entryPoint = getSafeString("open_wae", "1");
-                if ("0".equals(entryPoint)) return;
+                if ("0".equals(entryPoint) || "2".equals(entryPoint)) return;
                 Menu menu = (Menu) param.args[0];
                 injectToolbarMenu(menu, activity);
             }
@@ -72,7 +72,24 @@ public class SettingsInjector extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
                 String entryPoint = getSafeString("open_wae", "1");
-                if ("0".equals(entryPoint)) return;
+
+                // Clean up elements that shouldn't be present in the current mode
+                if (!"2".equals(entryPoint)) {
+                    removeNativeViewTile(activity);
+                } else {
+                    removeToolbarButton(activity);
+                }
+
+                if ("0".equals(entryPoint)) {
+                    removeToolbarButton(activity);
+                    return;
+                }
+
+                if ("2".equals(entryPoint)) {
+                    injectNativeViewTile(activity);
+                    return;
+                }
+
                 injectToolbarButton(activity);
                 int hash = System.identityHashCode(activity);
                 if (!processedActivities.add(hash)) return;
@@ -91,6 +108,296 @@ public class SettingsInjector extends Feature {
                 processedActivities.remove(System.identityHashCode(param.thisObject));
             }
         });
+    }
+
+    private void injectNativeViewTile(Activity activity) {
+        try {
+            ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root == null) return;
+
+            // Check if our custom tile is already injected
+            if (root.findViewById(VIEW_ID_WAE_SETTINGS) != null) return;
+
+            // Find TextViews for Account and Privacy using localized resources
+            View accountTextView = findTextViewWithText(root, getLocalizedText(activity, "settings_account", "Account"));
+            View privacyTextView = findTextViewWithText(root, getLocalizedText(activity, "settings_privacy", "Privacy"));
+
+            if (accountTextView == null && privacyTextView == null) return;
+
+            // If only one is found, fall back to simple vertical parent resolution
+            if (accountTextView == null || privacyTextView == null) {
+                View found = accountTextView != null ? accountTextView : privacyTextView;
+                ViewGroup container = findVerticalContainer(found);
+                if (container != null) {
+                    View row = findDirectChildOfContainer(container, found);
+                    if (row != null) {
+                        int index = container.indexOfChild(row);
+                        View customRow = createDynamicSettingRow(activity, row);
+                        if (customRow != null) {
+                            customRow.setId(VIEW_ID_WAE_SETTINGS);
+                            container.addView(customRow, index + 1);
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Both found! Resolve their first common ancestor (main vertical settings list container)
+            View accountRow = null;
+            ViewGroup commonAncestor = null;
+
+            // Trace ancestors of Account TextView
+            java.util.List<View> accountAncestors = new java.util.ArrayList<>();
+            View current = accountTextView;
+            while (current != null) {
+                accountAncestors.add(current);
+                android.view.ViewParent parent = current.getParent();
+                current = (parent instanceof View) ? (View) parent : null;
+            }
+
+            // Trace ancestors of Privacy TextView and find the first common ancestor
+            current = privacyTextView;
+            while (current != null) {
+                int index = accountAncestors.indexOf(current);
+                if (index != -1) {
+                    commonAncestor = (ViewGroup) current;
+                    if (index > 0) {
+                        accountRow = accountAncestors.get(index - 1);
+                    }
+                    break;
+                }
+                android.view.ViewParent parent = current.getParent();
+                current = (parent instanceof View) ? (View) parent : null;
+            }
+
+            if (commonAncestor != null && accountRow != null) {
+                int index = commonAncestor.indexOfChild(accountRow);
+                View customRow = createDynamicSettingRow(activity, accountRow);
+                if (customRow != null) {
+                    customRow.setId(VIEW_ID_WAE_SETTINGS);
+                    commonAncestor.addView(customRow, index + 1);
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WaEnhancer] SettingsInjector: native view tile error: " + t.getMessage());
+        }
+    }
+
+    private String getLocalizedText(Activity activity, String resName, String fallback) {
+        try {
+            android.content.res.Resources res = activity.getResources();
+            int resId = res.getIdentifier(resName, "string", activity.getPackageName());
+            if (resId != 0) {
+                return res.getString(resId);
+            }
+        } catch (Throwable ignored) {}
+        return fallback;
+    }
+
+    private View findTextViewWithText(View view, String targetText) {
+        if (view instanceof android.widget.TextView) {
+            String text = ((android.widget.TextView) view).getText().toString().trim();
+            if (text.equalsIgnoreCase(targetText)) {
+                return view;
+            }
+        } else if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findTextViewWithText(group.getChildAt(i), targetText);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private ViewGroup findVerticalContainer(View view) {
+        android.view.ViewParent parent = view.getParent();
+        while (parent instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) parent;
+            if (group instanceof android.widget.LinearLayout) {
+                android.widget.LinearLayout layout = (android.widget.LinearLayout) group;
+                if (layout.getOrientation() == android.widget.LinearLayout.VERTICAL) {
+                    return layout;
+                }
+            }
+            parent = group.getParent();
+        }
+        return null;
+    }
+
+    private View findDirectChildOfContainer(ViewGroup container, View view) {
+        View current = view;
+        while (current != null) {
+            android.view.ViewParent parent = current.getParent();
+            if (parent == container) {
+                return current;
+            }
+            current = (parent instanceof View) ? (View) parent : null;
+        }
+        return null;
+    }
+
+    private ImageView findImageView(View view) {
+        if (view instanceof ImageView) {
+            return (ImageView) view;
+        } else if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                ImageView found = findImageView(group.getChildAt(i));
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private android.widget.TextView findTextView(View view) {
+        if (view instanceof android.widget.TextView) {
+            return (android.widget.TextView) view;
+        } else if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                android.widget.TextView found = findTextView(group.getChildAt(i));
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private View createDynamicSettingRow(Activity activity, View anchorView) {
+        try {
+            android.widget.LinearLayout rowLayout = new android.widget.LinearLayout(activity);
+            rowLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            rowLayout.setGravity(Gravity.CENTER_VERTICAL);
+
+            // Copy anchor layout params so it behaves exactly like a native row in the list
+            if (anchorView.getLayoutParams() != null) {
+                rowLayout.setLayoutParams(anchorView.getLayoutParams());
+            } else {
+                rowLayout.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ));
+            }
+
+            // Standard Material Design paddings for settings row (starts at 24dp)
+            int padLeft = dp(activity, 24);
+            int padRight = dp(activity, 24);
+            int padTop = anchorView.getPaddingTop() > 0 ? anchorView.getPaddingTop() : dp(activity, 15);
+            int padBottom = anchorView.getPaddingBottom() > 0 ? anchorView.getPaddingBottom() : dp(activity, 15);
+            rowLayout.setPadding(padLeft, padTop, padRight, padBottom);
+
+            // Match native ripple selector background
+            TypedValue outValue = new TypedValue();
+            activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+            rowLayout.setBackgroundResource(outValue.resourceId);
+
+            rowLayout.setClickable(true);
+            rowLayout.setFocusable(true);
+
+            // Find adjacent elements to copy styling exactly
+            ImageView anchorIcon = findImageView(anchorView);
+            java.util.List<android.widget.TextView> anchorTextViews = new java.util.ArrayList<>();
+            findTextViews(anchorView, anchorTextViews);
+
+            android.widget.TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
+            android.widget.TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
+
+            // Icon ImageView (Styled perfectly to match keylines)
+            ImageView iconView = new ImageView(activity);
+            android.widget.LinearLayout.LayoutParams iconParams = new android.widget.LinearLayout.LayoutParams(dp(activity, 24), dp(activity, 24));
+            iconView.setLayoutParams(iconParams);
+
+            android.graphics.drawable.Drawable icon = DesignUtils.getDrawableByName("ic_settings");
+            if (icon != null) {
+                iconView.setImageDrawable(icon);
+            }
+
+            // Extract the native icon's exact tint to match colors perfectly (with fallback to description text colors for theme-awareness)
+            if (anchorIcon != null && anchorIcon.getImageTintList() != null) {
+                iconView.setImageTintList(anchorIcon.getImageTintList());
+                iconView.setColorFilter(anchorIcon.getColorFilter());
+                iconView.setAlpha(anchorIcon.getAlpha());
+            } else if (anchorSummary != null) {
+                iconView.setImageTintList(anchorSummary.getTextColors());
+                iconView.setAlpha(anchorSummary.getAlpha());
+            } else {
+                iconView.setImageTintList(android.content.res.ColorStateList.valueOf(0xff8696a0));
+            }
+            rowLayout.addView(iconView);
+
+            // Text vertical container (starts at 72dp keyline, meaning leftMargin = 24dp)
+            android.widget.LinearLayout textContainer = new android.widget.LinearLayout(activity);
+            textContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+            android.widget.LinearLayout.LayoutParams textContainerParams = new android.widget.LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1.0f
+            );
+            textContainerParams.leftMargin = dp(activity, 24);
+            textContainer.setLayoutParams(textContainerParams);
+
+            // Title TextView
+            android.widget.TextView titleText = new android.widget.TextView(activity);
+            titleText.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings, "WaEnhancerX Settings"));
+
+            // Extract title typography from the anchor title TextView if available
+            if (anchorTitle != null) {
+                titleText.setTextSize(TypedValue.COMPLEX_UNIT_PX, anchorTitle.getTextSize());
+                titleText.setTextColor(anchorTitle.getTextColors());
+                titleText.setTypeface(anchorTitle.getTypeface());
+            } else {
+                titleText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                titleText.setTextColor(0xffe9edef);
+            }
+            titleText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            titleText.setSingleLine(true);
+
+            // Summary TextView (Professional 1-2 line settings guide)
+            android.widget.TextView summaryText = new android.widget.TextView(activity);
+            summaryText.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+                R.string.waenhancer_settings_desc, 
+                "Configure WaEnhancerX features, UI customization, and privacy settings."
+            ));
+
+            // Copy typography and exact native description color from adjacent row!
+            if (anchorSummary != null) {
+                summaryText.setTextSize(TypedValue.COMPLEX_UNIT_PX, anchorSummary.getTextSize());
+                summaryText.setTextColor(anchorSummary.getTextColors());
+                summaryText.setTypeface(anchorSummary.getTypeface());
+                summaryText.setAlpha(anchorSummary.getAlpha());
+            } else {
+                summaryText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                summaryText.setTextColor(0xff8696a0);
+            }
+            summaryText.setPadding(0, dp(activity, 2), 0, 0);
+
+            // Limit summary to 2 lines maximum and show ellipsis (...) on overflow
+            summaryText.setMaxLines(2);
+            summaryText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+
+            textContainer.addView(titleText);
+            textContainer.addView(summaryText);
+            rowLayout.addView(textContainer);
+
+            // Dynamic Click Action to open Settings
+            rowLayout.setOnClickListener(v -> Utils.openModule(activity));
+
+            return rowLayout;
+        } catch (Throwable t) {
+            XposedBridge.log("[WaEnhancer] SettingsInjector: Error creating dynamic setting row: " + t.getMessage());
+            return null;
+        }
+    }
+
+    private void findTextViews(View view, java.util.List<android.widget.TextView> list) {
+        if (view instanceof android.widget.TextView) {
+            list.add((android.widget.TextView) view);
+        } else if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                findTextViews(group.getChildAt(i), list);
+            }
+        }
     }
 
     private void injectToolbarButton(Activity activity) {
@@ -127,6 +434,28 @@ public class SettingsInjector extends Feature {
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancer] SettingsInjector: direct button error: " + t.getMessage());
         }
+    }
+
+    private void removeNativeViewTile(Activity activity) {
+        try {
+            ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root == null) return;
+            View customRow = root.findViewById(VIEW_ID_WAE_SETTINGS);
+            if (customRow != null && customRow.getParent() instanceof ViewGroup) {
+                ((ViewGroup) customRow.getParent()).removeView(customRow);
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private void removeToolbarButton(Activity activity) {
+        try {
+            ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root == null) return;
+            View button = root.findViewById(VIEW_ID_WAE_SETTINGS);
+            if (button != null && button.getParent() instanceof ViewGroup) {
+                ((ViewGroup) button.getParent()).removeView(button);
+            }
+        } catch (Throwable ignored) {}
     }
 
     private ImageView createSettingsButton(Activity activity) {

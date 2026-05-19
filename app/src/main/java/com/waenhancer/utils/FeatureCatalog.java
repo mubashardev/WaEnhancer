@@ -171,13 +171,13 @@ public class FeatureCatalog {
                                 Arrays.asList("tasker", "automation", "intent")));
 
                 // GENERAL FRAGMENT - Homescreen sub-preferences
-                catalog.add(new SearchableFeature("buttonaction",
-                                context.getString(R.string.show_menu_buttons_as_icons),
-                                context.getString(R.string.show_menu_buttons_as_icons_sum),
+                catalog.add(new SearchableFeature("show_home_menu",
+                                context.getString(R.string.show_home_menu_title),
+                                context.getString(R.string.show_home_menu_sum),
                                 SearchableFeature.Category.GENERAL_HOMESCREEN,
                                 SearchableFeature.FragmentType.GENERAL,
                                 "homescreen",
-                                Arrays.asList("menu", "icons", "buttons")));
+                                Arrays.asList("menu", "icons", "buttons", "home")));
 
                 catalog.add(new SearchableFeature("shownamehome",
                                 context.getString(R.string.showname),

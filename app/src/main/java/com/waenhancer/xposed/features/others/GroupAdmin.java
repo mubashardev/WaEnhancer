@@ -2,10 +2,11 @@ package com.waenhancer.xposed.features.others;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -25,7 +26,6 @@ import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.Arrays;
 
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
@@ -34,6 +34,8 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class GroupAdmin extends Feature {
+
+    private static final int BADGE_ID = 0x7fff0010;
 
     public GroupAdmin(@NonNull ClassLoader classLoader, @NonNull SharedPreferences preferences) {
         super(classLoader, preferences);
@@ -45,7 +47,7 @@ public class GroupAdmin extends Feature {
             || prefs.getBoolean("show_admin_group_icon", false)
             || (!prefs.contains("admin_grp") && !prefs.contains("show_admin_group_icon"));
         if (!enabled) return;
-        
+
         var jidFactory = Unobfuscator.loadJidFactory(classLoader);
         var grpAdmin1 = Unobfuscator.loadGroupAdminMethod(classLoader);
         var grpcheckAdmin = Unobfuscator.loadGroupCheckAdminMethod(classLoader);
@@ -55,7 +57,7 @@ public class GroupAdmin extends Feature {
             conversationRowClass = Unobfuscator.loadConversationRowClass(classLoader);
         } catch (Throwable ignored) {
         }
-        
+
         var hooked = new XC_MethodHook() {
             @SuppressLint("ResourceType")
             @Override
@@ -64,23 +66,39 @@ public class GroupAdmin extends Feature {
                     Object targetObj = param.thisObject;
                     Object[] args = param.args;
 
-                    if (targetObj == null && args != null && args.length > 0) {
+                    // Find View - skip if no valid target
+                    View rowView = null;
+                    if (targetObj instanceof View) {
+                        rowView = (View) targetObj;
+                    } else if (args != null) {
                         for (Object arg : args) {
-                            if (arg == null) continue;
-                            if (arg instanceof View || XposedHelpers.findMethodExactIfExists(arg.getClass(), "getFMessage") != null) {
-                                targetObj = arg;
+                            if (arg instanceof View) {
+                                rowView = (View) arg;
                                 break;
+                            }
+                            if (arg != null) {
+                                View v = extractViewFromObject(arg);
+                                if (v != null) {
+                                    rowView = v;
+                                    break;
+                                }
                             }
                         }
                     }
+                    if (rowView == null) return;
 
-                    if (targetObj == null) return;
+                    // Quick check: if badge already exists, just update visibility
+                    TextView existingBadge = rowView.findViewById(BADGE_ID);
+                    boolean badgeExists = existingBadge != null;
 
+                    // Get FMessage - skip if can't get
                     Object fMessageObj = null;
-                    if (XposedHelpers.findMethodExactIfExists(targetObj.getClass(), "getFMessage") != null) {
-                        fMessageObj = XposedHelpers.callMethod(targetObj, "getFMessage");
+                    if (targetObj != null) {
+                        try {
+                            var method = XposedHelpers.findMethodExactIfExists(targetObj.getClass(), "getFMessage");
+                            if (method != null) fMessageObj = method.invoke(targetObj);
+                        } catch (Throwable ignored) {}
                     }
-                    
                     if (fMessageObj == null && args != null) {
                         for (Object arg : args) {
                             if (arg != null && fMessageClass.isAssignableFrom(arg.getClass())) {
@@ -89,58 +107,50 @@ public class GroupAdmin extends Feature {
                             }
                         }
                     }
+                    if (fMessageObj == null) {
+                        // If badge exists, hide it since we can't determine admin status
+                        if (badgeExists) existingBadge.setVisibility(View.GONE);
+                        return;
+                    }
 
-                    if (fMessageObj == null) return;
-                    
                     var fMessage = new FMessageWpp(fMessageObj);
                     var userJid = fMessage.getUserJid();
-                    if (userJid == null || userJid.userJid == null) return;
-                    
-                    var chatCurrentJid = resolveGroupJid(fMessage);
-                    if (chatCurrentJid == null || !chatCurrentJid.isGroup()) return;
-
-                    // Try to find the View
-                    View rowView = targetObj instanceof View ? (View) targetObj : null;
-                    if (rowView == null) {
-                        rowView = extractViewFromObject(targetObj);
+                    if (userJid == null) {
+                        if (badgeExists) existingBadge.setVisibility(View.GONE);
+                        return;
                     }
-                    if (rowView == null) return;
 
-                    // Try to find GroupParticipantManager instance
+                    var chatCurrentJid = resolveGroupJid(fMessage);
+                    if (chatCurrentJid == null || !chatCurrentJid.isGroup()) {
+                        if (badgeExists) existingBadge.setVisibility(View.GONE);
+                        return;
+                    }
+
+                    // Try to find GroupParticipantManager
                     Object manager = null;
                     Class<?> managerClass = grpcheckAdmin.getDeclaringClass();
-                    
-                    // Search in the target object fields
-                    Field managerField = ReflectionUtils.findFieldUsingFilterIfExists(targetObj.getClass(), f -> managerClass.isAssignableFrom(f.getType()));
-                    if (managerField != null) {
-                        manager = managerField.get(targetObj);
-                    }
-                    
-                    // Search in Activity
-                    if (manager == null) {
-                        Context ctx = rowView.getContext();
-                        while (ctx instanceof android.content.ContextWrapper && !(ctx instanceof android.app.Activity)) {
-                            ctx = ((android.content.ContextWrapper) ctx).getBaseContext();
-                        }
-                        if (ctx instanceof android.app.Activity) {
-                            Field f = ReflectionUtils.findFieldUsingFilterIfExists(ctx.getClass(), field -> managerClass.isAssignableFrom(field.getType()));
-                            if (f != null) {
-                                manager = f.get(ctx);
-                            }
-                        }
-                    }
 
-                    if (manager == null && args != null) {
-                        for (Object arg : args) {
-                            if (arg != null && managerClass.isAssignableFrom(arg.getClass())) {
-                                manager = arg;
-                                break;
+                    try {
+                        Field managerField = ReflectionUtils.findFieldUsingFilterIfExists(targetObj.getClass(), f -> managerClass.isAssignableFrom(f.getType()));
+                        if (managerField != null) manager = managerField.get(targetObj);
+                    } catch (Throwable ignored) {}
+
+                    if (manager == null && rowView.getContext() != null) {
+                        try {
+                            Context ctx = rowView.getContext();
+                            while (ctx instanceof android.content.ContextWrapper && !(ctx instanceof android.app.Activity)) {
+                                ctx = ((android.content.ContextWrapper) ctx).getBaseContext();
                             }
-                        }
+                            if (ctx instanceof android.app.Activity) {
+                                Field f = ReflectionUtils.findFieldUsingFilterIfExists(ctx.getClass(), field -> managerClass.isAssignableFrom(field.getType()));
+                                if (f != null) manager = f.get(ctx);
+                            }
+                        } catch (Throwable ignored) {}
                     }
 
                     if (manager == null) return;
 
+                    // Build group JID
                     Object jidGrp;
                     String groupRawJid = chatCurrentJid.getPhoneRawString();
                     if (Modifier.isStatic(jidFactory.getModifiers())) {
@@ -148,49 +158,52 @@ public class GroupAdmin extends Feature {
                     } else {
                         jidGrp = XposedHelpers.callStaticMethod(jidFactory.getDeclaringClass(), "A03", groupRawJid);
                     }
-                    
                     if (jidGrp == null) return;
 
-                    var result = grpcheckAdmin.invoke(manager, jidGrp, userJid.userJid);
-                    boolean isAdmin = (result instanceof Boolean && (Boolean) result);
-                    
-                    // Fallback for LIDs
-                    if (!isAdmin && userJid.phoneJid != null && !userJid.phoneJid.equals(userJid.userJid)) {
-                        Object res = grpcheckAdmin.invoke(manager, jidGrp, userJid.phoneJid);
-                        isAdmin = (res instanceof Boolean && (Boolean) res);
+                    // Check admin status - try userJid first, then phoneJid
+                    boolean isAdmin = false;
+
+                    if (userJid.userJid != null) {
+                        var result = grpcheckAdmin.invoke(manager, jidGrp, userJid.userJid);
+                        if (result instanceof Boolean) isAdmin = (Boolean) result;
                     }
 
-                    TextView iconAdmin;
-                    if ((iconAdmin = rowView.findViewById(0x7fff0010)) == null) {
-                        ViewGroup nameGroup = rowView.findViewById(Utils.getID("name_in_group", "id"));
-                        if (nameGroup == null) {
-                            nameGroup = findNameContainer(rowView);
+                    if (!isAdmin && userJid.phoneJid != null) {
+                        if (userJid.userJid == null || !userJid.phoneJid.toString().equals(userJid.userJid.toString())) {
+                            var result = grpcheckAdmin.invoke(manager, jidGrp, userJid.phoneJid);
+                            if (result instanceof Boolean) isAdmin = (Boolean) result;
                         }
-                        if (nameGroup == null) return;
-                        
-                        iconAdmin = new TextView(rowView.getContext());
-                        iconAdmin.setId(0x7fff0010);
-                        iconAdmin.setTextSize(12);
-                        
-                        String adminEmoji = prefs.getString("admin_emoji", "👑");
-                        if (adminEmoji == null || adminEmoji.isEmpty()) {
-                            adminEmoji = "👑";
-                        }
-                        iconAdmin.setText(adminEmoji);
-                        
-                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT, 
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        );
-                        params.leftMargin = Utils.dipToPixels(4);
-                        params.gravity = Gravity.CENTER_VERTICAL;
-                        iconAdmin.setLayoutParams(params);
-                        
-                        nameGroup.addView(iconAdmin);
                     }
-                    iconAdmin.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+
+                    // If badge doesn't exist and user is admin, create it
+                    // If badge exists, just update visibility
+                    if (badgeExists) {
+                        existingBadge.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+                        return;
+                    }
+
+                    // Need to create badge only if admin
+                    if (!isAdmin) return;
+
+                    // Find the name TextView directly
+                    TextView nameTextView = findNameTextView(rowView);
+                    if (nameTextView == null) return;
+
+                    String adminEmoji = prefs.getString("admin_emoji", "👑");
+                    if (adminEmoji == null || adminEmoji.isEmpty()) adminEmoji = "👑";
+
+                    // Check if already has prefix to avoid duplicate
+                    CharSequence currentText = nameTextView.getText();
+                    if (currentText != null && currentText.length() > 0 && currentText.charAt(0) == adminEmoji.charAt(0)) {
+                        // Already has the indicator, just ensure it's visible
+                        return;
+                    }
+
+                    // Prepend emoji to name text
+                    nameTextView.setText(adminEmoji + " " + currentText);
+                    return;
                 } catch (Throwable t) {
-                    XposedBridge.log("GroupAdmin HOOK ERROR: " + t.getMessage());
+                    XposedBridge.log("GroupAdmin Error: " + t.getMessage());
                 }
             }
         };
@@ -201,6 +214,38 @@ public class GroupAdmin extends Feature {
         }
         for (Method method : bindMethods) {
             XposedBridge.hookMethod(method, hooked);
+        }
+    }
+
+    private int getBubbleColor(View rowView) {
+        // Default colors by theme
+        int defaultLight = Color.parseColor("#E8E8E8");
+        int defaultDark = Color.parseColor("#3B3B3B");
+
+        try {
+            Context ctx = rowView.getContext();
+            boolean isDarkMode = (ctx.getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+
+            int baseColor = isDarkMode ? defaultDark : defaultLight;
+
+            // Try to get actual bubble color
+            View bubbleView = rowView.findViewById(Utils.getID("bubble_row", "id"));
+            if (bubbleView == null) bubbleView = rowView.findViewById(Utils.getID("bubble", "id"));
+            if (bubbleView != null && bubbleView.getBackground() != null) {
+                if (bubbleView.getBackground() instanceof android.graphics.drawable.GradientDrawable) {
+                    var gd = (android.graphics.drawable.GradientDrawable) bubbleView.getBackground();
+                    if (gd.getColor() != null) baseColor = gd.getColor().getDefaultColor();
+                } else if (bubbleView.getBackground() instanceof android.graphics.drawable.ColorDrawable) {
+                    baseColor = ((android.graphics.drawable.ColorDrawable) bubbleView.getBackground()).getColor();
+                }
+            }
+
+            // Apply 90% opacity (230 alpha)
+            return Color.argb(230, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor));
+        } catch (Throwable ignored) {
+            return Color.argb(230, Color.red(defaultLight), Color.green(defaultLight), Color.blue(defaultLight));
         }
     }
 
@@ -272,6 +317,84 @@ public class GroupAdmin extends Feature {
             cursor = cursor.getSuperclass();
         }
         return result;
+    }
+
+    private TextView findNameTextView(@NonNull View root) {
+        // First try to find by resource ID
+        int nameId = Utils.getID("name_in_group", "id");
+        if (nameId != 0) {
+            View found = root.findViewById(nameId);
+            if (found instanceof TextView) {
+                return (TextView) found;
+            }
+            // If it's a ViewGroup, search inside it
+            if (found instanceof ViewGroup) {
+                TextView tv = findTextViewInViewGroup((ViewGroup) found);
+                if (tv != null) return tv;
+            }
+        }
+
+        // Try ConversationRowParticipantHeaderMainView directly
+        View headerView = root.findViewById(Utils.getID("participant_header_main", "id"));
+        if (headerView == null) {
+            // Try alternative ID names
+            headerView = root.findViewById(Utils.getID("name_in_group", "id"));
+        }
+        if (headerView instanceof ViewGroup) {
+            TextView tv = findTextViewInViewGroup((ViewGroup) headerView);
+            if (tv != null) return tv;
+        }
+
+        // Search recursively for any TextView (including subclasses like WDSTextView)
+        return findTextViewInViewGroupRecursive(root, 6);
+    }
+
+    private TextView findTextViewInViewGroup(ViewGroup vg) {
+        for (int i = 0; i < vg.getChildCount(); i++) {
+            View child = vg.getChildAt(i);
+            if (child instanceof TextView) {
+                TextView tv = (TextView) child;
+                CharSequence text = tv.getText();
+                if (text != null && text.length() > 0) {
+                    String str = text.toString().trim();
+                    // Skip timestamps, numbers only, etc.
+                    if (str.length() > 1 && !str.matches("^\\d+$") && !str.matches("^\\d{1,2}:\\d{2}$") && !str.contains("AM") && !str.contains("PM") && !str.contains(":")) {
+                        return tv;
+                    }
+                }
+            }
+            if (child instanceof ViewGroup) {
+                TextView result = findTextViewInViewGroupRecursive(child, 3);
+                if (result != null) return result;
+            }
+        }
+        return null;
+    }
+
+    private TextView findTextViewInViewGroupRecursive(@NonNull View root, int depth) {
+        if (depth <= 0) return null;
+
+        if (root instanceof TextView) {
+            TextView tv = (TextView) root;
+            CharSequence text = tv.getText();
+            if (text != null && text.length() > 0) {
+                String str = text.toString().trim();
+                // Skip timestamps, numbers only, etc.
+                if (str.length() > 1 && !str.matches("^\\d+$") && !str.matches("^\\d{1,2}:\\d{2}$") && !str.contains("AM") && !str.contains("PM") && !str.contains(":")) {
+                    return tv;
+                }
+            }
+            return null;
+        }
+
+        if (root instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup) root;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                TextView result = findTextViewInViewGroupRecursive(vg.getChildAt(i), depth - 1);
+                if (result != null) return result;
+            }
+        }
+        return null;
     }
 
     private ViewGroup findNameContainer(@NonNull View root) {

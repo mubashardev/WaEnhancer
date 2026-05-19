@@ -403,8 +403,10 @@
     <string name="grant_media_read">Grant Media Read</string>
     <string name="grant_reading_of_contacts">Grant reading of Contacts</string>
     <string name="local_download">Local Download</string>
-    <string name="show_menu_buttons_as_icons">Show menu buttons as icons</string>
-    <string name="show_menu_buttons_as_icons_sum">Shows menu buttons on the home screen as icons for easy access to them</string>
+    <string name="show_home_menu_title">Show WaEnhancerX Home Menu</string>
+    <string name="show_home_menu_sum">Choose how the WaEnhancerX Home Menu is displayed: disabled, as an icon, or in the 3-dots menu</string>
+    <string name="show_as_icon">Show as icon</string>
+    <string name="show_in_3_dots_menu">Show in 3-dots menu</string>
     <string name="starting_cache">Starting hook cache in WhatsApp. This may take a while.</string>
     <string name="bridge_error">Bridge Failed: Enable System Framework in Lsposed and reboot device</string>
     <string name="disable_battery_optimization">Disable Battery Optimization</string>
@@ -583,7 +585,7 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="wa_enhancer_embedded_settings">WaEnhancer X Embedded Settings</string>
     <string name="wa_enhancer_embedded_settings_sum">Choose where to show the WaEnhancer X entry point</string>
     <string name="entry_point_home_menu">Home Screen Menu</string>
-    <string name="entry_point_wa_settings">WhatsApp Settings [Top Right Icon]</string>
+    <string name="entry_point_wa_settings">WhatsApp Settings</string>
     <string name="entry_point_none">Disabled</string>
     <string name="disable_ads">Disable Status Ads</string>
     <string name="logs">Logs</string>
@@ -636,6 +638,7 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="show_shortcut_settings">Show in WhatsApp settings [Icon]</string>
     <string name="show_shortcut_settings_sum">Adds a WaEnhancerX Settings top right icon to the official WhatsApp Settings screen</string>
     <string name="waenhancer_settings">WaEnhancerX Settings</string>
+    <string name="waenhancer_settings_desc">Configure the advanced features, UI customization, and privacy settings.</string>
     <string name="show_hook_toast">Show Hook Loading Toast</string>
     <string name="show_hook_toast_sum">Show toast and snackbar notifications during hook initialization and when hooks finish loading</string>
     <string name="admin_emoji_title">Group Admin Indicator Text/Emoji</string>

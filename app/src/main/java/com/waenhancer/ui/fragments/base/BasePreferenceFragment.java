@@ -48,8 +48,26 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         if (!isAdded() || getContext() == null) {
             return;
         }
-        Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
-        App.getInstance().sendBroadcast(intent);
+        // Collect changed preference titles
+        java.util.ArrayList<String> titles = null;
+        try {
+            java.util.Set<String> changes = mPrefs.getStringSet("pending_restart_changes", null);
+            if (changes != null && !changes.isEmpty()) {
+                titles = new java.util.ArrayList<>(changes);
+            }
+        } catch (Exception ignored) {}
+
+        // Send to both WhatsApp variants (must target package explicitly)
+        for (String pkg : new String[]{"com.whatsapp", "com.whatsapp.w4b"}) {
+            Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
+            intent.setPackage(pkg);
+            if (titles != null) {
+                intent.putStringArrayListExtra("changed_titles", titles);
+            }
+            App.getInstance().sendBroadcast(intent);
+        }
+        // Clear after sending so old titles don't accumulate
+        mPrefs.edit().remove("pending_restart_changes").apply();
     };
 
     @Override
@@ -377,17 +395,15 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         }
         setPreferenceState("filtergroups", false); // Forced disabled
 
-        // Keep this disabled for now because the underlying WhatsApp tab hooks
-        // still cause UI instability and swipe jank on recent test builds.
         var sepPref = findPreference("separategroups");
-        if (mPrefs.getBoolean("separategroups", false)) {
-            runWithoutRestartBroadcast(() -> mPrefs.edit().putBoolean("separategroups", false).apply());
-        }
         if (sepPref != null) {
-            setPreferenceState("separategroups", false);
-            sepPref.setSummary(getString(com.waenhancer.R.string.separate_groups_sum) + "\n\n" + getString(com.waenhancer.R.string.separate_groups_disabled_wa_update));
-        } else {
-            setPreferenceState("separategroups", false);
+            if (com.waenhancer.BuildConfig.DEBUG) {
+                sepPref.setEnabled(true);
+                sepPref.setSummary(getString(com.waenhancer.R.string.separate_groups_sum));
+            } else {
+                setPreferenceState("separategroups", false);
+                sepPref.setSummary("Under development and will launch soon.");
+            }
         }
         // Fully disable FilterGroups due to technical instability
         setPreferenceState("filtergroups", false);
@@ -422,12 +438,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     private boolean isSeparateGroupSupported() {
-        try {
-            var packageInfo = requireContext().getPackageManager().getPackageInfo(FeatureLoader.PACKAGE_WPP, 0);
-            return isVersionAtMost(packageInfo.versionName, 2, 26, 12);
-        } catch (Exception ignored) {
-            return true;
-        }
+        return true;
     }
 
     private void updateGroupPref(String key, boolean supported, int supportedSummary, int unsupportedSummary) {

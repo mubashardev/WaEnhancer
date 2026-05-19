@@ -6,11 +6,13 @@
         app:iconSpaceReserved="false"
         app:title="@string/home_screen">
 
-        <rikka.material.preference.MaterialSwitchPreference
-            app:defaultValue="true"
-            app:key="buttonaction"
-            app:summary="@string/show_menu_buttons_as_icons_sum"
-            app:title="@string/show_menu_buttons_as_icons" />
+        <ListPreference
+            app:defaultValue="1"
+            app:entries="@array/show_home_menu_entries"
+            app:entryValues="@array/show_home_menu_values"
+            app:key="show_home_menu"
+            app:summary="%s"
+            app:title="@string/show_home_menu_title" />
 
         <rikka.material.preference.MaterialSwitchPreference
             app:key="shownamehome"

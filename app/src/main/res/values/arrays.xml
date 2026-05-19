@@ -163,7 +163,6 @@
         <item>2.26.18.xx</item>
         <item>2.26.19.xx</item>
         <item>2.26.20.xx</item>
-        <item>2.26.21.xx</item>
     </string-array>
 
     <string-array name="supported_versions_business">
@@ -175,7 +174,6 @@
         <item>2.26.18.xx</item>
         <item>2.26.19.xx</item>
         <item>2.26.20.xx</item>
-        <item>2.26.21.xx</item>
     </string-array>
 
     <string-array name="image_picker">
@@ -295,6 +293,17 @@
         <item>1</item>
         <item>2</item>
         <item>0</item>
+    </string-array>
+
+    <string-array name="show_home_menu_entries">
+        <item>@string/disabled</item>
+        <item>@string/show_as_icon</item>
+        <item>@string/show_in_3_dots_menu</item>
+    </string-array>
+    <string-array name="show_home_menu_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
     </string-array>
 
     <string-array name="update_frequency_entries">

@@ -413,6 +413,10 @@ public class FMessageWpp {
          * The JID of whatsapp
          */
         public UserJid remoteJid;
+        /**
+         * The participant JID (for group messages)
+         */
+        public UserJid participant;
 
         /**
          * Constructs a new Key instance by wrapping the original WhatsApp message key object.
@@ -426,6 +430,13 @@ public class FMessageWpp {
                 this.isFromMe = (keyFromMeField != null) ? keyFromMeField.getBoolean(key) : XposedHelpers.getBooleanField(key, "A02");
                 Object jidObj = (keyRemoteJidField != null) ? keyRemoteJidField.get(key) : XposedHelpers.getObjectField(key, "A00");
                 this.remoteJid = new UserJid(jidObj);
+                // Try to get participant field
+                try {
+                    Object participantObj = XposedHelpers.getObjectField(key, "participant");
+                    if (participantObj != null) {
+                        this.participant = new UserJid(participantObj);
+                    }
+                } catch (Throwable ignored) {}
             } catch (Exception e) {
                 XposedBridge.log("[WAE] Error initializing FMessageWpp.Key: " + e.getMessage());
                 // Fallback to old hardcoded names if dynamic resolution fails (though unlikely to help if it fails)

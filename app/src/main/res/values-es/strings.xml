@@ -351,8 +351,6 @@
     <string name="grant_media_read">Conceder permiso para leer multimedia</string>
     <string name="grant_reading_of_contacts">Conceder permiso para la lectura de contactos</string>
     <string name="local_download">Directorio para las descargas</string>
-    <string name="show_menu_buttons_as_icons">Mostrar botones de menú como iconos</string>
-    <string name="show_menu_buttons_as_icons_sum">Muestra los botones de menú en la pantalla de inicio como iconos para un fácil acceso a ellos</string>
     <string name="starting_cache">Iniciando procesos de WAE en WhatsApp. Esto puede tardar un rato.</string>
     <string name="bridge_error">Fallo del Bridge: Habilita Framework del Sistema en Lsposed y reinicia el dispositivo</string>
     <string name="disable_battery_optimization">Desactivar la optimización de batería</string>
@@ -514,4 +512,9 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="call_recording_experimental_ok">I understand, enable anyway</string>
     <string name="contact_probably_not_added">Contact probably didn\'t add you!</string>
     <string name="coming_soon">Coming soon!</string>
+
+    <string name="show_home_menu_title">Mostrar menú principal de WaEnhancerX</string>
+    <string name="show_home_menu_sum">Elija cómo se muestra el menú principal de WaEnhancerX: desactivado, como icono o en el menú de 3 puntos</string>
+    <string name="show_as_icon">Mostrar como icono</string>
+    <string name="show_in_3_dots_menu">Mostrar en el menú de 3 puntos</string>
 </resources>

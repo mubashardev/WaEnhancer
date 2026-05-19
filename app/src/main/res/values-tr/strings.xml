@@ -351,8 +351,6 @@
     <string name="grant_media_read">Medya Okuma Yetkisi Ver</string>
     <string name="grant_reading_of_contacts">Kişileri Okuma İzni Ver</string>
     <string name="local_download">Yerel İndirme</string>
-    <string name="show_menu_buttons_as_icons">Menü düğmelerini simge olarak göster</string>
-    <string name="show_menu_buttons_as_icons_sum">Kolay erişim için ana ekrandaki menü düğmelerini simge olarak gösterir</string>
     <string name="starting_cache">WhatsApp\'ta kanca önbelleği başlatılıyor. Bu biraz zaman alabilir.</string>
     <string name="bridge_error">Köprü hatası: LSPosed\'te Sistem Çerçevesini etkinleştirin ve cihazı yeniden başlatın</string>
     <string name="disable_battery_optimization">Pil Optimizasyonunu Devre Dışı Bırak</string>
@@ -514,4 +512,9 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="call_recording_experimental_ok">I understand, enable anyway</string>
     <string name="contact_probably_not_added">Contact probably didn\'t add you!</string>
     <string name="coming_soon">Coming soon!</string>
+
+    <string name="show_home_menu_title">WaEnhancerX Ana Menüsünü Göster</string>
+    <string name="show_home_menu_sum">WaEnhancerX ana menüsünün nasıl görüntüleneceğini seçin: devre dışı, simge olarak veya 3 noktalı menüde</string>
+    <string name="show_as_icon">Simge olarak göster</string>
+    <string name="show_in_3_dots_menu">3 noktalı menüde göster</string>
 </resources>

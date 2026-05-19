@@ -4,3 +4,4 @@
 [Fixes]
 - Fixed Hide Tabs showing hidden tabs during swipe
 - Fixed compatibility errors
+- Fixed CustomThemeV2 errors

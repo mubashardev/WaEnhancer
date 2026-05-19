@@ -23,6 +23,7 @@ import com.waenhancer.App;
 import com.waenhancer.BuildConfig;
 import com.waenhancer.UpdateChecker;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
+import com.waenhancer.utils.ApkMirrorFeedHelper;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.components.SharedPreferencesWrapper;
 import com.waenhancer.xposed.core.components.WaContactWpp;
@@ -418,6 +419,9 @@ public class FeatureLoader {
             }
 
             if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
+                if (isHomeActivity(activity)) {
+                    triggerBetaCheckInHost(activity);
+                }
                 activity.getWindow().getDecorView().post(() -> {
                     long perfStart = PerfLogger.start();
                     try {
@@ -883,6 +887,69 @@ public class FeatureLoader {
                     XposedBridge.log(time);
             }
         }
+    }
+
+    private static void triggerBetaCheckInHost(Activity activity) {
+        String currentPackage = activity.getPackageName();
+        if (!PACKAGE_WPP.equals(currentPackage) && !PACKAGE_BUSINESS.equals(currentPackage)) {
+            return;
+        }
+
+        ApkMirrorFeedHelper.fetchVersionsIfNeededForPackage(activity, currentPackage, () -> {
+            try {
+                PackageManager pm = activity.getPackageManager();
+                PackageInfo pi = pm.getPackageInfo(currentPackage, 0);
+                String installedVersion = pi.versionName;
+                
+                if (ApkMirrorFeedHelper.isBetaVersion(activity, currentPackage, installedVersion)) {
+                    showBetaWarningDialogInHost(activity, currentPackage);
+                }
+            } catch (Exception e) {
+                XposedBridge.log("[WAE] Error checking beta in host: " + e.getMessage());
+            }
+        });
+    }
+
+    private static void showBetaWarningDialogInHost(Activity activity, String packageName) {
+        String appName = PACKAGE_WPP.equals(packageName) ? "WhatsApp" : "WhatsApp Business";
+        String prefKey = "last_beta_warning_dismissed_" + (PACKAGE_WPP.equals(packageName) ? "wpp" : "business");
+        
+        SharedPreferences prefs = activity.getSharedPreferences("ApkMirrorCache", Context.MODE_PRIVATE);
+        long lastDismissed = prefs.getLong(prefKey, 0L);
+        long now = System.currentTimeMillis();
+        
+        if (now - lastDismissed < java.util.concurrent.TimeUnit.DAYS.toMillis(1)) {
+            return;
+        }
+        
+        activity.runOnUiThread(() -> {
+            try {
+                new AlertDialogWpp(activity)
+                        .setTitle("Beta Version Detected")
+                        .setMessage("You have installed a beta version of " + appName + ". WaEnhancerX is designed for the stable versions of WhatsApp, if you face any bugs please switch to a stable version of " + appName + ".")
+                        .setPositiveButton("Leave Beta Program", (dialog, which) -> {
+                            try {
+                                String url = PACKAGE_WPP.equals(packageName) ?
+                                        "https://play.google.com/apps/testing/com.whatsapp" :
+                                        "https://play.google.com/apps/testing/com.whatsapp.w4b";
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                activity.startActivity(intent);
+                            } catch (Exception e) {
+                                XposedBridge.log("[WAE] Failed to open beta URL: " + e.getMessage());
+                            }
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton("Dismiss for 1 Day", (dialog, which) -> {
+                            prefs.edit().putLong(prefKey, System.currentTimeMillis()).apply();
+                            dialog.dismiss();
+                        })
+                        .setCancelable(false)
+                        .show();
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] Error showing beta dialog in host: " + t.getMessage());
+            }
+        });
     }
 
     private static class ErrorItem {

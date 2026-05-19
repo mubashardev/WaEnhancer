@@ -31,6 +31,7 @@ import com.waenhancer.activities.ChangelogActivity;
 import com.waenhancer.databinding.FragmentHomeBinding;
 import com.waenhancer.ui.fragments.base.BaseFragment;
 import com.waenhancer.utils.FilePicker;
+import com.waenhancer.utils.ApkMirrorFeedHelper;
 import com.waenhancer.xposed.core.FeatureLoader;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.UnobfuscatorCache;
@@ -90,6 +91,12 @@ public class HomeFragment extends BaseFragment {
 
         checkStateWpp(requireActivity());
 
+        ApkMirrorFeedHelper.fetchVersionsIfNeeded(requireContext(), () -> {
+            if (getActivity() != null && isAdded()) {
+                checkStateWpp(getActivity());
+            }
+        });
+
         binding.rebootBtn.setOnClickListener(view -> {
             animateClick(view);
             App.getInstance().restartApp(FeatureLoader.PACKAGE_WPP);
@@ -120,6 +127,36 @@ public class HomeFragment extends BaseFragment {
         binding.viewSupportedVersionsBtn.setOnClickListener(view -> {
             animateClick(view);
             startActivity(new Intent(requireContext(), SupportedVersionsActivity.class));
+        });
+
+        binding.wppVersionRow.setOnClickListener(view -> {
+            animateClick(view);
+            try {
+                var packageInfo = App.getInstance().getPackageManager().getPackageInfo(FeatureLoader.PACKAGE_WPP, 0);
+                var installedVersion = packageInfo.versionName;
+                if (ApkMirrorFeedHelper.isBetaVersion(requireContext(), FeatureLoader.PACKAGE_WPP, installedVersion)) {
+                    showBetaWarningDialog(requireActivity(), FeatureLoader.PACKAGE_WPP, true);
+                } else {
+                    Toast.makeText(requireContext(), "WhatsApp is a stable version.", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "WhatsApp is not installed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        binding.businessVersionRow.setOnClickListener(view -> {
+            animateClick(view);
+            try {
+                var packageInfo = App.getInstance().getPackageManager().getPackageInfo(FeatureLoader.PACKAGE_BUSINESS, 0);
+                var installedVersion = packageInfo.versionName;
+                if (ApkMirrorFeedHelper.isBetaVersion(requireContext(), FeatureLoader.PACKAGE_BUSINESS, installedVersion)) {
+                    showBetaWarningDialog(requireActivity(), FeatureLoader.PACKAGE_BUSINESS, true);
+                } else {
+                    Toast.makeText(requireContext(), "WhatsApp Business is a stable version.", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "WhatsApp Business is not installed.", Toast.LENGTH_SHORT).show();
+            }
         });
 
         binding.btnReportIssue.setOnClickListener(view -> {
@@ -561,7 +598,7 @@ public class HomeFragment extends BaseFragment {
         binding.modelName.setText(Build.DEVICE);
 
         if (App.isOriginalPackage()) {
-            checkPackageVersion(activity, FeatureLoader.PACKAGE_WPP, binding.wppInstalledVersion,
+            checkPackageVersion(activity, FeatureLoader.PACKAGE_WPP, binding.wppVersionRow, binding.wppInstalledVersion,
                     binding.wppVersionStatus, binding.wppStatusIcon, binding.wppUnsupportedBtn,
                     R.array.supported_versions_wpp);
         } else {
@@ -575,7 +612,7 @@ public class HomeFragment extends BaseFragment {
                 divider.setVisibility(View.GONE);
         }
 
-        checkPackageVersion(activity, FeatureLoader.PACKAGE_BUSINESS, binding.businessInstalledVersion,
+        checkPackageVersion(activity, FeatureLoader.PACKAGE_BUSINESS, binding.businessVersionRow, binding.businessInstalledVersion,
                 binding.businessVersionStatus, binding.businessStatusIcon, binding.businessUnsupportedBtn,
                 R.array.supported_versions_business);
     }
@@ -622,17 +659,15 @@ public class HomeFragment extends BaseFragment {
     }
 
     private void checkPackageVersion(FragmentActivity activity, String packageName,
+            View rowView,
             com.google.android.material.textview.MaterialTextView versionView,
             com.google.android.material.textview.MaterialTextView statusView, android.widget.ImageView iconView,
             View unsupportedBtnView,
             int supportedArrayResId) {
 
-        android.util.TypedValue typedValue = new android.util.TypedValue();
-        activity.getTheme().resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
-        int colorPrimary = typedValue.data;
-
         int colorError = androidx.core.content.ContextCompat.getColor(activity, android.R.color.holo_red_light);
         int colorOutline = androidx.core.content.ContextCompat.getColor(activity, android.R.color.darker_gray);
+        int colorSuccess = 0xFF2E7D32; // Premium green color!
 
         try {
             var packageInfo = App.getInstance().getPackageManager().getPackageInfo(packageName, 0);
@@ -656,15 +691,59 @@ public class HomeFragment extends BaseFragment {
             }
 
             if (isSupported) {
-                statusView.setText("Supported");
-                statusView.setTextColor(colorPrimary);
-                iconView.setImageResource(R.drawable.ic_round_check_circle_24);
-                iconView.setColorFilter(colorPrimary);
+                if (ApkMirrorFeedHelper.isBetaVersion(activity, packageName, installedVersion)) {
+                    statusView.setText("Beta Unsupported");
+                    statusView.setTextColor(colorError);
+                    iconView.setImageResource(R.drawable.ic_round_error_outline_24);
+                    iconView.setColorFilter(colorError);
+                    
+                    String appName = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "WhatsApp" : "WhatsApp Business";
+                    rowView.setOnClickListener(v -> {
+                        try {
+                            com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(activity);
+                            View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_info, null);
+                            dialog.setContentView(view);
+
+                            ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_title)).setText("Beta Version Detected");
+                            ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_message)).setText(
+                                    "You have installed a beta version of " + appName + ". WaEnhancerX is designed for the stable versions of WhatsApp. Please leave the beta program to install the stable release.");
+
+                            com.google.android.material.button.MaterialButton okBtn = view.findViewById(R.id.bs_ok_btn);
+                            okBtn.setText("Leave Beta Program");
+                            okBtn.setOnClickListener(v2 -> {
+                                try {
+                                    String url = FeatureLoader.PACKAGE_WPP.equals(packageName) ?
+                                            "https://play.google.com/apps/testing/com.whatsapp" :
+                                            "https://play.google.com/apps/testing/com.whatsapp.w4b";
+                                    Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    activity.startActivity(intent);
+                                } catch (Exception e) {
+                                    Log.e("WAE_BETA", "Failed to open beta URL: " + e.getMessage());
+                                }
+                                dialog.dismiss();
+                            });
+
+                            dialog.show();
+                        } catch (Exception e) {
+                            Log.e("WAE_BETA", "Error showing bottom sheet: " + e.getMessage());
+                        }
+                    });
+                } else {
+                    statusView.setText("Supported");
+                    statusView.setTextColor(colorSuccess);
+                    iconView.setImageResource(R.drawable.ic_round_check_circle_24);
+                    iconView.setColorFilter(colorSuccess);
+                    rowView.setOnClickListener(null);
+                    rowView.setClickable(false);
+                }
             } else {
                 statusView.setText("Not Supported");
                 statusView.setTextColor(colorError);
                 iconView.setImageResource(R.drawable.ic_round_error_outline_24);
                 iconView.setColorFilter(colorError);
+                rowView.setOnClickListener(null);
+                rowView.setClickable(false);
             }
         } catch (Exception e) {
             versionView.setText("Not Installed");
@@ -672,7 +751,38 @@ public class HomeFragment extends BaseFragment {
             unsupportedBtnView.setVisibility(View.GONE);
             iconView.setImageResource(R.drawable.ic_round_error_outline_24);
             iconView.setColorFilter(colorOutline);
+            rowView.setOnClickListener(null);
+            rowView.setClickable(false);
         }
+    }
+
+    private void showBetaWarningDialog(FragmentActivity activity, String packageName, boolean forceShow) {
+        String appName = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "WhatsApp" : "WhatsApp Business";
+        String prefKey = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "last_beta_warning_dismissed_wpp" : "last_beta_warning_dismissed_business";
+        
+        SharedPreferences prefs = activity.getSharedPreferences("ApkMirrorCache", Context.MODE_PRIVATE);
+        long lastDismissed = prefs.getLong(prefKey, 0L);
+        long now = System.currentTimeMillis();
+        
+        if (!forceShow && (now - lastDismissed < java.util.concurrent.TimeUnit.DAYS.toMillis(1))) {
+            return;
+        }
+        
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
+                .setTitle("Beta Version Detected")
+                .setMessage("You have installed a beta version of " + appName + ". WaEnhancerX is designed for the stable versions of WhatsApp, if you face any bugs please switch to a stable version of " + appName + ".")
+                .setPositiveButton("Dismiss for 1 Day", (dialog, which) -> {
+                    prefs.edit().putLong(prefKey, System.currentTimeMillis()).apply();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Close", (dialog, which) -> {
+                    prefs.edit().putLong(prefKey, System.currentTimeMillis()).apply();
+                    dialog.dismiss();
+                })
+                .setOnCancelListener(dialog -> {
+                    prefs.edit().putLong(prefKey, System.currentTimeMillis()).apply();
+                })
+                .show();
     }
 
     private void disableBusiness(FragmentActivity activity) {

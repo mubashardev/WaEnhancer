@@ -616,12 +616,16 @@
 
                         <!-- WhatsApp Version -->
                         <LinearLayout
+                            android:id="@+id/wpp_version_row"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center_vertical"
                             android:minHeight="48dp"
                             android:orientation="horizontal"
-                            android:paddingVertical="12dp">
+                            android:paddingVertical="12dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackground">
 
                             <ImageView
                                 android:id="@+id/wpp_status_icon"
@@ -693,12 +697,16 @@
 
                         <!-- Business Version -->
                         <LinearLayout
+                            android:id="@+id/business_version_row"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center_vertical"
                             android:minHeight="48dp"
                             android:orientation="horizontal"
-                            android:paddingVertical="12dp">
+                            android:paddingVertical="12dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackground">
 
                             <ImageView
                                 android:id="@+id/business_status_icon"

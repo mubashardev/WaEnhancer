@@ -271,22 +271,10 @@ public class Utils {
             try {
                 var view = activity.findViewById(android.R.id.content);
                 if (view != null) {
-                    Class<?> snackbarClass = null;
-                    ClassLoader loader = FeatureLoader.hostClassLoader != null ? FeatureLoader.hostClassLoader : activity.getClassLoader();
-                    
-                    try {
-                        snackbarClass = XposedHelpers.findClass("com.google.android.material.snackbar.Snackbar", loader);
-                    } catch (Throwable t) {
-                        snackbarClass = XposedHelpers.findClass("com.google.android.material.snackbar.Snackbar", activity.getClassLoader());
-                    }
-                    
-                    if (snackbarClass != null) {
-                        Object snackbar = XposedHelpers.callStaticMethod(snackbarClass, "make", view, message, 0); // 0 = LENGTH_LONG
-                        XposedHelpers.callMethod(snackbar, "show");
-                    }
+                    com.google.android.material.snackbar.Snackbar.make(view, message,
+                            com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
                 }
             } catch (Throwable t) {
-                XposedBridge.log("[WAE] Failed to show Snackbar: " + t.getMessage());
                 showToast(message, Toast.LENGTH_SHORT);
             }
         });

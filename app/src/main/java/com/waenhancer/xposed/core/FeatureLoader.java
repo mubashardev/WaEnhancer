@@ -19,10 +19,11 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.waenhancer.App;
-import com.waenhancer.xposed.bridge.client.ProviderSharedPreferences;
+
 import com.waenhancer.BuildConfig;
 import com.waenhancer.UpdateChecker;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
+import com.waenhancer.utils.ApkMirrorFeedHelper;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.components.SharedPreferencesWrapper;
 import com.waenhancer.xposed.core.components.WaContactWpp;
@@ -41,6 +42,7 @@ import com.waenhancer.xposed.features.customization.CustomToolbar;
 import com.waenhancer.xposed.features.customization.CustomView;
 import com.waenhancer.xposed.features.customization.HideSeenView;
 import com.waenhancer.xposed.features.customization.HideTabs;
+import com.waenhancer.xposed.features.customization.SeparateGroup;
 import com.waenhancer.xposed.features.customization.IGStatus;
 import com.waenhancer.xposed.features.customization.ShowOnline;
 import com.waenhancer.xposed.features.general.AntiRevoke;
@@ -219,12 +221,21 @@ public class FeatureLoader {
                         }
 
                         PackageManager packageManager = mApp.getPackageManager();
-                        
-                        // Use provider-backed prefs in the hooked process so changes made in the
-                        // manager app can propagate without relying on stale XSharedPreferences snapshots.
-                        var localBridgePrefs = mApp.getSharedPreferences("wae_bridge_prefs", Context.MODE_PRIVATE);
-                        var providerPrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(mApp, localBridgePrefs, pref);
-                        Utils.xprefs = providerPrefs;
+
+                        // XSharedPreferences reads the prefs file directly from disk.
+                        // The file is world-readable because we hook getDefaultSharedPreferencesMode()
+                        // in WppXposed to return MODE_WORLD_READABLE.
+                        // Reload to get the freshest data at startup.
+                        if (pref instanceof XSharedPreferences) {
+                            ((XSharedPreferences) pref).reload();
+                        }
+                        Utils.xprefs = pref;
+
+                        // Auto-reload prefs when they change on disk
+                        if (pref instanceof XSharedPreferences) {
+                            final XSharedPreferences xpref = (XSharedPreferences) pref;
+                            xpref.registerOnSharedPreferenceChangeListener((sp, key) -> xpref.reload());
+                        }
 
                         PackageInfo packageInfo = packageManager.getPackageInfo(mApp.getPackageName(), 0);
 
@@ -259,7 +270,7 @@ public class FeatureLoader {
                             }
                             
                             // Execute loading synchronously to ensure hooks are applied before app continues
-                            load(loader, providerPrefs, packageInfo, sourceDir);
+                            load(loader, pref, packageInfo, sourceDir);
                         } catch (Throwable e) {
                             XposedBridge.log(e);
                             var error = new ErrorItem();
@@ -389,6 +400,9 @@ public class FeatureLoader {
     private static void initComponents(ClassLoader loader, android.content.SharedPreferences pref) throws Exception {
         FMessageWpp.initialize(loader);
         WppCore.Initialize(loader, pref);
+        // Clear stale pending change titles from previous process.
+        // Must be after WppCore.Initialize() so privPrefs is available.
+        WppCore.setPrivString("pending_changes", "");
         DesignUtils.setPrefs(pref);
         Utils.init(loader);
         AlertDialogWpp.initDialog(loader);
@@ -398,7 +412,16 @@ public class FeatureLoader {
         final boolean[] hasCheckedThisSession = {false};
 
         WppCore.addListenerActivity((activity, state) -> {
+            // On HomeActivity CREATE, verify that prefs file is readable
+            if (state == WppCore.ActivityChangeState.ChangeType.CREATED
+                    && "HomeActivity".equals(activity.getClass().getSimpleName())) {
+                checkPrefsReadable(pref, activity);
+            }
+
             if (state == WppCore.ActivityChangeState.ChangeType.RESUMED) {
+                if (isHomeActivity(activity)) {
+                    triggerBetaCheckInHost(activity);
+                }
                 activity.getWindow().getDecorView().post(() -> {
                     long perfStart = PerfLogger.start();
                     try {
@@ -410,21 +433,14 @@ public class FeatureLoader {
 
                         if (pref instanceof XSharedPreferences) {
                             ((XSharedPreferences) pref).reload();
-                        } else if (pref instanceof ProviderSharedPreferences) {
-                            ((ProviderSharedPreferences) pref).reload();
                         }
 
-                        boolean needRestartPref = pref.getBoolean("need_restart", false);
-                        boolean needRestartGlobal = WppCore.getPrivBoolean("need_restart", false);
-                        java.util.Set<String> changes = pref.getStringSet("pending_restart_changes", null);
-                        boolean hasPendingChanges = changes != null && !changes.isEmpty();
+                        // Only check WppCore's local prefs for restart flag.
+                        // XSharedPreferences is READ-ONLY — we cannot clear flags there,
+                        // so we must not read them from there either.
+                        boolean needRestart = WppCore.getPrivBoolean("need_restart", false);
 
-                        if (!needRestartPref && !hasPendingChanges && needRestartGlobal) {
-                            WppCore.setPrivBooleanSync("need_restart", false);
-                            return;
-                        }
-
-                        if ((needRestartPref || needRestartGlobal) && !isRestartDialogShowing) {
+                        if (needRestart && !isRestartDialogShowing) {
                             if (isHomeActivity(activity)) {
                                 activity.invalidateOptionsMenu();
                             }
@@ -432,21 +448,21 @@ public class FeatureLoader {
                             String msg = getModuleString(ResId.string.restart_wpp);
                             String btnRestart = getModuleString(ResId.string.restart_whatsapp);
                             String btnCancel = getModuleString(android.R.string.cancel);
-                            
-                            // Enhance message with changed items if possible
-                            try {
-                                if (changes != null && !changes.isEmpty()) {
-                                    StringBuilder sb = new StringBuilder();
-                                    if (msg.isEmpty()) msg = "WhatsApp needs to be restarted to apply the following changes:";
-                                    else sb.append(msg).append("\n\n");
-                                    
-                                    sb.append("Changes:\n");
-                                    for (String change : changes) {
-                                        sb.append("• ").append(change).append("\n");
+
+                            // Show which preferences changed
+                            String changedTitles = WppCore.getPrivString("pending_changes", "");
+                            if (!changedTitles.isEmpty()) {
+                                StringBuilder sb = new StringBuilder();
+                                if (!msg.isEmpty()) sb.append(msg).append("\n\n");
+                                else sb.append("WhatsApp needs to be restarted to apply the following changes:\n\n");
+                                sb.append("Changes:\n");
+                                for (String title : changedTitles.split("\\|")) {
+                                    if (!title.trim().isEmpty()) {
+                                        sb.append("• ").append(title.trim()).append("\n");
                                     }
-                                    msg = sb.toString().trim();
                                 }
-                            } catch (Exception ignored) {}
+                                msg = sb.toString().trim();
+                            }
 
                             if (msg.isEmpty()) msg = "WhatsApp needs to be restarted to apply your recent changes in WaEnhancer. Would you like to restart now?";
                             if (btnRestart.isEmpty()) btnRestart = "Restart WhatsApp";
@@ -457,16 +473,14 @@ public class FeatureLoader {
                                     .setMessage(msg)
                                     .setPositiveButton(btnRestart, (dialog, which) -> {
                                         isRestartDialogShowing = false;
-                                        pref.edit().putBoolean("need_restart", false)
-                                                .remove("pending_restart_changes").apply();
                                         WppCore.setPrivBooleanSync("need_restart", false);
+                                        WppCore.setPrivString("pending_changes", "");
                                         Utils.doRestart(activity);
                                     })
                                     .setNegativeButton(btnCancel, (dialog, which) -> {
                                         isRestartDialogShowing = false;
-                                        pref.edit().putBoolean("need_restart", false)
-                                                .remove("pending_restart_changes").apply();
                                         WppCore.setPrivBooleanSync("need_restart", false);
+                                        WppCore.setPrivString("pending_changes", "");
                                     })
                                     .show();
                         }
@@ -494,6 +508,32 @@ public class FeatureLoader {
         });
     }
 
+    /**
+     * Verify that XSharedPreferences can actually read preference data.
+     * LSPosed stores prefs at /data/misc/apexdata/ and serves them via its own bridge,
+     * so file-level permission checks give false positives. Instead, we check if
+     * XSharedPreferences.getAll() returns any data.
+     */
+    private static void checkPrefsReadable(android.content.SharedPreferences pref, Activity activity) {
+        if (!(pref instanceof XSharedPreferences)) return;
+        try {
+            XSharedPreferences xpref = (XSharedPreferences) pref;
+            xpref.reload();
+            var allPrefs = xpref.getAll();
+            if (allPrefs == null || allPrefs.isEmpty()) {
+                XposedBridge.log("[WAE] PREFS WARNING: XSharedPreferences returned empty data. "
+                        + "File: " + xpref.getFile().getAbsolutePath());
+                activity.runOnUiThread(() ->
+                        Toast.makeText(activity,
+                                "[WAE] Unable to read preferences. Ensure the module is enabled and restart your device.",
+                                Toast.LENGTH_LONG).show());
+            } else if (Feature.DEBUG) {
+                XposedBridge.log("[WAE] Prefs OK: " + allPrefs.size() + " entries loaded");
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAE] checkPrefsReadable failed: " + t.getMessage());
+        }
+    }
 
 
     private static void registerReceivers() {
@@ -527,9 +567,22 @@ public class FeatureLoader {
         BroadcastReceiver restartManualReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                ;
                 WppCore.setPrivBooleanSync("need_restart", true);
-                ;
+                // Accumulate changed preference titles from the broadcast
+                try {
+                    java.util.ArrayList<String> titles = intent.getStringArrayListExtra("changed_titles");
+                    if (titles != null && !titles.isEmpty()) {
+                        String existing = WppCore.getPrivString("pending_changes", "");
+                        java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                        if (!existing.isEmpty()) {
+                            for (String t : existing.split("\\|")) {
+                                if (!t.trim().isEmpty()) all.add(t.trim());
+                            }
+                        }
+                        all.addAll(titles);
+                        WppCore.setPrivString("pending_changes", String.join("|", all));
+                    }
+                } catch (Exception ignored) {}
             }
         };
         ContextCompat.registerReceiver(mApp, restartManualReceiver,
@@ -549,16 +602,12 @@ public class FeatureLoader {
         ContextCompat.registerReceiver(mApp, clearCacheReceiver,
                 new IntentFilter(BuildConfig.APPLICATION_ID + ".CLEAR_OBFUSCATE_CACHE"), ContextCompat.RECEIVER_EXPORTED);
 
-        // Preference change receiver
+        // Preference change receiver — reload XSharedPreferences from disk
         BroadcastReceiver prefsChangedReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (Utils.xprefs != null) {
-                    if (Utils.xprefs instanceof com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) {
-                        ((com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) Utils.xprefs).reload();
-                    } else if (Utils.xprefs instanceof de.robv.android.xposed.XSharedPreferences) {
-                        ((de.robv.android.xposed.XSharedPreferences) Utils.xprefs).reload();
-                    }
+                if (Utils.xprefs instanceof de.robv.android.xposed.XSharedPreferences) {
+                    ((de.robv.android.xposed.XSharedPreferences) Utils.xprefs).reload();
                 }
             }
         };
@@ -748,6 +797,7 @@ public class FeatureLoader {
                 HideSeenView.class,
                 TagMessage.class,
                 HideTabs.class,
+                SeparateGroup.class,
                 IGStatus.class,
                 LiteMode.class,
                 MediaQuality.class,
@@ -825,8 +875,8 @@ public class FeatureLoader {
         }
         executorService.shutdown();
         try {
-            if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
-                XposedBridge.log("WAE: Features failed to load within 5 seconds");
+            if (!executorService.awaitTermination(15, TimeUnit.SECONDS)) {
+                XposedBridge.log("WAE: Features failed to load within 15 seconds");
             }
         } catch (InterruptedException e) {
             XposedBridge.log(e);
@@ -837,6 +887,69 @@ public class FeatureLoader {
                     XposedBridge.log(time);
             }
         }
+    }
+
+    private static void triggerBetaCheckInHost(Activity activity) {
+        String currentPackage = activity.getPackageName();
+        if (!PACKAGE_WPP.equals(currentPackage) && !PACKAGE_BUSINESS.equals(currentPackage)) {
+            return;
+        }
+
+        ApkMirrorFeedHelper.fetchVersionsIfNeededForPackage(activity, currentPackage, () -> {
+            try {
+                PackageManager pm = activity.getPackageManager();
+                PackageInfo pi = pm.getPackageInfo(currentPackage, 0);
+                String installedVersion = pi.versionName;
+                
+                if (ApkMirrorFeedHelper.isBetaVersion(activity, currentPackage, installedVersion)) {
+                    showBetaWarningDialogInHost(activity, currentPackage);
+                }
+            } catch (Exception e) {
+                XposedBridge.log("[WAE] Error checking beta in host: " + e.getMessage());
+            }
+        });
+    }
+
+    private static void showBetaWarningDialogInHost(Activity activity, String packageName) {
+        String appName = PACKAGE_WPP.equals(packageName) ? "WhatsApp" : "WhatsApp Business";
+        String prefKey = "last_beta_warning_dismissed_" + (PACKAGE_WPP.equals(packageName) ? "wpp" : "business");
+        
+        SharedPreferences prefs = activity.getSharedPreferences("ApkMirrorCache", Context.MODE_PRIVATE);
+        long lastDismissed = prefs.getLong(prefKey, 0L);
+        long now = System.currentTimeMillis();
+        
+        if (now - lastDismissed < java.util.concurrent.TimeUnit.DAYS.toMillis(1)) {
+            return;
+        }
+        
+        activity.runOnUiThread(() -> {
+            try {
+                new AlertDialogWpp(activity)
+                        .setTitle("Beta Version Detected")
+                        .setMessage("You have installed a beta version of " + appName + ". WaEnhancerX is designed for the stable versions of WhatsApp, if you face any bugs please switch to a stable version of " + appName + ".")
+                        .setPositiveButton("Leave Beta Program", (dialog, which) -> {
+                            try {
+                                String url = PACKAGE_WPP.equals(packageName) ?
+                                        "https://play.google.com/apps/testing/com.whatsapp" :
+                                        "https://play.google.com/apps/testing/com.whatsapp.w4b";
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                activity.startActivity(intent);
+                            } catch (Exception e) {
+                                XposedBridge.log("[WAE] Failed to open beta URL: " + e.getMessage());
+                            }
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton("Dismiss for 1 Day", (dialog, which) -> {
+                            prefs.edit().putLong(prefKey, System.currentTimeMillis()).apply();
+                            dialog.dismiss();
+                        })
+                        .setCancelable(false)
+                        .show();
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] Error showing beta dialog in host: " + t.getMessage());
+            }
+        });
     }
 
     private static class ErrorItem {

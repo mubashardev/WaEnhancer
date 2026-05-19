@@ -190,11 +190,22 @@ public class Unobfuscator {
         return UnobfuscatorCache.getInstance().getClass(classLoader, name, () -> {
             var result = dexkit.findClass(FindClass.create().matcher(ClassMatcher.create().className(name, type)))
                     .firstOrNull();
-            if (result == null)
+            if (result == null) {
+                if (name.contains("PhoneUserJid")) {
+                    XposedBridge.log("WAE: PhoneUserJid class not found. Falling back to UserJid class.");
+                    String fallbackName = name.replace("PhoneUserJid", "UserJid");
+                    var fallbackResult = dexkit.findClass(FindClass.create().matcher(ClassMatcher.create().className(fallbackName, type)))
+                            .firstOrNull();
+                    if (fallbackResult != null) {
+                        return fallbackResult.getInstance(classLoader);
+                    }
+                }
                 throw new ClassNotFoundException("Class not found: " + name);
+            }
             return result.getInstance(classLoader);
         });
     }
+
 
     public synchronized static String getMethodDescriptor(Method method) {
         if (method == null)
@@ -3482,6 +3493,17 @@ public class Unobfuscator {
 
     public synchronized static Class loadSettingsFragmentClass(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(loader, "SettingsFragment", () -> {
+            String[] names = {
+                "com.whatsapp.settings.SettingsFragment",
+                "com.whatsapp.settings.ui.SettingsFragment",
+                "com.whatsapp.settings.SettingsFragmentCompat",
+                "com.whatsapp.settings.ui.SettingsFragmentCompat"
+            };
+            for (String name : names) {
+                Class<?> clazz = XposedHelpers.findClassIfExists(name, loader);
+                if (clazz != null) return clazz;
+            }
+
             String[] settingsIdentifiers = {
                 "help_center_url", 
                 "setting_help", 

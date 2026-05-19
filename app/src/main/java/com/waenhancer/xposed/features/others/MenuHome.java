@@ -103,24 +103,26 @@ public class MenuHome extends Feature {
             logDebug("Error pre-caching menu resources: " + e.getMessage());
         }
 
-        var buttonAction = prefs.getBoolean("buttonaction", true);
+        var homeMenuMode = prefs.getString("show_home_menu", "1");
 
         synchronized (menuItems) {
             if (!internalItemsAdded) {
                 menuItems.add(this::InsertOpenWae);
-                menuItems.add((menu, activity) -> InsertGhostModeOption(menu, activity, buttonAction));
-                menuItems.add((menu, activity) -> InsertDNDOption(menu, activity, buttonAction));
-                menuItems.add((menu, activity) -> InsertFreezeLastSeenOption(menu, activity, buttonAction));
+                menuItems.add((menu, activity) -> InsertGhostModeOption(menu, activity, "1".equals(homeMenuMode)));
+                menuItems.add((menu, activity) -> InsertDNDOption(menu, activity, "1".equals(homeMenuMode)));
+                menuItems.add((menu, activity) -> InsertFreezeLastSeenOption(menu, activity, "1".equals(homeMenuMode)));
                 menuItems.add(this::InsertNewChat);
                 menuItems.add(this::InsertManageRecordings);
                 menuItems.add((menu, activity) -> InsertRestartButton(menu, activity, false));
                 internalItemsAdded = true;
             }
         }
-        hookMenu(buttonAction);
+        hookMenu(homeMenuMode);
     }
 
     private void InsertOpenWae(Menu menu, Activity activity) {
+        String entryPoint = prefs.getString("open_wae", "1");
+        if (!"1".equals(entryPoint)) return; // Only show in home menu if explicitly set to '1'
         if (!prefs.getBoolean("wa_enhancer_button", true)) return;
         if (menu.findItem(MENU_ID_OPEN_WAE) != null) return;
 
@@ -319,7 +321,11 @@ public class MenuHome extends Feature {
         });
     }
 
-    private void hookMenu(boolean buttonAction) {
+    private void hookMenu(String homeMenuMode) {
+        if ("0".equals(homeMenuMode)) {
+            // Disabled: do not hook/inject the home menu
+            return;
+        }
         XposedHelpers.findAndHookMethod(WppCore.getHomeActivityClass(classLoader), "onCreateOptionsMenu", Menu.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -347,8 +353,8 @@ public class MenuHome extends Feature {
                         item.setIcon(cachedWaeIcon);
                     }
                     
-                    // If buttonAction is enabled, show the WaEnhancerX submenu icon on the toolbar
-                    if (buttonAction) {
+                    // If homeMenuMode is "1" (Show as icon), show the WaEnhancerX submenu icon on the toolbar
+                    if ("1".equals(homeMenuMode)) {
                         item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                     }
                 } else {

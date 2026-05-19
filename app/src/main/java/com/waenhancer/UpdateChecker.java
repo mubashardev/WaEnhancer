@@ -56,15 +56,8 @@ public class UpdateChecker implements Runnable {
     private static void writeDebugLog(String message) {
         if (!Utils.DEBUG) return;
         try {
-            File debugDir = new File("/sdcard/Android/data/com.waenhancer/files");
-            debugDir.mkdirs();
-            File logFile = new File(debugDir, "update_checker_debug.log");
-            FileWriter fw = new FileWriter(logFile, true);
-            fw.write("[" + System.currentTimeMillis() + "] " + message + "\n");
-            fw.close();
-        } catch (Exception e) {
-            XposedBridge.log("[WAE_UpdateChecker] Failed to write debug log: " + e.getMessage());
-        }
+            XposedBridge.log("[WAE_UpdateChecker] " + message);
+        } catch (Exception ignored) {}
     }
 
     public UpdateChecker(Activity activity) {

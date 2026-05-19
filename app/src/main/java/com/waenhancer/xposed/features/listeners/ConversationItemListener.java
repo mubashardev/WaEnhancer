@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
+import com.waenhancer.xposed.core.devkit.Unobfuscator;
 
 import java.util.HashSet;
 
@@ -59,6 +60,8 @@ public class ConversationItemListener extends Feature {
                         if (viewGroup == null) return;
                         Object fMessageObj = mAdapter.getItem(position);
                         if (fMessageObj == null) return;
+                        // Guard: Only process FMessage instances, skip headers/adapters
+                        if (FMessageWpp.TYPE == null || !FMessageWpp.TYPE.isInstance(fMessageObj)) return;
                         var fMessage = new FMessageWpp(fMessageObj);
                         for (OnConversationItemListener listener : conversationListeners) {
                             listener.onItemBind(fMessage, viewGroup);

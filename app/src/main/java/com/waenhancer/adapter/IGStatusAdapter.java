@@ -54,7 +54,10 @@ public class IGStatusAdapter extends ArrayAdapter {
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        var item = itens.get(position);
+        Object item;
+        synchronized (itens) {
+            item = itens.get(position);
+        }
         IGStatusViewHolder holder;
         if (convertView == null) {
             holder = new IGStatusViewHolder();
@@ -151,7 +154,9 @@ public class IGStatusAdapter extends ArrayAdapter {
 
     @Override
     public int getCount() {
-        return itens.size();
+        synchronized (itens) {
+            return itens.size();
+        }
     }
 
     class IGStatusViewHolder {
@@ -420,7 +425,11 @@ public class IGStatusAdapter extends ArrayAdapter {
     }
 
     private static boolean hasOwnActiveStatus() {
-        for (Object item : itens) {
+        Object[] snapshot;
+        synchronized (itens) {
+            snapshot = itens.toArray();
+        }
+        for (Object item : snapshot) {
             if (item == null) continue;
             try {
                 Object jidObj = IGStatusViewHolder.findJidObject(item, 3);

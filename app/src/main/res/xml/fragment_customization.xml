@@ -144,6 +144,7 @@
             app:dependency="admin_grp"
             app:defaultValue="👑"
             app:key="admin_emoji"
+            android:maxLength="1"
             app:summary="@string/admin_emoji_sum"
             app:title="@string/admin_emoji_title" />
 

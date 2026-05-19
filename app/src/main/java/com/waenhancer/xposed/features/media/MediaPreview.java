@@ -92,6 +92,7 @@ public class MediaPreview extends Feature {
                 var view = (View) param.thisObject;
                 var context = view.getContext();
                 var surface = (ViewGroup) view.findViewById(Utils.getID("invisible_press_surface", "id"));
+                if (surface == null || surface.getChildCount() == 0) return;
                 var controlFrame = surface.getChildAt(0);
                 surface.removeViewAt(0);
                 var linearLayout = new LinearLayout(context);
@@ -125,9 +126,9 @@ public class MediaPreview extends Feature {
                 var view = (View) param.thisObject;
                 var context = view.getContext();
 
-
                 ViewGroup mediaContainer = view.findViewById(Utils.getID("media_container", "id"));
                 ViewGroup controlFrame = view.findViewById(Utils.getID("control_frame", "id"));
+                if (mediaContainer == null || controlFrame == null) return;
 
                 LinearLayout linearLayout = new LinearLayout(context);
                 linearLayout.setLayoutParams(new FrameLayout.LayoutParams(

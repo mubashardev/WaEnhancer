@@ -159,6 +159,31 @@ public class CustomThemeV2 extends Feature {
         }
     }
 
+    private int getPrefInt(SharedPreferences prefs, String key, int defaultValue) {
+        try {
+            Object val = prefs.getAll().get(key);
+            if (val instanceof Float) {
+                return Math.round((Float) val);
+            } else if (val instanceof Integer) {
+                return (Integer) val;
+            } else if (val instanceof Number) {
+                return Math.round(((Number) val).floatValue());
+            } else if (val instanceof String) {
+                return Math.round(Float.parseFloat((String) val));
+            }
+        } catch (Throwable ignored) {}
+
+        try {
+            return prefs.getInt(key, defaultValue);
+        } catch (Throwable ignored) {
+            try {
+                return Math.round(prefs.getFloat(key, (float) defaultValue));
+            } catch (Throwable ignored2) {
+                return defaultValue;
+            }
+        }
+    }
+
     private void loadAndApplyColorsWallpaper() {
         if (prefs.getBoolean("lite_mode", false))
             return;
@@ -167,18 +192,18 @@ public class CustomThemeV2 extends Feature {
         if (customWallpaper || properties.containsKey("wallpaper")) {
 
             wallAlpha = new HashMap<>(IColors.colors);
-            var wallpaperAlpha = customWallpaper ? prefs.getInt("wallpaper_alpha", 30)
+            var wallpaperAlpha = customWallpaper ? getPrefInt(prefs, "wallpaper_alpha", 30)
                     : Utils.tryParseInt(properties.getProperty("wallpaper_alpha"), 30);
             replaceTransparency(wallAlpha, (100 - wallpaperAlpha) / 100.0f);
 
             navAlpha = new HashMap<>(IColors.colors);
-            var wallpaperAlphaNav = customWallpaper ? prefs.getInt("wallpaper_alpha_navigation", 30)
+            var wallpaperAlphaNav = customWallpaper ? getPrefInt(prefs, "wallpaper_alpha_navigation", 30)
                     : Utils.tryParseInt(properties.getProperty("wallpaper_alpha_navigation"), 30);
             replaceTransparency(navAlpha, (100 - wallpaperAlphaNav) / 100.0f);
 
             toolbarAlpha = new HashMap<>(IColors.colors);
 
-            var wallpaperToolbarAlpha = customWallpaper ? prefs.getInt("wallpaper_alpha_toolbar", 30)
+            var wallpaperToolbarAlpha = customWallpaper ? getPrefInt(prefs, "wallpaper_alpha_toolbar", 30)
                     : Utils.tryParseInt(properties.getProperty("wallpaper_alpha_toolbar"), 30);
             replaceTransparency(toolbarAlpha, (100 - wallpaperToolbarAlpha) / 100.0f);
         }

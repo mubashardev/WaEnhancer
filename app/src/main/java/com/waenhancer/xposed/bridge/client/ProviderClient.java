@@ -49,11 +49,22 @@ public class ProviderClient extends BaseClient {
         CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
             boolean connected = false;
             try {
-                var intent = new Intent();
-                intent.setComponent(new ComponentName(BuildConfig.APPLICATION_ID, ForceStartActivity.class.getName()));
-                intent.putExtra("pkg", WppCore.getCurrentActivity().getPackageName());
-                WppCore.getCurrentActivity().startActivity(intent);
-            } catch (Exception ignored) {
+                var currentActivity = WppCore.getCurrentActivity();
+                if (currentActivity != null) {
+                    var intent = new Intent();
+                    intent.setComponent(new ComponentName(BuildConfig.APPLICATION_ID, ForceStartActivity.class.getName()));
+                    intent.putExtra("pkg", currentActivity.getPackageName());
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    currentActivity.startActivity(intent);
+                } else {
+                    // Fallback: try to start from application context
+                    var intent = new Intent();
+                    intent.setComponent(new ComponentName(BuildConfig.APPLICATION_ID, ForceStartActivity.class.getName()));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    Utils.getApplication().startActivity(intent);
+                }
+            } catch (Exception e) {
+                XposedBridge.log("ProviderClient: Failed to start ForceStartActivity: " + e.getMessage());
             }
 
             try {

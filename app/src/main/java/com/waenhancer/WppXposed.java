@@ -71,6 +71,15 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                 ;
             }
             XposedHelpers.findAndHookMethod("com.waenhancer.utils.ModuleStatus", lpparam.classLoader, "isModuleActive", XC_MethodReplacement.returnConstant(true));
+            // Make default SharedPreferences world-readable so XSharedPreferences
+            // can read them from WhatsApp's process without ContentProvider IPC.
+            // This is the critical hook that the competitor uses and we were missing.
+            @SuppressWarnings("deprecation")
+            int worldReadable = ContextWrapper.MODE_WORLD_READABLE;
+            XposedHelpers.findAndHookMethod(
+                    PreferenceManager.class.getName(), lpparam.classLoader,
+                    "getDefaultSharedPreferencesMode",
+                    XC_MethodReplacement.returnConstant(worldReadable));
             return;
         }
 
@@ -264,8 +273,8 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
         // Populate valid IDs list immediately (fast reflection)
         populateValidIds();
 
-        // Map everything in background to avoid splash screen delay
-        new Thread(() -> mapAllResources(resparam)).start();
+        // Map everything synchronously on the main thread to ensure consistency
+        mapAllResources(resparam);
     }
 
     private void populateValidIds() {
@@ -289,28 +298,41 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
     private void mapAllResources(XC_InitPackageResources.InitPackageResourcesParam resparam) {
         try {
             Class<?> rClass = com.waenhancer.R.class;
+            int count = 0;
             for (Class<?> subClass : rClass.getDeclaredClasses()) {
                 String type = subClass.getSimpleName();
-                for (java.lang.reflect.Field field : subClass.getFields()) {
+                if (type.equals("id") || type.equals("styleable") || type.equals("attr")) {
+                    continue;
+                }
+                for (java.lang.reflect.Field field : subClass.getDeclaredFields()) {
                     try {
-                        int originalId = field.getInt(null);
-                        // getHostId will perform the mapping and caching
-                        int hostId = XResManager.getHostId(originalId);
-                        
-                        // Also update ResId fields for backward compatibility
-                        try {
-                            Class<?> resIdSubClass = Class.forName("com.waenhancer.xposed.utils.ResId$" + type);
-                            java.lang.reflect.Field resIdField = resIdSubClass.getField(field.getName());
-                            resIdField.set(null, hostId);
-                        } catch (Exception ignored) {}
+                        field.setAccessible(true);
+                        if (field.getType() == int.class) {
+                            int originalId = field.getInt(null);
+                            if (originalId > 0x7f000000) {
+                                int hostId = XResManager.getHostId(originalId);
+                                
+                                // Update the R class field directly to the mapped ID
+                                field.set(null, hostId);
+                                count++;
+
+                                // Also update ResId fields for backward compatibility
+                                try {
+                                    Class<?> resIdSubClass = Class.forName("com.waenhancer.xposed.utils.ResId$" + type);
+                                    java.lang.reflect.Field resIdField = resIdSubClass.getField(field.getName());
+                                    resIdField.setAccessible(true);
+                                    resIdField.set(null, hostId);
+                                } catch (Exception ignored) {}
+                            }
+                        }
                     } catch (Exception ignored) {}
                 }
             }
             if (Utils.DEBUG) {
-                XposedBridge.log("[WAE] Background resource mapping complete. Total: " + XResManager.moduleToHostIdMap.size());
+                XposedBridge.log("[WAE] Resource mapping complete. Total mapped: " + count);
             }
         } catch (Throwable t) {
-            XposedBridge.log("[WAE] Resource mapping background error: " + t.getMessage());
+            XposedBridge.log("[WAE] Resource mapping error: " + t.getMessage());
         }
     }
 

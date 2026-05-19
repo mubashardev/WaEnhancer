@@ -146,16 +146,26 @@ public class AntiRevoke extends Feature {
         XposedBridge.hookMethod(antiRevokeMessageMethod, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Exception {
-                if (param.args == null || param.args.length == 0 || param.args[0] == null)
+                if (param.args == null || param.args.length == 0) return;
+                
+                Object fMessageObj = ReflectionUtils.getArg(param.args, FMessageWpp.TYPE, 0);
+                if (fMessageObj == null) {
+                    logDebug("FMessageObj is null in revoke!");
                     return;
+                }
 
-                var fMessage = new FMessageWpp(param.args[0]);
+                var fMessage = new FMessageWpp(fMessageObj);
                 var messageKey = fMessage.getKey();
                 var deviceJid = fMessage.getDeviceJid();
-                var messageID = messageKey.messageID;
+                String messageId;
+                try {
+                    messageId = (String) XposedHelpers.getObjectField(fMessage.getObject(), "A01");
+                } catch (Throwable t) {
+                    messageId = messageKey.messageID;
+                }
 
-                if (WppCore.getPrivBoolean(messageID + "_delpass", false)) {
-                    WppCore.removePrivKey(messageID + "_delpass");
+                if (WppCore.getPrivBoolean(messageId + "_delpass", false)) {
+                    WppCore.removePrivKey(messageId + "_delpass");
                     var activity = WppCore.getCurrentActivity();
                     Class<?> StatusPlaybackActivityClass = classLoader
                             .loadClass("com.whatsapp.status.playback.StatusPlaybackActivity");
@@ -164,16 +174,12 @@ public class AntiRevoke extends Feature {
                     }
                     return;
                 }
-                // For group messages: intercept any non-self revocation regardless of
-                // deviceJid.
-                // Previously the deviceJid != null guard caused all group revocations where
-                // deviceJid is null (the common case for other participants) to be silently
-                // skipped.
+
                 if (messageKey.remoteJid.isGroup()) {
-                    if (!messageKey.isFromMe && handleRevocationAttempt(fMessage, messageID) != 0) {
+                    if (deviceJid != null && handleRevocationAttempt(fMessage, messageId) != 0) {
                         param.setResult(true);
                     }
-                } else if (!messageKey.isFromMe && handleRevocationAttempt(fMessage, messageID) != 0) {
+                } else if (!messageKey.isFromMe && handleRevocationAttempt(fMessage, messageId) != 0) {
                     param.setResult(true);
                 }
             }
@@ -398,148 +404,63 @@ public class AntiRevoke extends Feature {
     private static int antirevokeStatusVal = -1;
 
     private void bindRevokedMessageUI(FMessageWpp fMessage, TextView dateTextView, String antirevokeType) {
-        if (dateTextView == null)
-            return;
+        if (dateTextView == null) return;
+        
+        int antirevokeValue = 0;
+        try {
+            antirevokeValue = Integer.parseInt(prefs.getString(antirevokeType, "0"));
+        } catch (Exception ignored) {}
+        if (antirevokeValue == 0) return;
 
         var key = fMessage.getKey();
         var messageRevokedList = getRevokedMessagesForJid(fMessage);
-        var id = fMessage.getRowId();
-        String keyOrig = null;
+        String originalMessage = (String) XposedHelpers.getAdditionalInstanceField(dateTextView, "originalMessage");
 
-        if (stringMessageDeleted == null) {
-            stringMessageDeleted = UnobfuscatorCache.getInstance().getString("messagedeleted");
-        }
-        if (antirevokeVal == -1) {
-            antirevokeVal = Integer.parseInt(prefs.getString("antirevoke", "0"));
-        }
-        if (antirevokeStatusVal == -1) {
-            antirevokeStatusVal = Integer.parseInt(prefs.getString("antirevokestatus", "0"));
-        }
-        int antirevokeValue = antirevokeType.equals("antirevoke") ? antirevokeVal : antirevokeStatusVal;
-
-        // Resolve the timestamp directly by key_id, which bypasses the JID mismatch
-        long timestamp = 0;
-        Long globalTs = revokedKeyIds.get(key.messageID);
-        if (globalTs == null && keyOrig != null) globalTs = revokedKeyIds.get(keyOrig);
-        
-        if (globalTs != null) {
-            timestamp = globalTs;
+        String messageID = null;
+        if (messageRevokedList.contains(key.messageID)) {
+            messageID = key.messageID;
         } else {
-            timestamp = DelMessageStore.getInstance(Utils.getApplication())
-                    .getTimestampByMessageId(keyOrig == null ? key.messageID : keyOrig);
+            String originalKey = com.waenhancer.xposed.core.db.MessageStore.getInstance().getOriginalMessageKey(fMessage.getRowId());
+            if (originalKey != null && !originalKey.isEmpty() && messageRevokedList.contains(originalKey)) {
+                messageID = originalKey;
+            }
         }
 
-        // Check both JID-based map AND global key_id map AND DB timestamp
-        boolean isRevoked = timestamp > 0
-                || messageRevokedList.contains(key.messageID)
-                || revokedKeyIds.containsKey(key.messageID)
-                || (keyOrig != null && (messageRevokedList.contains(keyOrig) || revokedKeyIds.containsKey(keyOrig)));
-
-        ViewGroup parent = (ViewGroup) dateTextView.getParent();
-        if (parent == null) return;
-
-        if (isRevoked) {
-            String toastMsg = "";
+        if (messageID != null) {
+            long timestamp = DelMessageStore.getInstance(Utils.getApplication()).getTimestampByMessageId(messageID);
             if (timestamp > 0) {
                 var date = Objects.requireNonNull(DATE_FORMAT_THREAD_LOCAL.get()).format(new Date(timestamp));
-                String toastFormat = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message_removed_on);
-                if (toastFormat == null || toastFormat.isEmpty() || toastFormat.equals("null") || !toastFormat.contains("%s")) {
-                    toastFormat = "Deleted on: %s"; // Fallback if resource is missing
-                }
-                toastMsg = String.format(toastFormat, date);
-            }
-
-            if (antirevokeType.equals("antirevokestatus")) {
-                // Status playback UI: Use compound drawables for better placement stability
-                if (antirevokeValue == 1) { // Text indicator
-                    var dateText = dateTextView.getText().toString();
-                    var revokeNotice = (stringMessageDeleted != null ? stringMessageDeleted : "Deleted") + " | ";
-                    if (!dateText.contains(revokeNotice)) {
-                        dateTextView.setText(revokeNotice + dateText);
+                dateTextView.getPaint().setUnderlineText(true);
+                dateTextView.setOnClickListener(v -> {
+                    String toastFormat = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message_removed_on);
+                    if (toastFormat == null || toastFormat.isEmpty() || !toastFormat.contains("%s")) {
+                        toastFormat = "Deleted on: %s"; // Fallback
                     }
-                } else if (antirevokeValue == 2) { // Icon indicator
-                    var drawable = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.deleted);
-                    dateTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null);
-                    dateTextView.setCompoundDrawablePadding(10);
-                }
-                
-                if (!toastMsg.isEmpty()) {
-                    final String finalToast = toastMsg;
-                    dateTextView.setOnClickListener(v -> Utils.showToast(finalToast, Toast.LENGTH_LONG));
-                }
-                
-                // Hide any leftover separate indicators
-                android.view.View indicator = parent.findViewWithTag("wae_revoke_indicator");
-                if (indicator != null) indicator.setVisibility(android.view.View.GONE);
-                
-                return;
+                    String toastMessage = String.format(toastFormat, date);
+                    Utils.showToast(toastMessage, Toast.LENGTH_LONG);
+                });
             }
 
-            android.view.View indicator = parent.findViewWithTag("wae_revoke_indicator");
-            if (indicator == null) {
-                if (antirevokeValue == 1) { // Text indicator
-                    indicator = new android.widget.TextView(dateTextView.getContext());
-                    ((android.widget.TextView) indicator).setText(stringMessageDeleted != null ? stringMessageDeleted : "Deleted");
-                    ((android.widget.TextView) indicator).setTextColor(dateTextView.getCurrentTextColor());
-                    ((android.widget.TextView) indicator).setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, dateTextView.getTextSize());
-                } else { // Icon indicator
-                    indicator = new android.widget.ImageView(dateTextView.getContext());
-                    ((android.widget.ImageView) indicator).setImageDrawable(com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.deleted));
+            if (antirevokeValue == 1) {
+                String messageText = originalMessage != null ? originalMessage : dateTextView.getText().toString();
+                if (stringMessageDeleted == null) {
+                    stringMessageDeleted = UnobfuscatorCache.getInstance().getString("messagedeleted");
                 }
-                indicator.setTag("wae_revoke_indicator");
-                
-                // Add right margin/padding
-                if (indicator instanceof android.widget.TextView) {
-                    indicator.setPadding(0, 0, 10, 0);
-                } else {
-                    indicator.setPadding(0, 0, 8, 0);
-                }
-                
-                // Add to parent, right before the dateTextView
-                if (parent instanceof android.widget.LinearLayout) {
-                    int index = parent.indexOfChild(dateTextView);
-                    parent.addView(indicator, index);
-                } else {
-                    parent.addView(indicator); // Fallback
-                }
+                String newTextData = (stringMessageDeleted != null ? stringMessageDeleted : "Deleted") + " | " + messageText;
+                dateTextView.setText(newTextData);
+                XposedHelpers.setAdditionalInstanceField(dateTextView, "originalMessage", messageText);
+            } else if (antirevokeValue == 2) {
+                var drawable = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.deleted);
+                dateTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null);
+                dateTextView.setCompoundDrawablePadding(5);
             }
-
-            indicator.setVisibility(android.view.View.VISIBLE);
-            
-            if (!toastMsg.isEmpty()) {
-                final String finalToast = toastMsg;
-                indicator.setOnClickListener(v -> Utils.showToast(finalToast, Toast.LENGTH_LONG));
-            } else {
-                indicator.setOnClickListener(null);
-            }
-
-            // Cleanup old inline modifications from dateTextView (if any remain)
-            dateTextView.setCompoundDrawables(null, null, null, null);
-            dateTextView.getPaint().setUnderlineText(false);
-            dateTextView.setOnClickListener(null);
-            var revokeNotice = (stringMessageDeleted != null ? stringMessageDeleted : "Deleted") + " | ";
-            var dateText = dateTextView.getText().toString();
-            if (dateText.contains(revokeNotice)) {
-                dateTextView.setText(dateText.replace(revokeNotice, ""));
-            }
-
         } else {
-            // Un-revoke or non-revoked message
-            android.view.View indicator = parent.findViewWithTag("wae_revoke_indicator");
-            if (indicator != null) {
-                indicator.setVisibility(android.view.View.GONE);
-                indicator.setOnClickListener(null);
-            }
-
-            // Cleanup old inline modifications
             dateTextView.setCompoundDrawables(null, null, null, null);
+            if (originalMessage != null) {
+                dateTextView.setText(originalMessage);
+            }
             dateTextView.getPaint().setUnderlineText(false);
             dateTextView.setOnClickListener(null);
-            var revokeNotice = (stringMessageDeleted != null ? stringMessageDeleted : "Deleted") + " | ";
-            var dateText = dateTextView.getText().toString();
-            if (dateText.contains(revokeNotice)) {
-                dateTextView.setText(dateText.replace(revokeNotice, ""));
-            }
         }
     }
 
@@ -550,10 +471,14 @@ public class AntiRevoke extends Feature {
             log(e);
         }
         String stripJID = fMessage.getKey().remoteJid.getPhoneNumber();
-        int revokeboolean = stripJID.equals("status") ? Integer.parseInt(prefs.getString("antirevokestatus", "0"))
-                : Integer.parseInt(prefs.getString("antirevoke", "0"));
-        if (revokeboolean == 0)
-            return revokeboolean;
+        int revokeboolean = 0;
+        try {
+            revokeboolean = "status".equals(stripJID) ? Integer.parseInt(prefs.getString("antirevokestatus", "0"))
+                    : Integer.parseInt(prefs.getString("antirevoke", "0"));
+        } catch (Exception ignored) {}
+        
+        if (revokeboolean == 0) return revokeboolean;
+        
         var messageRevokedList = getRevokedMessagesForJid(fMessage);
         if (!messageRevokedList.contains(messageId)) {
             try {
@@ -561,16 +486,23 @@ public class AntiRevoke extends Feature {
                     persistRevokedMessage(fMessage, messageId);
                     try {
                         var mConversation = WppCore.getCurrentConversation();
-                        if (mConversation != null
-                                && Objects.equals(stripJID, WppCore.getCurrentUserJid().getPhoneNumber())) {
+                        if (mConversation != null && Objects.equals(stripJID, WppCore.getCurrentUserJid().getPhoneNumber())) {
                             mConversation.runOnUiThread(() -> {
                                 if (mConversation.hasWindowFocus()) {
-                                    mConversation.startActivity(mConversation.getIntent());
-                                    mConversation.overridePendingTransition(0, 0);
-                                    mConversation.getWindow().getDecorView().findViewById(android.R.id.content)
-                                            .postInvalidate();
-                                } else {
-                                    mConversation.recreate();
+                                    // Fix shuttering: notify the RecyclerView adapter directly instead of restarting Activity
+                                    android.view.View list = mConversation.findViewById(android.R.id.list);
+                                    if (list instanceof androidx.recyclerview.widget.RecyclerView) {
+                                        androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) list;
+                                        if (rv.getAdapter() != null) {
+                                            rv.getAdapter().notifyDataSetChanged();
+                                        }
+                                    } else if (list instanceof android.widget.ListView) {
+                                        ((android.widget.ListView) list).invalidateViews();
+                                    } else {
+                                        // Fallback
+                                        android.view.View contentView = mConversation.getWindow().getDecorView().findViewById(android.R.id.content);
+                                        if (contentView != null) contentView.postInvalidate();
+                                    }
                                 }
                             });
                         }

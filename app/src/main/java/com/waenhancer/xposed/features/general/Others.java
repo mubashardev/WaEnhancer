@@ -320,8 +320,35 @@ public class Others extends Feature {
         if (!filterSeen) {
             disableHomeFilters();
         }
-
-
+        try {
+            Class<?> conversationClass = XposedHelpers.findClass("com.whatsapp.Conversation", classLoader);
+            XposedHelpers.findAndHookMethod(conversationClass, "onResume", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    Activity activity = (Activity) param.thisObject;
+                    android.content.Intent intent = activity.getIntent();
+                    if (intent != null && disableMetaAI) {
+                        String jid = intent.getStringExtra("jid");
+                        boolean isMetaAi = false;
+                        if (jid != null && (jid.contains("1313555") || jid.contains("meta"))) {
+                            isMetaAi = true;
+                        }
+                        if (intent.hasExtra("bot_metrics_entrypoint") || intent.hasExtra("extra_presentation_source")) {
+                            isMetaAi = true;
+                        }
+                        
+                        if (isMetaAi) {
+                            if (!activity.isFinishing()) {
+                                activity.finish();
+                                android.widget.Toast.makeText(activity, "Meta AI functions are disabled", android.widget.Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("[WAE] Failed to hook Conversation: " + t.toString());
+        }
 
     }
 

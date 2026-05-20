@@ -371,16 +371,20 @@ public class CustomView extends Feature {
             if (type != WppCore.ActivityChangeState.ChangeType.CREATED) {
                 return;
             }
-            View root = activity.findViewById(android.R.id.content);
-            if (root == null) {
-                return;
-            }
-            
-            // Move entire scan to post() to ensure we don't block the initial Activity.onCreate()
-            // which is critical for smooth tab swiping in HomeActivity.
-            root.post(() -> {
+            // Use Handler to post to the main thread's message queue. This ensures that
+            // Activity.onCreate() completely finishes executing before we query findViewById(android.R.id.content).
+            // Calling findViewById() too early during onCreate() forces the AppCompatDelegate to install the decor
+            // view/sub-decor, which throws "Window feature must be requested before adding content" if the activity
+            // attempts to call requestWindowFeature() later in its onCreate() sequence.
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                if (activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
+                View root = activity.findViewById(android.R.id.content);
+                if (root == null) {
+                    return;
+                }
                 long postPerfStart = PerfLogger.start();
-                // We clear here because it's a new activity instance
                 processedViews.clear();
                 applyRulesRecursively(root);
                 PerfLogger.end("CustomView.createdPost." + activity.getClass().getSimpleName(), postPerfStart, 1);

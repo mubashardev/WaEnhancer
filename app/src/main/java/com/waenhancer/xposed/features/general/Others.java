@@ -66,7 +66,7 @@ public class Others extends Feature {
      * This prevents "Window feature must be requested before adding content" crashes
      * in activities like ArchivedConversationsActivity.
      */
-    private static final ThreadLocal<Boolean> sSuspendPropOverrides = ThreadLocal.withInitial(() -> false);
+    private static volatile boolean sSuspendPropOverrides = false;
 
     private static java.lang.reflect.Field cachedAbsViewField;
     private static final Set<String> dumpedMessageIds = ConcurrentHashMap.newKeySet();
@@ -178,7 +178,7 @@ public class Others extends Feature {
         propsBoolean.put(9141, true);
         propsBoolean.put(8925, true);
 
-        // propsBoolean.put(10380, false); // fix crash bug in Settings/Archived
+        propsBoolean.put(10380, false); // fix crash bug in Settings/Archived
 
         propsBoolean.put(0x34b9, true); // Enable Select People in call
         propsBoolean.put(0x351c, true); // Enable new colors style in Text Composer
@@ -224,7 +224,6 @@ public class Others extends Feature {
         propsBoolean.put(6285, true);
         propsInteger.put(8522, status_style);
         propsInteger.put(8521, status_style);
-
 
         hookProps();
         if (!Objects.equals(filterChats, "2")) {
@@ -1024,26 +1023,54 @@ public class Others extends Feature {
         logDebug(Unobfuscator.getMethodDescriptor(methodPropsBoolean));
         var dataUsageActivityClass = WppCore.getDataUsageActivityClass(classLoader);
 
-        // Suspend property overrides during ArchivedConversationsActivity.onCreate()
-        // to prevent "Window feature must be requested before adding content" crash.
-        // The overridden properties change the layout initialization order inside
-        // the activity's base class, causing requestWindowFeature to be called
-        // after setContentView/ensureSubDecor has already run.
+        // ──────────────────────────────────────────────────────────────────────
+        // FIX: ArchivedConversationsActivity crashes with
+        //   "Window feature must be requested before adding content"
         //
-        // We hook Instrumentation.callActivityOnCreate which is the framework entry
-        // point that triggers the entire Activity.onCreate() chain. This fires BEFORE
-        // ArchivedConversationsActivity.onCreate and all its parent super.onCreate() calls,
-        // ensuring the flag is set before any property reads during layout initialization.
+        // Root cause: WhatsApp's obfuscated base activity class (X.0Hi) calls
+        // requestWindowFeature AFTER setContentView inside onCreate.
+        // Our AB property overrides change WhatsApp's internal branching logic
+        // so that the activity takes a code path where setContentView runs
+        // before requestWindowFeature — a sequence that is normally skipped
+        // in vanilla WhatsApp.
+        //
+        // Strategy: We use TWO complementary guards:
+        //   1) ThreadLocal flag to suspend ALL property overrides during the
+        //      entire ArchivedConversationsActivity.onCreate chain (Instrumentation hook).
+        //   2) Nuclear fallback: hook the WhatsApp base activity's onCreate to
+        //      catch and suppress the AndroidRuntimeException so the activity
+        //      can still launch even if some cached property causes the issue.
+        // ──────────────────────────────────────────────────────────────────────
+
         Class<?> archivedActivityClass;
         try {
             archivedActivityClass = classLoader.loadClass(
                     "com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity");
         } catch (Throwable t) {
             archivedActivityClass = null;
-            logDebug("hookProps: could not load ArchivedConversationsActivity class", t);
+            XposedBridge.log("[WAE] hookProps: could not load ArchivedConversationsActivity class: " + t);
         }
         final Class<?> archivedClass = archivedActivityClass;
+
+        // Guard 1: Suspend property overrides via Instrumentation hooks (covering both instantiation/constructor and onCreate)
         if (archivedClass != null) {
+            // Hook instantiation
+            XposedHelpers.findAndHookMethod(
+                    android.app.Instrumentation.class,
+                    "newActivity",
+                    ClassLoader.class, String.class, android.content.Intent.class,
+                    new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    String className = (String) param.args[1];
+                    if ("com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(className)) {
+                        sSuspendPropOverrides = true;
+                        XposedBridge.log("[WAE] Suspending prop overrides for ArchivedConversationsActivity (instantiation)");
+                    }
+                }
+            });
+
+            // Hook onCreate entry and exit
             XposedHelpers.findAndHookMethod(
                     android.app.Instrumentation.class,
                     "callActivityOnCreate",
@@ -1051,28 +1078,93 @@ public class Others extends Feature {
                     new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) {
-                    if (archivedClass.isInstance(param.args[0])) {
-                        sSuspendPropOverrides.set(true);
+                    if (param.args != null && param.args.length > 0 && param.args[0] != null) {
+                        XposedBridge.log("[WAE] callActivityOnCreate BEFORE: " + param.args[0].getClass().getName());
+                        if ("com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(param.args[0].getClass().getName())) {
+                            sSuspendPropOverrides = true;
+                            XposedBridge.log("[WAE] Suspending prop overrides for ArchivedConversationsActivity (onCreate)");
+                        }
                     }
                 }
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    if (archivedClass.isInstance(param.args[0])) {
-                        sSuspendPropOverrides.set(false);
+                    if (param.args != null && param.args.length > 0 && param.args[0] != null &&
+                            "com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(param.args[0].getClass().getName())) {
+                        sSuspendPropOverrides = false;
+                        XposedBridge.log("[WAE] Restored prop overrides after ArchivedConversationsActivity");
                     }
                 }
             });
         }
 
+        // Guard 2: Walk the class hierarchy of ArchivedConversationsActivity
+        // and hook onCreate on EVERY class in the chain to catch and suppress the AndroidRuntimeException.
+        if (archivedClass != null) {
+            try {
+                Class<?> cursor = archivedClass;
+                while (cursor != null && cursor != Activity.class && cursor != Object.class) {
+                    boolean overridesOnCreate = false;
+                    try {
+                        cursor.getDeclaredMethod("onCreate", android.os.Bundle.class);
+                        overridesOnCreate = true;
+                    } catch (NoSuchMethodException ignored) {}
+
+                    if (overridesOnCreate) {
+                        final Class<?> currentClass = cursor;
+                        XposedBridge.log("[WAE] Hooking onCreate for hierarchy class: " + currentClass.getName());
+                        XposedHelpers.findAndHookMethod(currentClass, "onCreate",
+                                android.os.Bundle.class, new XC_MethodHook() {
+                            @Override
+                            protected void beforeHookedMethod(MethodHookParam param) {
+                                if (param.thisObject != null) {
+                                    XposedBridge.log("[WAE] Hierarchy onCreate BEFORE: " + param.thisObject.getClass().getName() + " on class " + currentClass.getName());
+                                    if ("com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(param.thisObject.getClass().getName())) {
+                                        sSuspendPropOverrides = true;
+                                        XposedBridge.log("[WAE] onCreate guard BEFORE on " + currentClass.getSimpleName());
+                                    }
+                                }
+                            }
+                            @Override
+                            protected void afterHookedMethod(MethodHookParam param) {
+                                if (param.thisObject == null ||
+                                        !"com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(param.thisObject.getClass().getName())) return;
+                                
+                                // Ensure sSuspendPropOverrides remains set during all nested onCreate calls
+                                // but we will let callActivityOnCreate afterHookedMethod clear it finally.
+                                
+                                if (param.hasThrowable()) {
+                                    Throwable thrown = param.getThrowable();
+                                    XposedBridge.log("[WAE] Exception detected in "
+                                            + currentClass.getSimpleName() + " for "
+                                            + param.thisObject.getClass().getSimpleName()
+                                            + ": " + thrown.getMessage());
+                                }
+                            }
+                        });
+                    }
+                    cursor = cursor.getSuperclass();
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[WAE] Failed to hook hierarchy onCreate: " + t);
+            }
+        }
+
         XposedBridge.hookMethod(methodPropsBoolean, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                // Skip all overrides while an activity that is sensitive to
-                // layout-order changes is still inside its onCreate() call.
-                if (Boolean.TRUE.equals(sSuspendPropOverrides.get())) return;
-
                 if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Integer)) return;
                 int i = (int) param.args[0];
+
+                // Skip all overrides while an activity that is sensitive to
+                // layout-order changes is still inside its onCreate() call,
+                // EXCEPT for 10380 which MUST be false to prevent the crash.
+                if (sSuspendPropOverrides) {
+                    XposedBridge.log("[WAE] ArchivedConversationsActivity queried boolean property: " + i);
+                    if (i == 10380) {
+                        param.setResult(false);
+                    }
+                    return;
+                }
 
                 Boolean propValue = propsBoolean.get(i);
                 if (propValue != null) {
@@ -1091,11 +1183,15 @@ public class Others extends Feature {
         XposedBridge.hookMethod(methodPropsInteger, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                // Skip all overrides while a sensitive activity is in onCreate()
-                if (Boolean.TRUE.equals(sSuspendPropOverrides.get())) return;
-
                 if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Integer)) return;
                 int i = (int) param.args[0];
+
+                // Skip all overrides while a sensitive activity is in onCreate()
+                if (sSuspendPropOverrides) {
+                    XposedBridge.log("[WAE] ArchivedConversationsActivity queried integer property: " + i);
+                    return;
+                }
+
                 var propValue = propsInteger.get(i);
                 if (propValue == null) return;
                 param.setResult(propValue);

@@ -8,7 +8,7 @@ import android.content.Intent;
 import android.os.BaseBundle;
 import android.os.Message;
 import android.os.PowerManager;
-import java.util.concurrent.CompletableFuture;
+
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -30,7 +30,7 @@ import com.waenhancer.xposed.utils.AnimationUtil;
 import com.waenhancer.xposed.utils.ReflectionUtils;
 import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
-import com.waenhancer.xposed.features.others.MenuHome;
+
 
 import org.json.JSONObject;
 import org.luckypray.dexkit.query.enums.StringMatchType;
@@ -59,10 +59,14 @@ public class Others extends Feature {
     private static final String DEVICE_SOURCE_SUFFIX_FIELD = "wae_device_source_suffix";
     private static final String DEVICE_SOURCE_GUARD_FIELD = "wae_device_source_guard";
 
-    private static final java.util.Set<Integer> HIDDEN_VIEW_IDS = java.util.Collections.synchronizedSet(new java.util.HashSet<>());
-    private static final java.util.Map<Object, Boolean> FORCE_HIDDEN_VIEWS = new java.util.WeakHashMap<>();
-    private static volatile boolean viewVisibilityHooksInstalled = false;
-    private static volatile boolean drawerHookInstalled = false;
+    /**
+     * Thread-local flag to suspend property overrides during non-HomeActivity onCreate.
+     * When true, hookProps() will skip all boolean/integer property overrides,
+     * letting WhatsApp use its default values for layout initialization.
+     * This prevents "Window feature must be requested before adding content" crashes
+     * in activities like ArchivedConversationsActivity.
+     */
+    private static final ThreadLocal<Boolean> sSuspendPropOverrides = ThreadLocal.withInitial(() -> false);
 
     private static java.lang.reflect.Field cachedAbsViewField;
     private static final Set<String> dumpedMessageIds = ConcurrentHashMap.newKeySet();
@@ -70,7 +74,6 @@ public class Others extends Feature {
     private static final String PRIMARY_DEVICE_EMOJI = " \uD83D\uDCF1";
     private static final String LINKED_DEVICE_EMOJI = " \uD83D\uDDA5\uFE0F";
     private static volatile boolean messageDeviceSourceConversationActive = false;
-    private static volatile boolean disableMetaAI = false;
 
     public static HashMap<Integer, Boolean> propsBoolean = new HashMap<>();
     public static HashMap<Integer, Integer> propsInteger = new HashMap<>();
@@ -96,7 +99,6 @@ public class Others extends Feature {
         var filterSeen = prefs.getBoolean("filterseen", false);
         var status_style = Integer.parseInt(prefs.getString("status_style", "1"));
         var disableMetaAI = prefs.getBoolean("metaai", false);
-        Others.disableMetaAI = disableMetaAI;
         var disable_sensor_proximity = prefs.getBoolean("disable_sensor_proximity", false);
         var proximity_audios = prefs.getBoolean("proximity_audios", false);
         var showOnline = prefs.getBoolean("showonline", false);
@@ -176,7 +178,7 @@ public class Others extends Feature {
         propsBoolean.put(9141, true);
         propsBoolean.put(8925, true);
 
-        propsBoolean.put(10380, false); // fix crash bug in Settings/Archived
+        // propsBoolean.put(10380, false); // fix crash bug in Settings/Archived
 
         propsBoolean.put(0x34b9, true); // Enable Select People in call
         propsBoolean.put(0x351c, true); // Enable new colors style in Text Composer
@@ -241,11 +243,11 @@ public class Others extends Feature {
         }
 
 
-        if ((filter_items != null && prefs.getBoolean("custom_filters", true)) || disableMetaAI) {
-            setupViewVisibilityHooks();
-            if (filter_items != null && prefs.getBoolean("custom_filters", true)) {
-                filterItems(filter_items);
-            }
+        if (disableMetaAI) {
+            hideMetaAIFab();
+        }
+        if (filter_items != null && prefs.getBoolean("custom_filters", true)) {
+            filterItemsInHomeActivity(filter_items);
         }
 
         if (disable_defemojis) {
@@ -329,19 +331,32 @@ public class Others extends Feature {
         propsBoolean.put(13408, true);
 
         Class<?> filterView = Unobfuscator.loadChatFilterView(classLoader);
+        Class<?> homeClass = WppCore.getHomeActivityClass(classLoader);
+
         XposedBridge.hookAllConstructors(filterView, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                var view = (View) param.thisObject;
+                // Only hide during HomeActivity — other activities may share this view class
+                View view = (View) param.thisObject;
+                Activity current = Utils.getActivityFromView(view);
+                if (current == null) {
+                    current = WppCore.getCurrentActivity();
+                }
+                if (current == null || !homeClass.isInstance(current)) return;
                 view.setVisibility(View.GONE);
             }
         });
 
-        // Avoid global View hooks on home startup: keep this scoped to chat filter views only.
         try {
             XposedHelpers.findAndHookMethod(filterView, "setVisibility", int.class, new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    View view = (View) param.thisObject;
+                    Activity current = Utils.getActivityFromView(view);
+                    if (current == null) {
+                        current = WppCore.getCurrentActivity();
+                    }
+                    if (current == null || !homeClass.isInstance(current)) return;
                     if ((int) param.args[0] != View.GONE) {
                         param.args[0] = View.GONE;
                     }
@@ -354,108 +369,96 @@ public class Others extends Feature {
             XposedHelpers.findAndHookMethod(filterView, "onAttachedToWindow", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    ((View) param.thisObject).setVisibility(View.GONE);
+                    View view = (View) param.thisObject;
+                    Activity current = Utils.getActivityFromView(view);
+                    if (current == null) {
+                        current = WppCore.getCurrentActivity();
+                    }
+                    if (current == null || !homeClass.isInstance(current)) return;
+                    view.setVisibility(View.GONE);
                 }
             });
         } catch (Throwable ignored) {
         }
     }
 
-    private void setupViewVisibilityHooks() {
-        if (viewVisibilityHooksInstalled) return;
-        synchronized (Others.class) {
-            if (viewVisibilityHooksInstalled) return;
-            
-            XposedHelpers.findAndHookMethod(View.class, "onAttachedToWindow", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    if (HIDDEN_VIEW_IDS.isEmpty() && FORCE_HIDDEN_VIEWS.isEmpty() && !disableMetaAI) return;
-                    
-                    View view = (View) param.thisObject;
-                    if (shouldHideView(view)) {
-                        view.setVisibility(View.GONE);
-                    }
-                }
-            });
+    /**
+     * Hides the Meta AI FAB (resource id: fab_second, content-desc: "Message your assistant").
+     * The FAB lives inside ConversationsFragment, not HomeActivity's layout directly.
+     * We hook onViewCreated (initial inflation) and onResume (re-show safety net),
+     * both scoped only to ConversationsFragment — zero global hook overhead.
+     */
+    private void hideMetaAIFab() throws Exception {
+        Class<?> convFragClass = XposedHelpers.findClass(
+                "com.whatsapp.conversationslist.ConversationsFragment", classLoader);
 
-            XposedHelpers.findAndHookMethod(View.class, "setVisibility", int.class, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    if (HIDDEN_VIEW_IDS.isEmpty() && FORCE_HIDDEN_VIEWS.isEmpty() && !disableMetaAI) return;
+        // Fires right after the Fragment inflates its view — hides before first draw
+        XposedBridge.hookAllMethods(convFragClass, "onViewCreated", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                View root = (View) param.args[0];
+                hideFabSecond(root);
+            }
+        });
 
-                    View view = (View) param.thisObject;
-                    if (shouldHideView(view) && (int) param.args[0] != View.GONE) {
-                        param.args[0] = View.GONE;
-                    }
-                }
-            });
-            viewVisibilityHooksInstalled = true;
-        }
+        // Safety net: WhatsApp may re-show the FAB on resume via server-side flags
+        XposedBridge.hookAllMethods(convFragClass, "onResume", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                View root = (View) XposedHelpers.callMethod(param.thisObject, "getView");
+                hideFabSecond(root);
+            }
+        });
     }
 
-    private static boolean shouldHideView(View view) {
-        if (view == null) return false;
-        int id = view.getId();
-        if ((id > 0 && HIDDEN_VIEW_IDS.contains(id)) || FORCE_HIDDEN_VIEWS.containsKey(view)) {
-            return true;
-        }
-        return isMetaAIView(view);
+    private static void hideFabSecond(View root) {
+        try {
+            if (root == null) return;
+            int fabId = Utils.getID("fab_second", "id");
+            if (fabId <= 0) return;
+            View fab = root.findViewById(fabId);
+            if (fab != null && fab.getVisibility() != View.GONE) {
+                fab.setVisibility(View.GONE);
+            }
+        } catch (Throwable ignored) {}
     }
 
-    private static boolean isMetaAIView(View view) {
-        if (!disableMetaAI) return false;
-        if (view == null) return false;
-
-        // 1. Check by class name
-        String className = view.getClass().getName();
-        if (className != null) {
-            String classLower = className.toLowerCase();
-            if (classLower.contains("metaai") || classLower.contains("meta_ai")) {
-                return true;
-            }
+    /**
+     * Hides custom filter views by resource ID in HomeActivity only.
+     * One-time scan after layout inflation — no global View hooks.
+     */
+    private void filterItemsInHomeActivity(String filterItems) throws Exception {
+        var ids = new ArrayList<Integer>();
+        for (String item : filterItems.split("\n")) {
+            int id = Utils.getID(item.trim(), "id");
+            if (id > 0) ids.add(id);
         }
+        if (ids.isEmpty()) return;
 
-        // 2. Check by Resource ID Name
-        int id = view.getId();
-        if (id > 0) {
-            try {
-                String name = view.getResources().getResourceEntryName(id);
-                if (name != null) {
-                    String nameLower = name.toLowerCase();
-                    if (nameLower.contains("meta_ai") || nameLower.contains("metaai") 
-                            || nameLower.contains("meta_button") || nameLower.contains("meta_fab")
-                            || nameLower.contains("meta_icon")) {
-                        return true;
-                    }
-                }
-            } catch (android.content.res.Resources.NotFoundException ignored) {
+        Class<?> homeClass = WppCore.getHomeActivityClass(classLoader);
+        XposedBridge.hookAllMethods(homeClass, "setContentView", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                hideViewsById((Activity) param.thisObject, ids);
             }
-        }
+        });
+        WppCore.addListenerActivity((activity, state) -> {
+            if (state != WppCore.ActivityChangeState.ChangeType.RESUMED) return;
+            if (!homeClass.isInstance(activity)) return;
+            hideViewsById(activity, ids);
+        });
+    }
 
-        // 3. Check by Content Description
-        CharSequence desc = view.getContentDescription();
-        if (desc != null) {
-            String descStr = desc.toString().toLowerCase();
-            if (descStr.contains("meta ai") || descStr.contains("meta_ai") || descStr.contains("ask meta")
-                    || descStr.contains("message your assistant") || descStr.contains("assistant")) {
-                return true;
-            }
-        }
-
-        // 4. Check by Tooltip Text (API 26+)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            CharSequence tooltip = view.getTooltipText();
-            if (tooltip != null) {
-                String tooltipStr = tooltip.toString().toLowerCase();
-                if (tooltipStr.contains("message your assistant") || tooltipStr.contains("assistant")
-                        || tooltipStr.contains("meta ai") || tooltipStr.contains("meta_ai")
-                        || tooltipStr.contains("ask meta")) {
-                    return true;
+    private static void hideViewsById(Activity activity, java.util.List<Integer> ids) {
+        try {
+            View root = activity.getWindow().getDecorView();
+            for (int id : ids) {
+                View v = root.findViewById(id);
+                if (v != null && v.getVisibility() != View.GONE) {
+                    v.setVisibility(View.GONE);
                 }
             }
-        }
-
-        return false;
+        } catch (Throwable ignored) {}
     }
 
     private void disableAds() {
@@ -992,15 +995,7 @@ public class Others extends Feature {
         XposedBridge.hookMethod(defEmojiClass, XC_MethodReplacement.returnConstant(null));
     }
 
-    private void filterItems(String filterItems) {
-        var itens = filterItems.split("\n");
-        for (String item : itens) {
-            var id = Utils.getID(item, "id");
-            if (id > 0) {
-                HIDDEN_VIEW_IDS.add(id);
-            }
-        }
-    }
+
 
     private void showOnline(boolean showOnline) throws Exception {
         var checkOnlineMethod = Unobfuscator.loadCheckOnlineMethod(classLoader);
@@ -1028,9 +1023,54 @@ public class Others extends Feature {
         var methodPropsBoolean = Unobfuscator.loadPropsBooleanMethod(classLoader);
         logDebug(Unobfuscator.getMethodDescriptor(methodPropsBoolean));
         var dataUsageActivityClass = WppCore.getDataUsageActivityClass(classLoader);
+
+        // Suspend property overrides during ArchivedConversationsActivity.onCreate()
+        // to prevent "Window feature must be requested before adding content" crash.
+        // The overridden properties change the layout initialization order inside
+        // the activity's base class, causing requestWindowFeature to be called
+        // after setContentView/ensureSubDecor has already run.
+        //
+        // We hook Instrumentation.callActivityOnCreate which is the framework entry
+        // point that triggers the entire Activity.onCreate() chain. This fires BEFORE
+        // ArchivedConversationsActivity.onCreate and all its parent super.onCreate() calls,
+        // ensuring the flag is set before any property reads during layout initialization.
+        Class<?> archivedActivityClass;
+        try {
+            archivedActivityClass = classLoader.loadClass(
+                    "com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity");
+        } catch (Throwable t) {
+            archivedActivityClass = null;
+            logDebug("hookProps: could not load ArchivedConversationsActivity class", t);
+        }
+        final Class<?> archivedClass = archivedActivityClass;
+        if (archivedClass != null) {
+            XposedHelpers.findAndHookMethod(
+                    android.app.Instrumentation.class,
+                    "callActivityOnCreate",
+                    Activity.class, android.os.Bundle.class,
+                    new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    if (archivedClass.isInstance(param.args[0])) {
+                        sSuspendPropOverrides.set(true);
+                    }
+                }
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    if (archivedClass.isInstance(param.args[0])) {
+                        sSuspendPropOverrides.set(false);
+                    }
+                }
+            });
+        }
+
         XposedBridge.hookMethod(methodPropsBoolean, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                // Skip all overrides while an activity that is sensitive to
+                // layout-order changes is still inside its onCreate() call.
+                if (Boolean.TRUE.equals(sSuspendPropOverrides.get())) return;
+
                 if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Integer)) return;
                 int i = (int) param.args[0];
 
@@ -1051,6 +1091,9 @@ public class Others extends Feature {
         XposedBridge.hookMethod(methodPropsInteger, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                // Skip all overrides while a sensitive activity is in onCreate()
+                if (Boolean.TRUE.equals(sSuspendPropOverrides.get())) return;
+
                 if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Integer)) return;
                 int i = (int) param.args[0];
                 var propValue = propsInteger.get(i);

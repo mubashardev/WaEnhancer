@@ -1098,7 +1098,11 @@ public class CustomView extends Feature {
                 Bitmap bitmap;
                 if (!file.canRead()) {
                     try (var parcelFile = WppCore.getClientBridge().openFile(filePath, false)) {
-                        bitmap = BitmapFactory.decodeStream(new FileInputStream(parcelFile.getFileDescriptor()));
+                        if (parcelFile != null) {
+                            bitmap = BitmapFactory.decodeStream(new FileInputStream(parcelFile.getFileDescriptor()));
+                        } else {
+                            bitmap = null;
+                        }
                     }
                 } else {
                     bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());

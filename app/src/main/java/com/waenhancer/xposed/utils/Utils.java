@@ -245,6 +245,9 @@ public class Utils {
             File destFile = new File(destFolder, name);
             try (FileInputStream in = new FileInputStream(srcFile);
                  var parcelFileDescriptor = WppCore.getClientBridge().openFile(destFile.getAbsolutePath(), true)) {
+                if (parcelFileDescriptor == null) {
+                    return "Storage permission denied. Please enable 'Lite Mode' in WaEnhancer settings or grant 'All Files Access' permission in system settings.";
+                }
                 var out = new FileOutputStream(parcelFileDescriptor.getFileDescriptor());
                 byte[] bArr = new byte[1024];
                 while (true) {

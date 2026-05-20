@@ -70,6 +70,7 @@ public class Others extends Feature {
     private static final String PRIMARY_DEVICE_EMOJI = " \uD83D\uDCF1";
     private static final String LINKED_DEVICE_EMOJI = " \uD83D\uDDA5\uFE0F";
     private static volatile boolean messageDeviceSourceConversationActive = false;
+    private static volatile boolean disableMetaAI = false;
 
     public static HashMap<Integer, Boolean> propsBoolean = new HashMap<>();
     public static HashMap<Integer, Integer> propsInteger = new HashMap<>();
@@ -95,6 +96,7 @@ public class Others extends Feature {
         var filterSeen = prefs.getBoolean("filterseen", false);
         var status_style = Integer.parseInt(prefs.getString("status_style", "1"));
         var disableMetaAI = prefs.getBoolean("metaai", false);
+        Others.disableMetaAI = disableMetaAI;
         var disable_sensor_proximity = prefs.getBoolean("disable_sensor_proximity", false);
         var proximity_audios = prefs.getBoolean("proximity_audios", false);
         var showOnline = prefs.getBoolean("showonline", false);
@@ -239,9 +241,11 @@ public class Others extends Feature {
         }
 
 
-        if (filter_items != null && prefs.getBoolean("custom_filters", true)) {
+        if ((filter_items != null && prefs.getBoolean("custom_filters", true)) || disableMetaAI) {
             setupViewVisibilityHooks();
-            filterItems(filter_items);
+            if (filter_items != null && prefs.getBoolean("custom_filters", true)) {
+                filterItems(filter_items);
+            }
         }
 
         if (disable_defemojis) {
@@ -365,11 +369,10 @@ public class Others extends Feature {
             XposedHelpers.findAndHookMethod(View.class, "onAttachedToWindow", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    if (HIDDEN_VIEW_IDS.isEmpty() && FORCE_HIDDEN_VIEWS.isEmpty()) return;
+                    if (HIDDEN_VIEW_IDS.isEmpty() && FORCE_HIDDEN_VIEWS.isEmpty() && !disableMetaAI) return;
                     
                     View view = (View) param.thisObject;
-                    int id = view.getId();
-                    if ((id > 0 && HIDDEN_VIEW_IDS.contains(id)) || FORCE_HIDDEN_VIEWS.containsKey(view)) {
+                    if (shouldHideView(view)) {
                         view.setVisibility(View.GONE);
                     }
                 }
@@ -378,18 +381,67 @@ public class Others extends Feature {
             XposedHelpers.findAndHookMethod(View.class, "setVisibility", int.class, new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    if (HIDDEN_VIEW_IDS.isEmpty() && FORCE_HIDDEN_VIEWS.isEmpty()) return;
+                    if (HIDDEN_VIEW_IDS.isEmpty() && FORCE_HIDDEN_VIEWS.isEmpty() && !disableMetaAI) return;
 
                     View view = (View) param.thisObject;
-                    int id = view.getId();
-                    if (((id > 0 && HIDDEN_VIEW_IDS.contains(id)) || FORCE_HIDDEN_VIEWS.containsKey(view)) 
-                            && (int) param.args[0] != View.GONE) {
+                    if (shouldHideView(view) && (int) param.args[0] != View.GONE) {
                         param.args[0] = View.GONE;
                     }
                 }
             });
             viewVisibilityHooksInstalled = true;
         }
+    }
+
+    private static boolean shouldHideView(View view) {
+        if (view == null) return false;
+        int id = view.getId();
+        if ((id > 0 && HIDDEN_VIEW_IDS.contains(id)) || FORCE_HIDDEN_VIEWS.containsKey(view)) {
+            return true;
+        }
+        return isMetaAIView(view);
+    }
+
+    private static boolean isMetaAIView(View view) {
+        if (!disableMetaAI) return false;
+        if (view == null) return false;
+
+        // 1. Check by class name
+        String className = view.getClass().getName();
+        if (className != null) {
+            String classLower = className.toLowerCase();
+            if (classLower.contains("metaai") || classLower.contains("meta_ai")) {
+                return true;
+            }
+        }
+
+        // 2. Check by Resource ID Name
+        int id = view.getId();
+        if (id > 0) {
+            try {
+                String name = view.getResources().getResourceEntryName(id);
+                if (name != null) {
+                    String nameLower = name.toLowerCase();
+                    if (nameLower.contains("meta_ai") || nameLower.contains("metaai") 
+                            || nameLower.contains("meta_button") || nameLower.contains("meta_fab")
+                            || nameLower.contains("meta_icon")) {
+                        return true;
+                    }
+                }
+            } catch (android.content.res.Resources.NotFoundException ignored) {
+            }
+        }
+
+        // 3. Check by Content Description
+        CharSequence desc = view.getContentDescription();
+        if (desc != null) {
+            String descStr = desc.toString().toLowerCase();
+            if (descStr.contains("meta ai") || descStr.contains("meta_ai") || descStr.contains("ask meta")) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void disableAds() {

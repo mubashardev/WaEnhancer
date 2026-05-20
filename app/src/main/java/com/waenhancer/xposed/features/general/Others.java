@@ -436,8 +436,22 @@ public class Others extends Feature {
         CharSequence desc = view.getContentDescription();
         if (desc != null) {
             String descStr = desc.toString().toLowerCase();
-            if (descStr.contains("meta ai") || descStr.contains("meta_ai") || descStr.contains("ask meta")) {
+            if (descStr.contains("meta ai") || descStr.contains("meta_ai") || descStr.contains("ask meta")
+                    || descStr.contains("message your assistant") || descStr.contains("assistant")) {
                 return true;
+            }
+        }
+
+        // 4. Check by Tooltip Text (API 26+)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            CharSequence tooltip = view.getTooltipText();
+            if (tooltip != null) {
+                String tooltipStr = tooltip.toString().toLowerCase();
+                if (tooltipStr.contains("message your assistant") || tooltipStr.contains("assistant")
+                        || tooltipStr.contains("meta ai") || tooltipStr.contains("meta_ai")
+                        || tooltipStr.contains("ask meta")) {
+                    return true;
+                }
             }
         }
 

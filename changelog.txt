@@ -4,3 +4,4 @@
 [Fixes]
 - Fixed ChatLimit Plugin error
 - Fixed ContactBlockedVerify Plugin error
+- Fixed Archived Chats activity Crashed

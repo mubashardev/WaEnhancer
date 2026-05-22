@@ -63,8 +63,30 @@
 - `Separate Groups`
 - `Text Status Composer`
 - `Stickers Management`
-- `Group Admin Tools`
-- `Contact Actions`
+
+
+## Why choose WaEnhancerX
+
+WaEnhancerX isn't just a fork; it's a **high-performance, native-first evolution** of the original project. While the original WaEnhancer shifted towards experimental Kotlin and detached UIs, WaEnhancerX was rebuilt from the ground up to prioritize absolute stability, zero-lag performance, and native WhatsApp integration.
+
+### 🌟 Exclusive Features (Only in WaEnhancerX)
+- **Deep Settings Search:** Stop digging through menus. Our custom `FeatureCatalog` maps every toggle to localized strings for instant, deep searching.
+- **Embedded Native UI:** No jarring app transitions. WaEnhancerX settings are injected directly into WhatsApp’s native layout using `PreferenceFragmentCompat` for a seamless experience.
+- **Deleted By Me Log:** Keeps a local history of messages you deleted, allowing you to review or restore them natively.
+- **Aggressive Anti-Meta AI:** WhatsApp constantly tries to force Meta AI onto your screen via server-side resets. WaEnhancerX actively hunts down and destroys these UI elements (`View.GONE`) in real-time, beating server overrides.
+- **Tasker Automation:** Total extensibility. Control your privacy toggles and actions via Android Intent broadcasts using Tasker.
+- **Keyword-Based Status Forwarding:** Set up custom rules to auto-forward statuses based on specific keywords.
+- **Custom Admin Indicators:** Spot group admins instantly with customizable text or emoji badges next to their names.
+- **Dynamic Update Channels:** Switch between Stable and Beta release channels effortlessly from within the app to test bleeding-edge features.
+
+### Architectural Supremacy
+| Feature Category | WaEnhancer (Dev4Mod) | ⚡ WaEnhancerX (MubasharDev) |
+| :--- | :--- | :--- |
+| **Performance Philosophy** | Bloated with experimental plugins. | **Hyper-Optimized.** Consolidates features (e.g., merging advanced SQLite queries into `ChatScrollButtons`) to keep the module lightweight. |
+| **Status Deletion** | Slow, relying on WhatsApp's laggy UI dialogs. | **Zero-Lag Execution.** Directly targets the SQLite `message` database and File System (`MediaProvider`) to nuke statuses instantly. |
+| **Code Architecture** | Fragmented between Java and Kotlin (`.kt`). | **100% Pure Java.** Maintains strict, predictable reflection hooking (`FeatureLoader`) ensuring absolute Xposed compatibility without crashes. |
+| **UI Integration** | Moving towards detached, custom Compose UIs. | **Fully Embedded.** Looks and feels exactly like an official WhatsApp settings menu. |
+| **Contact Selection** | Basic Kotlin intents. | **Optimized Java API** A robust foundation for future per-contact Privacy Exception Lists. |
 
 ## Installation
 1. Ensure that your device is **Rooted**.

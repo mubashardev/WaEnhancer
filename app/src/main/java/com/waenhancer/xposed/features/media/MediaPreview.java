@@ -199,7 +199,7 @@ public class MediaPreview extends Feature {
                 webView.getSettings().setDisplayZoomControls(false);
                 webView.getSettings().setJavaScriptEnabled(true);
                 webView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                webView.loadDataWithBaseURL(null, HTML_LOADING.replace("$loading", com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.loading)), "text/html", "UTF-8", null);
+                webView.loadDataWithBaseURL(null, HTML_LOADING.replace("$loading", com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.loading)), "text/html", "UTF-8", null);
                 frameLayout.addView(webView);
                 alertDialog.setView(frameLayout);
                 alertDialog.setOnDismissListener(dialog1 -> {

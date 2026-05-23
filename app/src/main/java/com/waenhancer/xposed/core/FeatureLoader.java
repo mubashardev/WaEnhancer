@@ -166,6 +166,13 @@ public class FeatureLoader {
     }
 
     /**
+     * Resolve a module string resource using the host context's locale without fallback.
+     */
+    public static String getModuleString(Context context, int resId) {
+        return getModuleString(context, resId, "");
+    }
+
+    /**
      * Resolve a module string resource using the host context's locale.
      * This is required when WhatsApp overrides the system language and we need
      * the module strings to respect the in-app language preference.

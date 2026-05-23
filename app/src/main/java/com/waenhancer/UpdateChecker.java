@@ -297,14 +297,14 @@ public class UpdateChecker implements Runnable {
                     String freq = getPrefs().getString("update_alert_frequency", "restart");
                     String freqDisplay = freq;
                     switch (freq) {
-                        case "restart": freqDisplay = getModuleString(R.string.update_freq_restart); break;
-                        case "1h": freqDisplay = getModuleString(R.string.update_freq_1h); break;
-                        case "12h": freqDisplay = getModuleString(R.string.update_freq_12h); break;
-                        case "24h": freqDisplay = getModuleString(R.string.update_freq_24h); break;
-                        case "never": freqDisplay = getModuleString(R.string.update_freq_never); break;
+                        case "restart": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_restart); break;
+                        case "1h": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_1h); break;
+                        case "12h": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_12h); break;
+                        case "24h": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_24h); break;
+                        case "never": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_never); break;
                     }
                     
-                    Toast.makeText(mActivity, String.format(getModuleString(R.string.update_ignored_toast), version, freqDisplay), Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_ignored_toast), version, freqDisplay), Toast.LENGTH_LONG).show();
                     dialog1.dismiss();
                 });
                 dialog.setPositiveButton("Update Now", (dialog1, which) -> {

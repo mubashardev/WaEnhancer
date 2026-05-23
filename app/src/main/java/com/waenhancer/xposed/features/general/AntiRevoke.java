@@ -432,7 +432,7 @@ public class AntiRevoke extends Feature {
                 var date = Objects.requireNonNull(DATE_FORMAT_THREAD_LOCAL.get()).format(new Date(timestamp));
                 dateTextView.getPaint().setUnderlineText(true);
                 dateTextView.setOnClickListener(v -> {
-                    String toastFormat = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message_removed_on);
+                    String toastFormat = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.message_removed_on);
                     if (toastFormat == null || toastFormat.isEmpty() || !toastFormat.contains("%s")) {
                         toastFormat = "Deleted on: %s"; // Fallback
                     }
@@ -519,9 +519,9 @@ public class AntiRevoke extends Feature {
 
     private void showRevocationToast(FMessageWpp fMessage) {
         var jidAuthor = fMessage.getKey().remoteJid;
-        var messageSuffix = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.deleted_message);
+        var messageSuffix = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.deleted_message);
         if (jidAuthor.isStatus()) {
-            messageSuffix = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.deleted_status);
+            messageSuffix = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.deleted_status);
             jidAuthor = fMessage.getUserJid();
         }
         if (jidAuthor.userJid == null)

@@ -219,7 +219,7 @@ public class ShowEditMessage extends Feature {
 
         TextView editView = new TextView(dateView.getContext());
         editView.setId(injectId);
-        editView.setText(" " + indicator + " " + com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message_original, "Edited"));
+        editView.setText(" " + indicator + " " + com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.message_original, "Edited"));
         editView.setTextSize(11.0f);
         editView.setTextColor(DesignUtils.getUnSeenColor());
         editView.getPaint().setUnderlineText(true);
@@ -307,7 +307,7 @@ public class ShowEditMessage extends Feature {
             var ctx = (Context) WppCore.getCurrentConversation();
 
             var dialog = new AlertDialogWpp(ctx);
-            dialog.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.edited_history, "Edit History"));
+            dialog.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.edited_history, "Edit History"));
 
             var adapter = new MessageAdapter(ctx, messages);
             ListView listView = new NoScrollListView(ctx);

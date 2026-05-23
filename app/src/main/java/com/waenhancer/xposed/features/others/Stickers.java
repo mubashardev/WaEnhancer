@@ -48,7 +48,7 @@ public class Stickers extends Feature {
                             param.args[0] = (View.OnClickListener) v -> {
                                 var context = view.getContext();
                                 var dialog = new AlertDialogWpp(view.getContext());
-                                dialog.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.send_sticker));
+                                dialog.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.send_sticker));
 
                                 var stickerView = (ImageView) view.findViewById(Utils.getID("sticker", "id"));
                                 LinearLayout linearLayout = new LinearLayout(context);
@@ -65,7 +65,7 @@ public class Stickers extends Feature {
                                 linearLayout.addView(image);
 
                                 TextView text = new TextView(context);
-                                text.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.do_you_want_to_send_sticker));
+                                text.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.do_you_want_to_send_sticker));
                                 text.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                                 linearLayout.addView(text);
 

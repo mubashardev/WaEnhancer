@@ -49,9 +49,7 @@ public class MenuHome extends Feature {
         super(classLoader, preferences);
     }
 
-    private static String cachedRestartLabel = null;
     private static Drawable cachedRestartIcon = null;
-    private static String cachedWaeTitle = null;
     private static Drawable cachedWaeIcon = null;
     
     private static Drawable cachedGhostOnIcon = null;
@@ -70,10 +68,8 @@ public class MenuHome extends Feature {
     public void doHook() throws Throwable {
         // Pre-cache strings and drawables to avoid lookups during menu preparation
         try {
-            cachedRestartLabel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_whatsapp, "Restart WhatsApp");
             cachedRestartIcon = DesignUtils.getDrawable(R.drawable.refresh);
             
-            cachedWaeTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.waenhancer_settings, "WaEnhancerX Settings");
             cachedWaeIcon = DesignUtils.getDrawableByName("ic_settings");
             if (cachedWaeIcon != null) cachedWaeIcon.setTint(0xff8696a0);
 
@@ -126,7 +122,7 @@ public class MenuHome extends Feature {
         if (!prefs.getBoolean("wa_enhancer_button", true)) return;
         if (menu.findItem(MENU_ID_OPEN_WAE) != null) return;
 
-        String title = cachedWaeTitle != null ? cachedWaeTitle : "WaEnhancerX Settings";
+        String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.waenhancer_settings, "WaEnhancerX Settings");
         var itemMenu = menu.add(0, MENU_ID_OPEN_WAE, 0, title);
         
         itemMenu.setOnMenuItemClickListener(item -> {
@@ -142,7 +138,7 @@ public class MenuHome extends Feature {
         boolean ghostmode = WppCore.getPrivBoolean("ghostmode", false);
         String title = "Ghost Mode (" + (ghostmode ? "ON" : "OFF") + ")";
         try {
-            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghost_mode_s, "Ghost Mode");
+            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.ghost_mode_s, "Ghost Mode");
             if (moduleTitle != null && !moduleTitle.isEmpty()) {
                 title = String.format(moduleTitle, ghostmode ? "ON" : "OFF");
             }
@@ -170,7 +166,7 @@ public class MenuHome extends Feature {
         boolean dndmode = WppCore.getPrivBoolean("dndmode", false);
         String title = "DND Mode (" + (dndmode ? "ON" : "OFF") + ")";
         try {
-            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.dnd_mode_s, "DND Mode");
+            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.dnd_mode_s, "DND Mode");
             if (moduleTitle != null && !moduleTitle.isEmpty()) {
                 title = String.format(moduleTitle, dndmode ? "ON" : "OFF");
             }
@@ -198,7 +194,7 @@ public class MenuHome extends Feature {
         boolean freeze = WppCore.getPrivBoolean("freeze_last_seen", false);
         String title = "Freeze Last Seen (" + (freeze ? "ON" : "OFF") + ")";
         try {
-            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.freeze_last_seen_s, "Freeze Last Seen");
+            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.freeze_last_seen_s, "Freeze Last Seen");
             if (moduleTitle != null && !moduleTitle.isEmpty()) {
                 title = String.format(moduleTitle, freeze ? "ON" : "OFF");
             }
@@ -223,7 +219,7 @@ public class MenuHome extends Feature {
         if (!prefs.getBoolean("newchat", true)) return;
         if (menu.findItem(MENU_ID_NEW_CHAT) != null) return;
 
-        String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.new_chat, "New Chat");
+        String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.new_chat, "New Chat");
         var itemMenu = menu.add(0, MENU_ID_NEW_CHAT, 10, title);
 
         itemMenu.setOnMenuItemClickListener(item -> {
@@ -235,13 +231,13 @@ public class MenuHome extends Feature {
             edt.setMaxLines(1);
             edt.setInputType(InputType.TYPE_CLASS_PHONE);
             edt.setTransformationMethod(null);
-            edt.setHint(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.number_with_country_code, "Number with country code"));
+            edt.setHint(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.number_with_country_code, "Number with country code"));
             view.addView(edt);
 
             new AlertDialogWpp(activity)
                 .setTitle(title)
                 .setView(view)
-                .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message, "Message"), (dialog, which) -> {
+                .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.message, "Message"), (dialog, which) -> {
                     var number = edt.getText().toString();
                     var numberFomatted = number.replaceAll("[+\\-()/\\s]", "");
                     var intent = new Intent(Intent.ACTION_VIEW);
@@ -249,7 +245,7 @@ public class MenuHome extends Feature {
                     intent.setPackage(Utils.getApplication().getPackageName());
                     activity.startActivity(intent);
                 })
-                .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel, "Cancel"), null)
+                .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.cancel, "Cancel"), null)
                 .show();
             return true;
         });
@@ -261,7 +257,7 @@ public class MenuHome extends Feature {
 
         String title = "Manage Recordings";
         try {
-            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.manage_recordings, "Manage Recordings");
+            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.manage_recordings, "Manage Recordings");
             if (moduleTitle != null && !moduleTitle.isEmpty()) {
                 title = moduleTitle;
             }
@@ -285,13 +281,13 @@ public class MenuHome extends Feature {
     private void showToggleDialog(Activity activity, String title, String key, boolean current) {
         new AlertDialogWpp(activity)
             .setTitle(title)
-            .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.restart_wpp, 
+            .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.restart_wpp, 
                 "It is necessary to restart WhatsApp for the changes in WaEnhancer X to take effect.\n\nDo you want to restart?"))
-            .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(android.R.string.ok, "OK"), (dialog, which) -> {
+            .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, android.R.string.ok, "OK"), (dialog, which) -> {
                 WppCore.setPrivBooleanSync(key, !current);
                 Utils.doRestart(activity);
             })
-            .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(android.R.string.cancel, "Cancel"), null)
+            .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, android.R.string.cancel, "Cancel"), null)
             .show();
     }
 
@@ -299,7 +295,7 @@ public class MenuHome extends Feature {
         if (!prefs.getBoolean("restartbutton", true)) return;
         if (menu.findItem(MENU_ID_RESTART) != null) return;
 
-        String restartLabel = cachedRestartLabel != null ? cachedRestartLabel : "Restart WhatsApp";
+        String restartLabel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.restart_whatsapp, "Restart WhatsApp");
         var itemMenu = menu.add(0, MENU_ID_RESTART, 4, restartLabel);
         
         if (newSettings && !(menu instanceof SubMenu)) {
@@ -341,7 +337,7 @@ public class MenuHome extends Feature {
                 if (subMenuItem == null) {
                     String waeTitle = "WaEnhancerX";
                     try {
-                        String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.app_name, "WaEnhancerX");
+                        String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.app_name, "WaEnhancerX");
                         if (moduleTitle != null && !moduleTitle.isEmpty()) {
                             waeTitle = moduleTitle;
                         }

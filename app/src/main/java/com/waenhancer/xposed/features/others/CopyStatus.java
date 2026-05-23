@@ -37,7 +37,7 @@ public class CopyStatus extends Feature {
                 if (caption != null) {
                     caption.setOnLongClickListener((view1 -> {
                         Utils.setToClipboard(caption.getText().toString());
-                        Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.copied_to_clipboard), Toast.LENGTH_LONG);
+                        Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.copied_to_clipboard), Toast.LENGTH_LONG);
                         return true;
                     }));
                 }
@@ -54,7 +54,7 @@ public class CopyStatus extends Feature {
                 if (text != null) {
                     text.setOnLongClickListener((view1 -> {
                         Utils.setToClipboard(text.getText().toString());
-                        Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.copied_to_clipboard), Toast.LENGTH_LONG);
+                        Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.copied_to_clipboard), Toast.LENGTH_LONG);
                         return true;
                     }));
                 }

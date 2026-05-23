@@ -42,13 +42,13 @@ public class BackupRestore extends Feature {
                 if (!(name.contains("drive") && name.contains("google"))) return;
                 Menu menu = (Menu) param.args[0];
                 if (menu.findItem(10001) != null) return;
-                var menuItem = menu.add(0, 10001, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.force_restore_backup_experimental));
+                var menuItem = menu.add(0, 10001, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), com.waenhancer.R.string.force_restore_backup_experimental));
                 Activity activity = (Activity) param.thisObject;
                 menuItem.setOnMenuItemClickListener((item) -> {
                     new AlertDialogWpp(activity)
                             .setTitle(R.string.force_restore_backup)
-                            .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.warning_restore))
-                            .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.yes), (dialog, which) -> {
+                            .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.warning_restore))
+                            .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.yes), (dialog, which) -> {
                                 try {
                                     Intent intent = new Intent(activity, restoreFromBackupClass);
                                     intent.setAction("action_show_restore_one_time_setup");
@@ -58,7 +58,7 @@ public class BackupRestore extends Feature {
                                     Utils.showToast("Error launching restore activity: " + e.getMessage(), Toast.LENGTH_LONG);
                                 }
                             })
-                            .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.no), null)
+                            .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.no), null)
                             .show();
 
                     return true;

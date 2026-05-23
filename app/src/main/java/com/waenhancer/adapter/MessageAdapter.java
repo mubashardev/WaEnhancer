@@ -55,7 +55,7 @@ public class MessageAdapter extends ArrayAdapter<MessageHistory.MessageItem> {
         textView1.setTypeface(null, Typeface.ITALIC);
         textView1.setTextColor(DesignUtils.getPrimaryTextColor());
         var timestamp = this.items.get(position).timestamp;
-        textView1.setText((timestamp == 0L ? com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.message_original, "Original Message") : "✏️ " + Utils.getDateTimeFromMillis(timestamp)));
+        textView1.setText((timestamp == 0L ? com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.message_original, "Original Message") : "✏️ " + Utils.getDateTimeFromMillis(timestamp)));
         return view1;
     }
 

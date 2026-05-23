@@ -61,7 +61,7 @@ public class StatusDownload extends Feature {
                 if (fMessage.getKey().isFromMe) return null;
                 if (!fMessage.isMediaFile()) return null;
                 
-                MenuItem item = menu.add(0, R.string.download, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.download, "Download"));
+                MenuItem item = menu.add(0, R.string.download, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.download, "Download"));
                 File file = fMessage.getMediaFile();
                 if (file == null) {
                     file = getMediaFile(activeStatusObj);
@@ -92,7 +92,7 @@ public class StatusDownload extends Feature {
                 if (fMessage.getKey().isFromMe) return null;
                 if (menu.findItem(R.string.share_as_status) != null) return null;
                 
-                MenuItem item = menu.add(0, R.string.share_as_status, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.share_as_status, "Share as status"));
+                MenuItem item = menu.add(0, R.string.share_as_status, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.share_as_status, "Share as status"));
                 File file = fMessage.getMediaFile();
                 if (file == null) {
                     file = getMediaFile(activeStatusObj);
@@ -137,7 +137,7 @@ public class StatusDownload extends Feature {
                 file = getFileFromRawStatus(fragmentInstance, currentIndex, fMessageWpp);
             }
             if (file == null) {
-                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.download_not_available, "Please wait until it is fully downloaded in WhatsApp before trying again."), Toast.LENGTH_SHORT);
+                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.download_not_available, "Please wait until it is fully downloaded in WhatsApp before trying again."), Toast.LENGTH_SHORT);
                 return;
             }
 
@@ -174,7 +174,7 @@ public class StatusDownload extends Feature {
                 file = getFileFromRawStatus(fragmentInstance, currentIndex, fMessage);
             }
             if (file == null) {
-                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.download_not_available, "Please wait until it is fully downloaded in WhatsApp before trying again."), 1);
+                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.download_not_available, "Please wait until it is fully downloaded in WhatsApp before trying again."), 1);
                 return;
             }
             var userJid = fMessage.getUserJid();
@@ -183,11 +183,11 @@ public class StatusDownload extends Feature {
             var name = Utils.generateName(userJid, fileType);
             var error = Utils.copyFile(file, destination, name);
             if (TextUtils.isEmpty(error)) {
-                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.saved_to, "Saved to: ") + destination,
+                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.saved_to, "Saved to: ") + destination,
                         Toast.LENGTH_SHORT);
             } else {
                 Utils.showToast(
-                        com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.error_when_saving_try_again, "Error when saving, try again") + ": " + error,
+                        com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.error_when_saving_try_again, "Error when saving, try again") + ": " + error,
                         Toast.LENGTH_SHORT);
             }
         } catch (Throwable e) {

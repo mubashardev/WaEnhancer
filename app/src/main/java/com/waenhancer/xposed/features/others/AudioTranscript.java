@@ -62,7 +62,7 @@ public class AudioTranscript extends Feature {
                 var fmessage = new FMessageWpp(fmessageObj);
                 File file = fmessage.getMediaFile();
                 if (file == null) {
-                    Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.download_not_available), 1);
+                    Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.download_not_available), 1);
                     return;
                 }
                 var callback = param.args[1];

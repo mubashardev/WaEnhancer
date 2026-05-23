@@ -89,7 +89,7 @@ public class ActivityController extends Feature {
                                     method -> method.getParameterCount() == 1
                                             && method.getParameterTypes()[0] == CharSequence.class);
                             ReflectionUtils.callMethod(methods[1], toolbar,
-                                    com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.select_contacts));
+                                    com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.select_contacts));
                         }
                     }
                 });

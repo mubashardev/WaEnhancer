@@ -48,7 +48,7 @@ public class DownloadProfile extends Feature {
                 var menu = (Menu) param.args[0];
                 if (menu.findItem(MENU_ID_DOWNLOAD) != null) return;
 
-                var item = menu.add(0, MENU_ID_DOWNLOAD, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.download, "Download"));
+                var item = menu.add(0, MENU_ID_DOWNLOAD, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), com.waenhancer.R.string.download, "Download"));
                 item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 
                 // Use DesignUtils.getDrawable to ensure drawable is loaded from module resources
@@ -111,9 +111,9 @@ public class DownloadProfile extends Feature {
                         var name = Utils.generateName(userJid, "jpg");
                         var error = Utils.copyFile(file, destPath, name);
                         if (TextUtils.isEmpty(error)) {
-                            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.saved_to, "Saved to: ") + destPath + name, Toast.LENGTH_LONG);
+                            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.saved_to, "Saved to: ") + destPath + name, Toast.LENGTH_LONG);
                         } else {
-                            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.error_when_saving_try_again, "Error when saving: ") + " " + error, Toast.LENGTH_LONG);
+                            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.error_when_saving_try_again, "Error when saving: ") + " " + error, Toast.LENGTH_LONG);
                         }
                     } catch (Exception e) {
                         XposedBridge.log(e);

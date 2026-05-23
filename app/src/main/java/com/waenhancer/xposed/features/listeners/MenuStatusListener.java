@@ -149,7 +149,7 @@ public class MenuStatusListener extends Feature {
                         if (waeSubMenu == null) {
                             String waeTitle = "WaEnhancerX";
                             try {
-                                String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.app_name, "WaEnhancerX");
+                                String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.app_name, "WaEnhancerX");
                                 if (moduleTitle != null && !moduleTitle.isEmpty()) {
                                     waeTitle = moduleTitle;
                                 }

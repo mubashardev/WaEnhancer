@@ -134,11 +134,11 @@ public class EmbeddedMainFragment extends Fragment {
         try {
             if (XResManager.moduleResources != null) {
                 title = switch (position) {
-                    case 0 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.general);
-                    case 1 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.privacy);
-                    case 2 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.title_home);
-                    case 3 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.media);
-                    case 4 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.perso);
+                    case 0 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.general);
+                    case 1 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.privacy);
+                    case 2 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.title_home);
+                    case 3 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.media);
+                    case 4 -> com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.perso);
                     default -> null;
                 };
             }

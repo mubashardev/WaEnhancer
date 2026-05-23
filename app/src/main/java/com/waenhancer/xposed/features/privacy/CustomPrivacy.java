@@ -92,7 +92,7 @@ public class CustomPrivacy extends Feature {
                         int id = Utils.getID("contact_info_security_card_layout", "id");
                         ViewGroup infoLayout = activity.getWindow().findViewById(id);
                         Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_privacy);
-                        View itemView = createItemView(activity, com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.custom_privacy, "Custom Privacy"), com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.custom_privacy_sum, "Enable/Disable Custom Privacy"), icon);
+                        View itemView = createItemView(activity, com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.custom_privacy, "Custom Privacy"), com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.custom_privacy_sum, "Enable/Disable Custom Privacy"), icon);
                         itemView.setId(0x7f0a9999);
                         itemView.setOnClickListener((v) -> showPrivacyDialog(activity, ContactInfoActivityClass.isInstance(activity)));
                         infoLayout.addView(itemView);
@@ -109,7 +109,7 @@ public class CustomPrivacy extends Feature {
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     var menu = (Menu) param.args[0];
                     var activity = (Activity) param.thisObject;
-                    var customPrivacy = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.custom_privacy, "Custom Privacy"));
+                    var customPrivacy = menu.add(0, 0, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, com.waenhancer.R.string.custom_privacy, "Custom Privacy"));
                     customPrivacy.setIcon(com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_privacy));
                     customPrivacy.setOnMenuItemClickListener(item -> {
                         showPrivacyDialog(activity, ContactInfoActivityClass.isInstance(activity));
@@ -127,7 +127,7 @@ public class CustomPrivacy extends Feature {
         if (icon != null) icon.setTint(0xff8696a0);
         MenuHome.menuItems.add((menu, activity) -> {
             if (menu.findItem(MENU_ID_CUSTOM_PRIVACY) != null) return;
-            String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.custom_privacy, "Custom Privacy");
+            String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, com.waenhancer.R.string.custom_privacy, "Custom Privacy");
             if (title == null || title.isEmpty()) {
                 title = "Custom Privacy";
             }
@@ -220,12 +220,12 @@ public class CustomPrivacy extends Feature {
         }
 
         if (list.isEmpty()) {
-            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.no_contact_with_custom_privacy, "No contact with custom privacy!"), Toast.LENGTH_SHORT);
+            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.no_contact_with_custom_privacy, "No contact with custom privacy!"), Toast.LENGTH_SHORT);
             return;
         }
 
         AlertDialogWpp builder = new AlertDialogWpp(activity);
-        builder.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.custom_privacy, "Custom Privacy"));
+        builder.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.custom_privacy, "Custom Privacy"));
         ListView listView = new ListView(activity);
         listView.setAdapter(new CustomPrivacyAdapter(activity, pprefs, list, contactClass, groupClass));
         builder.setView(listView);
@@ -251,15 +251,15 @@ public class CustomPrivacy extends Feature {
     private AlertDialogWpp createPrivacyDialog(Activity activity, String number) {
         AlertDialogWpp builder = new AlertDialogWpp(activity);
         builder.setFullHeight(true);
-        builder.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.custom_privacy, "Custom Privacy"));
+        builder.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.custom_privacy, "Custom Privacy"));
 
         String[] items = {
-                com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.hideread, "Hide Blue Ticks"),
-                com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.hidestatusview, "Hide Status View"),
-                com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.hidereceipt, "Hide Delivered"),
-                com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghostmode, "Hide Typing"),
-                com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ghostmode_r, "Hide Recording Audio"),
-                com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.block_call, "Block Call")
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.hideread, "Hide Blue Ticks"),
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.hidestatusview, "Hide Status View"),
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.hidereceipt, "Hide Delivered"),
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.ghostmode, "Hide Typing"),
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.ghostmode_r, "Hide Recording Audio"),
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.block_call, "Block Call")
         };
 
         String[] itemsKeys = {
@@ -270,7 +270,7 @@ public class CustomPrivacy extends Feature {
 
         builder.setMultiChoiceItems(items, checkedItems, (dialog, which, isChecked) -> checkedItems[which] = isChecked);
         builder.setPositiveButton("OK", (dialog, which) -> savePreferences(number, itemsKeys, checkedItems));
-        builder.setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel, "Cancel"), null);
+        builder.setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.cancel, "Cancel"), null);
 
         return builder;
     }

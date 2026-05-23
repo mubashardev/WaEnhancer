@@ -43,7 +43,7 @@ public class DeleteStatus extends Feature {
                 if (menu.findItem(R.string.delete_for_me) != null) return null;
                 var fMessage = fMessageList.get(currentIndex);
                 if (fMessage.getKey().isFromMe) return null;
-                return menu.add(0, R.string.delete_for_me, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.R.string.delete_for_me, "Delete for me"));
+                return menu.add(0, R.string.delete_for_me, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), com.waenhancer.R.string.delete_for_me, "Delete for me"));
             }
 
             @Override

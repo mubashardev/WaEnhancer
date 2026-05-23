@@ -82,7 +82,7 @@ public class CallType extends Feature {
                 var context = origDialog.getContext();
                 var mAlertDialog = new AlertDialogWpp(origDialog.getContext());
                 mAlertDialog.setTitle(UnobfuscatorCache.getInstance().getString("selectcalltype"));
-                mAlertDialog.setItems(new String[]{com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.phone_call), com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.whatsapp_call)}, (dialog, which) -> {
+                mAlertDialog.setItems(new String[]{com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.phone_call), com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.whatsapp_call)}, (dialog, which) -> {
                     newDialog.dismiss();
                     switch (which) {
                         case 0:

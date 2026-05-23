@@ -45,13 +45,13 @@ public class LiteMode extends Feature {
     }
 
     private static void showDialogUriPermission(Activity activity) {
-        new AlertDialogWpp(activity).setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.download_folder_permission))
-                .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.ask_download_folder))
-                .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.allow), (dialog, which) -> {
+        new AlertDialogWpp(activity).setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.download_folder_permission))
+                .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.ask_download_folder))
+                .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.allow), (dialog, which) -> {
                     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                     intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, getDownloadsUri());
                     activity.startActivityForResult(intent, REQUEST_FOLDER);
-                }).setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(R.string.cancel), (dialog, which) -> dialog.dismiss()).show();
+                }).setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.cancel), (dialog, which) -> dialog.dismiss()).show();
     }
 
     @Override

@@ -1,7 +1,12 @@
+[Added]
+- Customize text color of deleted messages in Chat Screen
+
 [Improvements]
 - Reintroduced optional Google Crashlytics with a strict, privacy-first explicit consent flow
 - Enhanced overall module stability by utilizing lightweight native integration
+- Improved Module Entry tile in Settings Activity for all Languages
+- Improved WAEX Menu items locales according to WhatsApp Language
 
 [Fixes]
-- Fixed underlying app crashes and memory issues
+- Fixed Deleted Message Indicator not showing
 - Fixed minor UI glitches for a smoother native experience

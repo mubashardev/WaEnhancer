@@ -417,17 +417,20 @@ public class AntiRevoke extends Feature {
         String originalMessage = (String) XposedHelpers.getAdditionalInstanceField(dateTextView, "originalMessage");
 
         String messageID = null;
-        if (messageRevokedList.contains(key.messageID)) {
+        if (messageRevokedList.contains(key.messageID) || revokedKeyIds.containsKey(key.messageID)) {
             messageID = key.messageID;
         } else {
             String originalKey = com.waenhancer.xposed.core.db.MessageStore.getInstance().getOriginalMessageKey(fMessage.getRowId());
-            if (originalKey != null && !originalKey.isEmpty() && messageRevokedList.contains(originalKey)) {
+            if (originalKey != null && !originalKey.isEmpty() && (messageRevokedList.contains(originalKey) || revokedKeyIds.containsKey(originalKey))) {
                 messageID = originalKey;
             }
         }
 
         if (messageID != null) {
             long timestamp = DelMessageStore.getInstance(Utils.getApplication()).getTimestampByMessageId(messageID);
+            if (timestamp <= 0 && revokedKeyIds.containsKey(messageID)) {
+                timestamp = revokedKeyIds.get(messageID);
+            }
             if (timestamp > 0) {
                 var date = Objects.requireNonNull(DATE_FORMAT_THREAD_LOCAL.get()).format(new Date(timestamp));
                 dateTextView.getPaint().setUnderlineText(true);

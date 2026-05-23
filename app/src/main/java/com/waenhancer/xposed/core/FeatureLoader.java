@@ -173,7 +173,13 @@ public class FeatureLoader {
     public static String getModuleString(Context context, int resId, String fallback) {
         try {
             Context moduleContext = context.createPackageContext("com.waenhancer", 0);
-            String result = moduleContext.getResources().getString(resId);
+            
+            // Explicitly apply the host's configuration (which contains the active locale) 
+            // to the module context so it doesn't default to the system language.
+            android.content.res.Configuration hostConfig = context.getResources().getConfiguration();
+            Context localizedContext = moduleContext.createConfigurationContext(hostConfig);
+            
+            String result = localizedContext.getResources().getString(resId);
             return (result != null && !result.isEmpty()) ? result : fallback;
         } catch (Throwable t) {
             return getModuleString(resId, fallback);

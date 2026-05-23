@@ -80,10 +80,10 @@ WaEnhancerX isn't just a fork; it's a **high-performance, native-first evolution
 - **Dynamic Update Channels:** Switch between Stable and Beta release channels effortlessly from within the app to test bleeding-edge features.
 
 ### Architectural Supremacy
-| Feature Category | WaEnhancer (Dev4Mod) | ⚡ WaEnhancerX (MubasharDev) |
+| Feature Category | Legacy / Standard Modules | ⚡ WaEnhancerX (MubasharDev) |
 | :--- | :--- | :--- |
-| **Performance Philosophy** | Bloated with experimental plugins. | **Hyper-Optimized.** Consolidates features (e.g., merging advanced SQLite queries into `ChatScrollButtons`) to keep the module lightweight. |
-| **Status Deletion** | Slow, relying on WhatsApp's laggy UI dialogs. | **Zero-Lag Execution.** Directly targets the SQLite `message` database and File System (`MediaProvider`) to nuke statuses instantly. |
+| **Performance Philosophy** | Heavy / Experimental Logic. | **Hyper-Optimized.** Consolidates features (e.g., merging advanced SQLite queries into `ChatScrollButtons`) to keep the module lightweight. |
+| **Status Deletion** | Standard UI Dialog Delays. | **Zero-Lag Execution.** Directly targets the SQLite `message` database and File System (`MediaProvider`) to nuke statuses instantly. |
 | **Code Architecture** | Fragmented between Java and Kotlin (`.kt`). | **100% Pure Java.** Maintains strict, predictable reflection hooking (`FeatureLoader`) ensuring absolute Xposed compatibility without crashes. |
 | **UI Integration** | Moving towards detached, custom Compose UIs. | **Fully Embedded.** Looks and feels exactly like an official WhatsApp settings menu. |
 | **Contact Selection** | Basic Kotlin intents. | **Optimized Java API** A robust foundation for future per-contact Privacy Exception Lists. |

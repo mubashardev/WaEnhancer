@@ -83,6 +83,9 @@
 -keep class org.luckypray.dexkit.** { *; }
 -keep class com.waenhancer.xposed.utils.ResId** { *; }
 
+# Keep Unobfuscator and UnobfuscatorCache to prevent obfuscation, class merging, and method inlining
+-keep class com.waenhancer.xposed.core.devkit.** { *; }
+
 # Keep Firebase classes accessed via reflection
 -keep class com.google.firebase.** { *; }
 -dontwarn com.google.firebase.**

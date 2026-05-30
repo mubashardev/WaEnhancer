@@ -528,7 +528,29 @@ public class UnobfuscatorCache {
 
     private String getKeyName() {
         AtomicReference<String> keyName = new AtomicReference<>("");
-        Arrays.stream(Thread.currentThread().getStackTrace()).filter(stackTraceElement -> stackTraceElement.getClassName().equals(Unobfuscator.class.getName())).findFirst().ifPresent(stackTraceElement -> keyName.set(stackTraceElement.getMethodName()));
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        
+        // Try finding Unobfuscator method first
+        Arrays.stream(stackTrace)
+                .filter(stackTraceElement -> stackTraceElement.getClassName().equals(Unobfuscator.class.getName()))
+                .findFirst()
+                .ifPresent(stackTraceElement -> keyName.set(stackTraceElement.getMethodName()));
+        
+        // Fallback if not found (e.g. inlined or called from somewhere else)
+        if (keyName.get().isEmpty()) {
+            for (StackTraceElement ste : stackTrace) {
+                String clsName = ste.getClassName();
+                if (!clsName.equals(Thread.class.getName())
+                        && !clsName.equals(UnobfuscatorCache.class.getName())
+                        && !clsName.startsWith("java.lang.reflect.")
+                        && !clsName.startsWith("android.util.Log")
+                        && !clsName.contains("ReflectionUtils")) {
+                    String simpleClsName = clsName.substring(clsName.lastIndexOf('.') + 1);
+                    keyName.set("fb_" + simpleClsName + "_" + ste.getMethodName());
+                    break;
+                }
+            }
+        }
         return keyName.get();
     }
 

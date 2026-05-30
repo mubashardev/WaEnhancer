@@ -29,6 +29,7 @@ public class XPrefManager {
             
             return pref;
         } catch (Throwable t) {
+            android.util.Log.e("WaE-XPrefManager", "Failed to initialize XSharedPreferences reflectively", t);
             // Fallback to standard SharedPreferences if XSharedPreferences is not available
             return null;
         }
@@ -40,6 +41,14 @@ public class XPrefManager {
                 Class<?> xPrefsClass = Class.forName("de.robv.android.xposed.XSharedPreferences");
                 if (xPrefsClass.isInstance(pref)) {
                     xPrefsClass.getMethod("reload").invoke(pref);
+                }
+            } catch (Throwable ignored) {}
+        }
+        if (com.waenhancer.xposed.utils.Utils.xprefs != null) {
+            try {
+                Class<?> xPrefsClass = Class.forName("de.robv.android.xposed.XSharedPreferences");
+                if (xPrefsClass.isInstance(com.waenhancer.xposed.utils.Utils.xprefs)) {
+                    xPrefsClass.getMethod("reload").invoke(com.waenhancer.xposed.utils.Utils.xprefs);
                 }
             } catch (Throwable ignored) {}
         }

@@ -426,15 +426,39 @@ public class FeatureLoader {
     }
 
     private static void initComponents(ClassLoader loader, android.content.SharedPreferences pref) throws Exception {
-        FMessageWpp.initialize(loader);
-        WppCore.Initialize(loader, pref);
-        // Clear stale pending change titles from previous process.
-        // Must be after WppCore.Initialize() so privPrefs is available.
-        WppCore.setPrivString("pending_changes", "");
-        DesignUtils.setPrefs(pref);
-        Utils.init(loader);
-        AlertDialogWpp.initDialog(loader);
-        WaContactWpp.initialize(loader);
+        try {
+            FMessageWpp.initialize(loader);
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Failed to initialize FMessageWpp: " + t.getMessage());
+        }
+        try {
+            WppCore.Initialize(loader, pref);
+            // Clear stale pending change titles from previous process.
+            // Must be after WppCore.Initialize() so privPrefs is available.
+            WppCore.setPrivString("pending_changes", "");
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Failed to initialize WppCore: " + t.getMessage());
+        }
+        try {
+            DesignUtils.setPrefs(pref);
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Failed to initialize DesignUtils: " + t.getMessage());
+        }
+        try {
+            Utils.init(loader);
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Failed to initialize Utils: " + t.getMessage());
+        }
+        try {
+            AlertDialogWpp.initDialog(loader);
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Failed to initialize AlertDialogWpp: " + t.getMessage());
+        }
+        try {
+            WaContactWpp.initialize(loader);
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Failed to initialize WaContactWpp: " + t.getMessage());
+        }
         
         // Track update check per session
         final boolean[] hasCheckedThisSession = {false};

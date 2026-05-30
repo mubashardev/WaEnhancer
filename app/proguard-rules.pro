@@ -36,6 +36,18 @@
     native <methods>;
 }
 
+# Keep Native Security Bridge
+-keepclasseswithmembernames class com.waenhancer.pro.utils.SecurityNative {
+    native <methods>;
+}
+-keep class com.waenhancer.pro.utils.SecurityNative { *; }
+
+# Keep Network and Crypto classes
+-keep class com.waenhancer.xposed.utils.KeystoreHelper { *; }
+-keep class com.waenhancer.xposed.utils.LicenseManager { *; }
+-keep class com.waenhancer.pro.utils.ProStatusManager { *; }
+-keep class com.waenhancer.pro.utils.ProConfig { *; }
+
 # Keep the reflective constructors for all Feature plugins loaded dynamically at startup or lazily
 -keep class * extends com.waenhancer.xposed.core.Feature {
     public <init>(java.lang.ClassLoader, android.content.SharedPreferences);

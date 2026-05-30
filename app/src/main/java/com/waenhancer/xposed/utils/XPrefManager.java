@@ -34,6 +34,17 @@ public class XPrefManager {
         }
     }
 
+    public static void reload() {
+        if (pref != null) {
+            try {
+                Class<?> xPrefsClass = Class.forName("de.robv.android.xposed.XSharedPreferences");
+                if (xPrefsClass.isInstance(pref)) {
+                    xPrefsClass.getMethod("reload").invoke(pref);
+                }
+            } catch (Throwable ignored) {}
+        }
+    }
+
     public static SharedPreferences getPref(Context context) {
         SharedPreferences xposedPref = getPref();
         if (xposedPref != null) return xposedPref;

@@ -1,4 +1,4 @@
-# WaEnhancerX (WaEnhancer X)
+# WaEnhancer X
 <div align="center">
   <p><strong>WaEnhancer X is a powerful Xposed/LSPosed module that supercharges your WhatsApp experience with advanced privacy, customization, and utility features.</strong></p>
 

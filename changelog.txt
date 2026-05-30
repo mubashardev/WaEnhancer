@@ -1,8 +1,5 @@
-[Improvements]
-- Restored Separate Groups feature
-- Improved Module Entry tile in Settings Activity for all Languages
-- Improved Call info notification
+[Added]
+- Message Bomber [Pro]
+- Added Support for WA/WB 2.26.21.xx
 
-[Fixes]
-- Fixed crash on startup
-- Fixed crash on status custom text color
+Introduced Wa Enhancer X Pro with exciting new features

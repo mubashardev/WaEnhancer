@@ -80,17 +80,26 @@ public class HookProvider extends ContentProvider {
                 return Bundle.EMPTY;
             }
             if ("record_crash".equals(method) && extras != null) {
-                if (!prefs.getBoolean("enable_crash_analytics", false)) {
+                if (com.waenhancer.BuildConfig.DEBUG || !prefs.getBoolean("enable_crash_analytics", false)) {
                     return Bundle.EMPTY;
                 }
                 String stacktrace = extras.getString("stacktrace");
                 if (stacktrace != null && !stacktrace.isEmpty()) {
                     try {
+                        // Dynamically check if Firebase is initialized first
+                        Class<?> firebaseAppClass = Class.forName("com.google.firebase.FirebaseApp");
+                        try {
+                            firebaseAppClass.getMethod("getInstance").invoke(null);
+                        } catch (Exception e) {
+                            // Try to initialize it if not initialized
+                            firebaseAppClass.getMethod("initializeApp", Context.class).invoke(null, context.getApplicationContext());
+                        }
+
                         com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().log("WhatsApp Crash:\n" + stacktrace);
                         com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(
                                 new com.waenhancer.utils.WhatsAppCrashException("WhatsApp Crash: \n" + stacktrace));
-                    } catch (Exception e) {
-                        android.util.Log.e("WAEX_Provider", "Failed to record crash to Crashlytics: " + e.getMessage());
+                    } catch (Throwable t) {
+                        android.util.Log.e("WAEX_Provider", "Failed to record crash to Crashlytics: " + t.getMessage());
                     }
                 }
                 return Bundle.EMPTY;

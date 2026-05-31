@@ -20,7 +20,7 @@ public class AnalyticsManager {
      * Can be called from any process.
      */
     public static void logEvent(Context context, String eventName, Bundle params) {
-        if (context == null) return;
+        if (context == null || BuildConfig.DEBUG) return;
         
         // If in main process, log directly
         if (context.getPackageName().equals(BuildConfig.APPLICATION_ID)) {

@@ -364,15 +364,20 @@ public class HomeFragment extends BaseFragment {
             acceptBtn.setOnClickListener(v -> {
                 prefs.edit().putBoolean("consent_crashlytics_asked", true)
                         .putBoolean("enable_crash_analytics", true).apply();
-                try {
-                    Class<?> firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
-                    Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", android.content.Context.class).invoke(null, requireContext());
-                    firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled", boolean.class).invoke(analyticsInstance, true);
-                    
-                    Class<?> firebaseCrashlyticsClass = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics");
-                    Object crashlyticsInstance = firebaseCrashlyticsClass.getMethod("getInstance").invoke(null);
-                    firebaseCrashlyticsClass.getMethod("setCrashlyticsCollectionEnabled", boolean.class).invoke(crashlyticsInstance, true);
-                } catch (Throwable ignored) {}
+                if (!BuildConfig.DEBUG) {
+                    try {
+                        Class<?> firebaseAppClass = Class.forName("com.google.firebase.FirebaseApp");
+                        firebaseAppClass.getMethod("initializeApp", Context.class).invoke(null, requireContext().getApplicationContext());
+
+                        Class<?> firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
+                        Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", android.content.Context.class).invoke(null, requireContext());
+                        firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled", boolean.class).invoke(analyticsInstance, true);
+                        
+                        Class<?> firebaseCrashlyticsClass = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics");
+                        Object crashlyticsInstance = firebaseCrashlyticsClass.getMethod("getInstance").invoke(null);
+                        firebaseCrashlyticsClass.getMethod("setCrashlyticsCollectionEnabled", boolean.class).invoke(crashlyticsInstance, true);
+                    } catch (Throwable ignored) {}
+                }
                 dialog.dismiss();
             });
 

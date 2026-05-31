@@ -569,14 +569,14 @@ public class FeatureLoader {
         try {
             XSharedPreferences xpref = (XSharedPreferences) pref;
             xpref.reload();
+            java.io.File prefFile = xpref.getFile();
+            if (prefFile == null || !prefFile.exists()) {
+                return;
+            }
             var allPrefs = xpref.getAll();
             if (allPrefs == null || allPrefs.isEmpty()) {
                 XposedBridge.log("[WAEX] PREFS WARNING: XSharedPreferences returned empty data. "
-                        + "File: " + xpref.getFile().getAbsolutePath());
-                activity.runOnUiThread(() ->
-                        Toast.makeText(activity,
-                                "[WAEX] Unable to read preferences. Ensure the module is enabled and restart your device.",
-                                Toast.LENGTH_LONG).show());
+                        + "File: " + prefFile.getAbsolutePath());
             } else if (Feature.DEBUG) {
                 XposedBridge.log("[WAEX] Prefs OK: " + allPrefs.size() + " entries loaded");
             }

@@ -143,6 +143,19 @@
             app:summary="@string/message_bomber_sum"
             app:title="@string/message_bomber" />
 
+        <com.waenhancer.preference.ProSwitchPreference
+            app:defaultValue="false"
+            app:key="delete_message_file"
+            app:summary="@string/delete_message_file_sum"
+            app:title="@string/delete_message_file" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:dependency="delete_message_file"
+            app:key="delete_message_file_sent"
+            app:summary="@string/delete_message_file_sent_sum"
+            app:title="@string/delete_message_file_sent" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

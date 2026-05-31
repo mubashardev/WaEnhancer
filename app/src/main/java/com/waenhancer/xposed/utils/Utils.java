@@ -482,7 +482,7 @@ public class Utils {
           .append(view.getClass().getName())
           .append(" (id: ").append(idName).append(")");
           
-        XposedBridge.log("[WaEnhancerX] UI Dump: " + sb.toString());
+//        XposedBridge.log("[WaEnhancerX] UI Dump: " + sb.toString());
         
         if (view instanceof android.view.ViewGroup) {
             android.view.ViewGroup group = (android.view.ViewGroup) view;

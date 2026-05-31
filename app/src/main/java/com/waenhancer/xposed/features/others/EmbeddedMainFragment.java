@@ -73,6 +73,11 @@ public class EmbeddedMainFragment extends Fragment {
                 }
                 return super.getSystemService(name);
             }
+
+            @Override
+            public ClassLoader getClassLoader() {
+                return EmbeddedMainFragment.class.getClassLoader();
+            }
         };
     }
     @Nullable

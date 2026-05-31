@@ -116,6 +116,11 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
                 }
                 return super.getSystemService(name);
             }
+
+            @Override
+            public ClassLoader getClassLoader() {
+                return EmbeddedBasePreferenceFragment.class.getClassLoader();
+            }
         };
     }
 

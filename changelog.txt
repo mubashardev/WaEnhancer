@@ -1,5 +1,6 @@
 [Added]
-- Message Bomber [Pro]
 - Added Support for WA/WB 2.26.21.xx
+- Message Bomber [Pro]
+- Delete Message Media File [Pro]
 
 Introduced Wa Enhancer X Pro with exciting new features

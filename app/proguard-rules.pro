@@ -83,6 +83,9 @@
 -keep class org.luckypray.dexkit.** { *; }
 -keep class com.waenhancer.xposed.utils.ResId** { *; }
 
+# Keep all custom preference classes since they are inflated via reflection from XML
+-keep class com.waenhancer.preference.** { *; }
+
 # Keep Unobfuscator and UnobfuscatorCache to prevent obfuscation, class merging, and method inlining
 -keep class com.waenhancer.xposed.core.devkit.** { *; }
 

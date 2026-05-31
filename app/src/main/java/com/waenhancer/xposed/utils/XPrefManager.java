@@ -15,6 +15,10 @@ public class XPrefManager {
 
     public static SharedPreferences getPref() {
         if (pref != null) return pref;
+        if (com.waenhancer.xposed.utils.Utils.xprefs != null) {
+            pref = com.waenhancer.xposed.utils.Utils.xprefs;
+            return pref;
+        }
         if (xprefsUnavailable) return null;
 
         try {
@@ -31,9 +35,8 @@ public class XPrefManager {
             
             return pref;
         } catch (Throwable t) {
+            android.util.Log.e("WaE-XPrefManager", "Failed to initialize XSharedPreferences", t);
             xprefsUnavailable = true;
-            android.util.Log.d("WaE-XPrefManager", "XSharedPreferences not available (companion app context), using local prefs fallback.");
-            // Fallback to standard SharedPreferences if XSharedPreferences is not available
             return null;
         }
     }

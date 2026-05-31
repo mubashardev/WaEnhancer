@@ -187,6 +187,11 @@ public class EmbeddedSettingsDialogFragment extends DialogFragment {
                 }
                 return super.getSystemService(name);
             }
+
+            @Override
+            public ClassLoader getClassLoader() {
+                return EmbeddedSettingsDialogFragment.class.getClassLoader();
+            }
         };
     }
 

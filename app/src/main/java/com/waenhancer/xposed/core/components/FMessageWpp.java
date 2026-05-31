@@ -36,6 +36,7 @@ public class FMessageWpp {
     private static Method getOriginalMessageKey;
     private static Class abstractMediaMessageClass;
     private static Field broadcastField;
+    private static Field timestampField;
     private static Field keyIdField;
     private static Field keyFromMeField;
     private static Field keyRemoteJidField;
@@ -72,6 +73,11 @@ public class FMessageWpp {
             abstractMediaMessageClass = Unobfuscator.loadAbstractMediaMessageClass(classLoader);
             broadcastField = Unobfuscator.loadBroadcastTagField(classLoader);
             getFieldIdMessage = Unobfuscator.loadSetEditMessageField(classLoader);
+            try {
+                timestampField = Unobfuscator.loadFmessageTimestampField(classLoader);
+            } catch (Exception e) {
+                XposedBridge.log("[WAEX] Could not load timestampField: " + e.getMessage());
+            }
 
             // Initialize Key fields dynamically
             if (Key.TYPE != null) {
@@ -123,6 +129,16 @@ public class FMessageWpp {
         return 0;
     }
 
+    public long getTimestamp() {
+        try {
+            if (timestampField != null) {
+                return timestampField.getLong(fmessage);
+            }
+        } catch (Exception e) {
+            XposedBridge.log(e);
+        }
+        return 0;
+    }
 
     public Key getKey() {
         try {

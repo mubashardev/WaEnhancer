@@ -508,6 +508,22 @@ public class FeatureCatalog {
                                 "conversation",
                                 Arrays.asList("message", "bomber", "spam", "mass", "pro")));
 
+                catalog.add(new SearchableFeature("delete_message_file",
+                                context.getString(R.string.delete_message_file),
+                                context.getString(R.string.delete_message_file_sum),
+                                SearchableFeature.Category.GENERAL_CONVERSATION,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "conversation",
+                                Arrays.asList("delete", "message", "file", "media", "storage", "download", "pro")));
+
+                catalog.add(new SearchableFeature("delete_message_file_sent",
+                                context.getString(R.string.delete_message_file_sent),
+                                context.getString(R.string.delete_message_file_sent_sum),
+                                SearchableFeature.Category.GENERAL_CONVERSATION,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "conversation",
+                                Arrays.asList("delete", "message", "file", "sent", "my")));
+
                 // GENERAL FRAGMENT - Status
                 catalog.add(new SearchableFeature("auto_status_forward",
                                 context.getString(R.string.auto_status_forward),

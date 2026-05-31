@@ -391,22 +391,23 @@ public class ProviderSharedPreferences implements SharedPreferences {
     @Nullable
     private Bundle callProvider(@NonNull String method, @Nullable Bundle extras) {
         String[] authorities = new String[] { BuildConfig.APPLICATION_ID + AUTHORITY_SUFFIX, AUTHORITY_LEGACY, "com.waenhancer.provider" };
+        android.util.Log.i("WAE_ProviderSharedPrefs", "callProvider called: method=" + method + ", authorities=" + java.util.Arrays.toString(authorities));
         for (String authority : authorities) {
             try {
-                ;
+                android.util.Log.i("WAE_ProviderSharedPrefs", "Attempting call to content://" + authority);
                 Bundle result = context.getContentResolver().call(
                         Uri.parse("content://" + authority),
                         method,
                         null,
                         extras);
                 if (result != null) {
-                    ;
+                    android.util.Log.i("WAE_ProviderSharedPrefs", "Successfully called content://" + authority + ", returned non-null bundle");
                     return result;
                 } else {
-                    ;
+                    android.util.Log.w("WAE_ProviderSharedPrefs", "Call to content://" + authority + " returned null");
                 }
             } catch (Throwable e) {
-                Utils.log("[WAEX] ProviderSharedPreferences: Call error (" + authority + "): " + e.getMessage());
+                android.util.Log.e("WAE_ProviderSharedPrefs", "Call error (" + authority + "): " + e.getMessage(), e);
             }
         }
         return null;

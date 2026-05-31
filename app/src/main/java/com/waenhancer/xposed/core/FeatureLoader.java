@@ -902,6 +902,9 @@ public class FeatureLoader {
                 
                 Class<?> msgBomberClass = Class.forName("com.waenhancer.pro.MessageBomber");
                 allFeatureClasses.add(msgBomberClass);
+
+                Class<?> deleteMsgFileClass = Class.forName("com.waenhancer.pro.DeleteMessageFile");
+                allFeatureClasses.add(deleteMsgFileClass);
             } catch (Exception e) {
                 // Fail silently to prevent string leaks in stacktraces/logs
             }

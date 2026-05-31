@@ -214,6 +214,39 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     @Override
+    public boolean onPreferenceTreeClick(@NonNull androidx.preference.Preference preference) {
+        if (preference.getFragment() != null) {
+            try {
+                Class<?> clazz = Class.forName(preference.getFragment());
+                Object instance = clazz.getDeclaredConstructor().newInstance();
+                if (instance instanceof androidx.fragment.app.Fragment) {
+                    androidx.fragment.app.Fragment fragment = (androidx.fragment.app.Fragment) instance;
+                    fragment.setArguments(preference.getExtras());
+
+                    // Scope navigation to the correct fragment manager and container.
+                    androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
+                    int containerId = android.view.View.NO_ID;
+                    if (getView() != null && getView().getParent() instanceof android.view.View) {
+                        containerId = ((android.view.View) getView().getParent()).getId();
+                    }
+                    if (containerId == android.view.View.NO_ID) {
+                        containerId = com.waenhancer.R.id.frag_container; // Fallback container
+                    }
+
+                    fm.beginTransaction()
+                            .replace(containerId, fragment)
+                            .addToBackStack(null)
+                            .commit();
+                    return true;
+                }
+            } catch (Exception e) {
+                android.util.Log.e("WAEX", "Failed to navigate to fragment: " + preference.getFragment(), e);
+            }
+        }
+        return super.onPreferenceTreeClick(preference);
+    }
+
+    @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String s) {
         ;
         if (Objects.equals(s, "release_channel")) {

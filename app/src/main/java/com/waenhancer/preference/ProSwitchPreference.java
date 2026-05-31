@@ -10,7 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
 import com.waenhancer.BuildConfig;
-import com.waenhancer.activities.LicenseActivity;
+
 
 /**
  * Refactored ProSwitchPreference: converted from a standard preference to a MaterialSwitchPreference
@@ -76,9 +76,14 @@ public class ProSwitchPreference extends rikka.material.preference.MaterialSwitc
             super.onClick();
         } else {
             Context context = getContext();
-            Intent intent = new Intent(context, LicenseActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
+            try {
+                Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");
+                Intent intent = new Intent(context, clazz);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            } catch (ClassNotFoundException e) {
+                android.widget.Toast.makeText(context, "Pro features are not available.", android.widget.Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

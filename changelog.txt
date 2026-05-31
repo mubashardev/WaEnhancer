@@ -3,4 +3,10 @@
 - Message Bomber [Pro]
 - Delete Message Media File [Pro]
 
+
+[Enhancements]
+- Pro License Manager to bind license key with device hardware
+
 Introduced Wa Enhancer X Pro with exciting new features
+
+Note: We created our official <a href="https://t.me/waenhancerx_bot">WaEnhancer X Bot</a> on Telegram to getting the license key for WaEnhancer X Pro.

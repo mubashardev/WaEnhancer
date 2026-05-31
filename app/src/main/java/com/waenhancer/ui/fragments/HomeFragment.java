@@ -323,8 +323,7 @@ public class HomeFragment extends BaseFragment {
 
         binding.proStatusChip.setOnClickListener(v -> {
             animateClick(v);
-            Intent intent = new Intent(requireContext(), com.waenhancer.activities.LicenseActivity.class);
-            startActivity(intent);
+            launchLicenseActivity(requireContext());
         });
 
         setupReleaseChannelSelector();
@@ -343,8 +342,7 @@ public class HomeFragment extends BaseFragment {
             binding.proStatusChip.setOnClickListener(v -> {
                 android.content.Context context = getContext();
                 if (context != null) {
-                    android.content.Intent intent = new android.content.Intent(context, com.waenhancer.activities.LicenseActivity.class);
-                    context.startActivity(intent);
+                    launchLicenseActivity(context);
                 }
             });
         }
@@ -1103,5 +1101,15 @@ public class HomeFragment extends BaseFragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    private void launchLicenseActivity(Context context) {
+        try {
+            Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");
+            Intent intent = new Intent(context, clazz);
+            context.startActivity(intent);
+        } catch (ClassNotFoundException e) {
+            Toast.makeText(context, "Pro features are not available.", Toast.LENGTH_SHORT).show();
+        }
     }
 }

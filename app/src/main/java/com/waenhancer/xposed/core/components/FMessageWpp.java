@@ -399,6 +399,32 @@ public class FMessageWpp {
         tryAppend(sb, label, methodsSb);
     }
 
+    public void clearCache() {
+        try {
+            if (!isMediaFile() || abstractMediaMessageClass == null) return;
+            for (var field : abstractMediaMessageClass.getDeclaredFields()) {
+                if (field.getType().isPrimitive()) continue;
+                var fileField = ReflectionUtils.getFieldByType(field.getType(), File.class);
+                if (fileField != null) {
+                    var mediaObject = ReflectionUtils.getObjectField(field, fmessage);
+                    if (mediaObject == null) continue;
+                    fileField.setAccessible(true);
+                    fileField.set(mediaObject, null);
+                    
+                    // Reset boolean fields in the mediaObject (like transferred, etc.)
+                    for (Field f : mediaObject.getClass().getDeclaredFields()) {
+                        if (f.getType() == boolean.class) {
+                            f.setAccessible(true);
+                            f.setBoolean(mediaObject, false);
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Error clearing FMessageWpp cache: " + t.getMessage());
+        }
+    }
+
     /*
      * Represents the key of a WhatsApp message, containing identifiers for the message.
      */

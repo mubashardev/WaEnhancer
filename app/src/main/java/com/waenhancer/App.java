@@ -78,6 +78,42 @@ public class App extends Application {
             } catch (Throwable ignored) {
             }
 
+            // Local expiration check (offline fail-safe)
+            try {
+                var sharedPrefs = PreferenceManager.getDefaultSharedPreferences(App.this);
+                long expiresAt = 0;
+                try {
+                    expiresAt = sharedPrefs.getLong("expires_at", 0);
+                } catch (ClassCastException e) {
+                    try {
+                        String expiresStr = sharedPrefs.getString("expires_at", "0");
+                        expiresAt = Long.parseLong(expiresStr);
+                    } catch (Exception ignored) {}
+                }
+                boolean isProVerified = sharedPrefs.getBoolean("is_pro_verified", false);
+                if (isProVerified && expiresAt > 0 && expiresAt < System.currentTimeMillis()) {
+                    sharedPrefs.edit()
+                            .putBoolean("is_pro_verified", false)
+                            .remove("encrypted_config")
+                            .putBoolean("message_bomber", false)
+                            .putBoolean("delete_message_file", false)
+                            .putBoolean("delete_message_file_sent", false)
+                            .commit();
+                    com.waenhancer.xposed.utils.ProHelper.setForceFree(true);
+                    
+                    try {
+                        com.waenhancer.xposed.utils.LicenseManager.makePrefsWorldReadable(App.this);
+                    } catch (Exception ignored) {}
+
+                    try {
+                        restartApp("com.whatsapp");
+                    } catch (Exception ignored) {}
+                    try {
+                        restartApp("com.whatsapp.w4b");
+                    } catch (Exception ignored) {}
+                }
+            } catch (Throwable ignored) {}
+
             // Perform silent background license re-verification at startup
             com.waenhancer.xposed.utils.LicenseManager.silentCheck(App.this);
         }

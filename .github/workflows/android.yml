@@ -263,6 +263,13 @@ jobs:
           tag_name: ${{ env.NEW_VERSION_NAME }}
           prerelease: ${{ env.RELEASE_PRERELEASE }}
 
+      - name: Sync commits and push custom tag to Xposed Repo fork
+        run: |
+          git remote add xposed-repo https://x-access-token:${{ secrets.XPOSED_REPO_TOKEN }}@github.com/Xposed-Modules-Repo/com.waenhancer.git
+          git push xposed-repo HEAD:master --force || git push xposed-repo HEAD:main --force
+          git tag ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
+          git push xposed-repo ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
+
       - name: Upload to Xposed Repo release
         uses: softprops/action-gh-release@v2
         with:

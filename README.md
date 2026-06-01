@@ -14,55 +14,77 @@
 
 ## Main Features
 
+### ⚡ Pro Features (Exclusive to WaEnhancerX Pro)
+- **Message Bomber**: Send multiple repeated messages to a contact or group instantly with customizable count and delays.
+- **Enhanced Media Deletion (Delete Message File)**: Automatically delete downloaded media files from your local storage when a message is deleted for you/me or by the sender.
+- **Sent Media Clean-Up (Delete Message File Sent)**: Automatically delete sent media files from your device's local storage when you delete a sent message.
+
 ### Privacy & Security
-- `Anti-Revoke`
-- `Anti-View Once`
-- `Hide Read Receipts`
-- `Hide Delivery Reports`
-- `Hide Seen Status`
-- `Typing Privacy`
-- `Recording Privacy`
-- `Call Privacy`
-- `Locked Chats Enhancer`
+- `Anti-Revoke` (Prevents chats/messages from being deleted for you)
+- `Anti-View Once` (Bypasses restriction to view view-once messages/media infinitely)
+- `Hide Read Receipts` (Prevent others from knowing you read their messages)
+- `Hide Delivery Reports` (Hide the second tick to show offline)
+- `Hide Seen Status` (View statuses without appearing in the viewed list)
+- `Typing Privacy` (Hide the 'typing...' indicator)
+- `Recording Privacy` (Hide the 'recording...' indicator)
+- `Call Privacy` (Customize who can call you and hide call metadata)
+- `Freeze Last Seen` (Freeze your active time status)
+- `Recover Delete For Me` (Instantly undo or recover a message you accidentally deleted for yourself)
+- `Spy Mode` (Read messages and statuses with absolute stealth)
+- `Custom Privacy Exceptions` (Setup custom exceptions per contact)
+- `Locked Chats Enhancer` (Secure and extend standard locked chats)
+- `Hide Chat` (Completely hide specific chats from your main chat screen)
 
 ### Visual Customization
-- `Custom Themes (V2)`
-- `Bubble Colors`
-- `Custom Toolbar`
-- `Hide Tabs`
-- `Instagram-Style Status`
-- `Menu Home`
-- `Custom Font`
+- `Custom Themes (V2)` (Advanced custom dark/light color themes)
+- `Bubble Colors` (Personalize incoming and outgoing message bubble backgrounds)
+- `Custom Toolbar` (Modify or hide elements in the main conversation toolbar)
+- `Hide Tabs` (Fully dynamic custom tab hiding for chats, groups, updates, calls)
+- `Instagram-Style Status` (Display updates/statuses horizontally like Instagram stories)
+- `Menu Home` (Inject custom options into the main action menu)
+- `Custom Font` (Apply custom system or bundled typography)
+- `Custom Time` (Display precise message and call timestamps)
+- `Custom Views` (Inject customized background shapes and layouts)
 
 ### Media & Data
-
-- `Auto Status Forward on Reply`
-- `Force Cloud Restore`
-- `Status Download`
-- `Profile Picture Download`
-- `Download View Once`
-- `Media Quality`
-- `Share Limit Bypass`
-- `Status Length Bypass`
+- `Auto Status Forward on Reply` (Auto-forward specific status updates instantly)
+- `Force Cloud Restore` (Manually trigger local/cloud backup database restoration)
+- `Status Download` (Download and save status videos and images)
+- `Profile Picture Download` (Easily download and save profile photos)
+- `Download View Once` (Directly save view-once media items to your device)
+- `Video Note Attachment` (Directly send custom video note clips)
+- `Media Quality` (Configure original quality status and media uploads)
+- `Media Preview` (Instantly preview status media without loading full screens)
+- `Share Limit Bypass` (Share files to unlimited contacts at once)
+- `Status Length Bypass` (Upload high-duration status videos)
 
 ### Tools & Utilities
-
-- `Call Recording`
-- `Google Translate Integration`
-- `Audio Transcript`
-- `Tasker Integration`
-- `Toast Viewer`
-- `Block Verification`
-- `Message Scheduler`
-- `Auto Reply`
+- `Call Recording` (Record incoming and outgoing calls with high audio quality)
+- `Google Translate Integration` (Inline translate messages instantly)
+- `Audio Transcript` (Transcribe incoming audio messages to text)
+- `Tasker Integration` (Broadcast intents to control features automatically)
+- `Toast Viewer` (Receive floating notifications for active updates/events)
+- `Block Verification` (Check if you are blocked by a contact safely)
+- `Message Scheduler` (Schedule messages to be sent at specific dates/times)
+- `Auto Reply` (Auto-respond to incoming messages dynamically)
+- `Backup & Restore` (Safely export/import WaEnhancer configurations)
+- `DND Mode` (Do Not Disturb - silent notifications and pretend you are offline)
+- `Lite Mode` (Performance booster for low-end Android devices)
+- `Anti-WA Expiration` (Bypass hardcoded WhatsApp version expiration/reversion prompts)
 
 ### Chat Enhancements
-
-- `Pinned Limit Bypass`
-- `Chat Filters`
-- `Separate Groups`
-- `Text Status Composer`
-- `Stickers Management`
+- `Pinned Limit Bypass` (Pin unlimited chats to the top of your chat list)
+- `Chat Filters` (Organize and filter conversations with custom tabs)
+- `Separate Groups` (Separate personal chats from groups into distinct tabs)
+- `Text Status Composer` (Customize text status composer features)
+- `Stickers Management` (Save, manage, and duplicate sticker packs)
+- `New Chat Shortcut` (Directly start a conversation with unsaved numbers)
+- `Chat Limit Bypass` (Bypass chat message limit restrictions)
+- `Tag Message` (Advanced custom tags for messages and contacts)
+- `Delete Status` (Instantly delete your own status updates with zero delay)
+- `Group Admin Indicator` (Custom badges or indicators for group admins)
+- `Copy Status Text` (Copy text from picture or text status updates easily)
+- `Channels Enhancements` (Lock or improve standard channels integration)
 
 
 ## Why choose WaEnhancerX

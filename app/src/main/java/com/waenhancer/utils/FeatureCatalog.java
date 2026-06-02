@@ -904,6 +904,14 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.MEDIA,
                                 null,
                                 Arrays.asList("media", "preview", "temporary")));
+
+                catalog.add(new SearchableFeature("pro_status_splitter",
+                                context.getString(R.string.pro_status_splitter),
+                                context.getString(R.string.pro_status_splitter_sum),
+                                SearchableFeature.Category.MEDIA,
+                                SearchableFeature.FragmentType.MEDIA,
+                                null,
+                                Arrays.asList("status", "video", "splitter", "cut", "cutter", "trim", "trimmer", "pro")));
         }
 
         private static void addCustomizationFeatures(Context context, List<SearchableFeature> catalog) {
@@ -1074,14 +1082,6 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.CUSTOMIZATION,
                                 null,
                                 Arrays.asList("status", "composer", "colors", "text")));
-
-                catalog.add(new SearchableFeature("pro_status_splitter",
-                                context.getString(R.string.pro_status_splitter),
-                                context.getString(R.string.pro_status_splitter_sum),
-                                SearchableFeature.Category.CUSTOMIZATION,
-                                SearchableFeature.FragmentType.CUSTOMIZATION,
-                                null,
-                                Arrays.asList("status", "video", "splitter", "cut", "cutter", "trim", "trimmer", "pro")));
         }
 
         private static void addHomeActions(Context context, List<SearchableFeature> catalog) {

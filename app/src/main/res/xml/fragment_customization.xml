@@ -234,11 +234,6 @@
             app:summary="@string/custom_colors_for_text_status_sum"
             app:title="@string/custom_colors_for_text_status" />
 
-        <com.waenhancer.preference.ProSwitchPreference
-            app:defaultValue="false"
-            app:key="pro_status_splitter"
-            app:summary="@string/pro_status_splitter_sum"
-            app:title="@string/pro_status_splitter" />
     </PreferenceCategory>
 
 </PreferenceScreen>

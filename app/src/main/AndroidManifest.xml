@@ -190,6 +190,32 @@
             android:parentActivityName=".activities.ChangelogActivity" />
 
         <activity
+            android:name=".activities.ReleaseDetailsActivity"
+            android:theme="@style/AppTheme"
+            android:label="Release Details"
+            android:exported="true"
+            android:parentActivityName=".activities.ChangelogActivity">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="waex.mubashar.dev" />
+                <data android:pathPrefix="/releases/" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="wae.mubashar.dev" />
+                <data android:pathPrefix="/releases/" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".activities.TaskerGuideActivity"
             android:theme="@style/AppTheme"
             android:label="Automation Guide"

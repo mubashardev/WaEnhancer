@@ -41,7 +41,8 @@ public class DesignUtils {
         }
 
         Drawable drawable = null;
-        if ((id & 0xFF000000) == 0x7F000000 && XResManager.moduleResources != null) {
+        int packageId = id & 0xFF000000;
+        if ((packageId == 0x7F000000 || packageId == 0x7E000000) && XResManager.moduleResources != null) {
             try {
                 drawable = XResManager.moduleResources.getDrawable(id, null);
             } catch (Throwable ignored) {}

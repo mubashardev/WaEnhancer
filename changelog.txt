@@ -1,13 +1,19 @@
 [Added]
 - Added support for WA/WB 2.26.22.xx
-- Added option to hide new Meta AI tab in Home Screen
-- Added Status Splitter [Pro]
-- Added option to make text selectable in Chat Bubbles
+- Added Custom Status UI
+    * [Pro] Hide Status Reply Bar
+    * [Pro] Hide Status Quick Reactions
+    * [Pro] Hide Status Heart Button
+    * [Pro] Add Status Reply Menu Item
+    * [Pro] Status Video Fast Forward / Rewind Gesture
+    * [Pro] Status Video Fast Forward Speed
+    * [Pro] Status Play/Pause Button
 
 [Improvements]
-- Optimized app size & performance
 - Improved some ui elements
 
+[Fixes]
+- Fixed CustomTime Plugin Error
 
 [Fixes]
 - Fixed Error getting method loadfabMethod: Fab method not found

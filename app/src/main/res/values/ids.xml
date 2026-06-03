@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="wae_device_source_guard" type="id" />
+    <item name="wae_bottom_sheet_callback_tag" type="id" />
+    <item name="wae_status_reply_menu_item" type="id" />
+    <item name="wae_double_tap_tag" type="id" />
+    <item name="wae_progress_bar_tag" type="id" />
+    <item name="wae_status_page_instance_tag" type="id" />
+    <item name="wae_status_play_pause_button" type="id" />
+    <item name="wae_status_play_pause_container" type="id" />
+    <item name="wae_status_gesture_active" type="id" />
+    <item name="wae_status_gesture_fast_forward" type="id" />
+    <item name="wae_status_gesture_fast_rewind" type="id" />
+    <item name="wae_status_gesture_orig_listener" type="id" />
 </resources>

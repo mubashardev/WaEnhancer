@@ -871,6 +871,9 @@ public class FeatureLoader {
 
                 Class<?> statusSplitterClass = Class.forName("com.waenhancer.pro.StatusSplitter");
                 allFeatureClasses.add(statusSplitterClass);
+
+                Class<?> customizeStatusViewClass = Class.forName("com.waenhancer.pro.CustomizeStatusView");
+                allFeatureClasses.add(customizeStatusViewClass);
             } catch (Exception e) {
                 // Fail silently to prevent string leaks in stacktraces/logs
             }

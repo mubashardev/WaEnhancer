@@ -662,22 +662,50 @@ public class Unobfuscator {
         });
     }
     // TODO: Classes and methods to TimeToSeconds
-
+ 
     public synchronized static Method loadTimeToSecondsMethod(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
             Method setTimeInMillis = Calendar.class.getDeclaredMethod("setTimeInMillis", long.class);
-            Method getInstance = Calendar.class.getDeclaredMethod("getInstance", Locale.class);
-
-            var result = dexkit.findMethod(FindMethod.create().matcher(MethodMatcher.create()
+ 
+            // Try relaxed query first (just setTimeInMillis, static, returns String, has a long param)
+            var resultList = dexkit.findMethod(FindMethod.create().matcher(MethodMatcher.create()
                     .addInvoke(DexSignUtil.getMethodDescriptor(setTimeInMillis))
-                    .addInvoke(DexSignUtil.getMethodDescriptor(getInstance))
                     .modifiers(Modifier.STATIC)
-                    .returnType(String.class).paramCount(2)
+                    .returnType(String.class)
                     .paramTypes(null, long.class)
-
-            )).singleOrNull();
-            if (result == null) throw new Exception("TimeToSeconds method not found");
-            return result.getMethodInstance(classLoader);
+            ));
+ 
+            if (resultList.isEmpty()) {
+                // If completely empty, try finding any static method returning String invoking setTimeInMillis
+                resultList = dexkit.findMethod(FindMethod.create().matcher(MethodMatcher.create()
+                        .addInvoke(DexSignUtil.getMethodDescriptor(setTimeInMillis))
+                        .modifiers(Modifier.STATIC)
+                        .returnType(String.class)
+                ));
+            }
+ 
+            XposedBridge.log("[WAEX] loadTimeToSecondsMethod: found " + resultList.size() + " candidates");
+            for (int i = 0; i < resultList.size(); i++) {
+                XposedBridge.log("[WAEX]   Candidate [" + i + "]: " + resultList.get(i).getDescriptor());
+            }
+ 
+            if (resultList.isEmpty()) {
+                throw new Exception("TimeToSeconds method not found");
+            }
+ 
+            // Heuristic: If we have candidates, let's filter for ones that take (Context, long) or similar
+            // i.e. 2 parameters where the second is long.
+            for (var res : resultList) {
+                var method = res.getMethodInstance(classLoader);
+                if (method.getParameterCount() == 2 && method.getParameterTypes()[1] == long.class) {
+                    XposedBridge.log("[WAEX] Selecting candidate by parameter check: " + res.getDescriptor());
+                    return method;
+                }
+            }
+ 
+            // Otherwise return the first static candidate
+            XposedBridge.log("[WAEX] Selecting first fallback candidate: " + resultList.get(0).getDescriptor());
+            return resultList.get(0).getMethodInstance(classLoader);
         });
     }
 
@@ -3744,4 +3772,89 @@ public class Unobfuscator {
                         org.luckypray.dexkit.query.enums.StringMatchType.EndsWith,
                         "WDSActionTileGroup"));
     }
+
+    public static Method loadPausePlaybackMethod(ClassLoader loader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
+            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+                    "playbackPage/pausePlayback page=");
+            if (method == null)
+                throw new RuntimeException("pausePlayback method not found");
+            return method;
+        });
+    }
+
+    public static Method loadResumePlaybackMethod(ClassLoader loader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
+            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+                    "playbackPage/resumePlayback page=");
+            if (method == null)
+                throw new RuntimeException("resumePlayback method not found");
+            return method;
+        });
+    }
+
+    public static Class<?> loadVideoPlayerClass(ClassLoader loader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClass(loader, () -> {
+            var classes = dexkit.findClass(
+                    org.luckypray.dexkit.query.FindClass.create().matcher(
+                            org.luckypray.dexkit.query.matchers.ClassMatcher.create()
+                                    .addMethod(org.luckypray.dexkit.query.matchers.MethodMatcher.create().name("seekTo").paramTypes(java.util.List.of("int")))
+                                    .addMethod(org.luckypray.dexkit.query.matchers.MethodMatcher.create().name("getDuration").returnType("int"))));
+            if (classes.isEmpty())
+                throw new RuntimeException("Not Found VideoPlayerClass");
+            return classes.get(0).getInstance(loader);
+        });
+    }
+
+    public static Method loadStatusReplyMethod(ClassLoader loader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
+            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+                    "playbackPage/reply page=");
+            if (method == null)
+                throw new RuntimeException("status reply method not found");
+            return method;
+        });
+    }
+
+    public static Method loadPageOnViewCreatedMethod(ClassLoader loader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
+            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+                    "StatusPlaybackPage/onViewCreated");
+            if (method == null)
+                throw new RuntimeException("pageOnViewCreated method not found");
+            return method;
+        });
+    }
+
+    public static Method loadGetPageControllerMethod(ClassLoader loader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
+            Class<?> fragmentClass = XposedHelpers.findClass("com.whatsapp.status.playback.fragment.StatusPlaybackContactFragment", loader);
+            Class<?> pageControllerBaseClass = loadPausePlaybackMethod(loader).getDeclaringClass();
+            for (Method method : fragmentClass.getDeclaredMethods()) {
+                if (java.lang.reflect.Modifier.isStatic(method.getModifiers()) 
+                        && method.getParameterCount() == 1 
+                        && method.getParameterTypes()[0] == fragmentClass
+                        && method.getReturnType().isAssignableFrom(pageControllerBaseClass)
+                        && method.getReturnType() != Object.class) {
+                    return method;
+                }
+            }
+            throw new RuntimeException("getPageController method not found in StatusPlaybackContactFragment");
+        });
+    }
+
+    public synchronized static List<String> findCallers(Method targetMethod) {
+        try {
+            var callers = dexkit.findMethod(
+                org.luckypray.dexkit.query.FindMethod.create().matcher(
+                    org.luckypray.dexkit.query.matchers.MethodMatcher.create()
+                        .addInvoke(org.luckypray.dexkit.util.DexSignUtil.getMethodDescriptor(targetMethod))
+                )
+            );
+            return callers.stream().map(c -> c.getDescriptor()).collect(Collectors.toList());
+        } catch (Throwable t) {
+            return java.util.Collections.singletonList("Error: " + t.getMessage());
+        }
+    }
 }
+

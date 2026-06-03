@@ -581,6 +581,62 @@ public class FeatureCatalog {
                                 null,
                                 Arrays.asList("toast", "viewed", "status", "notification")));
 
+                catalog.add(new SearchableFeature("customize_status_view_category",
+                                context.getString(R.string.customize_status_view_title),
+                                context.getString(R.string.customize_status_view_desc),
+                                SearchableFeature.Category.GENERAL,
+                                SearchableFeature.FragmentType.GENERAL,
+                                null,
+                                Arrays.asList("status", "customization", "customize", "view", "reply", "gesture")));
+
+                catalog.add(new SearchableFeature("remove_status_bottom_tile",
+                                context.getString(R.string.remove_status_bottom_tile),
+                                context.getString(R.string.remove_status_bottom_tile_sum),
+                                SearchableFeature.Category.GENERAL,
+                                SearchableFeature.FragmentType.GENERAL,
+                                null,
+                                Arrays.asList("status", "bottom", "tile", "swipe", "reply", "hide")));
+
+                catalog.add(new SearchableFeature("remove_status_quick_reactions",
+                                context.getString(R.string.remove_status_quick_reactions),
+                                context.getString(R.string.remove_status_quick_reactions_sum),
+                                SearchableFeature.Category.GENERAL,
+                                SearchableFeature.FragmentType.GENERAL,
+                                null,
+                                Arrays.asList("status", "reactions", "quick", "reply", "hide", "emoji")));
+
+                catalog.add(new SearchableFeature("remove_status_heart_button",
+                                context.getString(R.string.remove_status_heart_button),
+                                context.getString(R.string.remove_status_heart_button_sum),
+                                SearchableFeature.Category.GENERAL,
+                                SearchableFeature.FragmentType.GENERAL,
+                                null,
+                                Arrays.asList("status", "heart", "like", "button", "hide")));
+
+                catalog.add(new SearchableFeature("add_status_reply_menu_item",
+                                context.getString(R.string.add_status_reply_menu_item),
+                                context.getString(R.string.add_status_reply_menu_item_sum),
+                                SearchableFeature.Category.GENERAL,
+                                SearchableFeature.FragmentType.GENERAL,
+                                null,
+                                Arrays.asList("status", "reply", "menu", "option", "button", "open")));
+
+                catalog.add(new SearchableFeature("status_bottom_play_pause_button",
+                                context.getString(R.string.status_bottom_play_pause_button),
+                                context.getString(R.string.status_bottom_play_pause_button_sum),
+                                SearchableFeature.Category.GENERAL,
+                                SearchableFeature.FragmentType.GENERAL,
+                                null,
+                                Arrays.asList("status", "play", "pause", "button", "bottom", "playback")));
+
+                catalog.add(new SearchableFeature("status_video_fast_gesture",
+                                context.getString(R.string.status_video_fast_gesture),
+                                context.getString(R.string.status_video_fast_gesture_sum),
+                                SearchableFeature.Category.GENERAL,
+                                SearchableFeature.FragmentType.GENERAL,
+                                null,
+                                Arrays.asList("status", "fast", "forward", "backward", "speed", "playback", "rewind", "gesture", "long", "press")));
+
                 catalog.add(new SearchableFeature("disable_ads",
                                 context.getString(R.string.disable_ads),
                                 context.getString(R.string.disable_ads_sum),

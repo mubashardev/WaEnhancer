@@ -302,7 +302,7 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                         field.setAccessible(true);
                         if (field.getType() == int.class) {
                             int originalId = field.getInt(null);
-                            if (originalId > 0x7f000000) {
+                            if (originalId >= 0x70000000 && originalId <= 0x7FFFFFFF) {
                                 int hostId = XResManager.getHostId(originalId);
                                 
                                 // Update the R class field directly to the mapped ID

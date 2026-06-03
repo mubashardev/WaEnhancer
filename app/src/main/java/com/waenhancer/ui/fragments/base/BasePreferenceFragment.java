@@ -427,6 +427,10 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         setPreferenceState("showonlinetext", !freezelastseen);
         setPreferenceState("dotonline", !freezelastseen);
 
+        boolean removeBottomTile = mPrefs.getBoolean("remove_status_bottom_tile", false);
+        setPreferenceState("remove_status_quick_reactions", !removeBottomTile);
+        setPreferenceState("remove_status_heart_button", !removeBottomTile);
+
         if (mPrefs.getBoolean("filtergroups", false)) {
             runWithoutRestartBroadcast(() -> mPrefs.edit().putBoolean("filtergroups", false).apply());
         }

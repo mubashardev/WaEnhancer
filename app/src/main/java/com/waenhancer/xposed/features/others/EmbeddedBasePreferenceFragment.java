@@ -141,6 +141,7 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
         }
         runWithoutRestartBroadcast(() -> applyDynamicStates(null));
         refreshSpecialSummaries();
+        com.waenhancer.xposed.utils.ProHelper.updatePreferences(requireContext(), getPreferenceScreen());
     }
 
     @Override
@@ -412,6 +413,10 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
         setPreferenceState("show_freezeLastSeen", !freezelastseen);
         setPreferenceState("showonlinetext", !freezelastseen);
         setPreferenceState("dotonline", !freezelastseen);
+
+        boolean removeBottomTile = mPrefs.getBoolean("remove_status_bottom_tile", false);
+        setPreferenceState("remove_status_quick_reactions", !removeBottomTile);
+        setPreferenceState("remove_status_heart_button", !removeBottomTile);
 
         if (mPrefs.getBoolean("filtergroups", false)) {
             runWithoutRestartBroadcast(() -> mPrefs.edit().putBoolean("filtergroups", false).apply());

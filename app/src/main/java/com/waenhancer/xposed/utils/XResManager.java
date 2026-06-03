@@ -24,7 +24,8 @@ public class XResManager {
      * Performs on-demand mapping if the ID hasn't been mapped yet.
      */
     public static int getHostId(int moduleId) {
-        if (moduleId == 0 || (moduleId & 0xFF000000) != 0x7F000000) {
+        int packageId = moduleId & 0xFF000000;
+        if (moduleId == 0 || (packageId != 0x7F000000 && packageId != 0x7E000000)) {
             return moduleId;
         }
 

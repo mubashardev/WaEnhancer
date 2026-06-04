@@ -71,6 +71,21 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
                 ;
             }
             XposedHelpers.findAndHookMethod("com.waenhancer.utils.ModuleStatus", lpparam.classLoader, "isModuleActive", XC_MethodReplacement.returnConstant(true));
+            
+            // Bypass the Android 7.0+ SecurityException when using MODE_WORLD_READABLE in the module settings app process
+            try {
+                XposedHelpers.findAndHookMethod(
+                        "android.app.ContextImpl", lpparam.classLoader,
+                        "checkMode", int.class, new XC_MethodHook() {
+                            @Override
+                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                param.setResult(null);
+                            }
+                        });
+            } catch (Throwable t) {
+                XposedBridge.log("[WAEX] Failed to hook ContextImpl.checkMode: " + t.getMessage());
+            }
+
             // Make default SharedPreferences world-readable so XSharedPreferences
             // can read them from WhatsApp's process without ContentProvider IPC.
             // This is the critical hook that the competitor uses and we were missing.

@@ -1,20 +1,11 @@
 [Added]
-- Added support for WA/WB 2.26.22.xx
-- Added Custom Status UI
-    * [Pro] Hide Status Reply Bar
-    * [Pro] Hide Status Quick Reactions
-    * [Pro] Hide Status Heart Button
-    * [Pro] Add Status Reply Menu Item
-    * [Pro] Status Video Fast Forward / Rewind Gesture
-    * [Pro] Status Video Fast Forward Speed
-    * [Pro] Status Play/Pause Button
+- Custom Status UI
+    * [Pro] Disable Swipe Up to Reply
+
 
 [Improvements]
 - Improved some ui elements
 
 [Fixes]
-- Fixed CustomTime Plugin Error
-
-
-[Fixes]
-- Fixed Error getting method loadfabMethod: Fab method not found
+- Fixed CustomView Plugin Error
+- Fixed MODE_WORLD_READABLE exception

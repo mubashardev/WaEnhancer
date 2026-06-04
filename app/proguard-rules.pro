@@ -97,8 +97,9 @@
     public <init>(android.content.Context, android.util.AttributeSet, int);
 }
 
-# Keep only Cz CSSKit reflection target since RuleFactoryImpl is loaded dynamically
--keep class cz.vutbr.web.csskit.RuleFactoryImpl { *; }
+# Keep jStyleParser classes and members to prevent reflection errors in obfuscated builds
+-keep class cz.vutbr.web.** { *; }
+-keep class org.w3c.css.sac.** { *; }
 -dontwarn cz.vutbr.web.**
 -dontwarn org.w3c.css.sac.**
 # Keep PreferenceManager and all its methods intact for Xposed preference mode hook and dynamic preference access

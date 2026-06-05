@@ -17,7 +17,20 @@ import java.util.List;
 
 public class ContactPickerAdapter extends RecyclerView.Adapter<ContactPickerAdapter.ContactViewHolder> {
 
+    public interface OnContactSelectionListener {
+        boolean onContactSelected(SelectableContact contact, boolean toSelectedState);
+    }
+
     private final List<SelectableContact> contacts = new ArrayList<>();
+    private final OnContactSelectionListener listener;
+
+    public ContactPickerAdapter() {
+        this.listener = null;
+    }
+
+    public ContactPickerAdapter(OnContactSelectionListener listener) {
+        this.listener = listener;
+    }
 
     public void submitList(@NonNull List<SelectableContact> newContacts) {
         contacts.clear();
@@ -35,7 +48,7 @@ public class ContactPickerAdapter extends RecyclerView.Adapter<ContactPickerAdap
 
     @Override
     public void onBindViewHolder(@NonNull ContactViewHolder holder, int position) {
-        holder.bind(contacts.get(position));
+        holder.bind(contacts.get(position), listener);
     }
 
     @Override
@@ -55,13 +68,19 @@ public class ContactPickerAdapter extends RecyclerView.Adapter<ContactPickerAdap
             checkBox = itemView.findViewById(R.id.contact_checkbox);
         }
 
-        void bind(@NonNull SelectableContact contact) {
+        void bind(@NonNull SelectableContact contact, OnContactSelectionListener listener) {
             nameView.setText(contact.getName());
             phoneView.setText(contact.getPhoneNumber());
             checkBox.setOnCheckedChangeListener(null);
             checkBox.setChecked(contact.isSelected());
             View.OnClickListener toggleSelection = v -> {
                 boolean newState = !contact.isSelected();
+                if (listener != null) {
+                    if (!listener.onContactSelected(contact, newState)) {
+                        checkBox.setChecked(contact.isSelected());
+                        return;
+                    }
+                }
                 contact.setSelected(newState);
                 checkBox.setChecked(newState);
             };

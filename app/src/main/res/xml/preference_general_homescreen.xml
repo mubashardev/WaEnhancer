@@ -101,8 +101,7 @@
             app:key="disable_profile_status"
             app:summary="@string/disable_status_in_the_profile_photo_sum"
             app:title="@string/disable_status_in_the_profile_photo" />
-
-
     </PreferenceCategory>
+
 
 </PreferenceScreen>

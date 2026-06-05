@@ -163,6 +163,20 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (data != null && data.hasExtra("key")) {
+            String key = data.getStringExtra("key");
+            androidx.preference.Preference preference = findPreference(key);
+            if (preference instanceof com.waenhancer.preference.ContactPickerPreference) {
+                ((com.waenhancer.preference.ContactPickerPreference) preference).handleActivityResult(requestCode, resultCode, data);
+            } else if (preference instanceof com.waenhancer.preference.FileSelectPreference) {
+                ((com.waenhancer.preference.FileSelectPreference) preference).handleActivityResult(requestCode, resultCode, data);
+            }
+        }
+    }
+
+    @Override
     public void onDisplayPreferenceDialog(androidx.preference.Preference preference) {
         if (preference instanceof androidx.preference.ListPreference) {
             androidx.preference.ListPreference listPref = (androidx.preference.ListPreference) preference;

@@ -349,4 +349,31 @@
         <item>3.0</item>
     </string-array>
 
+    <string-array name="always_typing_type_entries">
+        <item>@string/status_always_typing</item>
+        <item>@string/status_always_recording</item>
+    </string-array>
+    <string-array name="always_typing_type_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <string-array name="always_typing_mode_entries">
+        <item>@string/always_typing_app</item>
+        <item>@string/always_typing_chat</item>
+    </string-array>
+    <string-array name="always_typing_mode_values">
+        <item>2</item>
+        <item>1</item>
+    </string-array>
+
+    <string-array name="always_typing_target_entries">
+        <item>@string/always_typing_target_all</item>
+        <item>@string/always_typing_target_specific</item>
+    </string-array>
+    <string-array name="always_typing_target_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
 </resources>

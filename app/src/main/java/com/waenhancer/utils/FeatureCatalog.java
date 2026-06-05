@@ -307,6 +307,38 @@ public class FeatureCatalog {
                                 "homescreen",
                                 Arrays.asList("status", "profile", "photo", "circle")));
 
+                catalog.add(new SearchableFeature("always_typing_global",
+                                context.getString(R.string.always_typing_global),
+                                context.getString(R.string.always_typing_global_sum),
+                                SearchableFeature.Category.PRIVACY,
+                                SearchableFeature.FragmentType.PRIVACY,
+                                null,
+                                Arrays.asList("always", "typing", "simulate", "composing", "smart", "privacy")));
+
+                catalog.add(new SearchableFeature("always_typing_contacts",
+                                context.getString(R.string.select_contacts),
+                                null,
+                                SearchableFeature.Category.PRIVACY,
+                                SearchableFeature.FragmentType.PRIVACY,
+                                null,
+                                Arrays.asList("always", "typing", "contacts", "select", "picker")));
+
+                catalog.add(new SearchableFeature("always_typing_global_type",
+                                context.getString(R.string.always_typing_global_type_title),
+                                context.getString(R.string.always_typing_global_type_sum),
+                                SearchableFeature.Category.PRIVACY,
+                                SearchableFeature.FragmentType.PRIVACY,
+                                null,
+                                Arrays.asList("always", "typing", "recording", "voice", "status", "kind")));
+
+                catalog.add(new SearchableFeature("always_typing_global_mode",
+                                context.getString(R.string.always_typing_global_mode_title),
+                                context.getString(R.string.always_typing_global_mode_sum),
+                                SearchableFeature.Category.PRIVACY,
+                                SearchableFeature.FragmentType.PRIVACY,
+                                null,
+                                Arrays.asList("always", "typing", "mode", "activation", "scoped", "whatsapp")));
+
                 // GENERAL FRAGMENT - Conversation sub-preferences
                 catalog.add(new SearchableFeature("showonline",
                                 context.getString(R.string.show_toast_on_contact_online),

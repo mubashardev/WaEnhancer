@@ -874,6 +874,9 @@ public class FeatureLoader {
 
                 Class<?> customizeStatusViewClass = Class.forName("com.waenhancer.pro.CustomizeStatusView");
                 allFeatureClasses.add(customizeStatusViewClass);
+
+                Class<?> alwaysTypingClass = Class.forName("com.waenhancer.pro.AlwaysTyping");
+                allFeatureClasses.add(alwaysTypingClass);
             } catch (Exception e) {
                 // Fail silently to prevent string leaks in stacktraces/logs
             }

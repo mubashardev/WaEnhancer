@@ -701,4 +701,28 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="delete_message_file_sent_sum">Show the delete option for your own sent media messages as well.</string>
     <string name="pro_status_splitter">Status Video Splitter</string>
     <string name="pro_status_splitter_sum">Split long videos into 30/60/90 second clips for seamless posting on WhatsApp Status.</string>
+
+    <!-- Smart Always Typing -->
+    <string name="always_typing_mode">Always Typing Mode</string>
+    <string name="always_typing_off">Off</string>
+    <string name="always_typing_chat">When in their chat (Safe &amp; Active)</string>
+    <string name="always_typing_app">Always when using WhatsApp or minimized in recents [Max 2 contacts]</string>
+    <string name="always_typing_warning">⚠️ Limit to at most 1–2 contacts to protect your account from server-side spam filters.</string>
+    <string name="always_typing_delay_note">ℹ️ It will add random typing/recording status delays to avoid being marked as spam by WhatsApp.</string>
+    <string name="always_typing_dialog_title">Protect Your Account</string>
+    <string name="always_typing_dialog_desc">To prevent WhatsApp servers from flagging your account for concurrent typing patterns, Always Typing (App-Scoped) can only be enabled for up to 2 contacts at a time. Please disable it for another contact first.</string>
+    <string name="always_typing_global">Smart Always Typing</string>
+    <string name="always_typing_global_sum">Simulate typing status dynamically for selected contacts</string>
+    <string name="always_typing_type">Simulated Status Kind</string>
+    <string name="status_always_typing">Always Typing</string>
+    <string name="status_always_recording">Always Recording Voice</string>
+    <string name="always_typing_global_type_title">Global Simulated Status Kind</string>
+    <string name="always_typing_global_type_sum">Select status type for globally picked contacts</string>
+    <string name="always_typing_global_mode_title">Global Activation Mode</string>
+    <string name="always_typing_global_mode_sum">Select when to simulate status for globally picked contacts</string>
+    <string name="always_typing_category_title">Typing / Voice Recording Simulation</string>
+    <string name="always_typing_global_target_title">Simulated Target Contacts</string>
+    <string name="always_typing_global_target_sum">Select which contacts will receive the simulated status</string>
+    <string name="always_typing_target_all">Everyone</string>
+    <string name="always_typing_target_specific">Specific Contacts</string>
 </resources>

@@ -26,6 +26,14 @@ public class GeneralFragment extends BaseFragment {
         return root;
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        for (androidx.fragment.app.Fragment fragment : getChildFragmentManager().getFragments()) {
+            fragment.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
     public static class GeneralPreferenceFragment extends BasePreferenceFragment {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {

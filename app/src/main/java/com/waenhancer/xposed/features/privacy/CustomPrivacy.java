@@ -15,6 +15,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Spinner;
+import android.widget.AdapterView;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -248,6 +250,31 @@ public class CustomPrivacy extends Feature {
         }
     }
 
+    private int getAppScopedAlwaysTypingCount(SharedPreferences pprefs, String currentNumber) {
+        int count = 0;
+        try {
+            var maps = pprefs.getAll();
+            for (var key : maps.keySet()) {
+                if (key.endsWith("_privacy")) {
+                    var number = key.replace("_privacy", "");
+                    if (number.equals(currentNumber)) {
+                        continue;
+                    }
+                    String jsonStr = pprefs.getString(key, null);
+                    if (jsonStr != null) {
+                        JSONObject json = new JSONObject(jsonStr);
+                        if (json.optInt("AlwaysTyping", 0) == 2) {
+                            count++;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            XposedBridge.log(e);
+        }
+        return count;
+    }
+
     private AlertDialogWpp createPrivacyDialog(Activity activity, String number) {
         AlertDialogWpp builder = new AlertDialogWpp(activity);
         builder.setFullHeight(true);
@@ -268,8 +295,121 @@ public class CustomPrivacy extends Feature {
 
         boolean[] checkedItems = loadPreferences(number, itemsKeys);
 
+        // Load AlwaysTyping selection
+        JSONObject json = CustomPrivacy.getJSON(number);
+        int alwaysTypingVal = json.optInt("AlwaysTyping", 0);
+        int alwaysTypingTypeVal = json.optInt("AlwaysTypingType", 0);
+        final int[] previousSelection = { alwaysTypingVal };
+
+        // Create Custom View for dropdown list
+        LinearLayout customLayout = new LinearLayout(activity);
+        customLayout.setOrientation(LinearLayout.VERTICAL);
+        customLayout.setPadding(Utils.dipToPixels(20), Utils.dipToPixels(10), Utils.dipToPixels(20), Utils.dipToPixels(10));
+
+        TextView labelView = new TextView(activity);
+        labelView.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.always_typing_mode, "Always Typing Mode"));
+        labelView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        labelView.setTextColor(DesignUtils.getPrimaryTextColor());
+        labelView.setPadding(0, 0, 0, Utils.dipToPixels(8));
+        customLayout.addView(labelView);
+
+        Spinner spinner = new Spinner(activity);
+        String[] options = {
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.always_typing_off, "Off"),
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.always_typing_chat, "When in their chat (Safe & Active)"),
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.always_typing_app, "Always when using WhatsApp [Max 2 contacts]")
+        };
+        android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<>(
+                activity,
+                android.R.layout.simple_spinner_item,
+                options
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setSelection(alwaysTypingVal);
+        customLayout.addView(spinner);
+
+        TextView typeLabelView = new TextView(activity);
+        typeLabelView.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.always_typing_type, "Simulated Status Kind"));
+        typeLabelView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        typeLabelView.setTextColor(DesignUtils.getPrimaryTextColor());
+        typeLabelView.setPadding(0, Utils.dipToPixels(12), 0, Utils.dipToPixels(8));
+        typeLabelView.setVisibility(alwaysTypingVal == 0 ? View.GONE : View.VISIBLE);
+        customLayout.addView(typeLabelView);
+
+        Spinner typeSpinner = new Spinner(activity);
+        String[] typeOptions = {
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.status_always_typing, "Always Typing"),
+                com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.status_always_recording, "Always Recording Voice")
+        };
+        android.widget.ArrayAdapter<String> typeAdapter = new android.widget.ArrayAdapter<>(
+                activity,
+                android.R.layout.simple_spinner_item,
+                typeOptions
+        );
+        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        typeSpinner.setAdapter(typeAdapter);
+        typeSpinner.setSelection(alwaysTypingTypeVal);
+        typeSpinner.setVisibility(alwaysTypingVal == 0 ? View.GONE : View.VISIBLE);
+        customLayout.addView(typeSpinner);
+
+        TextView warningView = new TextView(activity);
+        warningView.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.always_typing_warning, "⚠️ Limit to at most 1–2 contacts to protect your account from server-side spam filters."));
+        warningView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        warningView.setTextColor(0xFFD32F2F); // Red warning color
+        warningView.setPadding(0, Utils.dipToPixels(4), 0, 0);
+        warningView.setVisibility(alwaysTypingVal == 2 ? View.VISIBLE : View.GONE);
+        customLayout.addView(warningView);
+
+        TextView delayNoteView = new TextView(activity);
+        delayNoteView.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.always_typing_delay_note, "ℹ️ It will add random delays on the homepage to avoid being marked as spam by WhatsApp."));
+        delayNoteView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        delayNoteView.setTextColor(0xFF757575); // Gray note color
+        delayNoteView.setPadding(0, Utils.dipToPixels(4), 0, 0);
+        delayNoteView.setVisibility(alwaysTypingVal == 2 ? View.VISIBLE : View.GONE);
+        customLayout.addView(delayNoteView);
+
+        spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+                    typeLabelView.setVisibility(View.GONE);
+                    typeSpinner.setVisibility(View.GONE);
+                    warningView.setVisibility(View.GONE);
+                    delayNoteView.setVisibility(View.GONE);
+                } else {
+                    typeLabelView.setVisibility(View.VISIBLE);
+                    typeSpinner.setVisibility(View.VISIBLE);
+                    if (position == 2) {
+                        SharedPreferences pprefs = WppCore.getPrivPrefs();
+                        int currentCount = getAppScopedAlwaysTypingCount(pprefs, number);
+                        if (currentCount >= 2) {
+                            AlertDialogWpp limitBuilder = new AlertDialogWpp(activity);
+                            limitBuilder.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.always_typing_dialog_title, "Protect Your Account"));
+                            limitBuilder.setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.always_typing_dialog_desc, "To prevent WhatsApp servers from flagging your account for concurrent typing patterns, Always Typing (App-Scoped) can only be enabled for up to 2 contacts at a time. Please disable it for another contact first."));
+                            limitBuilder.setPositiveButton("OK", null);
+                            limitBuilder.show();
+
+                            spinner.setSelection(previousSelection[0]);
+                            return;
+                        }
+                        warningView.setVisibility(View.VISIBLE);
+                        delayNoteView.setVisibility(View.VISIBLE);
+                    } else {
+                        warningView.setVisibility(View.GONE);
+                        delayNoteView.setVisibility(View.GONE);
+                    }
+                }
+                previousSelection[0] = position;
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        builder.setView(customLayout);
         builder.setMultiChoiceItems(items, checkedItems, (dialog, which, isChecked) -> checkedItems[which] = isChecked);
-        builder.setPositiveButton("OK", (dialog, which) -> savePreferences(number, itemsKeys, checkedItems));
+        builder.setPositiveButton("OK", (dialog, which) -> savePreferences(number, itemsKeys, checkedItems, spinner.getSelectedItemPosition(), typeSpinner.getSelectedItemPosition()));
         builder.setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.cancel, "Cancel"), null);
 
         return builder;
@@ -307,7 +447,7 @@ public class CustomPrivacy extends Feature {
         }
     }
 
-    private void savePreferences(String number, String[] itemsKeys, boolean[] checkedItems) {
+    private void savePreferences(String number, String[] itemsKeys, boolean[] checkedItems, int alwaysTypingVal, int alwaysTypingTypeVal) {
         try {
             JSONObject jsonObject = new JSONObject();
             for (int i = 0; i < itemsKeys.length; i++) {
@@ -320,6 +460,8 @@ public class CustomPrivacy extends Feature {
                         jsonObject.put(itemsKeys[i], checkedItems[i]);
                 }
             }
+            jsonObject.put("AlwaysTyping", alwaysTypingVal);
+            jsonObject.put("AlwaysTypingType", alwaysTypingTypeVal);
             WppCore.setPrivJSON(number + "_privacy", jsonObject);
         } catch (Exception e) {
             Utils.showToast(e.getMessage(), Toast.LENGTH_SHORT);

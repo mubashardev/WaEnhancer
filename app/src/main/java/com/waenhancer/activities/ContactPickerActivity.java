@@ -71,7 +71,25 @@ public class ContactPickerActivity extends BaseActivity {
         saveButton = findViewById(R.id.saveButton);
         RecyclerView contactListView = findViewById(R.id.contactListView);
         contactListView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ContactPickerAdapter();
+
+        int limit = getIntent().getIntExtra("limit", -1);
+        if (limit > 0) {
+            selectAllButton.setVisibility(android.view.View.GONE);
+        }
+
+        adapter = new ContactPickerAdapter((contact, toSelectedState) -> {
+            if (toSelectedState) {
+                int currentSelectedCount = 0;
+                for (SelectableContact c : allContacts) {
+                    if (c.isSelected()) currentSelectedCount++;
+                }
+                if (currentSelectedCount >= limit) {
+                    Toast.makeText(ContactPickerActivity.this, "Maximum " + limit + " contacts allowed", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+            }
+            return true;
+        });
         contactListView.setAdapter(adapter);
 
         searchBar.addTextChangedListener(new SimpleTextWatcher(this::filterContacts));

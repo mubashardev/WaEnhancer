@@ -170,5 +170,71 @@
 
     </PreferenceCategory>
 
+    <com.waenhancer.preference.ProPreferenceCategory
+        app:iconSpaceReserved="false"
+        app:key="always_typing_category"
+        app:title="@string/always_typing_category_title">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="always_typing_global"
+            app:summary="@string/always_typing_global_sum"
+            app:title="@string/always_typing_global" />
+
+        <ListPreference
+            app:defaultValue="1"
+            app:dependency="always_typing_global"
+            app:entries="@array/always_typing_target_entries"
+            app:entryValues="@array/always_typing_target_values"
+            app:key="always_typing_global_target"
+            app:summary="%s"
+            app:title="@string/always_typing_global_target_title" />
+
+        <ListPreference
+            app:defaultValue="1"
+            app:dependency="always_typing_global"
+            app:entries="@array/always_typing_mode_entries"
+            app:entryValues="@array/always_typing_mode_values"
+            app:key="always_typing_global_mode"
+            app:summary="%s"
+            app:title="@string/always_typing_global_mode_title" />
+
+        <com.waenhancer.preference.ContactPickerPreference
+            app:dependency="always_typing_global"
+            app:key="always_typing_contacts"
+            app:summaryOff="@string/recording_included_contacts_summary_off"
+            app:summaryOn="@string/recording_included_contacts_summary_on"
+            app:title="@string/select_contacts" />
+
+        <ListPreference
+            app:defaultValue="0"
+            app:dependency="always_typing_global"
+            app:entries="@array/always_typing_type_entries"
+            app:entryValues="@array/always_typing_type_values"
+            app:key="always_typing_global_type"
+            app:summary="%s"
+            app:title="@string/always_typing_global_type_title" />
+
+        <Preference
+            app:key="always_typing_delay_note"
+            app:dependency="always_typing_global"
+            app:selectable="false"
+            android:title="ℹ️ Safe Simulation Note"
+            android:summary="Always when using WhatsApp mode adds random delays on the homepage to avoid being marked as spam by WhatsApp." />
+
+        <Preference
+            app:key="always_typing_conflict_warning"
+            app:dependency="always_typing_global"
+            app:selectable="false"
+            android:title="⚠️ Custom Privacy Conflict"
+            android:summary="One or more contacts has custom privacy conflict with the smart typing. This may not work properly for them." />
+
+        <Preference
+            app:key="always_typing_check_contacts"
+            app:dependency="always_typing_global"
+            android:title="Check Contacts"
+            android:summary="View and clear per-contact custom privacy" />
+
+    </com.waenhancer.preference.ProPreferenceCategory>
 
 </PreferenceScreen>

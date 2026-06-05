@@ -284,7 +284,12 @@ public class ProHelper {
                     || key.equals("add_status_reply_menu_item")
                     || key.equals("status_video_fast_gesture")
                     || key.equals("status_video_fast_speed")
-                    || key.equals("disable_status_swipe_up");
+                    || key.equals("disable_status_swipe_up")
+                    || key.equals("always_typing_global")
+                    || key.equals("always_typing_global_target")
+                    || key.equals("always_typing_global_mode")
+                    || key.equals("always_typing_contacts")
+                    || key.equals("always_typing_global_type");
         }
         return false;
     }
@@ -309,6 +314,13 @@ public class ProHelper {
                 || key.equals("status_video_fast_speed")
                 || key.equals("disable_status_swipe_up")) {
             return "customize_status_control_class";
+        }
+        if (key.equals("always_typing_global")
+                || key.equals("always_typing_global_target")
+                || key.equals("always_typing_global_mode")
+                || key.equals("always_typing_contacts")
+                || key.equals("always_typing_global_type")) {
+            return "always_typing_global";
         }
         return null;
     }

@@ -22,6 +22,7 @@ public class ContactPickerPreference extends Preference implements Preference.On
     private CharSequence summaryOff;
     private CharSequence summaryOn;
     private ArrayList<String> mContacts;
+    private int maxSelection = -1;
 
     public ContactPickerPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -49,6 +50,10 @@ public class ContactPickerPreference extends Preference implements Preference.On
                 pref.setContacts(contacts);
             }
         }
+    }
+
+    public void setMaxSelection(int max) {
+        this.maxSelection = max;
     }
 
     public void setContacts(ArrayList<String> contacts) {
@@ -133,6 +138,7 @@ public class ContactPickerPreference extends Preference implements Preference.On
         intent.putExtra(ContactPickerActivity.EXTRA_KEY, getKey());
         intent.putStringArrayListExtra(ContactPickerActivity.EXTRA_SELECTED_CONTACTS,
                 mContacts != null ? new ArrayList<>(mContacts) : new ArrayList<>());
+        intent.putExtra("limit", maxSelection);
         activity.startActivityForResult(intent, REQUEST_CONTACT_PICKER);
         return true;
     }
@@ -145,6 +151,7 @@ public class ContactPickerPreference extends Preference implements Preference.On
         );
         summaryOff = typedArray.getText(R.styleable.ContactPickerPreference_summaryOff);
         summaryOn = typedArray.getText(R.styleable.ContactPickerPreference_summaryOn);
+        maxSelection = typedArray.getInt(R.styleable.ContactPickerPreference_maxSelection, -1);
         var prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String namesString = prefs.getString(getKey(), "");
         if (namesString.length() > 2) {

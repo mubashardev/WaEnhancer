@@ -1,11 +1,14 @@
 [Added]
+- Added Always Typing / Recording Voice Feature
 - Customize Status View
-    * [Pro] Disable Swipe Up to Reply
+    * [Pro] Added Disable Swipe Up to Reply
 
 
 [Improvements]
 - Improved some ui elements
+- Optimized conversation messages scroll to avoid lags
 
 [Fixes]
 - Fixed CustomView Plugin Error
 - Fixed MODE_WORLD_READABLE exception
+- Fixed My Status Views

@@ -103,11 +103,12 @@ public class MessageHistory extends SQLiteOpenHelper {
             content.put("jid", jid);
             content.put("message_id", message_id);
             content.put("type", type.ordinal());
+            content.put("viewed", viewed ? 1 : 0);
             dbWrite.insert("hide_seen_messages", null, content);
 
-            // Invalidate caches
+            // Store in cache directly
             String cacheKey = createSeenMessageCacheKey(jid, message_id, type);
-            seenMessageCache.remove(cacheKey);
+            seenMessageCache.put(cacheKey, new MessageSeenItem(jid, message_id, viewed));
             invalidateSeenMessagesListCache(jid, type);
         }
     }
@@ -123,12 +124,9 @@ public class MessageHistory extends SQLiteOpenHelper {
             content.put("viewed", viewed ? 1 : 0);
             dbWrite.update("hide_seen_messages", content, "_id=?", new String[]{cursor.getString(cursor.getColumnIndexOrThrow("_id"))});
 
-            // Update cache or invalidate
+            // Update cache directly
             String cacheKey = createSeenMessageCacheKey(jid, message_id, type);
-            MessageSeenItem cachedItem = seenMessageCache.get(cacheKey);
-            if (cachedItem != null && cachedItem.viewed != viewed) {
-                seenMessageCache.remove(cacheKey);
-            }
+            seenMessageCache.put(cacheKey, new MessageSeenItem(jid, message_id, viewed));
             invalidateSeenMessagesListCache(jid, type);
         }
         cursor.close();
@@ -156,6 +154,11 @@ public class MessageHistory extends SQLiteOpenHelper {
         // Store in cache
         seenMessageCache.put(cacheKey, message);
         return message;
+    }
+
+    public MessageSeenItem getHideSeenMessageOnlyCache(String jid, String message_id, MessageType type) {
+        String cacheKey = createSeenMessageCacheKey(jid, message_id, type);
+        return seenMessageCache.get(cacheKey);
     }
 
     public List<MessageSeenItem> getHideSeenMessages(String jid, MessageType type, boolean viewed) {

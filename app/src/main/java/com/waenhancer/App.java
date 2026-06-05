@@ -144,6 +144,33 @@ public class App extends Application {
                 );
             } catch (Exception ignored) {}
         });
+
+        // Suppress DeadSystemException/DeadSystemRuntimeException crashes from system server restarts
+        final Thread.UncaughtExceptionHandler originalHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            Throwable t = throwable;
+            boolean isDeadSystem = false;
+            while (t != null) {
+                String className = t.getClass().getName();
+                if ("android.os.DeadSystemRuntimeException".equals(className) ||
+                    "android.os.DeadSystemException".equals(className) ||
+                    "android.os.DeadObjectException".equals(className)) {
+                    isDeadSystem = true;
+                    break;
+                }
+                t = t.getCause();
+            }
+
+            if (isDeadSystem) {
+                android.util.Log.e("App", "Quietly ignoring DeadSystemException/DeadObjectException to prevent polluting Crashlytics", throwable);
+                System.exit(0);
+                return;
+            }
+
+            if (originalHandler != null) {
+                originalHandler.uncaughtException(thread, throwable);
+            }
+        });
     }
 
     public static void setThemeMode(int mode) {

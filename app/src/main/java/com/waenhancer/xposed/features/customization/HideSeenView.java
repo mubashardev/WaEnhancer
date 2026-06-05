@@ -20,8 +20,20 @@ import com.waenhancer.xposed.utils.Utils;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import android.os.Handler;
+import android.os.Looper;
 
 public class HideSeenView extends Feature {
+
+    private static final ExecutorService cacheExecutor = Executors.newSingleThreadExecutor();
+    private static final ConcurrentHashMap<String, Boolean> loadedJids = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Boolean> loadingJids = new ConcurrentHashMap<>();
+    private static final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private static final AtomicBoolean refreshScheduled = new AtomicBoolean(false);
 
     public HideSeenView(ClassLoader loader, SharedPreferences preferences) {
         super(loader, preferences);
@@ -49,14 +61,46 @@ public class HideSeenView extends Feature {
         });
     }
 
+    private static void ensureJidCacheLoaded(String jid) {
+        if (loadedJids.containsKey(jid)) return;
+        if (loadingJids.putIfAbsent(jid, Boolean.TRUE) != null) return;
+
+        cacheExecutor.execute(() -> {
+            try {
+                MessageHistory.getInstance().getHideSeenMessages(jid, MessageHistory.MessageType.MESSAGE_TYPE, true);
+                MessageHistory.getInstance().getHideSeenMessages(jid, MessageHistory.MessageType.MESSAGE_TYPE, false);
+                MessageHistory.getInstance().getHideSeenMessages(jid, MessageHistory.MessageType.VIEW_ONCE_TYPE, true);
+                MessageHistory.getInstance().getHideSeenMessages(jid, MessageHistory.MessageType.VIEW_ONCE_TYPE, false);
+
+                loadedJids.put(jid, Boolean.TRUE);
+                requestRefresh();
+            } catch (Throwable ignored) {
+            } finally {
+                loadingJids.remove(jid);
+            }
+        });
+    }
+
+    private static void requestRefresh() {
+        if (!refreshScheduled.compareAndSet(false, true)) return;
+        mainHandler.postDelayed(() -> {
+            refreshScheduled.set(false);
+            updateAllBubbleViews();
+        }, 100);
+    }
+
     @SuppressLint("ResourceType")
     private static void updateBubbleView(FMessageWpp fmessage, View viewGroup) {
         var userJid = fmessage.getKey().remoteJid;
         var messageId = fmessage.getKey().messageID;
         if (userJid.isNull()) return;
+        var jid = userJid.getPhoneRawString();
+
+        ensureJidCacheLoaded(jid);
+
         ImageView view = viewGroup.findViewById(Utils.getID("view_once_control_icon", "id"));
         if (view != null) {
-            var messageOnce = MessageHistory.getInstance().getHideSeenMessage(userJid.getPhoneRawString(), messageId, MessageHistory.MessageType.VIEW_ONCE_TYPE);
+            var messageOnce = MessageHistory.getInstance().getHideSeenMessageOnlyCache(jid, messageId, MessageHistory.MessageType.VIEW_ONCE_TYPE);
             if (messageOnce != null) {
                 view.setColorFilter(messageOnce.viewed ? Color.GREEN : Color.RED);
             } else {
@@ -72,7 +116,7 @@ public class HideSeenView extends Feature {
                 status.setTextSize(8);
                 dateWrapper.addView(status);
             }
-            var message = MessageHistory.getInstance().getHideSeenMessage(userJid.getPhoneRawString(), messageId, MessageHistory.MessageType.MESSAGE_TYPE);
+            var message = MessageHistory.getInstance().getHideSeenMessageOnlyCache(jid, messageId, MessageHistory.MessageType.MESSAGE_TYPE);
             if (message != null) {
                 status.setVisibility(View.VISIBLE);
                 status.setText(message.viewed ? "\uD83D\uDFE2" : "\uD83D\uDD34");

@@ -402,6 +402,16 @@ public class CustomView extends Feature {
                 param.args[0] = ((int) param.args[0] & ~VISIBILITY_MASK) | forced;
             }
         });
+
+        XposedHelpers.findAndHookMethod(android.view.LayoutInflater.class, "inflate", int.class, ViewGroup.class, boolean.class, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                View result = (View) param.getResult();
+                if (result != null) {
+                    applyRulesRecursively(result);
+                }
+            }
+        });
     }
 
     private void applyRulesRecursively(View view) {

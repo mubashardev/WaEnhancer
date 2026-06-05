@@ -666,15 +666,36 @@ public class Unobfuscator {
     public synchronized static Method loadTimeToSecondsMethod(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
             Method setTimeInMillis = Calendar.class.getDeclaredMethod("setTimeInMillis", long.class);
- 
-            // Try relaxed query first (just setTimeInMillis, static, returns String, has a long param)
-            var resultList = dexkit.findMethod(FindMethod.create().matcher(MethodMatcher.create()
-                    .addInvoke(DexSignUtil.getMethodDescriptor(setTimeInMillis))
-                    .modifiers(Modifier.STATIC)
-                    .returnType(String.class)
-                    .paramTypes(null, long.class)
-            ));
- 
+            Method is24HourFormat = null;
+            try {
+                is24HourFormat = android.text.format.DateFormat.class.getDeclaredMethod("is24HourFormat", Context.class);
+            } catch (Exception ignored) {}
+
+            MethodDataList resultList = null;
+            if (is24HourFormat != null) {
+                try {
+                    resultList = dexkit.findMethod(FindMethod.create().matcher(MethodMatcher.create()
+                            .addInvoke(DexSignUtil.getMethodDescriptor(setTimeInMillis))
+                            .addInvoke(DexSignUtil.getMethodDescriptor(is24HourFormat))
+                            .modifiers(Modifier.STATIC)
+                            .returnType(String.class)
+                            .paramTypes(null, long.class)
+                    ));
+                    XposedBridge.log("[WAEX] loadTimeToSecondsMethod (strict is24HourFormat): found " + resultList.size() + " candidates");
+                } catch (Exception ignored) {}
+            }
+
+            if (resultList == null || resultList.isEmpty()) {
+                // Try relaxed query first (just setTimeInMillis, static, returns String, has a long param)
+                resultList = dexkit.findMethod(FindMethod.create().matcher(MethodMatcher.create()
+                        .addInvoke(DexSignUtil.getMethodDescriptor(setTimeInMillis))
+                        .modifiers(Modifier.STATIC)
+                        .returnType(String.class)
+                        .paramTypes(null, long.class)
+                ));
+                XposedBridge.log("[WAEX] loadTimeToSecondsMethod (relaxed): found " + resultList.size() + " candidates");
+            }
+
             if (resultList.isEmpty()) {
                 // If completely empty, try finding any static method returning String invoking setTimeInMillis
                 resultList = dexkit.findMethod(FindMethod.create().matcher(MethodMatcher.create()
@@ -682,17 +703,17 @@ public class Unobfuscator {
                         .modifiers(Modifier.STATIC)
                         .returnType(String.class)
                 ));
+                XposedBridge.log("[WAEX] loadTimeToSecondsMethod (fallback): found " + resultList.size() + " candidates");
             }
- 
-            XposedBridge.log("[WAEX] loadTimeToSecondsMethod: found " + resultList.size() + " candidates");
+
             for (int i = 0; i < resultList.size(); i++) {
                 XposedBridge.log("[WAEX]   Candidate [" + i + "]: " + resultList.get(i).getDescriptor());
             }
- 
+
             if (resultList.isEmpty()) {
                 throw new Exception("TimeToSeconds method not found");
             }
- 
+
             // Heuristic: If we have candidates, let's filter for ones that take (Context, long) or similar
             // i.e. 2 parameters where the second is long.
             for (var res : resultList) {
@@ -702,7 +723,7 @@ public class Unobfuscator {
                     return method;
                 }
             }
- 
+
             // Otherwise return the first static candidate
             XposedBridge.log("[WAEX] Selecting first fallback candidate: " + resultList.get(0).getDescriptor());
             return resultList.get(0).getMethodInstance(classLoader);

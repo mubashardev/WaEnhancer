@@ -24,6 +24,13 @@ public class CustomTime extends Feature {
     public void doHook() throws Exception {
         var secondsToTime = prefs.getBoolean("segundos", false);
         var ampm = prefs.getBoolean("ampm", false);
+        var summary = prefs.getString("secondstotime", "");
+        boolean hasSummary = summary != null && !summary.trim().isEmpty();
+
+        if (!secondsToTime && !ampm && !hasSummary) {
+            return;
+        }
+
         var secondsToTimeMethod = Unobfuscator.loadTimeToSecondsMethod(classLoader);
         logDebug(Unobfuscator.getMethodDescriptor(secondsToTimeMethod));
 
@@ -31,6 +38,24 @@ public class CustomTime extends Feature {
 
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
+                String original = (String) param.getResult();
+                if (original != null) {
+                    original = original.trim();
+                    boolean isTime = original.contains(":");
+                    if (!isTime && original.contains(".")) {
+                        int dotCount = 0;
+                        for (int i = 0; i < original.length(); i++) {
+                            if (original.charAt(i) == '.') dotCount++;
+                        }
+                        if (dotCount == 1 && original.length() <= 8) {
+                            isTime = true;
+                        }
+                    }
+                    if (!isTime) {
+                        return;
+                    }
+                }
+
                 var timestamp = (long) param.args[1];
                 var date = new Date(timestamp);
                 var patternDefault = "HH:mm";

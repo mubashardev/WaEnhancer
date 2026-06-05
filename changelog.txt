@@ -12,3 +12,4 @@
 - Fixed CustomView Plugin Error
 - Fixed MODE_WORLD_READABLE exception
 - Fixed My Status Views
+- Fixed an issue where chat date separators (Today, Yesterday, etc.) went missing or displayed time formats when Time Customization was loaded

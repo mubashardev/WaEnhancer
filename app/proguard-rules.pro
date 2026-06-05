@@ -122,6 +122,10 @@
 -dontwarn com.google.firebase.**
 -keep class com.google.firebase.** { *; }
 
+# Markwon and Commonmark warning suppression
+-dontwarn org.commonmark.**
+-dontwarn io.noties.markwon.**
+
 # =============================================================================
 # 6. FRAGMENT REFLECTION SAFETY (KEEP FRAGMENTS INSTANTIATED FROM XML)
 # =============================================================================

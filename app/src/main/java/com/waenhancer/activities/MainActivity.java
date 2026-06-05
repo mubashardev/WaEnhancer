@@ -236,7 +236,15 @@ public class MainActivity extends BaseActivity {
                 break;
         }
 
-        if (subFragment != null && parentFragment.getView() != null) {
+        if (subFragment != null && parentFragment.isAdded() && parentFragment.getView() != null) {
+            if (parentFragment.getView().findViewById(R.id.frag_container) == null) {
+                parentFragment.getView().post(() -> {
+                    if (parentFragment.isAdded() && parentFragment.getView() != null) {
+                        navigateToSubFragmentAndScroll(parentFragment, parentKey, childPreferenceKey);
+                    }
+                });
+                return;
+            }
             final Fragment finalSubFragment = subFragment;
             // Replace the current child fragment with back stack so back button works
             parentFragment.getChildFragmentManager().beginTransaction()

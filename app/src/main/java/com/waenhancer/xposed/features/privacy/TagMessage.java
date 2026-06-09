@@ -40,11 +40,17 @@ public class TagMessage extends Feature {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 if (!prefs.getBoolean("hidetag", false)) return;
-                var arg = (long) param.args[0];
-                if (arg == 1) {
-                    Activity current = com.waenhancer.xposed.core.WppCore.getCurrentActivity();
-                    if (current != null && forwardClass.isInstance(current)) {
-                        param.args[0] = 0L;
+                Object argObj = param.args[0];
+                if (argObj instanceof Number) {
+                    long arg = ((Number) argObj).longValue();
+                    if (arg > 0) {
+                        if (ReflectionUtils.isCalledFromClass(forwardClass)) {
+                            if (argObj instanceof Integer) {
+                                param.args[0] = 0;
+                            } else if (argObj instanceof Long) {
+                                param.args[0] = 0L;
+                            }
+                        }
                     }
                 }
             }

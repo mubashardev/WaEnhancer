@@ -4,3 +4,4 @@
 
 [Fixes]
 - Fixed hide "Forwarded" tag for new WA/WB versions
+- Fixed Hide Floating Bottom Navigation on Scroll

@@ -160,10 +160,10 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
     }
 
     private void showFilterEditDialog(FilterItem item, boolean isEdit, int position) {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        com.google.android.material.bottomsheet.BottomSheetDialog dialog = 
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_filter_edit, null);
-        builder.setView(dialogView);
-        AlertDialog dialog = builder.create();
+        dialog.setContentView(dialogView);
 
         TextView titleView = dialogView.findViewById(R.id.dialog_title);
         TextInputEditText idInput = dialogView.findViewById(R.id.dialog_filter_id);
@@ -175,7 +175,7 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
         TextInputEditText opacityInput = dialogView.findViewById(R.id.dialog_opacity_input);
         View layoutResize = dialogView.findViewById(R.id.layout_resize);
         TextView resizeScaleText = dialogView.findViewById(R.id.resize_scale_text);
-        SeekBar resizeSeekBar = dialogView.findViewById(R.id.dialog_resize_seekbar);
+        com.google.android.material.slider.Slider resizeSlider = dialogView.findViewById(R.id.dialog_resize_slider);
 
         // Prepopulate values
         if (isEdit && item != null) {
@@ -220,12 +220,10 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
         colorPreview.setBackground(previewDrawable);
 
         dialogView.findViewById(R.id.btn_choose_color).setOnClickListener(v -> {
-            SimpleColorPickerDialog picker = new SimpleColorPickerDialog(this, color -> {
+            new SimpleColorPickerDialog(this, selectedColor[0], color -> {
                 selectedColor[0] = color;
                 previewDrawable.setColor(color);
-            });
-            picker.create().setCanceledOnTouchOutside(false);
-            picker.show();
+            }).show();
         });
 
         // Setup Opacity
@@ -235,21 +233,14 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
             opacityInput.setText("100");
         }
 
-        // Setup Resize Seekbar
+        // Setup Resize Slider
         float initialScale = (isEdit && item != null) ? item.scale : 1.0f;
-        int initialProgress = (int) (initialScale / 0.5f);
-        resizeSeekBar.setProgress(initialProgress);
+        if (initialScale < 0.1f) initialScale = 0.1f;
+        if (initialScale > 3.0f) initialScale = 3.0f;
+        resizeSlider.setValue(initialScale);
         resizeScaleText.setText("Scale: " + String.format("%.1fx", initialScale));
-        resizeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float scale = progress * 0.5f;
-                resizeScaleText.setText("Scale: " + String.format("%.1fx", scale));
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
+        resizeSlider.addOnChangeListener((slider, value, fromUser) -> {
+            resizeScaleText.setText("Scale: " + String.format("%.1fx", value));
         });
 
         // Buttons
@@ -291,7 +282,7 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
                 }
             }
 
-            float scale = resizeSeekBar.getProgress() * 0.5f;
+            float scale = resizeSlider.getValue();
 
             FilterItem resultItem = new FilterItem(idStr, behavior, selectedColor[0], opacity, scale);
             if (isEdit && position >= 0 && position < filtersList.size()) {

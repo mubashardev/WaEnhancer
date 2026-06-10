@@ -56,7 +56,6 @@ public class TextStatusComposer extends Feature {
                                     log(e);
                                 }
                             });
-                            dialog.create().setCanceledOnTouchOutside(false);
                             dialog.show();
                             return true;
                         });
@@ -67,7 +66,6 @@ public class TextStatusComposer extends Feature {
                                 colorData.textColor = color;
                                 entry.setTextColor(color);
                             });
-                            dialog.create().setCanceledOnTouchOutside(false);
                             dialog.show();
                             return true;
                         });

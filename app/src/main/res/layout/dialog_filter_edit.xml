@@ -10,6 +10,12 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-16dp"
+            android:layout_marginBottom="8dp" />
+
         <TextView
             android:id="@+id/dialog_title"
             android:layout_width="match_parent"
@@ -129,12 +135,14 @@
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginBottom="8dp" />
 
-            <SeekBar
-                android:id="@+id/dialog_resize_seekbar"
+            <com.google.android.material.slider.Slider
+                android:id="@+id/dialog_resize_slider"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:max="6"
-                android:progress="2" />
+                android:valueFrom="0.1"
+                android:valueTo="3.0"
+                android:stepSize="0.1"
+                android:value="1.0" />
 
             <TextView
                 android:layout_width="match_parent"

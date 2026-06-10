@@ -244,7 +244,21 @@ public class Others extends Feature {
         if (proximity_audios) {
             var classes = Unobfuscator.loadProximitySensorListenerClasses(classLoader);
             for (var cls : classes) {
-                XposedBridge.hookAllMethods(cls, "onSensorChanged", XC_MethodReplacement.DO_NOTHING);
+                try {
+                    XposedBridge.hookAllMethods(cls, "onSensorChanged", new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            if (param.args != null && param.args.length > 0 && param.args[0] != null) {
+                                android.hardware.SensorEvent event = (android.hardware.SensorEvent) param.args[0];
+                                if (event.sensor != null && event.sensor.getType() == android.hardware.Sensor.TYPE_PROXIMITY) {
+                                    param.setResult(null);
+                                }
+                            }
+                        }
+                    });
+                } catch (Throwable t) {
+                    XposedBridge.log("[WAEX] Failed to hook onSensorChanged on class: " + cls.getName() + " : " + t.toString());
+                }
             }
         }
 

@@ -424,6 +424,13 @@ public class MainActivity extends BaseActivity {
             showReversionBottomSheet();
         }
 
+        // Check if there is a pending downgrade reason to show
+        String downgradeMsg = rawPrefs.getString("pending_downgrade_reason_msg", null);
+        if (downgradeMsg != null) {
+            android.widget.Toast.makeText(this, downgradeMsg, android.widget.Toast.LENGTH_LONG).show();
+            showDowngradeBottomSheet(downgradeMsg);
+        }
+
         // Remote notices (cached + rate-limited)
         binding.getRoot().post(() -> NoticeCenter.checkAndShow(this));
     }
@@ -542,6 +549,47 @@ public class MainActivity extends BaseActivity {
             com.google.android.material.button.MaterialButton dismissBtn = view.findViewById(R.id.bs_cancel_btn);
             dismissBtn.setText("Dismiss");
             dismissBtn.setOnClickListener(v -> dialog.dismiss());
+
+            android.view.View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                bottomSheet.setBackgroundResource(android.R.color.transparent);
+            }
+            dialog.show();
+        } catch (Exception ignored) {}
+    }
+
+    private void showDowngradeBottomSheet(String message) {
+        try {
+            com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+            android.view.View view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_action, null);
+            dialog.setContentView(view);
+            dialog.setCancelable(false);
+            dialog.setCanceledOnTouchOutside(false);
+
+            ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_title)).setText("Downgraded to Free");
+            ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_message)).setText(message);
+
+            com.google.android.material.button.MaterialButton actionBtn = view.findViewById(R.id.bs_confirm_btn);
+            actionBtn.setText("Upgrade to Pro");
+            actionBtn.setOnClickListener(v -> {
+                android.content.SharedPreferences rawPrefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+                rawPrefs.edit().remove("pending_downgrade_reason_msg").apply();
+                
+                dialog.dismiss();
+                try {
+                    Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");
+                    startActivity(new Intent(this, clazz));
+                } catch (Exception ignored) {}
+            });
+
+            com.google.android.material.button.MaterialButton dismissBtn = view.findViewById(R.id.bs_cancel_btn);
+            dismissBtn.setText("Dismiss");
+            dismissBtn.setOnClickListener(v -> {
+                android.content.SharedPreferences rawPrefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+                rawPrefs.edit().remove("pending_downgrade_reason_msg").apply();
+                
+                dialog.dismiss();
+            });
 
             android.view.View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {

@@ -103,6 +103,8 @@ public class App extends Application {
                             .commit();
                     com.waenhancer.xposed.utils.ProHelper.setForceFree(true);
                     
+                    com.waenhancer.xposed.utils.Utils.handleSubscriptionDowngrade(App.this, "Your subscription plan has expired.");
+                    
                     try {
                         Class<?> managerClass = Class.forName("com.waenhancer.xposed.utils.LicenseManager");
                         managerClass.getMethod("makePrefsWorldReadable", Context.class).invoke(null, App.this);

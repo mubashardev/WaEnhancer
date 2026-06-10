@@ -275,6 +275,14 @@ public class FeatureCatalog {
                                 "floating_bottom_bar",
                                 Arrays.asList("floating", "bottom", "bar", "glass", "opacity", "alpha", "transparency")));
 
+                catalog.add(new SearchableFeature("floating_bottom_bar_pill_design",
+                                context.getString(R.string.floating_bottom_bar_pill_design),
+                                "Refined floating navigation pill design.",
+                                SearchableFeature.Category.CUSTOMIZATION,
+                                SearchableFeature.FragmentType.CUSTOMIZATION,
+                                "floating_bottom_bar",
+                                Arrays.asList("floating", "bottom", "bar", "pill", "design", "pro", "navigation")));
+
                 catalog.add(new SearchableFeature("separategroups",
                                 context.getString(R.string.separate_groups),
                                 context.getString(R.string.separate_groups_sum),

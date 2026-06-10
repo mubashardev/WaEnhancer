@@ -71,7 +71,7 @@ public class Utils {
     public static void init(ClassLoader loader) {
         var context = Utils.getApplication();
         var notificationManager = NotificationManagerCompat.from(context);
-        var channel = new NotificationChannel("wppenhacer", "Wa Enhancer X", NotificationManager.IMPORTANCE_HIGH);
+        var channel = new NotificationChannel("waex", "Wa Enhancer X", NotificationManager.IMPORTANCE_HIGH);
         notificationManager.createNotificationChannel(channel);
     }
 
@@ -430,15 +430,38 @@ public class Utils {
     public static void showNotification(String title, String content) {
         var context = Utils.getApplication();
         var notificationManager = NotificationManagerCompat.from(context);
-        var channel = new NotificationChannel("wppenhacer", "Wa Enhancer X", NotificationManager.IMPORTANCE_HIGH);
+        var channel = new NotificationChannel("waex", "Wa Enhancer X", NotificationManager.IMPORTANCE_HIGH);
         notificationManager.createNotificationChannel(channel);
-        var notification = new NotificationCompat.Builder(context, "wppenhacer")
-                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+        var notification = new NotificationCompat.Builder(context, "waex")
+                .setSmallIcon(com.waenhancer.R.drawable.ic_notifications_black_24dp)
                 .setContentTitle(title)
                 .setContentText(content)
                 .setAutoCancel(true)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(content));
         notificationManager.notify(new Random().nextInt(), notification.build());
+    }
+
+    public static void handleSubscriptionDowngrade(Context context, String reasonMsg) {
+        if (context == null || reasonMsg == null) return;
+
+        // Save the pending message for MainActivity to display toast & bottom sheet
+        var sharedPrefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        sharedPrefs.edit()
+                .putString("pending_downgrade_reason_msg", reasonMsg)
+                .commit();
+
+        // Also make preferences world-readable
+        try {
+            Class<?> managerClass = Class.forName("com.waenhancer.xposed.utils.LicenseManager");
+            managerClass.getMethod("makePrefsWorldReadable", Context.class).invoke(null, context);
+        } catch (Exception ignored) {}
+
+        // Send push notification if allowed
+        try {
+            if (androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+                showNotification("Subscription Downgraded", reasonMsg);
+            }
+        } catch (Exception ignored) {}
     }
 
     public static void openLink(Activity mActivity, String url) {

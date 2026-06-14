@@ -199,8 +199,36 @@ jobs:
           git push
 
       - name: Setup Google Services
-        env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+  env:
+    GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+  run: |
+    set -e
+    
+    if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+      echo "⚠️  GOOGLE_SERVICES_JSON secret is missing. Crashlytics will be disabled for this build."
+      exit 0
+    fi
+    
+    # Decode from base64 and write to file
+    echo "$GOOGLE_SERVICES_JSON" | base64 --decode > "app/google-services.json" 2>/dev/null || {
+      # Fallback: assume it's raw JSON
+      echo "$GOOGLE_SERVICES_JSON" > "app/google-services.json"
+    }
+    
+    # Validate JSON structure
+    if ! jq empty "app/google-services.json" 2>/dev/null; then
+      echo "❌ ERROR: Invalid JSON in google-services.json. Please verify your GOOGLE_SERVICES_JSON secret."
+      rm -f "app/google-services.json"
+      exit 1
+    fi
+    
+    # Verify file exists and is not empty
+    if [ -s "app/google-services.json" ]; then
+      echo "✅ Google Services configuration injected successfully"
+    else
+      echo "❌ ERROR: google-services.json was not created or is empty"
+      exit 1
+    fi
         run: |
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then
             # Check if it starts with { (raw JSON) or needs decoding

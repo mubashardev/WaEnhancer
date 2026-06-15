@@ -47,6 +47,7 @@ public class FloatingBottomBar extends Feature {
     private static final float PILL_ELEVATION_DP = 12f;
     private static final float PILL_TRANSLATION_Z_DP = 8f;
     private static final WeakHashMap<View, Boolean> styledBottomBars = new WeakHashMap<>();
+    private static final java.util.Set<Class<?>> hookedItemClasses = new java.util.HashSet<>();
     private static final WeakHashMap<View, Boolean> registeredScrollListeners = new WeakHashMap<>();
     private static final WeakHashMap<View, Float> targetTranslations = new WeakHashMap<>();
     private static final WeakHashMap<View, Integer> originalBottomPaddings = new WeakHashMap<>();
@@ -105,6 +106,54 @@ public class FloatingBottomBar extends Feature {
                         // Prevent duplicate initializations
                         if (styledBottomBars.containsKey(view)) return;
                         styledBottomBars.put(view, true);
+
+                        // Hook the click listener on the BottomNavigationItemView class dynamically
+                        ViewGroup menuView = findMenuView(view);
+                        if (menuView != null && menuView.getChildCount() > 0) {
+                            View child = menuView.getChildAt(0);
+                            Class<?> itemViewClass = child.getClass();
+                            
+                            // Wrap existing listeners immediately
+                            for (int i = 0; i < menuView.getChildCount(); i++) {
+                                wrapOnClickListener(view, menuView.getChildAt(i));
+                            }
+
+                            synchronized (hookedItemClasses) {
+                                if (!hookedItemClasses.contains(itemViewClass)) {
+                                    hookedItemClasses.add(itemViewClass);
+                                    XposedBridge.hookAllMethods(itemViewClass, "setOnClickListener", new XC_MethodHook() {
+                                        @Override
+                                        protected void beforeHookedMethod(MethodHookParam param2) throws Throwable {
+                                            try {
+                                                final View.OnClickListener originalListener = (View.OnClickListener) param2.args[0];
+                                                if (originalListener == null) return;
+                                                if (originalListener.getClass().getName().contains("FloatingBottomBar")) return;
+
+                                                View itemView = (View) param2.thisObject;
+                                                View.OnClickListener proxyListener = new View.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(View v) {
+                                                        try {
+                                                            int tabId = v.getId();
+                                                            View parentBottomNav = findBottomNavForView(v);
+                                                            if (parentBottomNav != null) {
+                                                                handleTabSelectionChanged(parentBottomNav, tabId);
+                                                            }
+                                                        } catch (Throwable t) {
+                                                            XposedBridge.log("[WAEX-FBB] Error in proxy onClick: " + t);
+                                                        }
+                                                        originalListener.onClick(v);
+                                                    }
+                                                };
+                                                param2.args[0] = proxyListener;
+                                            } catch (Throwable t) {
+                                                XposedBridge.log("[WAEX-FBB] Error wrapping setOnClickListener: " + t);
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        }
 
                         float density = view.getContext().getResources().getDisplayMetrics().density;
 
@@ -341,6 +390,110 @@ public class FloatingBottomBar extends Feature {
         } catch (Throwable t) {
             XposedBridge.log(t);
         }
+
+        // Hook ViewPager page dispatch events directly to intercept page changes
+        try {
+            Class<?> viewPagerClass = XposedHelpers.findClass("androidx.viewpager.widget.ViewPager", classLoader);
+            XposedBridge.hookAllMethods(viewPagerClass, "dispatchOnPageSelected", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    try {
+                        int position = (int) param.args[0];
+                        View viewPager = (View) param.thisObject;
+                        ViewGroup root = getRootLayout(viewPager);
+                        View bottomNav = findBottomNavInRoot(root);
+                        if (bottomNav != null) {
+                            int tabId = getTabIdForIndex(bottomNav, position);
+                            handleTabSelectionChanged(bottomNav, tabId);
+                        }
+                    } catch (Throwable t) {
+                        XposedBridge.log("[WAEX-FBB] Error in dispatchOnPageSelected: " + t);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX-FBB] Error hooking dispatchOnPageSelected: " + t);
+        }
+
+        // Hook tab selection calls on BottomNavigationView directly to intercept clicks and manual selections
+        try {
+            XposedBridge.hookAllMethods(loadTabFrameClass, "setSelectedItemId", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    try {
+                        int tabId = (int) param.args[0];
+                        View bottomNav = (View) param.thisObject;
+                        handleTabSelectionChanged(bottomNav, tabId);
+                    } catch (Throwable ignored) {}
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX-FBB] Error hooking setSelectedItemId: " + t);
+        }
+
+        // Hook the tab item selection listener of BottomNavigationView to capture tab taps/clicks
+        try {
+            java.lang.reflect.Method targetSetListenerMethod = null;
+            for (java.lang.reflect.Method m : loadTabFrameClass.getMethods()) {
+                String name = m.getName();
+                if ((name.equals("setOnItemSelectedListener") || name.equals("setOnNavigationItemSelectedListener")) 
+                    && m.getParameterCount() == 1) {
+                    targetSetListenerMethod = m;
+                    break;
+                }
+            }
+
+            if (targetSetListenerMethod != null) {
+                final Class<?> listenerInterface = targetSetListenerMethod.getParameterTypes()[0];
+                
+                XposedBridge.hookMethod(targetSetListenerMethod, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        try {
+                            final Object originalListener = param.args[0];
+                            if (originalListener == null) return;
+                            if (java.lang.reflect.Proxy.isProxyClass(originalListener.getClass())) return;
+                            
+                            final View bottomNav = (View) param.thisObject;
+                            
+                            Object listenerProxy = java.lang.reflect.Proxy.newProxyInstance(
+                                listenerInterface.getClassLoader(),
+                                new Class<?>[]{listenerInterface},
+                                new java.lang.reflect.InvocationHandler() {
+                                    @Override
+                                    public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
+                                        String methodName = method.getName();
+                                        if ("equals".equals(methodName)) {
+                                            return proxy == args[0];
+                                        }
+                                        if ("hashCode".equals(methodName)) {
+                                            return System.identityHashCode(proxy);
+                                        }
+                                        if ("toString".equals(methodName)) {
+                                            return "NavigationBarOnItemSelectedListenerProxy@" + Integer.toHexString(System.identityHashCode(proxy));
+                                        }
+                                        
+                                        if (args != null && args.length == 1 && args[0] instanceof android.view.MenuItem) {
+                                            android.view.MenuItem item = (android.view.MenuItem) args[0];
+                                            int tabId = item.getItemId();
+                                            handleTabSelectionChanged(bottomNav, tabId);
+                                        }
+                                        
+                                        return method.invoke(originalListener, args);
+                                    }
+                                }
+                            );
+                            
+                            param.args[0] = listenerProxy;
+                        } catch (Throwable t) {
+                            XposedBridge.log("[WAEX-FBB] Error wrapping tab selection listener: " + t);
+                        }
+                    }
+                });
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX-FBB] Error hooking item selection listener: " + t);
+        }
     }
 
     private void makeChildrenTransparent(View view) {
@@ -532,6 +685,12 @@ public class FloatingBottomBar extends Feature {
                 try {
                     int paddingBottom = dp(density, SCROLL_BOTTOM_PADDING_DP);
                     setBottomPaddingAndScrollListeners(viewPager, paddingBottom, bottomNav);
+                    
+                    int currentItem = (int) XposedHelpers.callMethod(viewPager, "getCurrentItem");
+                    int tabId = getTabIdForIndex(bottomNav, currentItem);
+                    if (tabId == 1000 || tabId == 1100) {
+                        handleTabSelectionChanged(bottomNav, tabId);
+                    }
                 } catch (Throwable t) {
                     XposedBridge.log(t);
                 }
@@ -552,7 +711,7 @@ public class FloatingBottomBar extends Feature {
         }
     }
 
-    private View findViewPager(ViewGroup root) {
+    private static View findViewPager(ViewGroup root) {
         for (int i = 0; i < root.getChildCount(); i++) {
             View child = root.getChildAt(i);
             String name = child.getClass().getName();
@@ -649,6 +808,7 @@ public class FloatingBottomBar extends Feature {
 
     private static void onViewScrolled(View bottomNav, int dy) {
         if (bottomNav == null) return;
+        if (isMetaAiTabActive(bottomNav)) return;
         
         View barTarget = getBarAnimationTarget(bottomNav);
         if (!barTarget.isShown()) return; // Do not animate if bottom bar is hidden on screen
@@ -1222,6 +1382,140 @@ public class FloatingBottomBar extends Feature {
             }
         }
         return null;
+    }
+
+
+    private static void handleTabSelectionChanged(View bottomNav, int tabId) {
+        try {
+            View barTarget = getBarAnimationTarget(bottomNav);
+            float density = bottomNav.getContext().getResources().getDisplayMetrics().density;
+            int height = barTarget.getHeight();
+            if (height <= 0) height = bottomNav.getHeight();
+            if (height <= 0) height = (int) (80 * density);
+
+            boolean isMetaAiActive = isMetaAiTabActive(bottomNav);
+
+            if (tabId == 1000 || tabId == 1100 || isMetaAiActive) {
+                float targetTranslationY = height + (24 * density);
+                targetTranslations.put(barTarget, targetTranslationY);
+                barTarget.animate()
+                    .translationY(targetTranslationY)
+                    .setDuration(250)
+                    .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator())
+                    .start();
+                animateFabs(bottomNav, true, density);
+            } else {
+                targetTranslations.put(barTarget, 0f);
+                barTarget.animate()
+                    .translationY(0)
+                    .setDuration(250)
+                    .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator())
+                    .start();
+                animateFabs(bottomNav, false, density);
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX-FBB] Error handling tab selection: " + t);
+        }
+    }
+
+    private static int getTabIdForIndex(View bottomNav, int index) {
+        try {
+            Object menu = XposedHelpers.callMethod(bottomNav, "getMenu");
+            if (menu != null) {
+                int size = (int) XposedHelpers.callMethod(menu, "size");
+                java.util.List<Integer> visibleIds = new java.util.ArrayList<>();
+                for (int i = 0; i < size; i++) {
+                    Object menuItem = XposedHelpers.callMethod(menu, "getItem", i);
+                    if (menuItem != null && (boolean) XposedHelpers.callMethod(menuItem, "isVisible")) {
+                        visibleIds.add((int) XposedHelpers.callMethod(menuItem, "getItemId"));
+                    }
+                }
+                int resolvedId = -1;
+                if (index >= 0 && index < visibleIds.size()) {
+                    resolvedId = visibleIds.get(index);
+                }
+                return resolvedId;
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX-FBB] Error in getTabIdForIndex: " + t);
+        }
+        return -1;
+    }
+
+    private static boolean isMetaAiTabSelected(View bottomNav) {
+        try {
+            int selectedId = (int) XposedHelpers.callMethod(bottomNav, "getSelectedItemId");
+            return selectedId == 1000 || selectedId == 1100;
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    private static View findBottomNavForView(View view) {
+        ViewParent parent = view.getParent();
+        while (parent != null) {
+            if (parent instanceof View) {
+                View parentView = (View) parent;
+                if (styledBottomBars.containsKey(parentView)) {
+                    return parentView;
+                }
+                parent = parentView.getParent();
+            } else {
+                break;
+            }
+        }
+        return null;
+    }
+
+    private static View.OnClickListener getOnClickListener(View view) {
+        try {
+            java.lang.reflect.Field listenerInfoField = View.class.getDeclaredField("mListenerInfo");
+            listenerInfoField.setAccessible(true);
+            Object listenerInfo = listenerInfoField.get(view);
+            if (listenerInfo != null) {
+                java.lang.reflect.Field onClickListenerField = listenerInfo.getClass().getDeclaredField("mOnClickListener");
+                onClickListenerField.setAccessible(true);
+                return (View.OnClickListener) onClickListenerField.get(listenerInfo);
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static void wrapOnClickListener(final View bottomNav, final View itemView) {
+        try {
+            final View.OnClickListener originalListener = getOnClickListener(itemView);
+            if (originalListener != null && !originalListener.getClass().getName().contains("FloatingBottomBar")) {
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        try {
+                            int tabId = v.getId();
+                            handleTabSelectionChanged(bottomNav, tabId);
+                        } catch (Throwable t) {
+                            XposedBridge.log("[WAEX-FBB] Error in wrapped onClick: " + t);
+                        }
+                        originalListener.onClick(v);
+                    }
+                });
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX-FBB] Error wrapping listener: " + t);
+        }
+    }
+
+    private static boolean isMetaAiTabActive(View bottomNav) {
+        try {
+            if (isMetaAiTabSelected(bottomNav)) {
+                return true;
+            }
+            ViewGroup root = getRootLayout(bottomNav);
+            View viewPager = findViewPager(root);
+            if (viewPager != null) {
+                int currentItem = (int) XposedHelpers.callMethod(viewPager, "getCurrentItem");
+                int tabId = getTabIdForIndex(bottomNav, currentItem);
+                return tabId == 1000 || tabId == 1100;
+            }
+        } catch (Throwable ignored) {}
+        return false;
     }
 
     @NonNull

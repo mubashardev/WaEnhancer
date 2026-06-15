@@ -1,2 +1,6 @@
 [Added]
 - Added support for 2.26.24.xx WA/WB
+
+[Improvements]
+- Fixed Floating Bottom Bar for Meta AI tab
+- Performance Improvements

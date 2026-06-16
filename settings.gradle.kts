@@ -32,16 +32,19 @@ include(":app")
 // the additional source set.  Forks / CI runs without access to the private
 // repo will simply build the open-source variant — no errors, no stubs needed.
 // ─────────────────────────────────────────────────────────────────────────────
-val proDir = file("app/src/pro")
-// A populated submodule will contain at least one file beyond .git / .gitignore / README.md
-val hasProSources: Boolean = proDir.exists() &&
-    proDir.walkTopDown()
-        .filter { it.isFile }
-        .any { file ->
-            file.name !in setOf(".gitignore", "README.md") &&
-            file.name != ".git" &&
-            !file.name.endsWith(".git")
-        }
+val hasProSources: Boolean = if (providers.gradleProperty("hasProSourcesOverride").isPresent) {
+    providers.gradleProperty("hasProSourcesOverride").get().toBoolean()
+} else {
+    val proDir = file("app/src/pro")
+    proDir.exists() &&
+        proDir.walkTopDown()
+            .filter { it.isFile }
+            .any { file ->
+                file.name !in setOf(".gitignore", "README.md") &&
+                file.name != ".git" &&
+                !file.name.endsWith(".git")
+            }
+}
 
 gradle.extra["hasProSources"] = hasProSources
 gradle.rootProject {

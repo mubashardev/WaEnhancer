@@ -54,8 +54,9 @@ import rikka.core.util.IOUtils;
 import java.io.File;
 
 public class HomeFragment extends BaseFragment {
-    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancerX/releases";
-    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancerX/releases/latest";
+
+    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
+    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
     private static final String PREF_MODULE_HEARTBEAT = "module_heartbeat";
 
     private FragmentHomeBinding binding;
@@ -75,10 +76,11 @@ public class HomeFragment extends BaseFragment {
                 String pkg = intent.getStringExtra("PKG");
                 ;
                 try {
-                    if (FeatureLoader.PACKAGE_WPP.equals(pkg))
+                    if (FeatureLoader.PACKAGE_WPP.equals(pkg)) {
                         receiverBroadcastWpp(context, intent);
-                    else
+                    } else {
                         receiverBroadcastBusiness(context, intent);
+                    }
                 } catch (Exception e) {
                     Log.e("WAE_STATUS", "Error in receiverBroadcast: " + e.getMessage());
                 }
@@ -141,16 +143,16 @@ public class HomeFragment extends BaseFragment {
             animateClick(view);
             try {
                 String dialogDetailsHtml = "<b>Device:</b> " + android.os.Build.MANUFACTURER + " "
-                        + android.os.Build.MODEL + "<br>" +
-                        "<b>Android Version:</b> " + android.os.Build.VERSION.RELEASE + " (SDK "
-                        + android.os.Build.VERSION.SDK_INT + ")<br>" +
-                        "<b>Module Version:</b> " + com.waenhancer.BuildConfig.VERSION_NAME + "<br>";
+                        + android.os.Build.MODEL + "<br>"
+                        + "<b>Android Version:</b> " + android.os.Build.VERSION.RELEASE + " (SDK "
+                        + android.os.Build.VERSION.SDK_INT + ")<br>"
+                        + "<b>Module Version:</b> " + com.waenhancer.BuildConfig.VERSION_NAME + "<br>";
 
                 String githubDetailsMd = "**Device:** " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL
-                        + "\n" +
-                        "**Android Version:** " + android.os.Build.VERSION.RELEASE + " (SDK "
-                        + android.os.Build.VERSION.SDK_INT + ")\n" +
-                        "**Module Version:** " + com.waenhancer.BuildConfig.VERSION_NAME + "\n";
+                        + "\n"
+                        + "**Android Version:** " + android.os.Build.VERSION.RELEASE + " (SDK "
+                        + android.os.Build.VERSION.SDK_INT + ")\n"
+                        + "**Module Version:** " + com.waenhancer.BuildConfig.VERSION_NAME + "\n";
 
                 String tempWaVersion = "Not Installed";
                 try {
@@ -174,11 +176,9 @@ public class HomeFragment extends BaseFragment {
                 final String finalGithubDetails = githubDetailsMd;
 
                 String dialogMessageHtml = "This will open the WaEnhancer X GitHub Issues page to report a bug.<br><br>"
-                        +
-                        "The following information about your device and installed apps will be pre-filled in your report:<br><br>"
-                        +
-                        finalDialogDetails + "<b>WhatsApp Version:</b> " + waVersion + "<br>" +
-                        "<b>WhatsApp Business Version:</b> " + waBusinessVersion + "<br>";
+                        + "The following information about your device and installed apps will be pre-filled in your report:<br><br>"
+                        + finalDialogDetails + "<b>WhatsApp Version:</b> " + waVersion + "<br>"
+                        + "<b>WhatsApp Business Version:</b> " + waBusinessVersion + "<br>";
 
                 var bottomSheetDialog = new com.google.android.material.bottomsheet.BottomSheetDialog(requireContext());
                 var sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_report_issue, null);
@@ -210,7 +210,9 @@ public class HomeFragment extends BaseFragment {
 
                 titleInput.addTextChangedListener(new android.text.TextWatcher() {
                     @Override
-                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    }
+
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
                         if (viewFlipper.getDisplayedChild() == 1) {
@@ -218,21 +220,27 @@ public class HomeFragment extends BaseFragment {
                             btnNext.setEnabled(len >= 15 && len <= 50);
                         }
                     }
+
                     @Override
-                    public void afterTextChanged(android.text.Editable s) {}
+                    public void afterTextChanged(android.text.Editable s) {
+                    }
                 });
 
                 issueInput.addTextChangedListener(new android.text.TextWatcher() {
                     @Override
-                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    }
+
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
                         if (viewFlipper.getDisplayedChild() == 2) {
                             btnNext.setEnabled(s != null && s.toString().trim().length() >= 15);
                         }
                     }
+
                     @Override
-                    public void afterTextChanged(android.text.Editable s) {}
+                    public void afterTextChanged(android.text.Editable s) {
+                    }
                 });
 
                 btnCancel.setOnClickListener(v -> {
@@ -273,10 +281,10 @@ public class HomeFragment extends BaseFragment {
                         String title = titleInput.getText() != null ? titleInput.getText().toString().trim() : "Bug Report";
                         String description = issueInput.getText() != null ? issueInput.getText().toString().trim() : "";
                         try {
-                            String body = finalGithubDetails + "**WhatsApp Version:** " + waVersion + "\n" +
-                                    "**WhatsApp Business Version:** " + waBusinessVersion + "\n" +
-                                    "\n---\n" +
-                                    description + "\n";
+                            String body = finalGithubDetails + "**WhatsApp Version:** " + waVersion + "\n"
+                                    + "**WhatsApp Business Version:** " + waBusinessVersion + "\n"
+                                    + "\n---\n"
+                                    + description + "\n";
 
                             String url = "https://github.com/mubashardev/WaEnhancerX/issues/new?title="
                                     + java.net.URLEncoder.encode(title, "UTF-8") + "&body="
@@ -324,7 +332,7 @@ public class HomeFragment extends BaseFragment {
         setupReleaseChannelSelector();
         setupUpdateBanner();
         startCardAnimations();
-        
+
         showConsentDialogIfNeeded();
 
         return binding.getRoot();
@@ -342,7 +350,7 @@ public class HomeFragment extends BaseFragment {
             });
         }
     }
-    
+
     private void showConsentDialogIfNeeded() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
         if (!prefs.contains("consent_crashlytics_asked")) {
@@ -367,11 +375,12 @@ public class HomeFragment extends BaseFragment {
                         Class<?> firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
                         Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", android.content.Context.class).invoke(null, requireContext());
                         firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled", boolean.class).invoke(analyticsInstance, true);
-                        
+
                         Class<?> firebaseCrashlyticsClass = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics");
                         Object crashlyticsInstance = firebaseCrashlyticsClass.getMethod("getInstance").invoke(null);
                         firebaseCrashlyticsClass.getMethod("setCrashlyticsCollectionEnabled", boolean.class).invoke(crashlyticsInstance, true);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
                 }
                 dialog.dismiss();
             });
@@ -422,27 +431,35 @@ public class HomeFragment extends BaseFragment {
 
     private void startCardAnimations() {
         Context context = getContext();
-        if (context == null) return;
-        
+        if (context == null) {
+            return;
+        }
+
         var slideUp = AnimationUtils.loadAnimation(context, R.anim.slide_up);
         var fadeIn = AnimationUtils.loadAnimation(context, R.anim.fade_in);
 
         binding.status.startAnimation(slideUp);
 
         binding.status2.postDelayed(() -> {
-            if (getContext() == null || !isAdded()) return;
+            if (getContext() == null || !isAdded()) {
+                return;
+            }
             var anim = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
             binding.status2.startAnimation(anim);
         }, 100);
 
         binding.status3.postDelayed(() -> {
-            if (getContext() == null || !isAdded()) return;
+            if (getContext() == null || !isAdded()) {
+                return;
+            }
             var anim = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
             binding.status3.startAnimation(anim);
         }, 100);
 
         binding.infoCard.postDelayed(() -> {
-            if (getContext() == null || !isAdded()) return;
+            if (getContext() == null || !isAdded()) {
+                return;
+            }
             binding.infoCard.startAnimation(fadeIn);
         }, 200);
     }
@@ -480,11 +497,13 @@ public class HomeFragment extends BaseFragment {
     }
 
     private void updateProUI() {
-        if (binding == null || getContext() == null) return;
+        if (binding == null || getContext() == null) {
+            return;
+        }
         boolean isPro = com.waenhancer.xposed.utils.ProHelper.isProEnabled();
         String planName = com.waenhancer.xposed.utils.ProHelper.getProPlanName();
         String proStatus = com.waenhancer.xposed.utils.ProHelper.getProStatus();
-        
+
         if (binding.proStatusChip != null) {
             String text;
             if ("ACTIVE".equalsIgnoreCase(proStatus)) {
@@ -495,7 +514,7 @@ public class HomeFragment extends BaseFragment {
                 text = "Free";
             }
             binding.proStatusChip.setText(text);
-            
+
             // Dynamically update chip's background tint and text colors based on status
             if ("EXPIRED".equalsIgnoreCase(proStatus)) {
                 // Light red background with dark red text for Expired Pro
@@ -594,7 +613,8 @@ public class HomeFragment extends BaseFragment {
         }
     }
 
-    private static @NonNull JSONObject getJsonObject(SharedPreferences prefs) throws JSONException {
+    private static @NonNull
+    JSONObject getJsonObject(SharedPreferences prefs) throws JSONException {
         var entries = prefs.getAll();
         var JSOjsonObject = new JSONObject();
         for (var entry : entries.entrySet()) {
@@ -698,7 +718,7 @@ public class HomeFragment extends BaseFragment {
                 Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-        FilePicker.fileCapture.launch(new String[] { "application/json" });
+        FilePicker.fileCapture.launch(new String[]{"application/json"});
     }
 
     private boolean isInitialCheck = true;
@@ -708,11 +728,10 @@ public class HomeFragment extends BaseFragment {
         boolean frameworkPresent = MainActivity.isXposedFrameworkPresent(requireContext());
         boolean hookEnabled = com.waenhancer.utils.ModuleStatus.isModuleActive();
         boolean heartbeatEnabled = hasRecentModuleHeartbeat();
-        
         ;
-        
+
         updateModuleStatusUi(frameworkPresent, hookEnabled, heartbeatEnabled);
-        
+
         if (isInstalled(FeatureLoader.PACKAGE_WPP) && App.isOriginalPackage()) {
             disableWpp(activity);
         } else {
@@ -724,7 +743,7 @@ public class HomeFragment extends BaseFragment {
         } else {
             binding.status3.setVisibility(View.GONE);
         }
-        
+
         // We still send the check broadcast to keep the heartbeat alive for when WhatsApp IS running,
         // but we no longer wait for its response to determine the basic "Enabled" status.
         checkWpp(activity);
@@ -740,12 +759,14 @@ public class HomeFragment extends BaseFragment {
         } else {
             // Hide WhatsApp section if not the original package flavor
             View parent = (View) binding.wppInstalledVersion.getParent().getParent().getParent();
-            if (parent != null)
+            if (parent != null) {
                 parent.setVisibility(View.GONE);
+            }
             View divider = (View) ((ViewGroup) parent.getParent())
                     .getChildAt(((ViewGroup) parent.getParent()).indexOfChild(parent) + 1);
-            if (divider != null)
+            if (divider != null) {
                 divider.setVisibility(View.GONE);
+            }
         }
 
         checkPackageVersion(activity, FeatureLoader.PACKAGE_BUSINESS, binding.businessVersionRow, binding.businessInstalledVersion,
@@ -761,7 +782,7 @@ public class HomeFragment extends BaseFragment {
         if (hookEnabled || heartbeatEnabled) {
             // Module is active (either directly hooked or validated via WhatsApp process heartbeat)
             binding.statusIcon.setImageResource(R.drawable.ic_round_check_circle_24);
-            binding.statusIcon.setColorFilter(null); 
+            binding.statusIcon.setColorFilter(null);
             binding.statusTitle.setText(R.string.module_enabled);
             binding.status.getChildAt(0).setBackgroundResource(R.drawable.hero_glow_enabled);
         } else if (frameworkPresent) {
@@ -824,57 +845,57 @@ public class HomeFragment extends BaseFragment {
                 boolean isBetaModule = BuildConfig.VERSION_NAME.toLowerCase().contains("beta");
                 if (!isBetaModule) {
 
-                if (ApkMirrorFeedHelper.isBetaVersion(activity, packageName, installedVersion)) {
-                    statusView.setText("Beta Unsupported");
-                    statusView.setTextColor(colorError);
-                    iconView.setImageResource(R.drawable.ic_round_error_outline_24);
-                    iconView.setColorFilter(colorError);
-                    
-                    String appName = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "WhatsApp" : "WhatsApp Business";
-                    rowView.setOnClickListener(v -> {
-                        try {
-                            com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(activity);
-                            View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_action, null);
-                            dialog.setContentView(view);
+                    if (ApkMirrorFeedHelper.isBetaVersion(activity, packageName, installedVersion)) {
+                        statusView.setText("Beta Unsupported");
+                        statusView.setTextColor(colorError);
+                        iconView.setImageResource(R.drawable.ic_round_error_outline_24);
+                        iconView.setColorFilter(colorError);
 
-                            ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_title)).setText("WhatsApp Beta Detected");
-                            ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_message)).setText(
-                                    "You are using a beta version of " + appName + " while WaEnhancerX is currently set to the Stable update channel.\n\nTo ensure full compatibility and stay up-to-date with every new WhatsApp beta update, we highly recommend switching WaEnhancerX to the Beta update channel.");
+                        String appName = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "WhatsApp" : "WhatsApp Business";
+                        rowView.setOnClickListener(v -> {
+                            try {
+                                com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(activity);
+                                View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_action, null);
+                                dialog.setContentView(view);
 
-                            com.google.android.material.button.MaterialButton okBtn = view.findViewById(R.id.bs_confirm_btn);
-                            okBtn.setText("Leave WhatsApp Beta");
-                            okBtn.setOnClickListener(v2 -> {
-                                try {
-                                    String url = FeatureLoader.PACKAGE_WPP.equals(packageName) ?
-                                            "https://play.google.com/apps/testing/com.whatsapp" :
-                                            "https://play.google.com/apps/testing/com.whatsapp.w4b";
-                                    Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    activity.startActivity(intent);
-                                } catch (Exception e) {
-                                    Log.e("WAE_BETA", "Failed to open beta URL: " + e.getMessage());
-                                }
-                                dialog.dismiss();
-                            });
+                                ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_title)).setText("WhatsApp Beta Detected");
+                                ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_message)).setText(
+                                        "You are using a beta version of " + appName + " while WaEnhancerX is currently set to the Stable update channel.\n\nTo ensure full compatibility and stay up-to-date with every new WhatsApp beta update, we highly recommend switching WaEnhancerX to the Beta update channel.");
 
-                            com.google.android.material.button.MaterialButton cancelBtn = view.findViewById(R.id.bs_cancel_btn);
-                            cancelBtn.setText("Switch to WAEX Beta");
-                            cancelBtn.setOnClickListener(v2 -> {
-                                try {
-                                    Intent intent = new Intent(activity, ChangelogActivity.class);
-                                    activity.startActivity(intent);
-                                } catch (Exception e) {
-                                    Log.e("WAE_BETA", "Failed to open ChangelogActivity: " + e.getMessage());
-                                }
-                                dialog.dismiss();
-                            });
+                                com.google.android.material.button.MaterialButton okBtn = view.findViewById(R.id.bs_confirm_btn);
+                                okBtn.setText("Leave WhatsApp Beta");
+                                okBtn.setOnClickListener(v2 -> {
+                                    try {
+                                        String url = FeatureLoader.PACKAGE_WPP.equals(packageName)
+                                                ? "https://play.google.com/apps/testing/com.whatsapp"
+                                                : "https://play.google.com/apps/testing/com.whatsapp.w4b";
+                                        Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        activity.startActivity(intent);
+                                    } catch (Exception e) {
+                                        Log.e("WAE_BETA", "Failed to open beta URL: " + e.getMessage());
+                                    }
+                                    dialog.dismiss();
+                                });
 
-                            dialog.show();
-                        } catch (Exception e) {
-                            Log.e("WAE_BETA", "Error showing bottom sheet: " + e.getMessage());
-                        }
-                    });
-                }
+                                com.google.android.material.button.MaterialButton cancelBtn = view.findViewById(R.id.bs_cancel_btn);
+                                cancelBtn.setText("Switch to WAEX Beta");
+                                cancelBtn.setOnClickListener(v2 -> {
+                                    try {
+                                        Intent intent = new Intent(activity, ChangelogActivity.class);
+                                        activity.startActivity(intent);
+                                    } catch (Exception e) {
+                                        Log.e("WAE_BETA", "Failed to open ChangelogActivity: " + e.getMessage());
+                                    }
+                                    dialog.dismiss();
+                                });
+
+                                dialog.show();
+                            } catch (Exception e) {
+                                Log.e("WAE_BETA", "Error showing bottom sheet: " + e.getMessage());
+                            }
+                        });
+                    }
                 } else {
                     statusView.setText("Supported");
                     statusView.setTextColor(colorSuccess);
@@ -905,15 +926,15 @@ public class HomeFragment extends BaseFragment {
     private void showBetaWarningDialog(FragmentActivity activity, String packageName, boolean forceShow) {
         String appName = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "WhatsApp" : "WhatsApp Business";
         String prefKey = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "last_beta_warning_dismissed_wpp" : "last_beta_warning_dismissed_business";
-        
+
         SharedPreferences prefs = activity.getSharedPreferences("ApkMirrorCache", Context.MODE_PRIVATE);
         long lastDismissed = prefs.getLong(prefKey, 0L);
         long now = System.currentTimeMillis();
-        
+
         if (!forceShow && (now - lastDismissed < java.util.concurrent.TimeUnit.DAYS.toMillis(1))) {
             return;
         }
-        
+
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                 .setTitle("Beta Version Detected")
                 .setMessage("You have installed a beta version of " + appName + ". WaEnhancerX is designed for the stable versions of WhatsApp, if you face any bugs please switch to a stable version of " + appName + ".")
@@ -956,7 +977,9 @@ public class HomeFragment extends BaseFragment {
     private void setupReleaseChannelSelector() {
         syncReleaseChannelToInstalled();
         binding.releaseChannelGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) return;
+            if (!isChecked) {
+                return;
+            }
             String selectedChannel = checkedId == R.id.release_channel_beta_btn ? "beta" : "stable";
             String installedChannel = getInstalledReleaseChannel();
             if (!selectedChannel.equals(installedChannel)) {
@@ -1011,7 +1034,6 @@ public class HomeFragment extends BaseFragment {
     }
 
     // setModuleActiveState is replaced by updateModuleStatusUi
-
     private void markModuleActive() {
         var prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
         prefs.edit().putLong(PREF_MODULE_HEARTBEAT, System.currentTimeMillis()).apply();
@@ -1020,8 +1042,10 @@ public class HomeFragment extends BaseFragment {
     private boolean hasRecentModuleHeartbeat() {
         var prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
         long lastSeen = prefs.getLong(PREF_MODULE_HEARTBEAT, 0L);
-        if (lastSeen == 0) return false;
-        
+        if (lastSeen == 0) {
+            return false;
+        }
+
         long diff = System.currentTimeMillis() - lastSeen;
         // Expiry threshold: 24 hours for persistent status even if WhatsApp is force-stopped
         boolean active = diff < 24 * 60 * 60 * 1000L;
@@ -1071,7 +1095,9 @@ public class HomeFragment extends BaseFragment {
         var updateChecker = new UpdateChecker(requireActivity());
         updateChecker.setSilent(true);
         updateChecker.setOnUpdateFoundListener((version, tagName, changelog, publishedAt, downloadUrl) -> {
-            if (binding == null) return;
+            if (binding == null) {
+                return;
+            }
             this.pendingUpdateUrl = downloadUrl;
             this.pendingUpdateVersion = version;
 
@@ -1080,7 +1106,7 @@ public class HomeFragment extends BaseFragment {
             binding.updateNotificationTitle.setText(getString(titleResId, version));
             binding.updateNotificationChangelog.setText(changelog);
             binding.updateNotificationCard.setVisibility(View.VISIBLE);
-            
+
             // Animation for the banner
             var anim = AnimationUtils.loadAnimation(getContext(), R.anim.slide_up);
             binding.updateNotificationCard.startAnimation(anim);

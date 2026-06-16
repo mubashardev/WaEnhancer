@@ -12,7 +12,7 @@ on:
             release_url:
                 description: "URL of the release to link"
                 required: true
-                default: "https://github.com/mubashardev/WaEnhancerX/releases/latest"
+                default: "https://github.com/mubashardev/WaEnhancer/releases/latest"
 
 jobs:
     telegram-notify:
@@ -24,15 +24,15 @@ jobs:
             - name: Post release to Telegram channel
               if: ${{ env.BOT_TOKEN != '' && env.CHANNEL_ID != '' && !github.event.release.prerelease }}
               run: |
-                BODY="${{ github.event.release.body || inputs.release_body }}"
-                URL="${{ github.event.release.html_url || inputs.release_url }}"
-                TAG="${{ github.event.release.tag_name || 'Manual' }}"
-                
-                # Truncate body to avoid Telegram's 4096 character limit
-                CLEAN_BODY=$(printf '%s' "$BODY" | sed '/./,$!d' | cut -c 1-4000)
-                MESSAGE="$(printf 'STABLE %s\n\n%s\n\nRelease: %s' "$TAG" "$CLEAN_BODY" "$URL")"
+                  BODY="${{ github.event.release.body || inputs.release_body }}"
+                  URL="${{ github.event.release.html_url || inputs.release_url }}"
+                  TAG="${{ github.event.release.tag_name || 'Manual' }}"
 
-                curl -f -X POST "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage" \
-                  -d "chat_id=${{ secrets.CHANNEL_ID }}" \
-                  --data-urlencode "text=$MESSAGE" \
-                  -d "disable_web_page_preview=true"
+                  # Truncate body to avoid Telegram's 4096 character limit
+                  CLEAN_BODY=$(printf '%s' "$BODY" | sed '/./,$!d' | cut -c 1-4000)
+                  MESSAGE="$(printf 'STABLE %s\n\n%s\n\nRelease: %s' "$TAG" "$CLEAN_BODY" "$URL")"
+
+                  curl -f -X POST "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage" \
+                    -d "chat_id=${{ secrets.CHANNEL_ID }}" \
+                    --data-urlencode "text=$MESSAGE" \
+                    -d "disable_web_page_preview=true"

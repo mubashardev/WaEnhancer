@@ -3990,5 +3990,109 @@ public class Unobfuscator {
             return java.util.Collections.singletonList("Error: " + t.getMessage());
         }
     }
+
+    public synchronized static Method findVoiceTransitionMethod(ClassLoader classLoader, Class<?> fragmentClass, String recorderTypeName) {
+        try {
+            var classData = dexkit.getClassData(fragmentClass.getName());
+            if (classData != null) {
+                for (var md : classData.getMethods()) {
+                    if (java.lang.reflect.Modifier.isStatic(md.getModifiers())
+                            && md.getParamCount() == 1
+                            && md.getParamTypeNames().get(0).equals(fragmentClass.getName())
+                            && md.getReturnType().equals("void")) {
+                        boolean usesRecorderField = false;
+                        for (var uf : md.getUsingFields()) {
+                            if (uf.getField().getType().getName().equals(recorderTypeName)) {
+                                usesRecorderField = true;
+                                break;
+                            }
+                        }
+                        if (usesRecorderField) {
+                            Method m = md.getMethodInstance(classLoader);
+                            m.setAccessible(true);
+                            return m;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+        return null;
+    }
+
+    public synchronized static Method findVoiceSendTriggerMethod(ClassLoader classLoader, Class<?> fragmentClass, String recorderTypeName) {
+        try {
+            var classData = dexkit.getClassData(fragmentClass.getName());
+            if (classData != null) {
+                for (var md : classData.getMethods()) {
+                    if (!java.lang.reflect.Modifier.isStatic(md.getModifiers())
+                            && md.getParamCount() == 0
+                            && md.getReturnType().equals("void")) {
+                        boolean usesRecorderField = false;
+                        for (var uf : md.getUsingFields()) {
+                            if (uf.getField().getType().getName().equals(recorderTypeName)) {
+                                usesRecorderField = true;
+                                break;
+                            }
+                        }
+                        if (usesRecorderField) {
+                            Method m = md.getMethodInstance(classLoader);
+                            m.setAccessible(true);
+                            return m;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+        return null;
+    }
+
+    public synchronized static Field findVoiceDurationField(ClassLoader classLoader, Method setDurationMethod) {
+        try {
+            var methodData = dexkit.getMethodData(setDurationMethod);
+            if (methodData != null) {
+                for (var uf : methodData.getUsingFields()) {
+                    if (uf.getField().getType().getName().equals("long")) {
+                        Field f = uf.getField().getFieldInstance(classLoader);
+                        if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                            f.setAccessible(true);
+                            return f;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+        return null;
+    }
+
+    public synchronized static Method findVoiceGetPreviewStateMethod(ClassLoader classLoader, Class<?> delegateClass, String recorderTypeName, Class<?> stateSuperClass) {
+        try {
+            var recorderClassData = dexkit.getClassData(recorderTypeName);
+            if (recorderClassData != null) {
+                for (var md : recorderClassData.getMethods()) {
+                    for (var inv : md.getInvokes()) {
+                        if (inv.getClassName().equals(delegateClass.getName())) {
+                            try {
+                                Method targetMethod = delegateClass.getDeclaredMethod(inv.getName(), delegateClass);
+                                if (java.lang.reflect.Modifier.isStatic(targetMethod.getModifiers())
+                                        && stateSuperClass.isAssignableFrom(targetMethod.getReturnType())) {
+                                    targetMethod.setAccessible(true);
+                                    return targetMethod;
+                                }
+                            } catch (Throwable ignored) {}
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+        return null;
+    }
 }
 

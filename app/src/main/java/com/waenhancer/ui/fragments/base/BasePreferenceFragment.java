@@ -44,8 +44,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         implements SharedPreferences.OnSharedPreferenceChangeListener {
-    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancerX/releases";
-    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancerX/releases/latest";
+
+    private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
+    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
     protected SharedPreferences mPrefs;
     // Default keybox verify results are persisted in SharedPreferences via KeyboxVerificationImpl (pro module).
     private boolean suppressRestartBroadcast;
@@ -61,7 +62,8 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             if (changes != null && !changes.isEmpty()) {
                 titles = new java.util.ArrayList<>(changes);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // Send to both WhatsApp variants (must target package explicitly)
         for (String pkg : new String[]{"com.whatsapp", "com.whatsapp.w4b"}) {
@@ -83,30 +85,61 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
         getPreferenceManager().setPreferenceDataStore(new androidx.preference.PreferenceDataStore() {
             @Override
-            public void putString(String key, @Nullable String value) { mPrefs.edit().putString(key, value).apply(); }
+            public void putString(String key, @Nullable String value) {
+                mPrefs.edit().putString(key, value).apply();
+            }
+
             @Override
             @Nullable
-            public String getString(String key, @Nullable String defValue) { return mPrefs.getString(key, defValue); }
+            public String getString(String key, @Nullable String defValue) {
+                return mPrefs.getString(key, defValue);
+            }
+
             @Override
-            public void putBoolean(String key, boolean value) { mPrefs.edit().putBoolean(key, value).apply(); }
+            public void putBoolean(String key, boolean value) {
+                mPrefs.edit().putBoolean(key, value).apply();
+            }
+
             @Override
-            public boolean getBoolean(String key, boolean defValue) { return mPrefs.getBoolean(key, defValue); }
+            public boolean getBoolean(String key, boolean defValue) {
+                return mPrefs.getBoolean(key, defValue);
+            }
+
             @Override
-            public void putInt(String key, int value) { mPrefs.edit().putInt(key, value).apply(); }
+            public void putInt(String key, int value) {
+                mPrefs.edit().putInt(key, value).apply();
+            }
+
             @Override
-            public int getInt(String key, int defValue) { return mPrefs.getInt(key, defValue); }
+            public int getInt(String key, int defValue) {
+                return mPrefs.getInt(key, defValue);
+            }
+
             @Override
-            public void putFloat(String key, float value) { mPrefs.edit().putFloat(key, value).apply(); }
+            public void putFloat(String key, float value) {
+                mPrefs.edit().putFloat(key, value).apply();
+            }
+
             @Override
-            public float getFloat(String key, float defValue) { return mPrefs.getFloat(key, defValue); }
+            public float getFloat(String key, float defValue) {
+                return mPrefs.getFloat(key, defValue);
+            }
+
             @Override
-            public void putLong(String key, long value) { mPrefs.edit().putLong(key, value).apply(); }
+            public void putLong(String key, long value) {
+                mPrefs.edit().putLong(key, value).apply();
+            }
+
             @Override
-            public long getLong(String key, long defValue) { return mPrefs.getLong(key, defValue); }
+            public long getLong(String key, long defValue) {
+                return mPrefs.getLong(key, defValue);
+            }
+
             @Override
             public void putStringSet(String key, @Nullable Set<String> values) {
                 mPrefs.edit().putStringSet(key, values).apply();
             }
+
             @Override
             @Nullable
             public Set<String> getStringSet(String key, @Nullable Set<String> defValues) {
@@ -153,7 +186,8 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                 );
                 recyclerView.setClipToPadding(false);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     @Override
@@ -210,7 +244,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             com.waenhancer.ui.helpers.BottomSheetHelper.showSingleChoice(
                     getContext(),
                     listPref.getDialogTitle() != null ? listPref.getDialogTitle().toString()
-                            : listPref.getTitle() != null ? listPref.getTitle().toString() : "",
+                    : listPref.getTitle() != null ? listPref.getTitle().toString() : "",
                     listPref.getEntries(),
                     listPref.getEntryValues(),
                     listPref.getValue(),
@@ -225,7 +259,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             com.waenhancer.ui.helpers.BottomSheetHelper.showMultiChoice(
                     getContext(),
                     multiPref.getDialogTitle() != null ? multiPref.getDialogTitle().toString()
-                            : multiPref.getTitle() != null ? multiPref.getTitle().toString() : "",
+                    : multiPref.getTitle() != null ? multiPref.getTitle().toString() : "",
                     multiPref.getEntries(),
                     multiPref.getEntryValues(),
                     multiPref.getValues(),
@@ -240,7 +274,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             com.waenhancer.ui.helpers.BottomSheetHelper.showInput(
                     getContext(),
                     editPref.getDialogTitle() != null ? editPref.getDialogTitle().toString()
-                            : editPref.getTitle() != null ? editPref.getTitle().toString() : "",
+                    : editPref.getTitle() != null ? editPref.getTitle().toString() : "",
                     editPref.getText(),
                     getString(android.R.string.ok),
                     value -> {
@@ -307,26 +341,26 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             }
             updateKeyboxVerifySummary();
         }
-        
+
         // Flag that a restart is needed for the changes to take effect in WhatsApp
         // Ignore internal/meta keys to avoid synchronization loops
-        boolean isInternalKey = s == null || 
-                s.equals("need_restart") || 
-                s.equals("release_channel") || 
-                s.equals("pending_restart_changes") || 
-                s.equals("ignored_version") || 
-                s.equals("ignored_timestamp") || 
-                s.equals("update_alert_frequency") || 
-                s.equals("last_update_check") || 
-                s.equals("show_hook_toast") || 
-                s.equals("open_waex") ||
-                s.equals("open_settings_mode") ||
-                s.equals("keybox_verify_status") ||
-                s.equals("keybox_verify_time");
+        boolean isInternalKey = s == null
+                || s.equals("need_restart")
+                || s.equals("release_channel")
+                || s.equals("pending_restart_changes")
+                || s.equals("ignored_version")
+                || s.equals("ignored_timestamp")
+                || s.equals("update_alert_frequency")
+                || s.equals("last_update_check")
+                || s.equals("show_hook_toast")
+                || s.equals("open_waex")
+                || s.equals("open_settings_mode")
+                || s.equals("keybox_verify_status")
+                || s.equals("keybox_verify_time");
 
         if (!isInternalKey) {
             ;
-            
+
             // Track what changed for the restart dialog
             try {
                 androidx.preference.Preference pref = findPreference(s);
@@ -344,18 +378,19 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             try {
                 String authority = BuildConfig.APPLICATION_ID + ".hookprovider";
                 getContext().getContentResolver().notifyChange(
-                        Uri.parse("content://" + authority + "/preferences"), 
+                        Uri.parse("content://" + authority + "/preferences"),
                         null
                 );
-                
+
                 Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
                 intent.setPackage("com.whatsapp"); // Target WhatsApp if it's running
                 getContext().sendBroadcast(intent);
-                
+
                 Intent intent2 = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
                 intent2.setPackage("com.whatsapp.w4b"); // Target WhatsApp Business
                 getContext().sendBroadcast(intent2);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             mPrefs.edit().putBoolean("need_restart", true).commit();
         }
@@ -437,8 +472,8 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         if (newValue instanceof Boolean && (Boolean) newValue) {
             if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager())
                     || (Build.VERSION.SDK_INT < Build.VERSION_CODES.R
-                            && ContextCompat.checkSelfPermission(requireContext(),
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
+                    && ContextCompat.checkSelfPermission(requireContext(),
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
                 App.showRequestStoragePermission(requireActivity());
                 return false;
             }
@@ -533,7 +568,8 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             int callType = 0;
             try {
                 callType = Integer.parseInt(mPrefs.getString("call_privacy", "0"));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
             switch (callType) {
                 case 3:
                     callBlockContacts.setEnabled(true);
@@ -558,7 +594,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
     private void updateGroupPref(String key, boolean supported, int supportedSummary, int unsupportedSummary) {
         var pref = findPreference(key);
-        if (pref == null) return;
+        if (pref == null) {
+            return;
+        }
         if (supported) {
             pref.setEnabled(true);
             pref.setSummary(supportedSummary);
@@ -572,15 +610,23 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     private boolean isVersionAtMost(String versionName, int major, int minor, int patch) {
-        if (versionName == null) return true;
+        if (versionName == null) {
+            return true;
+        }
         var parts = versionName.split("\\.");
-        if (parts.length < 3) return true;
+        if (parts.length < 3) {
+            return true;
+        }
         try {
             int vMajor = Integer.parseInt(parts[0]);
             int vMinor = Integer.parseInt(parts[1]);
             int vPatch = Integer.parseInt(parts[2]);
-            if (vMajor != major) return vMajor < major;
-            if (vMinor != minor) return vMinor < minor;
+            if (vMajor != major) {
+                return vMajor < major;
+            }
+            if (vMinor != minor) {
+                return vMinor < minor;
+            }
             return vPatch <= patch;
         } catch (NumberFormatException ignored) {
             return true;
@@ -588,8 +634,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     public void setDisplayHomeAsUpEnabled(boolean enabled) {
-        if (getActivity() == null)
+        if (getActivity() == null) {
             return;
+        }
         var actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(enabled);
@@ -602,18 +649,29 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     private boolean isVersionAtLeast(String versionName, int major, int minor, int patch) {
-        if (versionName == null) return false;
+        if (versionName == null) {
+            return false;
+        }
         try {
             String[] parts = versionName.split("[^0-9]+");
             int[] nums = new int[]{0, 0, 0};
             int idx = 0;
             for (String p : parts) {
-                if (p == null || p.isEmpty()) continue;
-                if (idx < 3) nums[idx++] = Integer.parseInt(p);
-                else break;
+                if (p == null || p.isEmpty()) {
+                    continue;
+                }
+                if (idx < 3) {
+                    nums[idx++] = Integer.parseInt(p);
+                } else {
+                    break;
+                }
             }
-            if (nums[0] != major) return nums[0] > major;
-            if (nums[1] != minor) return nums[1] > minor;
+            if (nums[0] != major) {
+                return nums[0] > major;
+            }
+            if (nums[1] != minor) {
+                return nums[1] > minor;
+            }
             return nums[2] >= patch;
         } catch (Exception e) {
             return false;
@@ -621,12 +679,13 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     /**
-     * Scroll to a specific preference by key.
-     * This is called when navigating from search results.
+     * Scroll to a specific preference by key. This is called when navigating
+     * from search results.
      */
     public void scrollToPreference(String preferenceKey) {
-        if (preferenceKey == null)
+        if (preferenceKey == null) {
             return;
+        }
 
         var rootView = getView();
         if (rootView == null) {
@@ -636,7 +695,10 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         // Small delay to ensure preference screen is fully loaded
         if (rootView != null) {
             rootView.postDelayed(() -> {
-                if (!isAdded()) return; // Fragment not attached
+                if (!isAdded()) {
+                    return; // Fragment not attached
+
+                }
                 var preference = findPreference(preferenceKey);
                 if (preference != null) {
                     scrollToPreference(preference);
@@ -652,13 +714,17 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
      */
     private void highlightPreference(androidx.preference.Preference preference) {
         var rootView = getView();
-        if (rootView == null || preference == null || preference.getKey() == null) return;
+        if (rootView == null || preference == null || preference.getKey() == null) {
+            return;
+        }
 
         final String targetKey = preference.getKey();
 
         // Wait for RecyclerView to lay out items after scroll
         rootView.postDelayed(() -> {
-            if (!isAdded()) return;
+            if (!isAdded()) {
+                return;
+            }
 
             androidx.recyclerview.widget.RecyclerView recyclerView;
             try {
@@ -667,12 +733,16 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                 return;
             }
 
-            if (recyclerView == null || getPreferenceScreen() == null) return;
+            if (recyclerView == null || getPreferenceScreen() == null) {
+                return;
+            }
 
             boolean found = false;
             for (int i = 0; i < recyclerView.getChildCount(); i++) {
                 android.view.View child = recyclerView.getChildAt(i);
-                if (child == null) continue;
+                if (child == null) {
+                    continue;
+                }
 
                 androidx.recyclerview.widget.RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
                 if (holder instanceof androidx.preference.PreferenceViewHolder) {
@@ -703,14 +773,18 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     private void tryHighlightAgain(String targetKey) {
-        if (!isAdded()) return;
+        if (!isAdded()) {
+            return;
+        }
         androidx.recyclerview.widget.RecyclerView recyclerView;
         try {
             recyclerView = getListView();
         } catch (IllegalStateException e) {
             return;
         }
-        if (recyclerView == null) return;
+        if (recyclerView == null) {
+            return;
+        }
 
         for (int i = 0; i < recyclerView.getChildCount(); i++) {
             android.view.View child = recyclerView.getChildAt(i);
@@ -736,14 +810,16 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
     private androidx.preference.Preference findPreferenceAtPosition(androidx.preference.PreferenceGroup group,
             int targetPosition) {
-        if (group == null)
+        if (group == null) {
             return null;
+        }
 
         int currentPosition = 0;
         for (int i = 0; i < group.getPreferenceCount(); i++) {
             androidx.preference.Preference pref = group.getPreference(i);
-            if (pref == null)
+            if (pref == null) {
                 continue;
+            }
 
             if (currentPosition == targetPosition) {
                 return pref;
@@ -780,8 +856,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
      * Animate a highlight effect on the view.
      */
     private void animateHighlight(android.view.View view) {
-        if (view == null || getContext() == null)
+        if (view == null || getContext() == null) {
             return;
+        }
 
         // Get primary color using android attribute
         android.util.TypedValue typedValue = new android.util.TypedValue();
@@ -814,7 +891,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     private void initializeReleaseChannelPreference() {
         try {
             var pref = findPreference("release_channel");
-            if (pref == null) return;
+            if (pref == null) {
+                return;
+            }
 
             String installedVersion = "";
             try {
@@ -841,11 +920,15 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
     private void setupReleaseChannelPreference() {
         var preference = findPreference("release_channel");
-        if (!(preference instanceof ListPreference)) return;
+        if (!(preference instanceof ListPreference)) {
+            return;
+        }
 
         ListPreference releaseChannelPreference = (ListPreference) preference;
         releaseChannelPreference.setOnPreferenceChangeListener((pref, newValue) -> {
-            if (!(newValue instanceof String)) return false;
+            if (!(newValue instanceof String)) {
+                return false;
+            }
 
             String selectedChannel = (String) newValue;
             String installedChannel = getInstalledReleaseChannel();
@@ -942,8 +1025,12 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
         // Add live spooferScore to cached cert score
         int spooferScore = 0;
-        if (hookActive) spooferScore += 5;
-        if (attestationSpoofed) spooferScore += 5;
+        if (hookActive) {
+            spooferScore += 5;
+        }
+        if (attestationSpoofed) {
+            spooferScore += 5;
+        }
 
         if (score >= 0) {
             score += spooferScore;
@@ -982,7 +1069,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                 }
             }
         }
-    }    private String getDefaultSpooferXml() {
+    }
+
+    private String getDefaultSpooferXml() {
         return """
                 <AndroidAttestation>
                     <NumberOfKeyboxes>1</NumberOfKeyboxes>
@@ -1234,11 +1323,13 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
     private boolean isBootloaderSpooferActive() {
         android.content.Context context = getContext();
-        if (context == null) return false;
-        
+        if (context == null) {
+            return false;
+        }
+
         String pkg = context.getPackageName();
         boolean isInWhatsApp = "com.whatsapp".equals(pkg) || "com.whatsapp.w4b".equals(pkg);
-        
+
         if (isInWhatsApp) {
             try {
                 return context.getPackageManager().hasSystemFeature("com.waenhancer.spoofer.active_check");
@@ -1247,8 +1338,10 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             }
         } else {
             boolean enabled = mPrefs.getBoolean("bootloader_spoofer", false);
-            if (!enabled) return false;
-            
+            if (!enabled) {
+                return false;
+            }
+
             boolean hasXposed = false;
             try {
                 Class.forName("de.robv.android.xposed.XposedBridge");
@@ -1260,7 +1353,8 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                         pm.getPackageInfo(managerPkg, 0);
                         hasXposed = true;
                         break;
-                    } catch (PackageManager.NameNotFoundException ignored) {}
+                    } catch (PackageManager.NameNotFoundException ignored) {
+                    }
                 }
             }
             if (!hasXposed) {
@@ -1297,7 +1391,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             keyPairGenerator.generateKeyPair();
 
             java.security.cert.Certificate[] chain = keyStore.getCertificateChain("waenhancer_attestation_test_key");
-            
+
             keyStore.deleteEntry("waenhancer_attestation_test_key");
 
             if (chain == null || chain.length == 0) {

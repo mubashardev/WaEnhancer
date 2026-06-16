@@ -190,10 +190,10 @@ public class MenuStatusListener extends Feature {
         return "Menu Status";
     }
 
-    public abstract static class OnMenuItemStatusListener {
+    public interface OnMenuItemStatusListener {
 
-        public abstract MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex);
+        MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex);
 
-        public abstract void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex);
+        void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex);
     }
 }

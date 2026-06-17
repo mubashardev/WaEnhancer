@@ -1,12 +1,13 @@
-package com.waenhancer.api.services;
+package com.waex.api.services;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.View;
-import com.waenhancer.api.model.UserJidDTO;
+import android.graphics.drawable.Drawable;
+import com.waex.api.model.UserJidDTO;
 
-public interface IWhatsAppContextService {
+public interface ICoreBridge {
     Activity getCurrentActivity();
     Context getApplicationContext();
     SharedPreferences getMainPrefs();
@@ -26,4 +27,9 @@ public interface IWhatsAppContextService {
     SharedPreferences getModulePrefs();
     int getModuleResourceIdentifier(String name, String defType);
     boolean sendMessage(UserJidDTO targetJid, String messageText);
+
+    Drawable getDrawable(int resId);
+    Drawable getModuleDrawable(String name);
+    String getModuleString(String name);
+    boolean isBootloaderSpooferActive();
 }

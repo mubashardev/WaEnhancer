@@ -1,4 +1,4 @@
-package com.waenhancer.api.model;
+package com.waex.api.model;
 
 public class CustomPrivacyDTO {
     private final String jsonString;

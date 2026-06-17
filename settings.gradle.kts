@@ -23,10 +23,13 @@ dependencyResolutionManagement {
 
 rootProject.name = "Wa Enhancer X"
 include(":app")
+include(":api")
+include(":pro")
+project(":pro").projectDir = file("pro")
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Private submodule detection
-// The private repo lives at app/src/pro (git submodule).
+// The private repo lives at pro (git submodule).
 // If the submodule is populated (has actual source files), we expose it to the
 // app build script via the "hasProSources" extra property so it can wire up
 // the additional source set.  Forks / CI runs without access to the private
@@ -35,7 +38,7 @@ include(":app")
 val hasProSources: Boolean = if (providers.gradleProperty("hasProSourcesOverride").isPresent) {
     providers.gradleProperty("hasProSourcesOverride").get().toBoolean()
 } else {
-    val proDir = file("app/src/pro")
+    val proDir = file("pro")
     proDir.exists() &&
         proDir.walkTopDown()
             .filter { it.isFile }

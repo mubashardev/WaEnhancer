@@ -39,7 +39,7 @@ public class KeyboxValidator {
 
         try {
             Class<?> implClass = Class.forName("com.waenhancer.pro.utils.KeyboxValidatorImpl");
-            java.lang.reflect.Method method = implClass.getMethod("validate", String.class, ValidationResult.class);
+            java.lang.reflect.Method method = implClass.getMethod("validate", String.class, Object.class);
             method.invoke(null, xmlContent, result);
         } catch (Exception e) {
             result.parsed = false;

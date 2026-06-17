@@ -1,4 +1,4 @@
-package com.waenhancer.api.model;
+package com.waex.api.model;
 
 public class MessageDTO {
     private final MessageKeyDTO key;

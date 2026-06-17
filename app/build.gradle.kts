@@ -191,28 +191,7 @@ android {
         generatePalette = true
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Conditionally add the private pro source set
-    // When the submodule is populated, Gradle will compile those sources
-    // as part of the main app — no separate module, no separate APK.
-    // ─────────────────────────────────────────────────────────────────────
-    if (hasProSources) {
-        sourceSets {
-            named("main") {
-                java.srcDirs("src/pro/java", "src/pro/kotlin")
-                res.srcDirs("src/pro/res")
-                assets.srcDirs("src/pro/assets")
-                aidl.srcDirs("src/pro/aidl")
-            }
-        }
-        // Native build for pro security layer
-        externalNativeBuild {
-            cmake {
-                path = file("src/pro/jni/CMakeLists.txt")
-                version = "3.22.1"
-            }
-        }
-    }
+
 
     applicationVariants.all {
         val variant = this
@@ -228,6 +207,7 @@ android {
 
 
 dependencies {
+    implementation(project(":api"))
     implementation(libs.blurview)
     implementation(libs.colorpicker)
     implementation(libs.dexkit)

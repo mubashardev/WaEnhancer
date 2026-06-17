@@ -286,7 +286,7 @@ public class HomeFragment extends BaseFragment {
                                     + "\n---\n"
                                     + description + "\n";
 
-                            String url = "https://github.com/mubashardev/WaEnhancerX/issues/new?title="
+                            String url = "https://github.com/mubashardev/WaEnhancer/issues/new?title="
                                     + java.net.URLEncoder.encode(title, "UTF-8") + "&body="
                                     + java.net.URLEncoder.encode(body, "UTF-8");
                             openUrl(requireContext(), url);
@@ -310,7 +310,7 @@ public class HomeFragment extends BaseFragment {
 
         binding.githubBtn.setOnClickListener(view -> {
             animateClick(view);
-            openUrl(requireContext(), "https://github.com/mubashardev/WaEnhancerX/issues");
+            openUrl(requireContext(), "https://github.com/mubashardev/WaEnhancer/issues");
         });
 
         binding.clearCacheBtn.setOnClickListener(view -> {

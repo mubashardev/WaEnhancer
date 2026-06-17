@@ -48,7 +48,7 @@ public class AboutActivity extends BaseActivity {
     private ContributorAdapter adapter;
     private List<Contributor> contributorList = new ArrayList<>();
 
-    private static final String API_URL = "https://api.github.com/repos/mubashardev/WaEnhancerX/contributors";
+    private static final String API_URL = "https://api.github.com/repos/mubashardev/WaEnhancer/contributors";
     private static final OkHttpClient client = new OkHttpClient();
 
     @Override
@@ -58,7 +58,7 @@ public class AboutActivity extends BaseActivity {
         setContentView(binding.getRoot());
 
         binding.btnTelegram.setOnClickListener(v -> openTelegramChannel());
-        binding.btnGithub.setOnClickListener(view -> openUrl("https://github.com/mubashardev/WaEnhancerX/issues"));
+        binding.btnGithub.setOnClickListener(view -> openUrl("https://github.com/mubashardev/WaEnhancer/issues"));
 
         adapter = new ContributorAdapter();
         binding.rvContributors.setAdapter(adapter);
@@ -194,6 +194,7 @@ public class AboutActivity extends BaseActivity {
     }
 
     private static class Contributor {
+
         String login;
         String avatarUrl;
         String htmlUrl;
@@ -232,6 +233,7 @@ public class AboutActivity extends BaseActivity {
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
+
             ImageView ivAvatar;
 
             ViewHolder(View itemView) {

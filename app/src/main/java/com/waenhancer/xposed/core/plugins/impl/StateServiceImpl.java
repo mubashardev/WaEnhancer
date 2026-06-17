@@ -1,11 +1,11 @@
 package com.waenhancer.xposed.core.plugins.impl;
 
 import android.app.Activity;
-import com.waenhancer.api.model.CustomPrivacyDTO;
-import com.waenhancer.api.model.MessageDTO;
-import com.waenhancer.api.model.MessageKeyDTO;
-import com.waenhancer.api.model.UserJidDTO;
-import com.waenhancer.api.services.IStateService;
+import com.waex.api.model.CustomPrivacyDTO;
+import com.waex.api.model.MessageDTO;
+import com.waex.api.model.MessageKeyDTO;
+import com.waex.api.model.UserJidDTO;
+import com.waex.api.services.IStateService;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.features.privacy.CustomPrivacy;
@@ -171,5 +171,17 @@ public class StateServiceImpl implements IStateService {
             fMsg.isViewOnce(),
             mediaFile != null ? mediaFile.getAbsolutePath() : null
         );
+    }
+
+    @Override
+    public long getMessageRowId(Object messageObj) {
+        if (messageObj == null) return -1L;
+        return new FMessageWpp(messageObj).getRowId();
+    }
+
+    @Override
+    public java.io.File getMessageMediaFile(Object messageObj) {
+        if (messageObj == null) return null;
+        return new FMessageWpp(messageObj).getMediaFile();
     }
 }

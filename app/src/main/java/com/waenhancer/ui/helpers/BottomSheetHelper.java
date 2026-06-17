@@ -33,16 +33,18 @@ import java.util.Set;
 public class BottomSheetHelper {
 
     public interface OnConfirmListener {
+
         void onConfirm();
     }
 
     public interface OnInputConfirmListener {
+
         void onConfirm(String input);
     }
 
     /**
-     * Show a confirmation bottom sheet. If isDestructive is true, the action button
-     * is red.
+     * Show a confirmation bottom sheet. If isDestructive is true, the action
+     * button is red.
      */
     public static void showConfirmation(Context context, String title, String message,
             String confirmText, boolean isDestructive, OnConfirmListener onConfirm) {
@@ -140,10 +142,12 @@ public class BottomSheetHelper {
     }
 
     public interface OnSingleChoiceListener {
+
         void onChoice(int index, String value);
     }
 
     public interface OnMultiChoiceListener {
+
         void onChoices(Set<String> values);
     }
 
@@ -343,7 +347,7 @@ public class BottomSheetHelper {
 
                     new android.os.Handler(android.os.Looper.getMainLooper())
                             .post(() -> parseAndPopulateProfile(context, view, bottomSheet, json, htmlUrl, avatarUrl,
-                                    contributions));
+                            contributions));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -365,8 +369,9 @@ public class BottomSheetHelper {
             String blog = obj.optString("blog", "");
             String htmlUrl = obj.optString("html_url", fallbackHtmlUrl);
 
-            if (name.isEmpty() || name.equals("null"))
+            if (name.isEmpty() || name.equals("null")) {
                 name = login;
+            }
 
             com.google.android.material.textview.MaterialTextView tvName = view.findViewById(R.id.bsName);
             com.google.android.material.textview.MaterialTextView tvLocation = view.findViewById(R.id.bsLocation);
@@ -453,8 +458,9 @@ public class BottomSheetHelper {
                 btnWebsite.setVisibility(View.VISIBLE);
                 btnWebsite.setOnClickListener(v -> {
                     String url = blog;
-                    if (!url.startsWith("http"))
+                    if (!url.startsWith("http")) {
                         url = "https://" + url;
+                    }
                     try {
                         context.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
                                 android.net.Uri.parse(url)));
@@ -482,7 +488,9 @@ public class BottomSheetHelper {
 
             // shimmerLayout.stopShimmer();
             // shimmerLayout.setVisibility(View.GONE);
-            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+            if (progressIndicator != null) {
+                progressIndicator.setVisibility(View.GONE);
+            }
             contentLayout.setVisibility(View.VISIBLE);
 
         } catch (Exception e) {
@@ -527,7 +535,7 @@ public class BottomSheetHelper {
         }
 
         okhttp3.Request request = new okhttp3.Request.Builder()
-                .url("https://api.github.com/repos/mubashardev/WaEnhancerX/stats/contributors")
+                .url("https://api.github.com/repos/mubashardev/WaEnhancer/stats/contributors")
                 .header("User-Agent", "WaEnhancerX-App")
                 .header("Accept", "application/vnd.github.v3+json")
                 .build();
@@ -624,7 +632,9 @@ public class BottomSheetHelper {
 
             // shimmerLayout.stopShimmer();
             // shimmerLayout.setVisibility(View.GONE);
-            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+            if (progressIndicator != null) {
+                progressIndicator.setVisibility(View.GONE);
+            }
             contentLayout.setVisibility(View.VISIBLE);
         } catch (Exception e) {
             e.printStackTrace();
@@ -661,7 +671,7 @@ public class BottomSheetHelper {
         LinearLayout refinedCard = createPreviewCard(context, "Refined (Pro)", true, density, currentValue.equals("pro"));
 
         LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-        cardLp.setMargins((int)(4*density), 0, (int)(4*density), 0);
+        cardLp.setMargins((int) (4 * density), 0, (int) (4 * density), 0);
         classicCard.setLayoutParams(cardLp);
         refinedCard.setLayoutParams(cardLp);
 
@@ -710,13 +720,13 @@ public class BottomSheetHelper {
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
-        
+
         GradientDrawable gd = new GradientDrawable();
         gd.setCornerRadius(12 * density);
-        
-        boolean isNight = (context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) 
+
+        boolean isNight = (context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
                 == android.content.res.Configuration.UI_MODE_NIGHT_YES;
-                
+
         int strokeColor;
         if (isSelected) {
             int resolved = com.waenhancer.xposed.utils.DesignUtils.resolveColorAttr(context, android.R.attr.colorPrimary);
@@ -724,16 +734,16 @@ public class BottomSheetHelper {
         } else {
             strokeColor = isNight ? 0x22FFFFFF : 0x15000000;
         }
-        int strokeWidth = isSelected ? (int)(2 * density) : (int)(1 * density);
+        int strokeWidth = isSelected ? (int) (2 * density) : (int) (1 * density);
         int bgColor = isNight ? 0xFF2D2D30 : 0xFFFFFFFF;
-        
+
         gd.setColor(bgColor);
         gd.setStroke(strokeWidth, strokeColor);
         card.setBackground(gd);
-        
+
         int pad = (int) (8 * density);
         card.setPadding(pad, pad, pad, pad);
-        
+
         MaterialTextView title = new MaterialTextView(context);
         title.setText(label);
         title.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12);
@@ -743,31 +753,31 @@ public class BottomSheetHelper {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        titleLp.setMargins(0, (int)(4*density), 0, (int)(8 * density));
+        titleLp.setMargins(0, (int) (4 * density), 0, (int) (8 * density));
         title.setLayoutParams(titleLp);
         card.addView(title);
-        
+
         android.widget.ImageView gifView = new android.widget.ImageView(context);
         gifView.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
         gifView.setAdjustViewBounds(true);
         LinearLayout.LayoutParams gifLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                (int)(110 * density)
+                (int) (110 * density)
         );
         gifView.setLayoutParams(gifLp);
         card.addView(gifView);
-        
+
         String url = isPro
-                ? "https://raw.githubusercontent.com/mubashardev/WaEnhancerX/beta/demo/pill_pro.gif"
-                : "https://raw.githubusercontent.com/mubashardev/WaEnhancerX/beta/demo/pill_regular.gif";
-                
+                ? "https://raw.githubusercontent.com/mubashardev/WaEnhancer/beta/demo/pill_pro.gif"
+                : "https://raw.githubusercontent.com/mubashardev/WaEnhancer/beta/demo/pill_regular.gif";
+
         com.bumptech.glide.Glide.with(context)
                 .asGif()
                 .load(url)
                 .placeholder(R.drawable.ic_image)
                 .error(android.R.drawable.stat_notify_error)
                 .into(gifView);
-        
+
         return card;
     }
 }

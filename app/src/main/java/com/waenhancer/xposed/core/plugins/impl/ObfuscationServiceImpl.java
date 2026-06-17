@@ -1,6 +1,6 @@
 package com.waenhancer.xposed.core.plugins.impl;
 
-import com.waenhancer.api.services.IObfuscationService;
+import com.waex.api.services.IObfuscationService;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

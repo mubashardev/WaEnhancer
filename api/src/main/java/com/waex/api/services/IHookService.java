@@ -1,4 +1,4 @@
-package com.waenhancer.api.services;
+package com.waex.api.services;
 
 import java.lang.reflect.Member;
 

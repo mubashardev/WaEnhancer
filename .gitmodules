@@ -1,3 +1,3 @@
-[submodule "app/src/pro"]
-	path = app/src/pro
+[submodule "pro"]
+	path = pro
 	url = https://github.com/mubashardev/WaEnhancerX-Pro.git

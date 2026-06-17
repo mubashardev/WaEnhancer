@@ -1,6 +1,6 @@
 package com.waenhancer.xposed.core.plugins.impl;
 
-import com.waenhancer.api.services.IHookService;
+import com.waex.api.services.IHookService;
 import java.lang.reflect.Member;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;

@@ -4,19 +4,30 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.View;
-import com.waenhancer.api.model.UserJidDTO;
-import com.waenhancer.api.services.IWhatsAppContextService;
+import android.graphics.drawable.Drawable;
+import com.waex.api.model.UserJidDTO;
+import com.waex.api.services.ICoreBridge;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
 import com.waenhancer.xposed.utils.Utils;
 import com.waenhancer.xposed.utils.XPrefManager;
 
-public class WhatsAppContextServiceImpl implements IWhatsAppContextService {
+public class CoreBridgeImpl implements ICoreBridge {
 
     private final SharedPreferences mainPrefs;
 
-    public WhatsAppContextServiceImpl(SharedPreferences mainPrefs) {
+    public CoreBridgeImpl(SharedPreferences mainPrefs) {
         this.mainPrefs = mainPrefs;
+    }
+
+    private Context getModuleContext() {
+        Context app = Utils.getApplication();
+        if (app != null) {
+            try {
+                return app.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
+            } catch (Throwable ignored) {}
+        }
+        return null;
     }
 
     @Override
@@ -136,5 +147,49 @@ public class WhatsAppContextServiceImpl implements IWhatsAppContextService {
         if (targetJid == null || targetJid.getRawJid() == null) return false;
         Object rawJid = WppCore.createUserJid(targetJid.getRawJid());
         return WppCore.sendMessage(rawJid, messageText);
+    }
+
+    @Override
+    public Drawable getDrawable(int resId) {
+        Context app = Utils.getApplication();
+        if (app != null) {
+            return androidx.core.content.ContextCompat.getDrawable(app, resId);
+        }
+        return null;
+    }
+
+    @Override
+    public Drawable getModuleDrawable(String name) {
+        Context modCtx = getModuleContext();
+        if (modCtx != null) {
+            int resId = modCtx.getResources().getIdentifier(name, "drawable", "com.waenhancer");
+            if (resId != 0) {
+                return modCtx.getDrawable(resId);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public String getModuleString(String name) {
+        Context modCtx = getModuleContext();
+        if (modCtx != null) {
+            int resId = modCtx.getResources().getIdentifier(name, "string", "com.waenhancer");
+            if (resId != 0) {
+                return modCtx.getString(resId);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isBootloaderSpooferActive() {
+        Context app = Utils.getApplication();
+        if (app != null) {
+            try {
+                return app.getPackageManager().hasSystemFeature("com.waenhancer.spoofer.active_check");
+            } catch (Throwable ignored) {}
+        }
+        return false;
     }
 }

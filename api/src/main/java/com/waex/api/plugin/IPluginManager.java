@@ -1,4 +1,4 @@
-package com.waenhancer.api.plugin;
+package com.waex.api.plugin;
 
 import java.util.Collection;
 

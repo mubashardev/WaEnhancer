@@ -1,8 +1,8 @@
-package com.waenhancer.api.services;
+package com.waex.api.services;
 
-import com.waenhancer.api.model.CustomPrivacyDTO;
-import com.waenhancer.api.model.MessageDTO;
-import com.waenhancer.api.model.UserJidDTO;
+import com.waex.api.model.CustomPrivacyDTO;
+import com.waex.api.model.MessageDTO;
+import com.waex.api.model.UserJidDTO;
 
 public interface IStateService {
     void addListenerActivity(Object listener);
@@ -23,4 +23,6 @@ public interface IStateService {
     CustomPrivacyDTO getCustomPrivacy(String phoneNumber);
     boolean isJidNull(UserJidDTO userJid);
     boolean isActivityResumed(String simpleName);
+    long getMessageRowId(Object messageObj);
+    java.io.File getMessageMediaFile(Object messageObj);
 }

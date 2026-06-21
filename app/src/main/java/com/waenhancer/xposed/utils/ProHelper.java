@@ -690,36 +690,9 @@ public class ProHelper {
                 return;
             }
 
-            // Create a Context backed by com.waex.pro so LayoutInflater can resolve
-            // pro-module layouts and drawables (bottom_sheet_keybox_verify, etc.)
-            Context proContext = null;
-            try {
-                proContext = context.createPackageContext(
-                    "com.waex.pro",
-                    Context.CONTEXT_IGNORE_SECURITY | Context.CONTEXT_INCLUDE_CODE
-                );
-            } catch (Throwable e) {
-                android.util.Log.w("WaeX-Helper", "Could not create com.waex.pro package context: " + e.getMessage());
-            }
-
             Class<?> implClass = loader.loadClass("com.waex.pro.utils.KeyboxVerificationImpl");
-
-            // Try showDialogWithContext(Context, PreferenceFragmentCompat) first — accepts a
-            // pro-package context so resource inflation works in the manager app.
-            boolean invoked = false;
-            try {
-                implClass.getMethod("showDialogWithContext",
-                    Context.class,
-                    androidx.preference.PreferenceFragmentCompat.class)
-                    .invoke(null, proContext != null ? proContext : context, fragment);
-                invoked = true;
-            } catch (NoSuchMethodException ignored) {}
-
-            // Fall back to showDialog(PreferenceFragmentCompat) for older pro versions
-            if (!invoked) {
-                implClass.getMethod("showDialog", androidx.preference.PreferenceFragmentCompat.class)
-                         .invoke(null, fragment);
-            }
+            implClass.getMethod("showDialog", androidx.preference.PreferenceFragmentCompat.class)
+                     .invoke(null, fragment);
         } catch (Throwable t) {
             android.util.Log.e("WaeX-Helper", "showKeyboxVerificationDialog failed: " + t.getMessage(), t);
             android.widget.Toast.makeText(context, "Verification module not found.", android.widget.Toast.LENGTH_SHORT).show();

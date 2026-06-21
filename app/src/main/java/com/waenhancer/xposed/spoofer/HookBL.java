@@ -318,6 +318,28 @@ public final class HookBL {
         return new JcaPEMKeyConverter().getKeyPair(pemKeyPair);
     }
 
+    private static String getAliasFromKeyPairGenerator(Object obj) {
+        if (obj == null) return null;
+        try {
+            String alias = (String) XposedHelpers.getObjectField(obj, "mEntryAlias");
+            if (alias != null) return alias;
+        } catch (Throwable ignored) {}
+        try {
+            KeyGenParameterSpec spec = (KeyGenParameterSpec) XposedHelpers.getObjectField(obj, "mSpec");
+            if (spec != null && spec.getKeystoreAlias() != null) {
+                return spec.getKeystoreAlias();
+            }
+        } catch (Throwable ignored) {}
+        try {
+            Object spi = XposedHelpers.getObjectField(obj, "spi");
+            if (spi != null) {
+                return getAliasFromKeyPairGenerator(spi);
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+
     private static Certificate parseCert(String cert) throws Throwable {
         PemObject pemObject;
         try (PemReader reader = new PemReader(new StringReader(cert))) {
@@ -657,14 +679,38 @@ public final class HookBL {
             KeyPairGeneratorSpi keyPairGeneratorSpi_EC = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, "AndroidKeyStore");
             XposedHelpers.findAndHookMethod(keyPairGeneratorSpi_EC.getClass(), "generateKeyPair", new XC_MethodReplacement() {
                 @Override
-                protected Object replaceHookedMethod(MethodHookParam param) {
+                protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                    String alias = getAliasFromKeyPairGenerator(param.thisObject);
+                    if ("WaEnhancerX_Device_Key".equals(alias)) {
+                        return XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args);
+                    }
+                    if (param.thisObject instanceof KeyPairGenerator) {
+                        String algo = ((KeyPairGenerator) param.thisObject).getAlgorithm();
+                        if ("EC".equalsIgnoreCase(algo)) {
+                            return keyPair_EC;
+                        } else if ("RSA".equalsIgnoreCase(algo)) {
+                            return keyPair_RSA;
+                        }
+                    }
                     return keyPair_EC;
                 }
             });
             KeyPairGeneratorSpi keyPairGeneratorSpi_RSA = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
             XposedHelpers.findAndHookMethod(keyPairGeneratorSpi_RSA.getClass(), "generateKeyPair", new XC_MethodReplacement() {
                 @Override
-                protected Object replaceHookedMethod(MethodHookParam param) {
+                protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                    String alias = getAliasFromKeyPairGenerator(param.thisObject);
+                    if ("WaEnhancerX_Device_Key".equals(alias)) {
+                        return XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args);
+                    }
+                    if (param.thisObject instanceof KeyPairGenerator) {
+                        String algo = ((KeyPairGenerator) param.thisObject).getAlgorithm();
+                        if ("EC".equalsIgnoreCase(algo)) {
+                            return keyPair_EC;
+                        } else if ("RSA".equalsIgnoreCase(algo)) {
+                            return keyPair_RSA;
+                        }
+                    }
                     return keyPair_RSA;
                 }
             });
@@ -678,6 +724,10 @@ public final class HookBL {
             XposedHelpers.findAndHookMethod(keyStoreSpi.getClass(), "engineGetCertificateChain", String.class, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
+                    String alias = (String) param.args[0];
+                    if ("WaEnhancerX_Device_Key".equals(alias)) {
+                        return; // Don't mock for our license key
+                    }
                     Certificate[] certificates = null;
 
                     try {

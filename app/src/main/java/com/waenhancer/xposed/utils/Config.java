@@ -12,7 +12,7 @@ public final class Config {
      */
     public static String getBaseUrl() {
         try {
-            Class<?> secClazz = Class.forName("com.waenhancer.pro.utils.SecurityNative");
+            Class<?> secClazz = Class.forName("com.waex.pro.utils.SecurityNative");
             return (String) secClazz.getMethod("getBaseUrl").invoke(null);
         } catch (Throwable t) {
             // Secure fallback in case native library is not yet loaded in context

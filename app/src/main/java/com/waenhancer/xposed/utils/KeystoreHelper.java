@@ -28,28 +28,58 @@ public class KeystoreHelper {
      */
     public static void generateRSAKeyPair() {
         try {
+            Log.d(TAG, "generateRSAKeyPair: starting");
             KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
             keyStore.load(null);
             if (keyStore.containsAlias(ALIAS)) {
-                return;
+                Log.d(TAG, "generateRSAKeyPair: Key already exists under alias " + ALIAS);
+                if (getPublicKeyBase64() != null) {
+                    Log.d(TAG, "generateRSAKeyPair: Existing key is valid");
+                    return;
+                } else {
+                    Log.w(TAG, "generateRSAKeyPair: Existing key is invalid (public key null). Deleting and regenerating.");
+                    try {
+                        keyStore.deleteEntry(ALIAS);
+                    } catch (Exception ignored) {}
+                }
             }
 
             try {
-                // Try generating with StrongBox first (highest hardware security tier)
+                Log.d(TAG, "generateRSAKeyPair: attempting StrongBox generation");
                 generateKeyPairInternal(true);
+                if (getPublicKeyBase64() == null) {
+                    throw new Exception("StrongBox generation succeeded but public key is null");
+                }
+                Log.d(TAG, "generateRSAKeyPair: StrongBox generation succeeded and verified");
             } catch (Exception e) {
-                // Fallback to standard TEE-backed keystore
-                generateKeyPairInternal(false);
+                Log.w(TAG, "generateRSAKeyPair: StrongBox generation failed or invalid, deleting alias and falling back to standard TEE: " + e.getMessage(), e);
+                try {
+                    keyStore.deleteEntry(ALIAS);
+                } catch (Exception ignored) {}
+                try {
+                    Log.d(TAG, "generateRSAKeyPair: attempting standard TEE generation");
+                    generateKeyPairInternal(false);
+                    if (getPublicKeyBase64() == null) {
+                        throw new Exception("Standard TEE generation succeeded but public key is null");
+                    }
+                    Log.d(TAG, "generateRSAKeyPair: standard TEE generation succeeded and verified");
+                } catch (Exception ex) {
+                    Log.e(TAG, "generateRSAKeyPair: standard TEE generation failed: " + ex.getMessage(), ex);
+                    try {
+                        keyStore.deleteEntry(ALIAS);
+                    } catch (Exception ignored) {}
+                    throw ex;
+                }
             }
         } catch (Exception e) {
-            Log.e(TAG, "Failed to generate RSA key pair: ", e);
+            Log.e(TAG, "Failed to generate RSA key pair: " + e.getMessage(), e);
         }
     }
 
     /**
      * Internal helper to build and generate KeyPair with or without StrongBox.
      */
-    private static void generateKeyPairInternal(boolean useStrongBox) throws Exception {
+    private static java.security.KeyPair generateKeyPairInternal(boolean useStrongBox) throws Exception {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance(
                 KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
 
@@ -57,14 +87,22 @@ public class KeystoreHelper {
                 ALIAS,
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
                 .setDigests(KeyProperties.DIGEST_SHA256)
-                .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1);
+                .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                .setCertificateSubject(new javax.security.auth.x500.X500Principal("CN=" + ALIAS))
+                .setCertificateSerialNumber(java.math.BigInteger.ONE);
 
         if (useStrongBox) {
             builder.setIsStrongBoxBacked(true);
         }
 
         kpg.initialize(builder.build());
-        kpg.generateKeyPair();
+        java.security.KeyPair kp = kpg.generateKeyPair();
+        if (kp != null) {
+            Log.d(TAG, "generateKeyPairInternal: kp public=" + kp.getPublic() + ", private=" + kp.getPrivate());
+        } else {
+            Log.w(TAG, "generateKeyPairInternal: kp is null!");
+        }
+        return kp;
     }
 
     /**
@@ -76,16 +114,35 @@ public class KeystoreHelper {
         try {
             KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
             keyStore.load(null);
-            if (!keyStore.containsAlias(ALIAS)) {
+            
+            // List all aliases for diagnostic purposes
+            try {
+                java.util.Enumeration<String> aliases = keyStore.aliases();
+                while (aliases.hasMoreElements()) {
+                    Log.d(TAG, "getPublicKeyBase64: existing alias in Keystore: " + aliases.nextElement());
+                }
+            } catch (Exception ignored) {}
+
+            boolean hasAlias = keyStore.containsAlias(ALIAS);
+            Log.d(TAG, "getPublicKeyBase64: hasAlias=" + hasAlias);
+            if (!hasAlias) {
                 return null;
             }
 
             java.security.cert.Certificate cert = keyStore.getCertificate(ALIAS);
+            Log.d(TAG, "getPublicKeyBase64: cert=" + cert);
             if (cert == null) {
+                try {
+                    KeyStore.Entry entry = keyStore.getEntry(ALIAS, null);
+                    Log.d(TAG, "getPublicKeyBase64: entry=" + entry + " (class=" + (entry != null ? entry.getClass().getName() : "null") + ")");
+                } catch (Exception ex) {
+                    Log.e(TAG, "getPublicKeyBase64: failed to getEntry: " + ex.getMessage());
+                }
                 return null;
             }
 
             PublicKey publicKey = cert.getPublicKey();
+            Log.d(TAG, "getPublicKeyBase64: publicKey=" + publicKey);
             if (publicKey == null) {
                 return null;
             }

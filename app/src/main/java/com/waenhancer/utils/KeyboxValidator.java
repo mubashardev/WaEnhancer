@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -16,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -66,6 +69,7 @@ public class KeyboxValidator {
 
         final CountDownLatch latch = new CountDownLatch(1);
         final IProService[] serviceHolder = new IProService[1];
+        ExecutorService connectionExecutor = null;
 
         ServiceConnection conn = new ServiceConnection() {
             @Override
@@ -83,7 +87,13 @@ public class KeyboxValidator {
         };
 
         try {
-            boolean bound = context.bindService(intent, conn, Context.BIND_AUTO_CREATE);
+            boolean bound;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                connectionExecutor = Executors.newSingleThreadExecutor();
+                bound = context.bindService(intent, Context.BIND_AUTO_CREATE, connectionExecutor, conn);
+            } else {
+                bound = context.bindService(intent, conn, Context.BIND_AUTO_CREATE);
+            }
             if (!bound) {
                 result.errorMsg = "Failed to bind to Pro validation service.";
                 return result;
@@ -129,10 +139,16 @@ public class KeyboxValidator {
                 result.errorMsg = "IPC error: " + e.getMessage();
             } finally {
                 context.unbindService(conn);
+                if (connectionExecutor != null) {
+                    connectionExecutor.shutdownNow();
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Binding failed: " + e.toString());
             result.errorMsg = "Binding error: " + e.getMessage();
+            if (connectionExecutor != null) {
+                connectionExecutor.shutdownNow();
+            }
         }
 
         return result;

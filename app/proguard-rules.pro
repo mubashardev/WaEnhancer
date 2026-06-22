@@ -31,6 +31,10 @@
 -keep public class * implements de.robv.android.xposed.IXposedHookInitPackageResources { *; }
 -keep public class * implements de.robv.android.xposed.IXposedHookZygoteInit { *; }
 
+# Keep Xposed framework classes and references intact to prevent R8 from obfuscating them
+-keep class de.robv.android.xposed.** { *; }
+-dontwarn de.robv.android.xposed.**
+
 # Keep Xposed loading entry point classes and their member signatures
 -keep class com.waenhancer.WppXposed { *; }
 

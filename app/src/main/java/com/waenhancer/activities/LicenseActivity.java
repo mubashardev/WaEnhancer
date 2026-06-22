@@ -594,7 +594,7 @@ public class LicenseActivity extends BaseActivity {
                     loadingOverlay.setVisibility(View.GONE);
                 }
 
-                Toast.makeText(LicenseActivity.this, "Activation Successful!", Toast.LENGTH_LONG).show();
+                Toast.makeText(LicenseActivity.this, "Activation Successful! 🎉", Toast.LENGTH_LONG).show();
 
                 // Immediately refresh visual state to present active pro tier card
                 checkStatus();
@@ -605,6 +605,49 @@ public class LicenseActivity extends BaseActivity {
                     broadcastIntent.setPackage(getPackageName());
                     sendBroadcast(broadcastIntent);
                 } catch (Exception ignored) {}
+
+                // Pro hooks are installed at WhatsApp startup — restart WhatsApp
+                // so they pick up the now-active license.
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    try {
+                        new com.google.android.material.dialog.MaterialAlertDialogBuilder(LicenseActivity.this)
+                                .setTitle("Restart WhatsApp")
+                                .setMessage("Pro features are installed when WhatsApp starts. Please restart WhatsApp to activate all Pro features.")
+                                .setPositiveButton("Restart Now", (dialog, which) -> {
+                                    dialog.dismiss();
+                                    // Kill WhatsApp and relaunch it
+                                    try {
+                                        android.app.ActivityManager am = (android.app.ActivityManager)
+                                                getSystemService(android.content.Context.ACTIVITY_SERVICE);
+                                        for (android.app.ActivityManager.RunningAppProcessInfo info : am.getRunningAppProcesses()) {
+                                            if ("com.whatsapp".equals(info.processName) || "com.whatsapp.w4b".equals(info.processName)) {
+                                                android.os.Process.killProcess(info.pid);
+                                            }
+                                        }
+                                    } catch (Throwable ignored) {}
+                                    // Also send restart broadcast to WhatsApp process
+                                    try {
+                                        Intent restartIntent = new Intent(getPackageName() + ".WHATSAPP.RESTART");
+                                        restartIntent.putExtra("PKG", "com.whatsapp");
+                                        sendBroadcast(restartIntent);
+                                    } catch (Throwable ignored) {}
+                                    // Launch WhatsApp fresh
+                                    try {
+                                        Intent wppLaunch = getPackageManager().getLaunchIntentForPackage("com.whatsapp");
+                                        if (wppLaunch == null) {
+                                            wppLaunch = getPackageManager().getLaunchIntentForPackage("com.whatsapp.w4b");
+                                        }
+                                        if (wppLaunch != null) {
+                                            wppLaunch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                            startActivity(wppLaunch);
+                                        }
+                                    } catch (Throwable ignored) {}
+                                })
+                                .setNegativeButton("Later", (dialog, which) -> dialog.dismiss())
+                                .setCancelable(true)
+                                .show();
+                    } catch (Throwable ignored) {}
+                }, 800);
 
                 if (!com.waenhancer.xposed.utils.ProHelper.isPluginInstalled(LicenseActivity.this)) {
                     com.waenhancer.xposed.utils.ProHelper.checkRootAndInstallPlugin(LicenseActivity.this, null);

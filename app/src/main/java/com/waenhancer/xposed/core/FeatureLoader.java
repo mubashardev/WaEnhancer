@@ -977,10 +977,37 @@ public class FeatureLoader {
 
         // Load Pro features dynamically if installed
         try {
-            ClassLoader proLoader = com.waenhancer.xposed.utils.ProHelper.getPluginClassLoader(mApp, loader, de.robv.android.xposed.XposedBridge.class.getClassLoader());
+            // XposedBridge.class.getClassLoader() returns null under LSPosed because it is
+            // injected at native level and treated as a bootstrap class.
+            // XC_MethodHook lives in the same InMemoryDexClassLoader but is NOT bootstrap-null.
+            // Use it to get a non-null reference to the Xposed framework classloader.
+            ClassLoader xposedFrameworkLoader = de.robv.android.xposed.XC_MethodHook.class.getClassLoader();
+            if (xposedFrameworkLoader == null) {
+                xposedFrameworkLoader = Thread.currentThread().getContextClassLoader();
+                XposedBridge.log("[WAEX] XC_MethodHook classloader was null, using thread context classloader: " + xposedFrameworkLoader);
+            }
+            XposedBridge.log("[WAEX] Using xposedFrameworkLoader: " + xposedFrameworkLoader + " (XposedBridge was: " + de.robv.android.xposed.XposedBridge.class.getClassLoader() + ")");
+            ClassLoader proLoader = com.waenhancer.xposed.utils.ProHelper.getPluginClassLoader(mApp, loader, xposedFrameworkLoader);
             if (proLoader != null) {
                 System.getProperties().put("com.waex.pro.classloader", proLoader);
                 XposedBridge.log("[WAEX] Pro plugin ClassLoader loaded successfully. Injected into System properties.");
+
+                // Reflectively verify if the native library loaded successfully
+                boolean isNativeLibLoaded = false;
+                try {
+                    Class<?> proFeatureClass = proLoader.loadClass("com.waex.pro.ProFeature");
+                    java.lang.reflect.Field nlField = proFeatureClass.getDeclaredField("nl");
+                    nlField.setAccessible(true);
+                    isNativeLibLoaded = nlField.getBoolean(null);
+                } catch (Throwable t) {
+                    XposedBridge.log("[WAEX] Warning: Failed to query ProFeature.nl via reflection: " + t.toString());
+                }
+
+                if (isNativeLibLoaded) {
+                    XposedBridge.log("[WAEX] Pro native library (pro_native) loaded successfully!");
+                } else {
+                    XposedBridge.log("[WAEX] WARNING: Pro native library (pro_native) is NOT loaded. Pro features will be inactive! Check logcat for library loading details.");
+                }
 
                 String[] proFeatureClassNames = {
                         "com.waex.pro.AlwaysTyping",
@@ -997,6 +1024,7 @@ public class FeatureLoader {
                     CompletableFuture.runAsync(() -> {
                         long timemillis = System.currentTimeMillis();
                         try {
+                            XposedBridge.log("[WAEX] Loading Pro Feature class: " + className);
                             Class<?> clazz = proLoader.loadClass(className);
                             var constructor = clazz.getConstructor(ClassLoader.class, android.content.SharedPreferences.class);
                             Object pluginObj = constructor.newInstance(loader, pref);

@@ -141,7 +141,9 @@ public class App extends Application {
                     com.waenhancer.xposed.utils.LicenseManager.makePrefsWorldReadable(this);
                 } catch (Exception ignored) {}
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable t) {
+            android.util.Log.e("WaeX-App", "Failed to resolve companion APK path", t);
+        }
 
         // Initialize limited-free feature config. Run unconditionally — the pro plugin is now a
         // separate APK (com.waex.pro), so HAS_PRO_FEATURES may be false even when it is installed.

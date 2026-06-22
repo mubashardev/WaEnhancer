@@ -31,10 +31,11 @@
         tools:ignore="ScopedStorage" />
 
 
-<!--    <queries>-->
-<!--        <package android:name="com.whatsapp" />-->
-<!--        <package android:name="com.whatsapp.w4b" />-->
-<!--    </queries>-->
+    <queries>
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
+        <package android:name="com.waex.pro" />
+    </queries>
 
     <application
         android:forceQueryable="true"

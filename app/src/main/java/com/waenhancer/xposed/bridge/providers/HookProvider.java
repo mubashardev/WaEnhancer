@@ -106,6 +106,24 @@ public class HookProvider extends ContentProvider {
                 }
                 return result;
             }
+            if ("get_pro_plugin_info".equals(method)) {
+                Bundle result = new Bundle();
+                try {
+                    android.content.pm.ApplicationInfo info =
+                            context.getPackageManager().getApplicationInfo("com.waex.pro", 0);
+                    if (info.sourceDir != null && new java.io.File(info.sourceDir).exists()) {
+                        result.putString("sourceDir", info.sourceDir);
+                        result.putString("nativeLibraryDir", info.nativeLibraryDir);
+                        prefs.edit()
+                                .putString("pro_plugin_path", info.sourceDir)
+                                .putString("pro_plugin_lib_path", info.nativeLibraryDir)
+                                .commit();
+                    }
+                } catch (Throwable t) {
+                    android.util.Log.e("WAEX_Provider", "Failed to resolve pro plugin info", t);
+                }
+                return result;
+            }
             if (method.equals("get_all_preferences")) {
                 var all = prefs.getAll();
                 ;

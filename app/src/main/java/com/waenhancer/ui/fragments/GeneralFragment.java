@@ -112,6 +112,23 @@ public class GeneralFragment extends BaseFragment {
             super.onCreatePreferences(savedInstanceState, rootKey);
             setPreferencesFromResource(R.xml.preference_general_conversation, rootKey);
             setDisplayHomeAsUpEnabled(true);
+
+            androidx.preference.EditTextPreference customLimitPref = findPreference("customforwardlimit");
+            if (customLimitPref != null) {
+                customLimitPref.setSummaryProvider(preference -> {
+                    String val = customLimitPref.getText();
+                    boolean hasKey = customLimitPref.getSharedPreferences() != null && customLimitPref.getSharedPreferences().contains("customforwardlimit");
+                    if (!hasKey || android.text.TextUtils.isEmpty(val)) {
+                        return getString(R.string.customforwardlimit_sum);
+                    }
+                    return val;
+                });
+                customLimitPref.setOnBindEditTextListener(editText -> {
+                    editText.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+                    editText.setKeyListener(android.text.method.DigitsKeyListener.getInstance("0123456789"));
+                    editText.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(5)});
+                });
+            }
         }
     }
 

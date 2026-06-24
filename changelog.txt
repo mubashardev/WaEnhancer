@@ -1,5 +1,6 @@
 [Added]
 - Added support for version 2.26.25.xx WA/WB
+- Set custom forward limit
 
 [Improvements]
 - Improved the module to keep it compiliant to GPL 3.0 license
@@ -7,6 +8,7 @@
 - [Pro] Improved audio trimmer for audio to voice status
 
 [Fixes]
+- Fixed ShareLimit plugin Error
 
 
 

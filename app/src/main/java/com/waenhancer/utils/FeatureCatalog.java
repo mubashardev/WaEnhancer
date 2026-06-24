@@ -468,6 +468,14 @@ public class FeatureCatalog {
                                 "conversation",
                                 Arrays.asList("forward", "limit", "remove")));
 
+                catalog.add(new SearchableFeature("customforwardlimit",
+                                context.getString(R.string.customforwardlimit),
+                                context.getString(R.string.customforwardlimit_sum),
+                                SearchableFeature.Category.GENERAL_CONVERSATION,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "conversation",
+                                Arrays.asList("forward", "limit", "custom", "number", "count", "chats")));
+
                 catalog.add(new SearchableFeature("hidetag",
                                 context.getString(R.string.hidetag),
                                 context.getString(R.string.hidetag_sum),

@@ -453,6 +453,23 @@ public class Unobfuscator {
         });
     }
 
+    public synchronized static Class<?> loadMultiSelectionLimitInfoClass(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
+            try {
+                var matcher = new ClassMatcher();
+                matcher.addUsingString("MultiSelectionLimitInfo", StringMatchType.Contains);
+                var result = dexkit.findClass(FindClass.create().matcher(matcher));
+                if (!result.isEmpty()) {
+                    return result.get(0).getInstance(classLoader);
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[SHARE_LIMIT] Error in DexKit lookup: " + t.toString());
+            }
+            throw new ClassNotFoundException("MultiSelectionLimitInfo class not found");
+        });
+    }
+
+
     // TODO: Classes and Methods for HideView
     public synchronized static Method loadHideViewSendReadJob(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {

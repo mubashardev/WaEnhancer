@@ -58,6 +58,8 @@
     <string name="freezelastseen_sum">Your last seen time will be frozen\n(CAUTION: You will not see any presence updates from other users, like typing, recording, online)</string>
     <string name="removeforwardlimit_sum">Remove forward limit for 5 chats (normal) and 1 chat (multiple times)\n(Note: Use with caution, you may be banned for spam)</string>
     <string name="removeforwardlimit">Remove Forward Limit</string>
+    <string name="customforwardlimit">Custom Forward Limit</string>
+    <string name="customforwardlimit_sum">Set a custom max forward limit for chat selection (default: 9999)</string>
     <string name="showname">Show Name</string>
     <string name="showname_sum">Show your profile name at the top of home screen, instead of \"WhatsApp\"</string>
     <string name="showbio_sum">Show your bio below the title of toolbar</string>

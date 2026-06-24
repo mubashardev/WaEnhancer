@@ -1063,6 +1063,19 @@ public class HomeFragment extends BaseFragment {
         prefs.edit().putLong(PREF_MODULE_HEARTBEAT, System.currentTimeMillis()).apply();
     }
 
+    private boolean isWhatsAppRunning(Context context) {
+        android.app.ActivityManager am = (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        java.util.List<android.app.ActivityManager.RunningAppProcessInfo> runningProcesses = am.getRunningAppProcesses();
+        if (runningProcesses != null) {
+            for (android.app.ActivityManager.RunningAppProcessInfo processInfo : runningProcesses) {
+                if ("com.whatsapp".equals(processInfo.processName) || "com.whatsapp.w4b".equals(processInfo.processName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private boolean hasRecentModuleHeartbeat() {
         var prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
         long lastSeen = prefs.getLong(PREF_MODULE_HEARTBEAT, 0L);
@@ -1070,11 +1083,21 @@ public class HomeFragment extends BaseFragment {
             return false;
         }
 
+        // 1. Check if the device has rebooted since the last heartbeat
+        long bootTime = System.currentTimeMillis() - android.os.SystemClock.elapsedRealtime();
+        if (lastSeen < bootTime) {
+            return false;
+        }
+
         long diff = System.currentTimeMillis() - lastSeen;
-        // Expiry threshold: 24 hours for persistent status even if WhatsApp is force-stopped
-        boolean active = diff < 24 * 60 * 60 * 1000L;
-        ;
-        return active;
+
+        // 2. If WhatsApp or Business is running, we require a very recent heartbeat (5 minutes)
+        if (isWhatsAppRunning(requireContext())) {
+            return diff < 5 * 60 * 1000L;
+        }
+
+        // 3. If WhatsApp is not running, allow a 24-hour persistent window
+        return diff < 24 * 60 * 60 * 1000L;
     }
 
     private void showClearCacheConfirmation() {

@@ -190,12 +190,15 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
         }
         if (preference instanceof androidx.preference.EditTextPreference) {
             androidx.preference.EditTextPreference editPref = (androidx.preference.EditTextPreference) preference;
+            String title = editPref.getDialogTitle() != null ? editPref.getDialogTitle().toString()
+                    : editPref.getTitle() != null ? editPref.getTitle().toString() : "";
             BottomSheetHelper.showInput(
                     getContext(),
-                    editPref.getDialogTitle() != null ? editPref.getDialogTitle().toString()
-                            : editPref.getTitle() != null ? editPref.getTitle().toString() : "",
+                    title,
                     editPref.getText(),
+                    title,
                     getString(android.R.string.ok),
+                    editPref,
                     value -> {
                         if (editPref.callChangeListener(value)) {
                             editPref.setText(value);

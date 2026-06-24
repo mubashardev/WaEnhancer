@@ -114,6 +114,16 @@ public class BottomSheetHelper {
      */
     public static void showInput(Context context, String title, String hint,
             String confirmText, OnInputConfirmListener onConfirm) {
+        showInput(context, title, null, hint, confirmText, null, onConfirm);
+    }
+
+    public static void showInput(Context context, String title, String defaultValue, String hint,
+            String confirmText, OnInputConfirmListener onConfirm) {
+        showInput(context, title, defaultValue, hint, confirmText, null, onConfirm);
+    }
+
+    public static void showInput(Context context, String title, String defaultValue, String hint,
+            String confirmText, androidx.preference.EditTextPreference editPref, OnInputConfirmListener onConfirm) {
         BottomSheetDialog dialog = createDialog(context);
         View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_input, null);
         dialog.setContentView(view);
@@ -121,9 +131,49 @@ public class BottomSheetHelper {
         ((MaterialTextView) view.findViewById(R.id.bs_title)).setText(title);
 
         TextInputLayout inputLayout = view.findViewById(R.id.bs_input_layout);
-        inputLayout.setHint(hint);
+        if (hint != null) {
+            inputLayout.setHint(hint);
+        } else {
+            inputLayout.setHint("Enter value");
+        }
 
         TextInputEditText input = view.findViewById(R.id.bs_input);
+
+        // Pre-fill the previous saved value
+        if (defaultValue != null) {
+            input.setText(defaultValue);
+            input.setSelection(defaultValue.length());
+        }
+
+        // Dynamically apply input type and bindings from the preference
+        if (editPref != null) {
+            androidx.preference.EditTextPreference.OnBindEditTextListener bindListener = null;
+            try {
+                java.lang.reflect.Method getListener = androidx.preference.EditTextPreference.class.getDeclaredMethod("getOnBindEditTextListener");
+                getListener.setAccessible(true);
+                bindListener = (androidx.preference.EditTextPreference.OnBindEditTextListener) getListener.invoke(editPref);
+            } catch (Exception ignored) {}
+
+            if (bindListener != null) {
+                bindListener.onBindEditText(input);
+            } else {
+                String key = editPref.getKey();
+                if (key != null && (key.equals("change_dpi") || key.equals("customforwardlimit"))) {
+                    input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+                    input.setKeyListener(android.text.method.DigitsKeyListener.getInstance("0123456789"));
+                } else {
+                    input.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+                }
+            }
+        } else {
+            // Safe fallback: check if title or hint suggests numeric input
+            if (title != null && (title.toLowerCase().contains("dpi") || title.toLowerCase().contains("limit") || title.toLowerCase().contains("number"))) {
+                input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+                input.setKeyListener(android.text.method.DigitsKeyListener.getInstance("0123456789"));
+            } else {
+                input.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+            }
+        }
 
         MaterialButton confirmBtn = view.findViewById(R.id.bs_confirm_btn);
         confirmBtn.setText(confirmText);
@@ -139,6 +189,12 @@ public class BottomSheetHelper {
 
         // Auto-focus the input and show keyboard
         input.requestFocus();
+        input.postDelayed(() -> {
+            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            }
+        }, 150);
     }
 
     public interface OnSingleChoiceListener {

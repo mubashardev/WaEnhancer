@@ -99,10 +99,23 @@ public class CustomToolbar extends Feature {
                 var method = ReflectionUtils.findMethodUsingFilter(
                         param.thisObject.getClass(),
                         m -> m.getReturnType().equals(Date.class)
+                                || m.getReturnType().equals(long.class)
+                                || m.getReturnType().equals(Long.class)
                 );
-                var date = (Date) method.invoke(param.thisObject);
-                mDateExpiration = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                        .format(Objects.requireNonNull(date));
+                if (method != null) {
+                    Object result = method.invoke(param.thisObject);
+                    if (result instanceof Date) {
+                        mDateExpiration = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                .format(result);
+                    } else if (result instanceof Long) {
+                        long ms = (Long) result;
+                        if (ms < 10000000000L) {
+                            ms *= 1000L;
+                        }
+                        mDateExpiration = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                .format(new Date(ms));
+                    }
+                }
             }
         });
     }

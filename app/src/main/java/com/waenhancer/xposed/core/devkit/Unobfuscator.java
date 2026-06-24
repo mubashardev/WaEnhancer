@@ -2726,7 +2726,10 @@ public class Unobfuscator {
             var methods = findAllMethodUsingStrings(classLoader, StringMatchType.Contains,
                     "software_forced_expiration");
             var expirationMethod = Arrays.stream(methods)
-                    .filter(methodData -> methodData.getReturnType().equals(Date.class)).findFirst().orElse(null);
+                    .filter(methodData -> methodData.getReturnType().equals(Date.class)
+                                       || methodData.getReturnType().equals(long.class)
+                                       || methodData.getReturnType().equals(Long.class))
+                    .findFirst().orElse(null);
             if (expirationMethod == null)
                 throw new RuntimeException("Expiration class not found");
             return expirationMethod.getDeclaringClass();

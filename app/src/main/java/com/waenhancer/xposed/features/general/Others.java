@@ -134,7 +134,7 @@ public class Others extends Feature {
         var igstatus = prefs.getBoolean("igstatus", false);
         var animationEmojis = prefs.getBoolean("animation_emojis", false);
         var disableProfileStatus = prefs.getBoolean("disable_profile_status", false);
-        var disableExpiration = prefs.getBoolean("disable_expiration", false);
+        var disableExpiration = prefs.getBoolean("disable_expiration", true);
         var disableAds = prefs.getBoolean("disable_ads", false);
 
         propsInteger.put(3877, oldStatus ? igstatus ? 2 : 0 : 2);

@@ -389,15 +389,30 @@ public class FeatureLoader {
 
     public static void disableExpirationVersion(ClassLoader classLoader) throws Exception {
         var expirationClass = Unobfuscator.loadExpirationClass(classLoader);
-        var method = ReflectionUtils.findMethodUsingFilter(expirationClass, m -> m.getReturnType().equals(Date.class));
-        XposedBridge.hookMethod(method, new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                var calendar = Calendar.getInstance();
-                calendar.set(2099, 12, 31);
-                param.setResult(calendar.getTime());
+        XposedBridge.log("[WAEX] Expiration class found: " + expirationClass.getName());
+        for (var method : expirationClass.getDeclaredMethods()) {
+            Class<?> returnType = method.getReturnType();
+            if (returnType.equals(Date.class) || returnType.equals(long.class) || returnType.equals(Long.class)) {
+                XposedBridge.log("[WAEX] Hooking expiration method: " + method.getName() + " returning " + returnType.getSimpleName());
+                XposedBridge.hookMethod(method, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        if (returnType.equals(Date.class)) {
+                            var calendar = Calendar.getInstance();
+                            calendar.set(2099, 11, 31);
+                            param.setResult(calendar.getTime());
+                        } else if (returnType.equals(long.class) || returnType.equals(Long.class)) {
+                            param.setResult(4102444800000L); // Year 2100-01-01 in milliseconds
+                        }
+                    }
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        Object result = param.getResult();
+                        XposedBridge.log("[WAEX] Method " + param.method.getName() + " returned (hooked): " + result);
+                    }
+                });
             }
-        });
+        }
     }
 
     private static void load(ClassLoader loader, SharedPreferences providerPrefs, PackageInfo packageInfo, String sourceDir) {

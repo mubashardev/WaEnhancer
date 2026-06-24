@@ -211,6 +211,26 @@ public class SharedPreferencesWrapper implements SharedPreferences {
     }
 
     private static Object applyHook(String key, Object value) {
+        if ("software_forced_expiration".equals(key) || "expiration_timestamp".equals(key) || "client_expiration_time".equals(key)) {
+            if (value instanceof Long) {
+                long longVal = (Long) value;
+                if (longVal > 0 && longVal < 10000000000L) {
+                    return 4102444800L; // Year 2100 in seconds
+                } else {
+                    return 4102444800000L; // Year 2100 in milliseconds
+                }
+            } else if (value instanceof Integer) {
+                return 2147483647;
+            } else if (value instanceof String) {
+                String strVal = (String) value;
+                if (strVal.length() < 11) {
+                    return "4102444800"; // Year 2100 in seconds
+                } else {
+                    return "4102444800000"; // Year 2100 in milliseconds
+                }
+            }
+        }
+
         for (SPrefHook hook : prefHook) {
             value = hook.hookValue(key, value);
         }

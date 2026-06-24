@@ -34,14 +34,14 @@ import de.robv.android.xposed.XposedHelpers;
 
 public class MenuHome extends Feature {
 
-    private static final int MENU_ID_OPEN_WAEX = 0x7EAE0001;
-    private static final int MENU_ID_RESTART = 0x7EAE0002;
-    private static final int MENU_ID_GHOST = 0x7EAE0003;
-    private static final int MENU_ID_DND = 0x7EAE0004;
-    private static final int MENU_ID_FREEZE = 0x7EAE0005;
-    private static final int MENU_ID_SUBMENU = 0x7EAE0006;
-    private static final int MENU_ID_NEW_CHAT = 0x7EAE0007;
-    private static final int MENU_ID_RECORDINGS = 0x7EAE0008;
+    private static final int MENU_ID_OPEN_WAEX = 9901;
+    private static final int MENU_ID_RESTART = 9902;
+    private static final int MENU_ID_GHOST = 9903;
+    private static final int MENU_ID_DND = 9904;
+    private static final int MENU_ID_FREEZE = 9905;
+    private static final int MENU_ID_SUBMENU = 9906;
+    private static final int MENU_ID_NEW_CHAT = 9907;
+    private static final int MENU_ID_RECORDINGS = 9908;
 
     public static final LinkedHashSet<HomeMenuItem> menuItems = new LinkedHashSet<>();
 

@@ -901,11 +901,20 @@ public class Unobfuscator {
             var methodData = dexkit.getMethodData(shareLimitMethod);
             var usingFields = Objects.requireNonNull(methodData).getUsingFields();
             for (var ufield : usingFields) {
-                var field = ufield.getField().getFieldInstance(classLoader);
-                if (field.getType() == Map.class)
-                    return field;
+                try {
+                    var field = ufield.getField().getFieldInstance(classLoader);
+                    if (Map.class.isAssignableFrom(field.getType()))
+                        return field;
+                } catch (Throwable ignored) {}
             }
-            throw new Exception("ShareItem field not found");
+            // Fallback: search all declared fields in the method's declaring class
+            var declaringClass = shareLimitMethod.getDeclaringClass();
+            for (var field : declaringClass.getDeclaredFields()) {
+                if (Map.class.isAssignableFrom(field.getType())) {
+                    return field;
+                }
+            }
+            throw new Exception("ShareItem field not found in class " + declaringClass.getName());
         });
     }
 

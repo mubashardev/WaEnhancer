@@ -57,7 +57,15 @@ public class HomeFragment extends BaseFragment {
 
     private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
     private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
-    private static final String PREF_MODULE_HEARTBEAT = "module_heartbeat";
+
+    /**
+     * In-memory flag — reset to false every time the app process starts.
+     * Becomes true only when WhatsApp/Business sends a live broadcast response
+     * in the current session, proving the Xposed hook is actually running.
+     * Using SharedPreferences here caused a false "Module Enabled" status
+     * when the module was disabled in LSPosed after a previous active session.
+     */
+    private static volatile boolean sModuleHeartbeatActive = false;
 
     private FragmentHomeBinding binding;
     private String pendingUpdateUrl;
@@ -98,6 +106,12 @@ public class HomeFragment extends BaseFragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
             ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
+
+        // Migration: remove the legacy disk-persisted heartbeat key introduced in older builds.
+        // That key caused a false "Module Enabled" status when the module was disabled in
+        // LSPosed between app restarts. The heartbeat is now an in-memory flag only.
+        PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .edit().remove("module_heartbeat").apply();
 
         checkStateWpp(requireActivity());
 
@@ -1059,8 +1073,10 @@ public class HomeFragment extends BaseFragment {
 
     // setModuleActiveState is replaced by updateModuleStatusUi
     private void markModuleActive() {
-        var prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        prefs.edit().putLong(PREF_MODULE_HEARTBEAT, System.currentTimeMillis()).apply();
+        // Set the in-memory flag. No disk persistence — the flag intentionally
+        // resets to false when the app process is killed, so a stale value
+        // from a previous session can never produce a false "Module Enabled".
+        sModuleHeartbeatActive = true;
     }
 
     private boolean isWhatsAppRunning(Context context) {
@@ -1077,27 +1093,9 @@ public class HomeFragment extends BaseFragment {
     }
 
     private boolean hasRecentModuleHeartbeat() {
-        var prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        long lastSeen = prefs.getLong(PREF_MODULE_HEARTBEAT, 0L);
-        if (lastSeen == 0) {
-            return false;
-        }
-
-        // 1. Check if the device has rebooted since the last heartbeat
-        long bootTime = System.currentTimeMillis() - android.os.SystemClock.elapsedRealtime();
-        if (lastSeen < bootTime) {
-            return false;
-        }
-
-        long diff = System.currentTimeMillis() - lastSeen;
-
-        // 2. If WhatsApp or Business is running, we require a very recent heartbeat (5 minutes)
-        if (isWhatsAppRunning(requireContext())) {
-            return diff < 5 * 60 * 1000L;
-        }
-
-        // 3. If WhatsApp is not running, allow a 24-hour persistent window
-        return diff < 24 * 60 * 60 * 1000L;
+        // Simply return the in-memory flag. It is false until WhatsApp sends a
+        // broadcast response in the current app session (see markModuleActive).
+        return sModuleHeartbeatActive;
     }
 
     private void showClearCacheConfirmation() {

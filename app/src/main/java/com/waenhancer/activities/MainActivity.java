@@ -469,27 +469,55 @@ public class MainActivity extends BaseActivity {
     }
 
     public static boolean isXposedFrameworkPresent(Context context) {
-        // 1. Check if we are already hooked (direct detection)
+        final String TAG = "WaeX_FwDetect";
+
+        // 1. System property written by our own initZygote — most reliable signal when in-scope or system allows.
         try {
-            Class.forName("de.robv.android.xposed.XposedBridge", false, MainActivity.class.getClassLoader());
-            return true;
+            Class<?> sp = Class.forName("android.os.SystemProperties");
+            java.lang.reflect.Method get = sp.getMethod("get", String.class, String.class);
+            String val = (String) get.invoke(null, "debug.waenhancer.lsposed", "0");
+            if ("1".equals(val)) {
+                android.util.Log.d(TAG, "DETECTED via SystemProperty");
+                return true;
+            }
         } catch (Throwable ignored) {}
 
-        // 2. Check for known Manager apps (LSPosed, EdXposed, etc.)
-        // This allows detection even if the current app is not in scope.
-        if (context == null) return false;
-        PackageManager pm = context.getPackageManager();
-        String[] managers = {
-            "org.lsposed.manager", 
-            "org.meowcat.edxposed.manager", 
-            "de.robv.android.xposed.installer"
-        };
-        for (String pkg : managers) {
-            try {
-                pm.getPackageInfo(pkg, 0);
-                return true;
-            } catch (Throwable ignored) {}
+        // 2. Shell Command Check: Check directory visibility of LSPosed or other modules directories.
+        // Bypasses Java API sandboxing since we catch the "Permission denied" error on existing folders.
+        try {
+            String[] commands = {
+                "ls /data/adb/lspd",
+                "ls /data/adb/modules",
+                "ls /data/adb/ksu"
+            };
+            for (String cmd : commands) {
+                Process process = Runtime.getRuntime().exec(cmd);
+                int exitCode = process.waitFor();
+                java.io.BufferedReader stdErr = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
+                String line = stdErr.readLine();
+                if (exitCode == 0 || (line != null && line.contains("Permission denied"))) {
+                    android.util.Log.d(TAG, "DETECTED via Shell Directory Check (" + cmd + ")");
+                    return true;
+                }
+            }
+        } catch (Throwable ignored) {}
+
+        // 3. Package manager — check for active manager packages (LSPosed Manager/Zygisk)
+        if (context != null) {
+            PackageManager pm = context.getPackageManager();
+            for (String pkg : new String[]{
+                    "org.lsposed.manager", "io.github.lsposed.manager",
+                    "org.meowcat.edxposed.manager", "com.solohsu.android.edxp.manager",
+                    "de.robv.android.xposed.installer", "me.weishu.exp"}) {
+                try {
+                    pm.getPackageInfo(pkg, 0);
+                    android.util.Log.d(TAG, "DETECTED via Package Manager: " + pkg);
+                    return true;
+                } catch (Throwable ignored) {}
+            }
         }
+
+        android.util.Log.d(TAG, "RESULT: Framework NOT detected");
         return false;
     }
 

@@ -35,6 +35,13 @@
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />
         <package android:name="com.waex.pro" />
+        <!-- Xposed/LSPosed framework manager packages for framework detection -->
+        <package android:name="org.lsposed.manager" />
+        <package android:name="io.github.lsposed.manager" />
+        <package android:name="org.meowcat.edxposed.manager" />
+        <package android:name="com.solohsu.android.edxp.manager" />
+        <package android:name="de.robv.android.xposed.installer" />
+        <package android:name="me.weishu.exp" />
     </queries>
 
     <application

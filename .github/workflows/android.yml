@@ -39,37 +39,11 @@ jobs:
       CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
       NOTICES_URL: ${{ secrets.NOTICES_URL }}
     steps:
-      # ─────────────────────────────────────────────────────────────────
-      # Checkout public repo (without recursive submodule — we handle the
-      # private one separately so forks without the secret don't break)
-      # ─────────────────────────────────────────────────────────────────
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: false  # we init the private submodule manually below
 
-      # ─────────────────────────────────────────────────────────────────
-      # Private submodule — only when the deploy key secret is available.
-      # Forks that lack PRO_DEPLOY_KEY will skip this block and build the
-      # open-source variant (hasProSources=false) without errors.
-      # ─────────────────────────────────────────────────────────────────
-      - name: Setup SSH for private submodule
-        env:
-          PRO_DEPLOY_KEY: ${{ secrets.PRO_DEPLOY_KEY }}
-        if: ${{ env.PRO_DEPLOY_KEY != '' }}
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.PRO_DEPLOY_KEY }}
 
-      - name: Checkout private helper submodule
-        env:
-          PRO_DEPLOY_KEY: ${{ secrets.PRO_DEPLOY_KEY }}
-        if: ${{ env.PRO_DEPLOY_KEY != '' }}
-        run: |
-          git config --global url."git@github.com:".insteadOf "https://github.com/"
-          git submodule update --init --recursive app/src/pro
-          git config --global --unset url."git@github.com:".insteadOf
-          echo "Helper submodule checked out successfully."
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5

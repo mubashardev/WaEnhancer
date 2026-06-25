@@ -9,35 +9,6 @@ public final class RootUtils {
     }
 
     public static boolean hasRootAccess() {
-        // First check standard bin paths
-        boolean suExists = false;
-        String[] paths = {"/system/xbin/su", "/system/bin/su", "/sbin/su", "/system/sd/xbin/su", 
-                          "/system/bin/failsafe/su", "/data/local/xbin/su", "/data/local/bin/su", 
-                          "/data/local/su", "/su/bin/su"};
-        for (String path : paths) {
-            if (new java.io.File(path).exists()) {
-                suExists = true;
-                break;
-            }
-        }
-        if (!suExists) {
-            // Check PATH environment variable
-            try {
-                String pathEnv = System.getenv("PATH");
-                if (pathEnv != null) {
-                    for (String dir : pathEnv.split(":")) {
-                        if (new java.io.File(dir, "su").exists()) {
-                            suExists = true;
-                            break;
-                        }
-                    }
-                }
-            } catch (Exception ignored) {}
-        }
-        if (!suExists) {
-            return false;
-        }
-
         String output = runRootCommand("id");
         return output != null && (output.contains("uid=0") || output.contains("root"));
     }

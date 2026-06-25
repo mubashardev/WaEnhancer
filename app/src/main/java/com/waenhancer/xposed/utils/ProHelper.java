@@ -1461,6 +1461,18 @@ public class ProHelper {
     public static void startProDownloadAndInstallSilent(final Activity activity) {
         if (activity == null) return;
 
+        if (!com.waenhancer.utils.RootUtils.hasRootAccess()) {
+            activity.runOnUiThread(() -> {
+                Toast.makeText(activity, "Root access is needed. Please grant Root/Superuser permission to WAEX Helper in your root manager (e.g. KernelSU/Magisk).", Toast.LENGTH_LONG).show();
+                new androidx.appcompat.app.AlertDialog.Builder(activity)
+                    .setTitle("Root Access Required")
+                    .setMessage("WAEX Helper requires Root/Superuser permission to install/update the Helper app silently.\n\nPlease open your Root Manager, grant root access to WAEX Helper, and try again.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            });
+            return;
+        }
+
         File cacheDir = activity.getCacheDir();
         File apkFile = new File(cacheDir, "helper.apk");
         if (apkFile.exists() && apkFile.length() > 1024) {
@@ -1560,6 +1572,18 @@ public class ProHelper {
 
     public static void startProDownloadAndInstall(final Activity activity) {
         if (activity == null) return;
+
+        if (!com.waenhancer.utils.RootUtils.hasRootAccess()) {
+            activity.runOnUiThread(() -> {
+                Toast.makeText(activity, "Root access is needed. Please grant Root/Superuser permission to WaEnhancer in your root manager (e.g. KernelSU/Magisk).", Toast.LENGTH_LONG).show();
+                new androidx.appcompat.app.AlertDialog.Builder(activity)
+                    .setTitle("Root Access Required")
+                    .setMessage("WaEnhancer requires Root/Superuser permission to install/update the Helper app silently.\n\nPlease open your Root Manager, grant root access to WaEnhancer, and try again.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            });
+            return;
+        }
 
         File cacheDir = activity.getCacheDir();
         File apkFile = new File(cacheDir, "helper.apk");
@@ -1759,6 +1783,7 @@ public class ProHelper {
             
             if (success) {
                 com.waenhancer.utils.RootUtils.runRootCommand("pm grant com.waex.helper android.permission.POST_NOTIFICATIONS");
+                com.waenhancer.utils.RootUtils.runRootCommand("appops set com.waex.helper POST_NOTIFICATION allow");
                 com.waenhancer.utils.RootUtils.runRootCommand("am force-stop com.whatsapp");
                 com.waenhancer.utils.RootUtils.runRootCommand("am force-stop com.whatsapp.w4b");
             }

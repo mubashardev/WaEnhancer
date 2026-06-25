@@ -130,6 +130,22 @@ public class FeatureCatalog {
                                 "general_home",
                                 Arrays.asList("version", "check", "bypass")));
 
+                catalog.add(new SearchableFeature("customize_supported_versions",
+                                context.getString(R.string.customize_supported_versions),
+                                context.getString(R.string.customize_supported_versions_sum),
+                                SearchableFeature.Category.GENERAL_HOME,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "general_home",
+                                Arrays.asList("version", "supported", "customize", "custom", "add", "list")));
+
+                catalog.add(new SearchableFeature("manage_supported_versions",
+                                context.getString(R.string.manage_supported_versions),
+                                context.getString(R.string.manage_supported_versions_sum),
+                                SearchableFeature.Category.GENERAL_HOME,
+                                SearchableFeature.FragmentType.ACTIVITY,
+                                "SupportedVersionsActivity",
+                                Arrays.asList("version", "supported", "manage", "add", "edit", "delete", "custom", "user", "list")));
+
                 catalog.add(new SearchableFeature("bootloader_spoofer",
                                 context.getString(R.string.bootloader_spoofer),
                                 context.getString(R.string.bootloader_spoofer_sum),

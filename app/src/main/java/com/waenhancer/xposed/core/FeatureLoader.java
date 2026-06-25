@@ -289,8 +289,19 @@ public class FeatureLoader {
                         int versionsArrayId = Objects.equals(mApp.getPackageName(), FeatureLoader.PACKAGE_WPP)
                                 ? com.waenhancer.R.array.supported_versions_wpp
                                 : com.waenhancer.R.array.supported_versions_business;
-                        supportedVersions = Arrays.asList(
-                                XResManager.moduleResources.getStringArray(versionsArrayId));
+                        supportedVersions = new java.util.ArrayList<>(Arrays.asList(
+                                XResManager.moduleResources.getStringArray(versionsArrayId)));
+
+                        // Merge user-defined custom versions when customization is enabled
+                        if (pref.getBoolean("customize_supported_versions", false)) {
+                            String customKey = Objects.equals(mApp.getPackageName(), FeatureLoader.PACKAGE_WPP)
+                                    ? "custom_versions_wpp"
+                                    : "custom_versions_business";
+                            java.util.Set<String> customVersions = pref.getStringSet(customKey, null);
+                            if (customVersions != null && !customVersions.isEmpty()) {
+                                supportedVersions.addAll(customVersions);
+                            }
+                        }
                         mApp.registerActivityLifecycleCallbacks(new WaCallback());
                         registerReceivers();
                         try {
@@ -304,15 +315,17 @@ public class FeatureLoader {
                             }
                             if (!isSupported) {
                                 disableExpirationVersion(mApp.getClassLoader());
-                                String sb = "Unsupported version: " +
-                                        packageInfo.versionName +
-                                        "\n" +
-                                        "Only the function of ignoring the expiration of the WhatsApp version has been applied!";
-                                throw new Exception(sb);
-                            }
-                            
-                            // Execute loading synchronously to ensure hooks are applied before app continues
-                            load(loader, pref, packageInfo, sourceDir);
+                                if (pref.getBoolean("bypass_version_check", false)) {
+                                    // User opted in: load all features despite unsupported version
+                                    load(loader, pref, packageInfo, sourceDir);
+                                } else {
+                                    String sb = "Unsupported version: " +
+                                            packageInfo.versionName +
+                                            "\n" +
+                                            "Only the function of ignoring the expiration of the WhatsApp version has been applied!";
+                                    throw new Exception(sb);
+                                }
+                            } else {
                         } catch (Throwable e) {
                             XposedBridge.log(e);
                             var error = new ErrorItem();

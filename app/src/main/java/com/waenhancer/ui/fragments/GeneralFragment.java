@@ -98,6 +98,24 @@ public class GeneralFragment extends BaseFragment {
             setPreferencesFromResource(R.xml.preference_general_home, rootKey);
             setDisplayHomeAsUpEnabled(true);
         }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            setupManageVersionsPref();
+        }
+
+        private void setupManageVersionsPref() {
+            androidx.preference.Preference pref = findPreference("manage_supported_versions");
+            if (pref != null) {
+                pref.setOnPreferenceClickListener(preference -> {
+                    android.content.Intent intent = new android.content.Intent(requireContext(),
+                            SupportedVersionsActivity.class);
+                    startActivity(intent);
+                    return true;
+                });
+            }
+        }
     }
 
     public static class HomeScreenGeneralPreference extends BasePreferenceFragment {

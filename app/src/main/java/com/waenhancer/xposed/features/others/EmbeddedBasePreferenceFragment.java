@@ -237,6 +237,18 @@ public abstract class EmbeddedBasePreferenceFragment extends PreferenceFragmentC
             }
             return true;
         }
+        if ("manage_supported_versions".equals(preference.getKey())) {
+            try {
+                Intent intent = new Intent();
+                intent.setClassName(BuildConfig.APPLICATION_ID,
+                        "com.waenhancer.ui.fragments.SupportedVersionsActivity");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                requireContext().startActivity(intent);
+            } catch (Exception e) {
+                Utils.showToast("Failed to open Supported Versions", android.widget.Toast.LENGTH_SHORT);
+            }
+            return true;
+        }
         if (preference.getFragment() != null) {
             navigateToFragment(preference);
             return true;

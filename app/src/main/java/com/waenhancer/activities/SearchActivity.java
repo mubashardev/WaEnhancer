@@ -116,8 +116,17 @@ public class SearchActivity extends BaseActivity implements SearchAdapter.OnFeat
     @Override
     public void onFeatureClick(SearchableFeature feature) {
         if (feature.getFragmentType() == SearchableFeature.FragmentType.ACTIVITY) {
+            String parentKey = feature.getParentKey();
+            Class<?> target = null;
             if ("deleted_messages_activity".equals(feature.getKey())) {
-                startActivity(new Intent(this, DeletedMessagesActivity.class));
+                target = DeletedMessagesActivity.class;
+            } else if ("SupportedVersionsActivity".equals(parentKey)) {
+                target = com.waenhancer.ui.fragments.SupportedVersionsActivity.class;
+            } else if ("UpdateSettingsActivity".equals(parentKey)) {
+                target = com.waenhancer.activities.UpdateSettingsActivity.class;
+            }
+            if (target != null) {
+                startActivity(new Intent(this, target));
             }
             return;
         }

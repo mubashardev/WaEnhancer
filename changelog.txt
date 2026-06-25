@@ -1,6 +1,7 @@
 [Added]
 - Added support for version 2.26.25.xx WA/WB
 - Set custom forward limit
+- Add support for user-defined WA/WB versions
 
 [Improvements]
 - Improved the module to keep it compiliant to GPL 3.0 license

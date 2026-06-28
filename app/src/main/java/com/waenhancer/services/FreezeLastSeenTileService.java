@@ -1,9 +1,9 @@
 package com.waenhancer.services;
 
-public class GhostModeTileService extends BaseTileService {
+public class FreezeLastSeenTileService extends BaseTileService {
     @Override
     protected String getPreferenceKey() {
-        return "ghostmode_actual";
+        return "freeze_last_seen_actual";
     }
 
     @Override

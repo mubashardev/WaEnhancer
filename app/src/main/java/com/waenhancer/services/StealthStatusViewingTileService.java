@@ -1,9 +1,9 @@
 package com.waenhancer.services;
 
-public class GhostModeTileService extends BaseTileService {
+public class StealthStatusViewingTileService extends BaseTileService {
     @Override
     protected String getPreferenceKey() {
-        return "ghostmode_actual";
+        return "hidestatusview";
     }
 
     @Override

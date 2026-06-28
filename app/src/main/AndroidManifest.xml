@@ -114,6 +114,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/noexist" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <activity
@@ -259,6 +263,105 @@
             android:name=".services.GhostModeTileService"
             android:icon="@drawable/ghost_enabled"
             android:label="@string/ghost_mode"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.DndModeTileService"
+            android:icon="@drawable/airplane_enabled"
+            android:label="@string/dnd_mode_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.FreezeLastSeenTileService"
+            android:icon="@drawable/eye_enabled"
+            android:label="@string/freezelastseen"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.StealthReadTicksTileService"
+            android:icon="@drawable/eye_disabled"
+            android:label="@string/hideread"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.StealthStatusViewingTileService"
+            android:icon="@drawable/preview_eye"
+            android:label="@string/hidestatusview"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.AlwaysOnlineTileService"
+            android:icon="@drawable/online"
+            android:label="@string/always_online"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.ProximitySensorSwitchTileService"
+            android:icon="@drawable/ic_media"
+            android:label="@string/disable_audio_sensor"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.BlockCallsTileService"
+            android:icon="@drawable/deleted"
+            android:label="@string/call_blocker"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.SmartTypingTileService"
+            android:icon="@drawable/ic_recording"
+            android:label="@string/always_typing_global"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.ContactOnlineNotificationsTileService"
+            android:icon="@drawable/ic_notifications_black_24dp"
+            android:label="@string/show_toast_on_contact_online"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>

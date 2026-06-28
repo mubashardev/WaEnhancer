@@ -1,9 +1,9 @@
 package com.waenhancer.services;
 
-public class GhostModeTileService extends BaseTileService {
+public class SmartTypingTileService extends BaseTileService {
     @Override
     protected String getPreferenceKey() {
-        return "ghostmode_actual";
+        return "always_typing_global";
     }
 
     @Override

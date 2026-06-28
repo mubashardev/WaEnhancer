@@ -289,6 +289,57 @@ public class MainActivity extends BaseActivity {
         if (intent == null)
             return;
 
+        if ("android.service.quicksettings.action.QS_TILE_PREFERENCES".equals(intent.getAction())) {
+            android.content.ComponentName component = intent.getParcelableExtra(Intent.EXTRA_COMPONENT_NAME);
+            if (component != null) {
+                String className = component.getClassName();
+                int fragmentPos = -1;
+                String prefKey = null;
+                String parentKey = null;
+
+                if (className.contains("GhostModeTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "ghostmode";
+                } else if (className.contains("DndModeTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "show_dndmode";
+                } else if (className.contains("FreezeLastSeenTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "freezelastseen";
+                } else if (className.contains("StealthReadTicksTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "hideread";
+                } else if (className.contains("StealthStatusViewingTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "hidestatusview";
+                } else if (className.contains("AlwaysOnlineTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "always_online";
+                } else if (className.contains("ProximitySensorSwitchTileService")) {
+                    fragmentPos = 3;
+                    prefKey = "disable_sensor_proximity";
+                } else if (className.contains("BlockCallsTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "call_privacy";
+                } else if (className.contains("SmartTypingTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "always_typing_global";
+                } else if (className.contains("ContactOnlineNotificationsTileService")) {
+                    fragmentPos = 2;
+                    prefKey = "show_toast_on_contact_online";
+                    parentKey = "conversation";
+                }
+
+                if (fragmentPos >= 0) {
+                    intent.putExtra("navigate_to_fragment", fragmentPos);
+                    intent.putExtra("scroll_to_preference", prefKey);
+                    if (parentKey != null) {
+                        intent.putExtra("parent_preference", parentKey);
+                    }
+                }
+            }
+        }
+
         int fragmentPosition = intent.getIntExtra("navigate_to_fragment", -1);
         String preferenceKey = intent.getStringExtra("scroll_to_preference");
         String parentKey = intent.getStringExtra("parent_preference");

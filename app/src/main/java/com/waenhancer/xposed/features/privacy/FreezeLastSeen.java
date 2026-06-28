@@ -19,7 +19,7 @@ public class FreezeLastSeen extends Feature {
     @Override
     public void doHook() throws Exception {
         var freezeLastSeen = prefs.getBoolean("freezelastseen", false);
-        var freezeLastSeenOption = WppCore.getPrivBoolean("freezelastseen", false);
+        var freezeLastSeenOption = prefs.getBoolean("freeze_last_seen_actual", false);
         var ghostmode = prefs.getBoolean("ghostmode_actual", false);
 
         if (freezeLastSeen || freezeLastSeenOption || ghostmode) {

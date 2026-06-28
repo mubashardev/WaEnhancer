@@ -1,9 +1,9 @@
 package com.waenhancer.services;
 
-public class GhostModeTileService extends BaseTileService {
+public class ContactOnlineNotificationsTileService extends BaseTileService {
     @Override
     protected String getPreferenceKey() {
-        return "ghostmode_actual";
+        return "show_toast_on_contact_online";
     }
 
     @Override

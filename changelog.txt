@@ -1,20 +1,9 @@
 [Added]
-- Added support for version 2.26.25.xx WA/WB
-- Set custom forward limit
-- Add support for user-defined WA/WB versions
+- Quick Settings Tiles for WAEX essential features
+
 
 [Improvements]
-- Improved the module to keep it compiliant to GPL 3.0 license
-- Migrated all the pro module code to optional Pro plugin
-- [Pro] Improved audio trimmer for audio to voice status
-- Removed New chat from WaEnhancerX Menu shifted to Long-Press Chat floating button (FAB)
-- Improved New Chat Sheet UI
-- Improved Emojis loading for system emojis
+- Long press any quick tile takes you to the preference in WAEX
 
 [Fixes]
-- Fixed ShareLimit plugin Error
-- Fixed Xposed framework detection for some devices
-- Fixed Disable Default emoji crash for some devices
-
-
-Note: You manually need to turn on the Root access for Helper plugin if it is not enabled by default or not showing runtime permission requests. Usually happens for KSU root users.
+- Fixed unnecessary ClassNotFoundException errors

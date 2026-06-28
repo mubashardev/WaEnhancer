@@ -158,10 +158,10 @@ public class MenuHome extends Feature {
     }
 
     private void InsertDNDOption(Menu menu, Activity activity, boolean buttonAction) {
-        if (!prefs.getBoolean("show_dndmode", true)) return;
+        boolean dndmode = prefs.getBoolean("dndmode_actual", false);
+        if (!prefs.getBoolean("show_dndmode", true) && !dndmode) return;
         if (menu.findItem(MENU_ID_DND) != null) return;
 
-        boolean dndmode = WppCore.getPrivBoolean("dndmode", false);
         String title = "DND Mode (" + (dndmode ? "ON" : "OFF") + ")";
         try {
             String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.dnd_mode_s, "DND Mode");
@@ -179,17 +179,17 @@ public class MenuHome extends Feature {
 
         final String finalTitleDnd = title;
         itemMenu.setOnMenuItemClickListener(item -> {
-            boolean current = WppCore.getPrivBoolean("dndmode", false);
-            showToggleDialog(activity, finalTitleDnd, "dndmode", current);
+            boolean current = prefs.getBoolean("dndmode_actual", false);
+            showToggleDialog(activity, finalTitleDnd, "dndmode_actual", current);
             return true;
         });
     }
 
     private void InsertFreezeLastSeenOption(Menu menu, Activity activity, boolean buttonAction) {
-        if (!prefs.getBoolean("show_freezeLastSeen", true)) return;
+        boolean freeze = prefs.getBoolean("freeze_last_seen_actual", false);
+        if (!prefs.getBoolean("show_freezeLastSeen", true) && !freeze) return;
         if (menu.findItem(MENU_ID_FREEZE) != null) return;
 
-        boolean freeze = WppCore.getPrivBoolean("freeze_last_seen", false);
         String title = "Freeze Last Seen (" + (freeze ? "ON" : "OFF") + ")";
         try {
             String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.freeze_last_seen_s, "Freeze Last Seen");
@@ -207,8 +207,8 @@ public class MenuHome extends Feature {
 
         final String finalTitleFreeze = title;
         itemMenu.setOnMenuItemClickListener(item -> {
-            boolean current = WppCore.getPrivBoolean("freeze_last_seen", false);
-            showToggleDialog(activity, finalTitleFreeze, "freeze_last_seen", current);
+            boolean current = prefs.getBoolean("freeze_last_seen_actual", false);
+            showToggleDialog(activity, finalTitleFreeze, "freeze_last_seen_actual", current);
             return true;
         });
     }
@@ -282,13 +282,13 @@ public class MenuHome extends Feature {
             .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.restart_wpp, 
                 "It is necessary to restart WhatsApp for the changes in WaEnhancer X to take effect.\n\nDo you want to restart?"))
             .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, android.R.string.ok, "OK"), (dialog, which) -> {
-                if ("ghostmode_actual".equals(key)) {
+                if ("ghostmode_actual".equals(key) || "dndmode_actual".equals(key) || "freeze_last_seen_actual".equals(key)) {
                     if (prefs instanceof com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) {
-                        prefs.edit().putBoolean("ghostmode_actual", !current).commit();
+                        prefs.edit().putBoolean(key, !current).commit();
                     } else {
                         try {
                             android.os.Bundle extras = new android.os.Bundle();
-                            extras.putString("key", "ghostmode_actual");
+                            extras.putString("key", key);
                             extras.putString("type", "boolean");
                             extras.putBoolean("value", !current);
                             activity.getContentResolver().call(

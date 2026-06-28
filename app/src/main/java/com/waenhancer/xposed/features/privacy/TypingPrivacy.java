@@ -82,7 +82,7 @@ public class TypingPrivacy extends Feature {
                 if (phone == null || phone.isEmpty()) return;
 
                 // Load preferences
-                boolean ghostmode = WppCore.getPrivBoolean("ghostmode", false);
+                boolean ghostmode = prefs.getBoolean("ghostmode_actual", false);
                 boolean ghostmode_t = prefs.getBoolean("ghostmode_t", false);
                 boolean ghostmode_r = prefs.getBoolean("ghostmode_r", false);
 

@@ -131,10 +131,9 @@ public class MenuHome extends Feature {
     }
 
     private void InsertGhostModeOption(Menu menu, Activity activity, boolean buttonAction) {
-        if (!prefs.getBoolean("ghostmode", true)) return;
+        boolean ghostmode = prefs.getBoolean("ghostmode_actual", false);
+        if (!prefs.getBoolean("ghostmode", true) && !ghostmode) return;
         if (menu.findItem(MENU_ID_GHOST) != null) return;
-
-        boolean ghostmode = WppCore.getPrivBoolean("ghostmode", false);
         String title = "Ghost Mode (" + (ghostmode ? "ON" : "OFF") + ")";
         try {
             String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.ghost_mode_s, "Ghost Mode");
@@ -152,8 +151,8 @@ public class MenuHome extends Feature {
 
         final String finalTitle = title;
         itemMenu.setOnMenuItemClickListener(item -> {
-            boolean current = WppCore.getPrivBoolean("ghostmode", false);
-            showToggleDialog(activity, finalTitle, "ghostmode", current);
+            boolean current = prefs.getBoolean("ghostmode_actual", false);
+            showToggleDialog(activity, finalTitle, "ghostmode_actual", current);
             return true;
         });
     }
@@ -283,7 +282,28 @@ public class MenuHome extends Feature {
             .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.restart_wpp, 
                 "It is necessary to restart WhatsApp for the changes in WaEnhancer X to take effect.\n\nDo you want to restart?"))
             .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, android.R.string.ok, "OK"), (dialog, which) -> {
-                WppCore.setPrivBooleanSync(key, !current);
+                if ("ghostmode_actual".equals(key)) {
+                    if (prefs instanceof com.waenhancer.xposed.bridge.client.ProviderSharedPreferences) {
+                        prefs.edit().putBoolean("ghostmode_actual", !current).commit();
+                    } else {
+                        try {
+                            android.os.Bundle extras = new android.os.Bundle();
+                            extras.putString("key", "ghostmode_actual");
+                            extras.putString("type", "boolean");
+                            extras.putBoolean("value", !current);
+                            activity.getContentResolver().call(
+                                android.net.Uri.parse("content://com.waenhancer.hookprovider"),
+                                "put_preference",
+                                null,
+                                extras
+                            );
+                        } catch (Throwable t) {
+                            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to write preference via provider: " + t.getMessage());
+                        }
+                    }
+                } else {
+                    WppCore.setPrivBooleanSync(key, !current);
+                }
                 Utils.doRestart(activity);
             })
             .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, android.R.string.cancel, "Cancel"), null)

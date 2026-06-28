@@ -255,6 +255,18 @@
             android:exported="true"
             tools:ignore="ExportedService" />
 
+        <service
+            android:name=".services.GhostModeTileService"
+            android:icon="@drawable/ghost_enabled"
+            android:label="@string/ghost_mode"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

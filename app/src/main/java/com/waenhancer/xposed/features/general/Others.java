@@ -856,7 +856,13 @@ public class Others extends Feature {
     }
 
     private void disablePhotoProfileStatus() throws Exception {
-        var refreshStatusClass = Unobfuscator.loadRefreshStatusClass(classLoader);
+        Class<?> refreshStatusClass;
+        try {
+            refreshStatusClass = Unobfuscator.loadRefreshStatusClass(classLoader);
+        } catch (Exception e) {
+            logDebug("disablePhotoProfileStatus: RefreshStatus class not found, skipping", e);
+            return;
+        }
         var photoProfileClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, ".WDSProfilePhoto");
         var convClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, ".ConversationsFragment");
         var jidClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "jid.Jid");

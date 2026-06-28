@@ -70,7 +70,7 @@ public class HideSeen extends Feature {
     }
 
     private void loadPreferences() {
-        ghostMode = WppCore.getPrivBoolean("ghostmode", false);
+        ghostMode = prefs.getBoolean("ghostmode_actual", false);
         hideRead = prefs.getBoolean("hideread", false);
         hideAudioSeen = prefs.getBoolean("hideaudioseen", false);
         hideOnceSeen = prefs.getBoolean("hideonceseen", false);

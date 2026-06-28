@@ -3314,18 +3314,55 @@ public class Unobfuscator {
     public static Class<?> loadRefreshStatusClass(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
             Method keyset = Map.class.getDeclaredMethod("keySet");
-            ClassMatcher matcher = ClassMatcher.create()
+            String keysetDescriptor = DexSignUtil.getMethodDescriptor(keyset);
+
+            // Strategy 1: Original matcher (WA < 2.26.24.80)
+            ClassMatcher matcher1 = ClassMatcher.create()
                     .addMethod(
                             MethodMatcher.create().returnType(String.class)
-                                    .addInvoke(DexSignUtil.getMethodDescriptor(keyset))
+                                    .addInvoke(keysetDescriptor)
                                     .addUsingString(",", StringMatchType.Equals)
                                     .addUsingString("", StringMatchType.Equals))
                     .addMethod(MethodMatcher.create().addUsingNumber(0x3684));
+            List<ClassData> results = dexkit.findClass(FindClass.create().matcher(matcher1));
+            if (!results.isEmpty())
+                return results.get(0).getInstance(classLoader);
 
-            List<ClassData> results = dexkit.findClass(FindClass.create().matcher(matcher));
-            if (results.isEmpty())
-                throw new RuntimeException("RefreshStatus Class Not Found");
-            return results.get(0).getInstance(classLoader);
+            // Strategy 2: Relax — drop the magic number constraint (WA 2.26.24.80+)
+            ClassMatcher matcher2 = ClassMatcher.create()
+                    .addMethod(
+                            MethodMatcher.create().returnType(String.class)
+                                    .addInvoke(keysetDescriptor)
+                                    .addUsingString(",", StringMatchType.Equals)
+                                    .addUsingString("", StringMatchType.Equals));
+            results = dexkit.findClass(FindClass.create().matcher(matcher2));
+            if (!results.isEmpty())
+                return results.get(0).getInstance(classLoader);
+
+            // Strategy 3: Try nearby magic numbers that WhatsApp may have changed to
+            for (int candidate : new int[]{0x3685, 0x3683, 0x3686, 0x3682, 0x36A0, 0x3700}) {
+                ClassMatcher matcher3 = ClassMatcher.create()
+                        .addMethod(
+                                MethodMatcher.create().returnType(String.class)
+                                        .addInvoke(keysetDescriptor))
+                        .addMethod(MethodMatcher.create().addUsingNumber(candidate));
+                results = dexkit.findClass(FindClass.create().matcher(matcher3));
+                if (!results.isEmpty())
+                    return results.get(0).getInstance(classLoader);
+            }
+
+            // Strategy 4: Find via "conversation/refresh" string used in loadMediaTypeField context
+            try {
+                var methodData = dexkit.findMethod(
+                        FindMethod.create().matcher(MethodMatcher.create().addUsingString("conversation/refresh")));
+                if (!methodData.isEmpty()) {
+                    var declClass = methodData.get(0).getDeclaredClass();
+                    if (declClass != null)
+                        return declClass.getInstance(classLoader);
+                }
+            } catch (Exception ignored) {}
+
+            throw new RuntimeException("RefreshStatus Class Not Found");
         });
     }
 

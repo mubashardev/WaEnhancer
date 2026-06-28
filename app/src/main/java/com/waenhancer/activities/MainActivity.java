@@ -289,6 +289,14 @@ public class MainActivity extends BaseActivity {
         if (intent == null)
             return;
 
+        android.util.Log.d("WAEX_MAIN", "handleIncomingIntent: action=" + intent.getAction());
+        if (intent.getExtras() != null) {
+            for (String key : intent.getExtras().keySet()) {
+                Object val = intent.getExtras().get(key);
+                android.util.Log.d("WAEX_MAIN", "Extra: " + key + " = " + val + " (type: " + (val != null ? val.getClass().getName() : "null") + ")");
+            }
+        }
+
         if ("android.service.quicksettings.action.QS_TILE_PREFERENCES".equals(intent.getAction())) {
             android.content.ComponentName component = intent.getParcelableExtra(Intent.EXTRA_COMPONENT_NAME);
             if (component != null) {
@@ -325,7 +333,7 @@ public class MainActivity extends BaseActivity {
                     fragmentPos = 1;
                     prefKey = "always_typing_global";
                 } else if (className.contains("ContactOnlineNotificationsTileService")) {
-                    fragmentPos = 2;
+                    fragmentPos = 0;
                     prefKey = "show_toast_on_contact_online";
                     parentKey = "conversation";
                 }
@@ -402,6 +410,27 @@ public class MainActivity extends BaseActivity {
     }
 
     private void navigateToSubFragmentAndScroll(Fragment parentFragment, String parentKey, String childPreferenceKey) {
+        // Check if the target subfragment is already displayed
+        Fragment currentChild = parentFragment.getChildFragmentManager().findFragmentById(R.id.frag_container);
+        boolean isAlreadyDisplayed = false;
+        
+        if (currentChild != null) {
+            if ("general_home".equals(parentKey) && currentChild instanceof GeneralFragment.HomeGeneralPreference) {
+                isAlreadyDisplayed = true;
+            } else if ("homescreen".equals(parentKey) && currentChild instanceof GeneralFragment.HomeScreenGeneralPreference) {
+                isAlreadyDisplayed = true;
+            } else if ("conversation".equals(parentKey) && currentChild instanceof GeneralFragment.ConversationGeneralPreference) {
+                isAlreadyDisplayed = true;
+            }
+        }
+
+        if (isAlreadyDisplayed) {
+            if (currentChild instanceof BasePreferenceFragment) {
+                ((BasePreferenceFragment) currentChild).scrollToPreference(childPreferenceKey);
+            }
+            return;
+        }
+
         // Directly instantiate the sub-fragment
         Fragment subFragment = null;
 
@@ -436,10 +465,10 @@ public class MainActivity extends BaseActivity {
 
             // Wait for fragment to be ready, then scroll
             parentFragment.getView().postDelayed(() -> {
-                if (finalSubFragment instanceof BasePreferenceFragment) {
+                if (finalSubFragment.isAdded() && finalSubFragment instanceof BasePreferenceFragment) {
                     ((BasePreferenceFragment) finalSubFragment).scrollToPreference(childPreferenceKey);
                 }
-            }, 400);
+            }, 600);
         }
     }
 

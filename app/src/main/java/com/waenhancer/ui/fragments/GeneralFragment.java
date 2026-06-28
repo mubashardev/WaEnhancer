@@ -160,6 +160,12 @@ public class GeneralFragment extends BaseFragment {
             setPreferencesFromResource(R.xml.preference_general_homescreen, rootKey);
             setDisplayHomeAsUpEnabled(false);
         }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            setDisplayHomeAsUpEnabled(false);
+        }
     }
 
     public static class ConversationGeneralPreference extends BasePreferenceFragment {
@@ -185,6 +191,12 @@ public class GeneralFragment extends BaseFragment {
                     editText.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(5)});
                 });
             }
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            setDisplayHomeAsUpEnabled(false);
         }
     }
 }

@@ -78,7 +78,7 @@ public class ContactPickerActivity extends BaseActivity {
         }
 
         adapter = new ContactPickerAdapter((contact, toSelectedState) -> {
-            if (toSelectedState) {
+            if (toSelectedState && limit != -1) {
                 int currentSelectedCount = 0;
                 for (SelectableContact c : allContacts) {
                     if (c.isSelected()) currentSelectedCount++;

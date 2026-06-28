@@ -1,11 +1,8 @@
 [Added]
-- Quick Settings Tiles for WAEX essential features
-- Dynamic default Keybox instead of hardcoding, this will keep itself synced with our server latest Keybox
 
 
 [Improvements]
-- Long press any quick tile takes you to the preference in WAEX
 - UI Improvements
 
 [Fixes]
-- Fixed unnecessary ClassNotFoundException errors
+- Fixed Maximum -1 contacts limitation bug 

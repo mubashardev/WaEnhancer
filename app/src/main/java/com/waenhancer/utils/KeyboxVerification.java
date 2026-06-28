@@ -392,7 +392,14 @@ public class KeyboxVerification {
             if (useCache) {
                 subtitleText.setVisibility(View.VISIBLE);
                 SimpleDateFormat timeFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-                subtitleText.setText("Cached report (verified: " + timeFmt.format(new Date(lastCheck)) + ")");
+                String extra = "";
+                if (!isCustom) {
+                    String lastSyncStr = prefs.getString("default_kb_last_updated", "");
+                    if (!lastSyncStr.isEmpty()) {
+                        extra = " | Keybox synced: " + formatLastUpdated(lastSyncStr);
+                    }
+                }
+                subtitleText.setText("Cached report (verified: " + timeFmt.format(new Date(lastCheck)) + ")" + extra);
 
                 spooferLoading.setVisibility(View.GONE);
                 spooferContent.setVisibility(View.VISIBLE);
@@ -438,7 +445,14 @@ public class KeyboxVerification {
                 loadingHandler.postDelayed(() -> {
                     if (!dialog.isShowing()) return;
                     recCard.setVisibility(View.VISIBLE);
-                    subtitleText.setText("Audit complete");
+                    String extra = "";
+                    if (!isCustom) {
+                        String lastSyncStr = prefs.getString("default_kb_last_updated", "");
+                        if (!lastSyncStr.isEmpty()) {
+                            extra = " | Keybox synced: " + formatLastUpdated(lastSyncStr);
+                        }
+                    }
+                    subtitleText.setText("Audit complete" + extra);
                     okBtn.setEnabled(true);
                 }, 2500);
             }
@@ -645,5 +659,17 @@ public class KeyboxVerification {
         } catch (Throwable ignored) {}
 
         return null;
+    }
+
+    private static String formatLastUpdated(String rawIso) {
+        try {
+            java.text.SimpleDateFormat isoFmt = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US);
+            isoFmt.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            java.util.Date parsed = isoFmt.parse(rawIso);
+            java.text.SimpleDateFormat outFmt = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
+            return outFmt.format(parsed);
+        } catch (Exception e) {
+            return rawIso;
+        }
     }
 }

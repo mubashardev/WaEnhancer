@@ -606,14 +606,15 @@ public final class HookBL {
     public static void hook(ClassLoader loader, SharedPreferences prefs) {
 
         boolean useCustomSpoofer = prefs.getBoolean("bootloader_spoofer_custom", false);
-        if (useCustomSpoofer) {
-            String xmlContent = prefs.getString("bootloader_spoofer_xml", "");
-            if (!xmlContent.isEmpty()) {
-                try {
-                    parseBootloaderSpooferXml(xmlContent);
-                    ;
-                } catch (Throwable t) {
-                    XposedBridge.log(t);
+        String xmlContent = useCustomSpoofer 
+                ? prefs.getString("bootloader_spoofer_xml", "") 
+                : prefs.getString("bootloader_spoofer_default_xml", "");
+        if (xmlContent != null && !xmlContent.isEmpty()) {
+            try {
+                parseBootloaderSpooferXml(xmlContent);
+            } catch (Throwable t) {
+                XposedBridge.log(t);
+                if (useCustomSpoofer) {
                     Utils.showToast("Error parsing custom bootloader spoofer XML: " + t.getMessage(), 1);
                 }
             }

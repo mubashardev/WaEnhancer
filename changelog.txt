@@ -1,5 +1,6 @@
 [Added]
 - Quick Settings Tiles for WAEX essential features
+- Dynamic default Keybox instead of hardcoding, this will keep itself synced with our server latest Keybox
 
 
 [Improvements]

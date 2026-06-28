@@ -201,6 +201,10 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         setupReleaseChannelPreference();
         updateKeyboxVerifySummary();
 
+        try {
+            com.waenhancer.utils.KeyboxFetcher.syncKeyboxAsync(requireContext());
+        } catch (Throwable ignored) {}
+
         // Lockdown pro preferences dynamically if not verified
         com.waenhancer.xposed.utils.ProHelper.updatePreferences(requireContext(), getPreferenceScreen());
     }
@@ -1075,6 +1079,12 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     private String getDefaultSpooferXml() {
+        if (mPrefs != null) {
+            String cached = mPrefs.getString("bootloader_spoofer_default_xml", "");
+            if (cached != null && !cached.trim().isEmpty()) {
+                return cached;
+            }
+        }
         return """
                 <AndroidAttestation>
                     <NumberOfKeyboxes>1</NumberOfKeyboxes>

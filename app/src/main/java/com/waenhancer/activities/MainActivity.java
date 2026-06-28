@@ -229,6 +229,9 @@ public class MainActivity extends BaseActivity {
         binding.viewPager.setCurrentItem(2, false);
         createMainDir();
         FilePicker.registerFilePicker(this);
+        try {
+            com.waenhancer.utils.KeyboxFetcher.syncKeyboxAsync(this);
+        } catch (Throwable ignored) {}
 
         // Wire up custom header action buttons
         binding.btnSearch.setOnClickListener(v -> {

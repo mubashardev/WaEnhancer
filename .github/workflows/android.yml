@@ -199,7 +199,7 @@ jobs:
 
       - name: Build WhatsApp flavor
         run: |
-          BUILD_TASKS="assembleWhatsappRelease"
+          BUILD_TASKS="assembleWhatsappRelease assembleWhatsappDebug"
           if [ -s "app/google-services.json" ]; then
             BUILD_TASKS="$BUILD_TASKS uploadCrashlyticsMappingFileWhatsappRelease"
           fi
@@ -224,13 +224,16 @@ jobs:
       - name: Rename APK to versioned name
         run: |
           mkdir -p release_artifacts
-          cp app/build/outputs/apk/whatsapp/release/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk "release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk"
+          cp app/build/outputs/apk/whatsapp/release/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk "release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk"
+          cp app/build/outputs/apk/whatsapp/debug/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_debug.apk "release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_debug.apk"
 
       - name: Upload WhatsApp flavor artifact
         uses: actions/upload-artifact@v5
         with:
-          name: WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
-          path: release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
+          name: WaEnhancerX-v${{ env.NEW_VERSION_NAME }}
+          path: |
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_debug.apk
 
       - name: Upload to GitHub release
         id: release
@@ -240,28 +243,29 @@ jobs:
           name: WaEnhancerX v${{ env.NEW_VERSION_NAME }}
           body_path: changelog.txt
           files: |
-            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_debug.apk
           tag_name: ${{ env.NEW_VERSION_NAME }}
           prerelease: ${{ env.RELEASE_PRERELEASE }}
 
-      - name: Sync commits and push custom tag to Xposed Repo fork
-        run: |
-          git remote add xposed-repo https://x-access-token:${{ secrets.XPOSED_REPO_TOKEN }}@github.com/Xposed-Modules-Repo/com.waenhancer.git
-          git push xposed-repo HEAD:master --force || git push xposed-repo HEAD:main --force
-          git tag ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
-          git push xposed-repo ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
-
-      - name: Upload to Xposed Repo release
-        uses: softprops/action-gh-release@v2
-        with:
-          repository: Xposed-Modules-Repo/com.waenhancer
-          token: ${{ secrets.XPOSED_REPO_TOKEN }}
-          name: WaEnhancerX v${{ env.NEW_VERSION_NAME }}
-          body_path: changelog.txt
-          files: |
-            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
-          tag_name: ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
-          prerelease: ${{ env.RELEASE_PRERELEASE }}
+#       - name: Sync commits and push custom tag to Xposed Repo fork
+#         run: |
+#           git remote add xposed-repo https://x-access-token:${{ secrets.XPOSED_REPO_TOKEN }}@github.com/Xposed-Modules-Repo/com.waenhancer.git
+#           git push xposed-repo HEAD:master --force || git push xposed-repo HEAD:main --force
+#           git tag ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
+#           git push xposed-repo ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
+# 
+#       - name: Upload to Xposed Repo release
+#         uses: softprops/action-gh-release@v2
+#         with:
+#           repository: Xposed-Modules-Repo/com.waenhancer
+#           token: ${{ secrets.XPOSED_REPO_TOKEN }}
+#           name: WaEnhancerX v${{ env.NEW_VERSION_NAME }}
+#           body_path: changelog.txt
+#           files: |
+#             release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk
+#           tag_name: ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
+#           prerelease: ${{ env.RELEASE_PRERELEASE }}
 
       - name: Read changelog
         id: changelog

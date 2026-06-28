@@ -395,6 +395,12 @@ public class ChangelogActivity extends BaseActivity {
             );
         }
 
+        private static String formatSize(long bytes) {
+            if (bytes <= 0) return "Unknown size";
+            double mb = bytes / (1024.0 * 1024.0);
+            return String.format(java.util.Locale.US, "%.2f MB", mb);
+        }
+
         public void bind(JSONObject release) {
             bind(release, false, new java.util.HashSet<>());
         }
@@ -416,7 +422,16 @@ public class ChangelogActivity extends BaseActivity {
             tvDate.setText(formatDate(publishedAt));
             tvBadge.setVisibility(View.GONE); // No need of mentioning Stable/Beta chip on each item
 
-            tvInstalledBadge.setVisibility(isInstalled ? View.VISIBLE : View.GONE);
+            if (isInstalled) {
+                tvInstalledBadge.setVisibility(View.VISIBLE);
+                if (com.waenhancer.BuildConfig.DEBUG) {
+                    tvInstalledBadge.setText("Installed (Debug)");
+                } else {
+                    tvInstalledBadge.setText("Installed (Release)");
+                }
+            } else {
+                tvInstalledBadge.setVisibility(View.GONE);
+            }
 
             // Handle Expand/Collapse State
             boolean isExpanded = expandedTags.contains(tagName);
@@ -493,35 +508,80 @@ public class ChangelogActivity extends BaseActivity {
                 }
             }
 
+            JSONArray assets = release.optJSONArray("assets");
+            boolean hasReleaseApk = false;
+            boolean hasDebugApk = false;
+            JSONObject releaseAsset = null;
+            JSONObject debugAsset = null;
+            final List<JSONObject> apkAssets = new ArrayList<>();
+            if (assets != null) {
+                for (int j = 0; j < assets.length(); j++) {
+                    JSONObject asset = assets.optJSONObject(j);
+                    if (asset != null) {
+                        String assetName = asset.optString("name", "");
+                        if (assetName.endsWith(".apk")) {
+                            apkAssets.add(asset);
+                            if (assetName.endsWith("_release.apk")) {
+                                hasReleaseApk = true;
+                                releaseAsset = asset;
+                            } else if (assetName.endsWith("_debug.apk")) {
+                                hasDebugApk = true;
+                                debugAsset = asset;
+                            }
+                        }
+                    }
+                }
+            }
+
             boolean showUpdateButton = isNewer || (downgradesEnabled && !isInstalled);
+            boolean isSwitchingAvailable = false;
+            JSONObject switchAsset = null;
+            String switchText = "";
+
+            if (isInstalled) {
+                if (com.waenhancer.BuildConfig.DEBUG) {
+                    if (hasReleaseApk) {
+                        isSwitchingAvailable = true;
+                        switchAsset = releaseAsset;
+                        switchText = "Switch to Release";
+                    }
+                } else {
+                    if (hasDebugApk) {
+                        isSwitchingAvailable = true;
+                        switchAsset = debugAsset;
+                        switchText = "Switch to Debug";
+                    }
+                }
+            }
+
+            if (isSwitchingAvailable) {
+                showUpdateButton = true;
+            }
+
             btnUpdate.setVisibility(showUpdateButton ? View.VISIBLE : View.GONE);
             btnUpdateSpacer.setVisibility(showUpdateButton ? View.VISIBLE : View.GONE);
 
-            if (showUpdateButton && !isNewer) {
+            if (isSwitchingAvailable) {
+                btnUpdate.setText(switchText);
+            } else if (showUpdateButton && !isNewer) {
                 btnUpdate.setText(R.string.downgrade);
             } else {
                 btnUpdate.setText(R.string.update);
             }
 
+            final boolean finalIsSwitching = isSwitchingAvailable;
+            final JSONObject finalSwitchAsset = switchAsset;
+            final JSONObject finalReleaseAsset = releaseAsset;
+            final JSONObject finalDebugAsset = debugAsset;
+
             btnUpdate.setOnClickListener(v -> {
-                String downloadUrl = null;
-                JSONArray assets = release.optJSONArray("assets");
-                if (assets != null) {
-                    for (int j = 0; j < assets.length(); j++) {
-                        JSONObject asset = assets.optJSONObject(j);
-                        if (asset != null) {
-                            String assetName = asset.optString("name", "");
-                            if (assetName.endsWith(".apk")) {
-                                downloadUrl = asset.optString("browser_download_url", "");
-                                break;
-                            }
-                        }
-                    }
+                if (finalIsSwitching && finalSwitchAsset != null) {
+                    String downloadUrl = finalSwitchAsset.optString("browser_download_url", "");
+                    UpdateDownloader.showDownloadDialog(v.getContext(), downloadUrl, tagName, downgradesEnabled);
+                    return;
                 }
 
-                if (downloadUrl != null) {
-                    UpdateDownloader.showDownloadDialog(v.getContext(), downloadUrl, tagName, downgradesEnabled);
-                } else {
+                if (apkAssets.isEmpty()) {
                     try {
                         android.content.Context context = v.getContext();
                         android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW,
@@ -529,6 +589,45 @@ public class ChangelogActivity extends BaseActivity {
                         context.startActivity(intent);
                     } catch (Exception ignored) {
                     }
+                    return;
+                }
+
+                if (apkAssets.size() == 1) {
+                    JSONObject asset = apkAssets.get(0);
+                    String downloadUrl = asset.optString("browser_download_url", "");
+                    UpdateDownloader.showDownloadDialog(v.getContext(), downloadUrl, tagName, downgradesEnabled);
+                } else {
+                    final List<JSONObject> choices = new ArrayList<>();
+                    List<String> items = new ArrayList<>();
+
+                    if (finalReleaseAsset != null && finalDebugAsset != null) {
+                        choices.add(finalReleaseAsset);
+                        items.add("Release (Size: " + formatSize(finalReleaseAsset.optLong("size", 0)) + ")");
+                        choices.add(finalDebugAsset);
+                        items.add("Debug (Size: " + formatSize(finalDebugAsset.optLong("size", 0)) + ")");
+                    } else {
+                        for (JSONObject asset : apkAssets) {
+                            choices.add(asset);
+                            String name = asset.optString("name", "");
+                            String type = "APK";
+                            if (name.endsWith("_release.apk")) {
+                                type = "Release";
+                            } else if (name.endsWith("_debug.apk")) {
+                                type = "Debug";
+                            }
+                            items.add(type + " (Size: " + formatSize(asset.optLong("size", 0)) + ")");
+                        }
+                    }
+
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(v.getContext())
+                            .setTitle("Select Build Type")
+                            .setItems(items.toArray(new String[0]), (dialog, which) -> {
+                                JSONObject selectedAsset = choices.get(which);
+                                String downloadUrl = selectedAsset.optString("browser_download_url", "");
+                                UpdateDownloader.showDownloadDialog(v.getContext(), downloadUrl, tagName, downgradesEnabled);
+                            })
+                            .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
+                            .show();
                 }
             });
 

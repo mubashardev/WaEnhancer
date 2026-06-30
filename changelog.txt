@@ -1,8 +1,8 @@
 [Added]
+- Added support for new WA/WB version 2.26.26.xx
 
-
-[Improvements]
-- UI Improvements
+[Disabled]
+- Disabled contact blocked feature
 
 [Fixes]
 - Fixed Maximum -1 contacts limitation bug 

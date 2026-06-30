@@ -97,8 +97,8 @@ public class Others extends Feature {
     private static final String LINKED_DEVICE_EMOJI = " \uD83D\uDDA5\uFE0F";
     private static volatile boolean messageDeviceSourceConversationActive = false;
 
-    public static HashMap<Integer, Boolean> propsBoolean = new HashMap<>();
-    public static HashMap<Integer, Integer> propsInteger = new HashMap<>();
+    public static ConcurrentHashMap<Integer, Boolean> propsBoolean = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<Integer, Integer> propsInteger = new ConcurrentHashMap<>();
     private Properties properties;
 
     public Others(ClassLoader loader, SharedPreferences preferences) {

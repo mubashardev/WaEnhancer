@@ -603,7 +603,6 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.ACTIVITY,
                                 null,
                                 Arrays.asList("deleted", "messages", "restore", "history", "log")));
-
                 catalog.add(new SearchableFeature("verify_blocked_contact",
                                 context.getString(R.string.show_contact_blocked),
                                 context.getString(R.string.show_contact_blocked_sum),
@@ -611,7 +610,6 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.GENERAL,
                                 "conversation",
                                 Arrays.asList("blocked", "contact", "verify")));
-
                 catalog.add(new SearchableFeature("go_to_first_message",
                                 context.getString(R.string.go_to_first_message),
                                 context.getString(R.string.go_to_first_message_sum),

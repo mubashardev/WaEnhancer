@@ -127,6 +127,9 @@ public class App extends Application {
         }
         
         var sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sharedPreferences.getBoolean("verify_blocked_contact", false)) {
+            sharedPreferences.edit().putBoolean("verify_blocked_contact", false).apply();
+        }
 
         // Resolve and store the Pro plugin APK path so that Xposed hooks can load it
         try {

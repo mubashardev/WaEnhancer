@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
@@ -69,30 +70,21 @@ public class ContactBlockedVerify extends Feature {
     @SuppressLint("ResourceType")
     @Override
     public void doHook() throws Throwable {
-        if (!prefs.getBoolean("verify_blocked_contact", false))
-            return;
-
-        Others.propsBoolean.put(2966, true);
-
-
-        Class<?> sendGetProfilePhoto = Unobfuscator.loadGetProfilePhoto(classLoader);
-        state.sendGetProfilePhoto = sendGetProfilePhoto;
-        var profilePhotoProtocolHelper = sendGetProfilePhoto.getConstructors()[0].getParameterTypes()[2];
-        initProfilePhotoProtocolHooks(profilePhotoProtocolHelper);
-        Class<?> dialerProfilePictureLoader = Unobfuscator.loadDialerProfilePictureLoader(classLoader);
-        initProfilePhotoCallbacks(dialerProfilePictureLoader);
-
-        var verifyKeyStrategy = buildVerifyKeyStrategy();
-        if (verifyKeyStrategy != null) {
-            registerActivityListener(verifyKeyStrategy.callbackInterface, verifyKeyStrategy.invoker);
-        }
+        // Fully disabled due to recent WhatsApp updates patching this method
     }
 
-    @NonNull
-    private VerifyKeyStrategy buildVerifyKeyStrategy() throws Exception {
+    @Nullable
+    private VerifyKeyStrategy buildVerifyKeyStrategy() {
         try {
             Class<?> verifyKeyClass = Unobfuscator.loadVerifyKeyClass(classLoader);
-            var callbackInterface = verifyKeyClass.getDeclaredConstructors()[0].getParameterTypes()[0];
+            if (verifyKeyClass == null || verifyKeyClass.getDeclaredConstructors().length == 0) {
+                return null;
+            }
+            var constructors = verifyKeyClass.getDeclaredConstructors();
+            if (constructors[0].getParameterTypes().length == 0) {
+                return null;
+            }
+            var callbackInterface = constructors[0].getParameterTypes()[0];
             VerifyKeyInvoker invoker = (proxyInstance, jids) -> {
                 var instance = XposedHelpers.newInstance(verifyKeyClass, proxyInstance, jids);
                 XposedHelpers.callMethod(instance, "A00", 1);
@@ -104,6 +96,9 @@ public class ContactBlockedVerify extends Feature {
                 Constructor<?> verifyKeyRunnableConstructor = Unobfuscator.loadVerifyKeyRunnableConstructor(classLoader);
                 log(verifyKeyRunnableConstructor);
                 var number = Unobfuscator.loadVerifyKeyInt(classLoader);
+                if (verifyKeyItemConstructor == null || verifyKeyItemConstructor.getParameterTypes().length == 0) {
+                    return null;
+                }
                 var callbackInterface = verifyKeyItemConstructor.getParameterTypes()[0];
                 VerifyKeyInvoker invoker = (proxyInstance, jids) -> {
                     var instance = verifyKeyItemConstructor.newInstance(proxyInstance, jids);
@@ -139,6 +134,10 @@ public class ContactBlockedVerify extends Feature {
             var textView = resolveContactChecker(activity, view);
             showChecking(textView);
             var methodResult = ReflectionUtils.findMethodUsingFilter(callbackInterface, method1 -> method1.getParameterCount() == 1 && method1.getParameterTypes()[0] == Integer.class);
+            if (methodResult == null) {
+                showUnverified(textView);
+                return;
+            }
             long startTime = System.currentTimeMillis();
             var isloaded = new AtomicBoolean(false);
             var clazzProxy = Proxy.newProxyInstance(classLoader,
@@ -168,6 +167,7 @@ public class ContactBlockedVerify extends Feature {
 
 
     private void initProfilePhotoProtocolHooks(Class<?> profilePhotoProtocolHelper) {
+        if (profilePhotoProtocolHelper == null) return;
         XposedBridge.hookAllConstructors(profilePhotoProtocolHelper, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -177,35 +177,51 @@ public class ContactBlockedVerify extends Feature {
     }
 
     private void initProfilePhotoCallbacks(Class<?> dialerProfilePictureLoader) {
-        var methods = ReflectionUtils.findAllMethodsUsingFilter(dialerProfilePictureLoader, method -> method.getName().length() == 3 && method.getParameterCount() > 1);
-        var onSuccess = Arrays.stream(methods).filter(method -> !List.of(method.getParameterTypes()).contains(String.class)).findFirst().orElseThrow();
-        var onError = Arrays.stream(methods).filter(method -> List.of(method.getParameterTypes()).contains(String.class)).findFirst().orElseThrow();
-        XposedBridge.hookMethod(onSuccess, new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                var fieldUserJid = ReflectionUtils.getFieldByExtendType(param.args[0].getClass(), FMessageWpp.UserJid.TYPE_JID);
-                var userJid = new FMessageWpp.UserJid(fieldUserJid.get(param.args[0]));
-                if (!Objects.equals(state.pendingUserJid.get(), userJid.getUserRawString())) return;
-                state.pendingUserJid.set(null);
-                var tv = state.checkerView.get();
-                if (tv == null) return;
-                showNotBlocked(tv);
+        try {
+            var methods = ReflectionUtils.findAllMethodsUsingFilter(dialerProfilePictureLoader, method -> method.getName().length() == 3 && method.getParameterCount() > 1);
+            var onSuccessOpt = Arrays.stream(methods).filter(method -> !List.of(method.getParameterTypes()).contains(String.class)).findFirst();
+            var onErrorOpt = Arrays.stream(methods).filter(method -> List.of(method.getParameterTypes()).contains(String.class)).findFirst();
+            
+            if (onSuccessOpt.isEmpty() || onErrorOpt.isEmpty()) {
+                logDebug("Could not find onSuccess or onError methods in dialerProfilePictureLoader");
+                return;
             }
-        });
-        XposedBridge.hookMethod(onError, new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                var userJid = new FMessageWpp.UserJid(param.args[0]);
-                if (!Objects.equals(state.pendingUserJid.get(), userJid.getUserRawString())) return;
-                state.pendingUserJid.set(null);
-                var status = ReflectionUtils.getArg(param.args, Integer.class, 0);
-                var tv = state.checkerView.get();
-                if (tv == null) return;
-                if (status == STATUS_NOT_ADDED) {
-                    showProbablyNotAdded(tv);
+            
+            var onSuccess = onSuccessOpt.get();
+            var onError = onErrorOpt.get();
+            
+            XposedBridge.hookMethod(onSuccess, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if (param.args == null || param.args.length == 0 || param.args[0] == null) return;
+                    var fieldUserJid = ReflectionUtils.getFieldByExtendType(param.args[0].getClass(), FMessageWpp.UserJid.TYPE_JID);
+                    if (fieldUserJid == null) return;
+                    var userJid = new FMessageWpp.UserJid(fieldUserJid.get(param.args[0]));
+                    if (!Objects.equals(state.pendingUserJid.get(), userJid.getUserRawString())) return;
+                    state.pendingUserJid.set(null);
+                    var tv = state.checkerView.get();
+                    if (tv == null) return;
+                    showNotBlocked(tv);
                 }
-            }
-        });
+            });
+            XposedBridge.hookMethod(onError, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if (param.args == null || param.args.length == 0 || param.args[0] == null) return;
+                    var userJid = new FMessageWpp.UserJid(param.args[0]);
+                    if (!Objects.equals(state.pendingUserJid.get(), userJid.getUserRawString())) return;
+                    state.pendingUserJid.set(null);
+                    var status = ReflectionUtils.getArg(param.args, Integer.class, 0);
+                    var tv = state.checkerView.get();
+                    if (tv == null) return;
+                    if (status != null && status == STATUS_NOT_ADDED) {
+                        showProbablyNotAdded(tv);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("[ContactBlockedVerify] Failed to init profile photo callbacks: " + t.getMessage());
+        }
     }
 
     private void onVerifyResult(ViewGroup view, FMessageWpp.UserJid userJid, int value, long startTime) {

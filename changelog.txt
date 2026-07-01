@@ -6,3 +6,4 @@
 
 [Fixes]
 - Fixed Maximum -1 contacts limitation bug 
+- Fixed settings reset bug for some devices

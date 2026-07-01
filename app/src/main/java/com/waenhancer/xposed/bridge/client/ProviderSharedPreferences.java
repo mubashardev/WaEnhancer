@@ -204,8 +204,12 @@ public class ProviderSharedPreferences implements SharedPreferences {
             Bundle result = callProvider("get_all_preferences", null);
             if (result == null) {
                 if (fallbackPrefs == null) return;
+                Map<String, ?> fallbackMap = fallbackPrefs.getAll();
+                if (fallbackMap == null || fallbackMap.isEmpty()) {
+                    return;
+                }
                 var editor = localPrefs.edit().clear();
-                for (Map.Entry<String, ?> entry : fallbackPrefs.getAll().entrySet()) {
+                for (Map.Entry<String, ?> entry : fallbackMap.entrySet()) {
                     Object value = entry.getValue();
                     if (value instanceof String) editor.putString(entry.getKey(), (String) value);
                     else if (value instanceof Boolean) editor.putBoolean(entry.getKey(), (Boolean) value);

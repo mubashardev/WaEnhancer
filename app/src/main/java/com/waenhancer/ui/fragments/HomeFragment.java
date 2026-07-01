@@ -65,7 +65,7 @@ public class HomeFragment extends BaseFragment {
      * Using SharedPreferences here caused a false "Module Enabled" status
      * when the module was disabled in LSPosed after a previous active session.
      */
-    private static volatile boolean sModuleHeartbeatActive = false;
+    private static volatile long sLastHeartbeatTime = 0L;
 
     private FragmentHomeBinding binding;
     private String pendingUpdateUrl;
@@ -1094,10 +1094,7 @@ public class HomeFragment extends BaseFragment {
 
     // setModuleActiveState is replaced by updateModuleStatusUi
     private void markModuleActive() {
-        // Set the in-memory flag. No disk persistence — the flag intentionally
-        // resets to false when the app process is killed, so a stale value
-        // from a previous session can never produce a false "Module Enabled".
-        sModuleHeartbeatActive = true;
+        sLastHeartbeatTime = System.currentTimeMillis();
     }
 
     private boolean isWhatsAppRunning(Context context) {
@@ -1114,9 +1111,7 @@ public class HomeFragment extends BaseFragment {
     }
 
     private boolean hasRecentModuleHeartbeat() {
-        // Simply return the in-memory flag. It is false until WhatsApp sends a
-        // broadcast response in the current app session (see markModuleActive).
-        return sModuleHeartbeatActive;
+        return (System.currentTimeMillis() - sLastHeartbeatTime) < 8000;
     }
 
     private void showClearCacheConfirmation() {

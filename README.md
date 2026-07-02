@@ -5,7 +5,10 @@
   > **Legal & DMCA Disclaimer:** WaEnhancer X is a community-driven, independent fork. It is not affiliated with, endorsed by, or in any way associated with WhatsApp Inc. or Meta Platforms, Inc. This project is provided "as is" for research and educational purposes. Use at your own risk.
 </div>
 
-[![Youtube Video](http://thumb.mubashar.dev/?id=BIrojFtTGJ8)](https://www.youtube.com/watch?v=BIrojFtTGJ8)
+## Star History
+
+[![Star History Chart](https://api.star-history.com/chart?repos=mubashardev/WaEnhancer&type=date&legend=top-left)](https://www.star-history.com/?repos=mubashardev%2FWaEnhancer&type=date&legend=top-left)
+<!-- [![Youtube Video](http://thumb.mubashar.dev/?id=BIrojFtTGJ8)](https://www.youtube.com/watch?v=BIrojFtTGJ8) -->
 
 ## Why WaEnhancer X?
 - **Unified LSPosed scope**: Optimized hooks for seamless integration.
@@ -122,6 +125,7 @@ WaEnhancerX isn't just a fork; it's a **high-performance, native-first evolution
 6. Ensure **WhatsApp** is selected in the scope.
 7. **Force Stop** WhatsApp.
 8. Open WhatsApp and verify the module is active.
+
 
 
 ---

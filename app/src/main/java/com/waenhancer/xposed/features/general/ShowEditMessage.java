@@ -317,6 +317,7 @@ public class ShowEditMessage extends Feature {
             var ctx = (Context) WppCore.getCurrentConversation();
 
             var dialog = new AlertDialogWpp(ctx);
+            dialog.setFullHeight(true);
 
             var adapter = new MessageAdapter(ctx, messages);
             ListView listView = new NoScrollListView(ctx);

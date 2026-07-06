@@ -4,3 +4,8 @@
 [Fixes]
 - Fixed module for some devices not working
 - Fixed text status custom color not working for some devices
+- Fixed edit message history to keep complete history instead of keeping only recent 2 versions of message. 
+
+
+
+Note: This update may clear old editted messages histories.

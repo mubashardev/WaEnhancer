@@ -284,6 +284,7 @@ public class SimpleColorPickerDialog {
         android.widget.Button btnCancel = new android.widget.Button(context);
         btnCancel.setText("Cancel");
         btnCancel.setTextColor(textColor);
+        btnCancel.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
         GradientDrawable cancelBg = new GradientDrawable();
         cancelBg.setColor(Color.TRANSPARENT);
         btnCancel.setBackground(cancelBg);
@@ -293,12 +294,13 @@ public class SimpleColorPickerDialog {
 
         android.widget.Button btnSelect = new android.widget.Button(context);
         btnSelect.setText("Select");
-        btnSelect.setTextColor(Color.WHITE);
+        btnSelect.setTextColor(isDark ? 0xFF000000 : 0xFFFFFFFF);
+        btnSelect.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
         GradientDrawable selectBg = new GradientDrawable();
-        selectBg.setColor(0xFF00A884); // WhatsApp green/teal
-        selectBg.setCornerRadius(dpToPx(20));
+        selectBg.setColor(isDark ? 0xFF00E676 : 0xFF00A884); // Bright green for dark theme, teal green for light theme
+        selectBg.setCornerRadius(dpToPx(100)); // Fully rounded
         btnSelect.setBackground(selectBg);
-        btnSelect.setPadding(dpToPx(20), dpToPx(8), dpToPx(20), dpToPx(8));
+        btnSelect.setPadding(dpToPx(24), dpToPx(8), dpToPx(24), dpToPx(8));
         btnSelect.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onColorSelected(selectedColor);

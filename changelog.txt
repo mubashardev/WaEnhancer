@@ -1,3 +1,5 @@
+[Improved]
+- Enhanced Edited messages history to show the difference between original and edited message by highlighting the changes
 
 [Fixes]
 - Fixed module for some devices not working

@@ -153,9 +153,18 @@ public class FMessageWpp {
 
     public Key getOriginalKey() {
         try {
-            return new Key(getOriginalMessageKey.invoke(fmessage), this);
+            if (getOriginalMessageKey == null) return null;
+            Object result;
+            if (java.lang.reflect.Modifier.isStatic(getOriginalMessageKey.getModifiers())) {
+                result = getOriginalMessageKey.invoke(null, fmessage);
+            } else {
+                result = getOriginalMessageKey.invoke(fmessage);
+            }
+            if (result != null) {
+                return new Key(result, this);
+            }
         } catch (Exception e) {
-            XposedBridge.log(e);
+            XposedBridge.log("[WAEX] Error invoking getOriginalMessageKey: " + e.getMessage());
         }
         return null;
     }

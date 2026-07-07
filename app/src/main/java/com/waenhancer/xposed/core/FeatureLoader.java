@@ -129,6 +129,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
@@ -368,6 +370,46 @@ public class FeatureLoader {
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         super.afterHookedMethod(param);
                         Activity activity = (Activity) param.thisObject;
+
+                        // Check if group message filter is enabled and database index is missing
+                        if (pref.getBoolean("filter_group_members_messages", false)) {
+                            try {
+                                java.io.File dbFile = activity.getDatabasePath("msgstore.db");
+                                boolean indexed = false;
+                                if (dbFile.exists()) {
+                                    SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null,
+                                            SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+                                    try (Cursor c = db.rawQuery(
+                                            "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
+                                        indexed = c != null && c.moveToFirst();
+                                    } finally {
+                                        db.close();
+                                    }
+                                }
+                                if (!indexed) {
+                                    new AlertDialogWpp(activity)
+                                            .asBottomSheet()
+                                            .setTitle("Database Optimization Needed")
+                                            .setMessage("WaEnhancer database optimization indexes are missing or were removed due to a recent WhatsApp update. Optimize now for fast group message filtering?")
+                                            .setPositiveButton("Optimize Now", (dialog, which) -> {
+                                                try {
+                                                    Class<?> settingsClass = WppCore.getAboutActivityClass(activity.getClassLoader());
+                                                    Intent intent = new Intent(activity, settingsClass);
+                                                    intent.putExtra("wae_optimize_db", true);
+                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                    activity.startActivity(intent);
+                                                } catch (Throwable t) {
+                                                    XposedBridge.log("[WAEX] Failed to start optimization: " + t.toString());
+                                                }
+                                            })
+                                            .setNegativeButton("Later", null)
+                                            .show();
+                                }
+                            } catch (Throwable t) {
+                                XposedBridge.log("[WAEX] Error checking database index at startup: " + t.toString());
+                            }
+                        }
+
                         if (!list.isEmpty()) {
                             var msg = String.join("\n",
                                     list.stream().map(item -> item.getPluginName() + " - " + item.getMessage())

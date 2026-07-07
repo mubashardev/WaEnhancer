@@ -635,6 +635,14 @@ public class FeatureCatalog {
                                 "conversation",
                                 Arrays.asList("go", "to", "first", "message", "scroll", "top", "initial")));
 
+                catalog.add(new SearchableFeature("filter_group_members_messages",
+                                context.getString(R.string.filter_group_members_messages),
+                                context.getString(R.string.filter_group_members_messages_sum),
+                                SearchableFeature.Category.GENERAL_CONVERSATION,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "conversation",
+                                Arrays.asList("filter", "group", "members", "messages", "sender", "select")));
+
                 catalog.add(new SearchableFeature("message_bomber",
                                 context.getString(R.string.message_bomber),
                                 context.getString(R.string.message_bomber_sum),

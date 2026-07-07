@@ -151,6 +151,11 @@
             app:key="go_to_first_message"
             app:summary="@string/go_to_first_message_sum"
             app:title="@string/go_to_first_message" />
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="true"
+            app:key="filter_group_members_messages"
+            app:summary="@string/filter_group_members_messages_sum"
+            app:title="@string/filter_group_members_messages" />
 
         <rikka.material.preference.MaterialSwitchPreference
             app:key="admin_grp"

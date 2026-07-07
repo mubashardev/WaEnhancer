@@ -694,6 +694,8 @@ public class ProHelper {
             hookKey = "always_typing_global";
         } else if (prefKey.equals("send_audio_as_voice_status")) {
             hookKey = "send_audio_as_voice_status";
+        } else if (prefKey.equals("filter_group_members_messages")) {
+            hookKey = "filter_group_members_messages";
         }
 
         if (hookKey != null) {
@@ -886,9 +888,17 @@ public class ProHelper {
 
                 if (isFree) {
                     CharSequence title = pref.getTitle();
-                    if (title != null && !title.toString().contains("Limited Free")) {
-                        String coloredBadge = " <font color='#02C697'><b>[Limited Free]</b></font>";
-                        pref.setTitle(Html.fromHtml(title.toString() + coloredBadge, Html.FROM_HTML_MODE_LEGACY));
+                    if (title != null) {
+                        String titleStr = title.toString();
+                        // Remove the [Pro] badge if it was added by ProSwitchPreference
+                        titleStr = titleStr.replace("[Pro]", "").trim();
+                        titleStr = titleStr.replace("  ", " ");
+                        if (!titleStr.contains("Limited Free")) {
+                            String coloredBadge = " <font color='#02C697'><b>[Limited Free]</b></font>";
+                            pref.setTitle(Html.fromHtml(titleStr + coloredBadge, Html.FROM_HTML_MODE_LEGACY));
+                        } else {
+                            pref.setTitle(Html.fromHtml(titleStr, Html.FROM_HTML_MODE_LEGACY));
+                        }
                     }
                 }
             }

@@ -65,7 +65,6 @@ public class KeyboxFetcher {
                     editor.putString("default_kb_last_updated", lastUpdated);
                 }
                 editor.apply();
-                /* Log removed */
             }
         }
     }

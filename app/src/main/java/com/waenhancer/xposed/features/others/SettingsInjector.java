@@ -23,6 +23,7 @@ import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 import java.util.HashSet;
 import java.util.Set;
+import org.json.JSONObject;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -60,6 +61,15 @@ public class SettingsInjector extends Feature {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
+                String screenId = activity.getIntent().getStringExtra("waex_screen_id");
+                if (screenId != null) {
+                    Menu menu = (Menu) param.args[0];
+                    if (menu != null) {
+                        menu.clear(); // Hides all native menu items (including search!)
+                    }
+                    return;
+                }
+
                 String entryPoint = getSafeString("open_waex", "2");
                 if ("0".equals(entryPoint) || "2".equals(entryPoint)) return;
                 Menu menu = (Menu) param.args[0];
@@ -69,10 +79,25 @@ public class SettingsInjector extends Feature {
         XposedBridge.hookAllMethods(settingsActivityClass, "onPrepareOptionsMenu", menuHook);
         XposedBridge.hookAllMethods(settingsActivityClass, "onCreateOptionsMenu", menuHook);
 
+        XposedBridge.hookAllMethods(settingsActivityClass, "onNewIntent", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                Activity activity = (Activity) param.thisObject;
+                android.content.Intent intent = (android.content.Intent) param.args[0];
+                activity.setIntent(intent);
+            }
+        });
+
         XposedBridge.hookAllMethods(settingsActivityClass, "onResume", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
+                String screenId = activity.getIntent().getStringExtra("waex_screen_id");
+                if (screenId != null) {
+                    hijackWholeScreen(activity, screenId);
+                    return;
+                }
+
                 String entryPoint = getSafeString("open_waex", "2");
                 XposedBridge.log("[WAEX] SettingsInjector onResume called, entryPoint: " + entryPoint);
 
@@ -457,13 +482,117 @@ public class SettingsInjector extends Feature {
             rowLayout.addView(textContainer);
 
             // Dynamic Click Action to open Settings
-            rowLayout.setOnClickListener(v -> Utils.openModule(activity));
+            rowLayout.setOnClickListener(v -> {
+                String entryPoint = getSafeString("open_waex", "2");
+                if ("2".equals(entryPoint)) {
+                    android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                    intent.putExtra("waex_screen_id", "root");
+                    activity.startActivity(intent);
+                } else {
+                    Utils.openModule(activity);
+                }
+            });
 
             return rowLayout;
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancerX] SettingsInjector: Error creating dynamic setting row: " + t.getMessage());
             return null;
         }
+    }
+
+    private void hijackWholeScreen(Activity activity, String screenId) {
+        try {
+            ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root == null) return;
+
+            View originalList = findSettingsListByStructure(root);
+            if (originalList == null) {
+                originalList = root.findViewById(android.R.id.list);
+            }
+            if (originalList == null) return;
+
+            ViewGroup parent = (ViewGroup) originalList.getParent();
+            if (parent == null) return;
+
+            FrameLayout container = new FrameLayout(activity);
+            container.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+            int listIndex = parent.indexOfChild(originalList);
+            parent.removeView(originalList);
+            parent.addView(container, listIndex);
+
+            JSONObject settingsMap = WdsSettingsTileRenderer.loadSettingsMap(activity);
+            if (settingsMap != null) {
+                View contentView;
+                String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+                        activity, R.string.waenhancer_settings, "WaeX Settings");
+                if ("root".equals(screenId)) {
+                    contentView = WdsSettingsTileRenderer.buildCategoryList(activity, settingsMap, prefs, (key, newValue) -> {
+                        android.content.Intent intent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                        intent.putExtra("key", key);
+                        intent.setPackage(activity.getPackageName());
+                        activity.sendBroadcast(intent);
+                    });
+                } else {
+                    contentView = WdsSettingsTileRenderer.buildSubScreenById(activity, settingsMap, screenId, prefs, (key, newValue) -> {
+                        android.content.Intent intent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                        intent.putExtra("key", key);
+                        intent.setPackage(activity.getPackageName());
+                        activity.sendBroadcast(intent);
+                    });
+                    // Resolve title from JSON categories
+                    try {
+                        org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                        for (int i = 0; i < categories.length(); i++) {
+                            JSONObject cat = categories.getJSONObject(i);
+                            if (cat.getString("id").equals(screenId)) {
+                                title = cat.getString("title");
+                                break;
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                if (contentView != null) {
+                    container.addView(contentView);
+                    setToolbarTitle(activity, title);
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WaEnhancerX] SettingsInjector: Hijack failed: " + t.getMessage());
+        }
+    }
+
+    private void setToolbarTitle(Activity activity, String title) {
+        try {
+            activity.setTitle(title);
+        } catch (Throwable ignored) {}
+        try {
+            Object actionBar = XposedHelpers.callMethod(activity, "getSupportActionBar");
+            if (actionBar != null) {
+                XposedHelpers.callMethod(actionBar, "setTitle", title);
+            }
+        } catch (Throwable ignored) {}
+        try {
+            ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root != null) {
+                ViewGroup toolbar = findToolbar(root);
+                if (toolbar != null) {
+                    for (int i = 0; i < toolbar.getChildCount(); i++) {
+                        View child = toolbar.getChildAt(i);
+                        if (child instanceof android.widget.TextView) {
+                            ((android.widget.TextView) child).setText(title);
+                        } else if (child instanceof ViewGroup) {
+                            android.widget.TextView tv = findTextView(child);
+                            if (tv != null) {
+                                tv.setText(title);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
     }
 
     private void findTextViews(View view, java.util.List<android.widget.TextView> list) {

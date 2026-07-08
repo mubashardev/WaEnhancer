@@ -68,6 +68,7 @@ public class AlertDialogWpp {
     private View mCustomView;
     private CharSequence[] mItems;
     private DialogInterface.OnClickListener mItemsListener;
+    private int mSelectedIndex = -1;
     private CharSequence[] mMultiChoiceItems;
     private boolean[] mCheckedItems;
     private DialogInterface.OnMultiChoiceClickListener mMultiChoiceListener;
@@ -280,6 +281,20 @@ public class AlertDialogWpp {
             } catch (Throwable e) {
                 XposedBridge.log("[WAEX] AlertDialogWpp setItems failed on Wpp builder: " + e.getMessage());
             }
+        }
+        return this;
+    }
+
+
+    public AlertDialogWpp setSingleChoiceItems(CharSequence[] items, int checkedItem, DialogInterface.OnClickListener listener) {
+        mItems = items;
+        mItemsListener = listener;
+        mSelectedIndex = checkedItem;
+        mAlertDialog.setSingleChoiceItems(items, checkedItem, listener);
+        if (!shouldUseSystem()) {
+            try {
+                XposedHelpers.callMethod(mAlertDialogWpp, "setSingleChoiceItems", items, checkedItem, listener);
+            } catch (Throwable ignored) {}
         }
         return this;
     }
@@ -664,28 +679,61 @@ public class AlertDialogWpp {
                     
                     for (int i = 0; i < mItems.length; i++) {
                         final int index = i;
-                        TextView itemView = createWdsTextView(mContext);
-                        LinearLayout.LayoutParams itemLp = new LinearLayout.LayoutParams(
+                        LinearLayout itemRow = new LinearLayout(mContext);
+                        itemRow.setOrientation(LinearLayout.HORIZONTAL);
+                        itemRow.setGravity(Gravity.CENTER_VERTICAL);
+                        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                        itemView.setLayoutParams(itemLp);
-                        itemView.setText(mItems[index]);
-                        itemView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-                        itemView.setTextColor(primaryTextColor);
-                        itemView.setGravity(Gravity.CENTER_VERTICAL);
-                        itemView.setPadding((int) (16 * density), (int) (14 * density), (int) (16 * density), (int) (14 * density));
-                        
+                        itemRow.setLayoutParams(rowLp);
+                        itemRow.setPadding((int) (16 * density), (int) (12 * density), (int) (16 * density), (int) (12 * density));
+
+                        // Label
+                        TextView labelView = createWdsTextView(mContext);
+                        LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(
+                                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+                        labelView.setLayoutParams(labelLp);
+                        labelView.setText(mItems[index]);
+                        labelView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                        labelView.setTextColor(primaryTextColor);
+                        itemRow.addView(labelView);
+
+                        // If single choice mode, add RadioButton
+                        if (mSelectedIndex >= 0) {
+                            android.widget.RadioButton radio = new android.widget.RadioButton(mContext);
+                            LinearLayout.LayoutParams radioLp = new LinearLayout.LayoutParams(
+                                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                            radio.setLayoutParams(radioLp);
+                            radio.setChecked(index == mSelectedIndex);
+                            radio.setClickable(false);
+                            // Theme radio button to look green-tinted in dark mode
+                            if (isDarkMode) {
+                                ColorStateList colorStateList = new ColorStateList(
+                                        new int[][]{
+                                                new int[]{-android.R.attr.state_checked},
+                                                new int[]{android.R.attr.state_checked}
+                                        },
+                                        new int[]{
+                                                0xFF8696A0, // Unchecked grey
+                                                accentColor // Checked green
+                                        }
+                                );
+                                radio.setButtonTintList(colorStateList);
+                            }
+                            itemRow.addView(radio);
+                        }
+
                         ColorDrawable normalBg = new ColorDrawable(Color.TRANSPARENT);
                         ColorStateList itemRippleColor = ColorStateList.valueOf(secondaryTextColor & 0x15FFFFFF | 0x15000000);
                         RippleDrawable itemRipple = new RippleDrawable(itemRippleColor, normalBg, null);
-                        itemView.setBackground(itemRipple);
-                        
-                        itemView.setOnClickListener(v -> {
+                        itemRow.setBackground(itemRipple);
+
+                        itemRow.setOnClickListener(v -> {
                             if (mItemsListener != null) {
                                 mItemsListener.onClick(dialog, index);
                             }
                             dialog.dismiss();
                         });
-                        itemsLayout.addView(itemView);
+                        itemsLayout.addView(itemRow);
                     }
                     scrollContentLayout.addView(itemsLayout);
                 }

@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 
 import com.waenhancer.xposed.core.Feature;
+import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.R;
@@ -72,12 +73,21 @@ public class SettingsInjector extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
                 String entryPoint = getSafeString("open_waex", "1");
+                XposedBridge.log("[WAEX] SettingsInjector onResume called, entryPoint: " + entryPoint);
 
                 // Clean up elements that shouldn't be present in the current mode
                 if (!"2".equals(entryPoint)) {
                     removeNativeViewTile(activity);
                 } else {
                     removeToolbarButton(activity);
+                }
+
+                // Check and inject/remove optimization tile dynamically
+                boolean needOpt = needDatabaseOptimization(activity);
+                if (needOpt) {
+                    injectOptimizationTile(activity);
+                } else {
+                    removeOptimizationTile(activity);
                 }
 
                 if ("0".equals(entryPoint)) {
@@ -110,38 +120,31 @@ public class SettingsInjector extends Feature {
         });
     }
 
+    private View findAccountRow(ViewGroup listContainer, Activity activity) {
+        View accountTextView = findTextViewWithText(listContainer, getLocalizedText(activity, "settings_account", "Account"));
+        if (accountTextView != null) {
+            return findDirectChildOfContainer(listContainer, accountTextView);
+        }
+        return null;
+    }
+
     private void injectNativeViewTile(Activity activity) {
         try {
             ViewGroup root = activity.findViewById(android.R.id.content);
             if (root == null) return;
 
+            if (root.findViewById(VIEW_ID_WAEX_SETTINGS) != null) return;
+
             // Strategy 1: Find main settings container by structure (Vertical LinearLayout with multiple clickable rows)
             ViewGroup listContainer = findSettingsListByStructure(root);
             if (listContainer != null) {
-                View anchorRow = null;
-                int insertionIndex = 1;
-                int validRowCount = 0;
-
-                for (int i = 0; i < listContainer.getChildCount(); i++) {
-                    View child = listContainer.getChildAt(i);
-                    if (child instanceof ViewGroup && (child.isClickable() || child.hasOnClickListeners())) {
-                        if (findImageView(child) != null && findTextView(child) != null) {
-                            validRowCount++;
-                            anchorRow = child;
-                            // Insert after the first valid settings row (which is usually the Profile row)
-                            if (validRowCount == 1) {
-                                insertionIndex = i + 1;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (anchorRow != null) {
-                    View customRow = createDynamicSettingRow(activity, anchorRow);
+                View accountRow = findAccountRow(listContainer, activity);
+                if (accountRow != null) {
+                    int accountIndex = listContainer.indexOfChild(accountRow);
+                    View customRow = createDynamicSettingRow(activity, accountRow);
                     if (customRow != null) {
                         customRow.setId(VIEW_ID_WAEX_SETTINGS);
-                        listContainer.addView(customRow, insertionIndex);
+                        listContainer.addView(customRow, accountIndex);
                         return; // Success
                     }
                 }
@@ -164,7 +167,7 @@ public class SettingsInjector extends Feature {
                         View customRow = createDynamicSettingRow(activity, row);
                         if (customRow != null) {
                             customRow.setId(VIEW_ID_WAEX_SETTINGS);
-                            container.addView(customRow, index + 1);
+                            container.addView(customRow, index);
                         }
                     }
                 }
@@ -204,7 +207,7 @@ public class SettingsInjector extends Feature {
                 View customRow = createDynamicSettingRow(activity, accountRow);
                 if (customRow != null) {
                     customRow.setId(VIEW_ID_WAEX_SETTINGS);
-                    commonAncestor.addView(customRow, index + 1);
+                    commonAncestor.addView(customRow, index);
                 }
             }
         } catch (Throwable t) {
@@ -582,6 +585,239 @@ public class SettingsInjector extends Feature {
             }
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancerX] SettingsInjector: Toolbar error: " + t.getMessage());
+        }
+    }
+
+    private static final int VIEW_ID_WAEX_OPTIMIZATION = 10002;
+
+    private boolean needDatabaseOptimization(Activity activity) {
+        try {
+            boolean needFilterIndex = prefs.getBoolean("filter_group_members_messages", false);
+            boolean needSeparateIndex = prefs.getBoolean("separategroups", false);
+            XposedBridge.log("[WAEX] needDatabaseOptimization check: needFilterIndex=" + needFilterIndex + ", needSeparateIndex=" + needSeparateIndex);
+            if (!needFilterIndex && !needSeparateIndex) return false;
+
+            java.io.File dbFile = activity.getDatabasePath("msgstore.db");
+            XposedBridge.log("[WAEX] msgstore.db file path: " + dbFile.getAbsolutePath() + ", exists: " + dbFile.exists());
+            if (!dbFile.exists()) return false;
+
+            boolean filterIndexed = !needFilterIndex;
+            boolean separateIndexed = !needSeparateIndex;
+            
+            android.database.sqlite.SQLiteDatabase db = android.database.sqlite.SQLiteDatabase.openDatabase(
+                    dbFile.getAbsolutePath(), null,
+                    android.database.sqlite.SQLiteDatabase.OPEN_READONLY | android.database.sqlite.SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+            try {
+                if (needFilterIndex) {
+                    try (android.database.Cursor c = db.rawQuery(
+                            "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
+                        filterIndexed = c != null && c.moveToFirst();
+                    }
+                }
+                if (needSeparateIndex) {
+                    try (android.database.Cursor c = db.rawQuery(
+                            "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_chat_unseen_idx'", null)) {
+                        separateIndexed = c != null && c.moveToFirst();
+                    }
+                }
+            } finally {
+                db.close();
+            }
+            XposedBridge.log("[WAEX] filterIndexed=" + filterIndexed + ", separateIndexed=" + separateIndexed);
+            return !filterIndexed || !separateIndexed;
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Error checking database optimization state in SettingsInjector: " + t.toString());
+            return false;
+        }
+    }
+
+    private void injectOptimizationTile(Activity activity) {
+        try {
+            ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root == null) return;
+
+            if (root.findViewById(VIEW_ID_WAEX_OPTIMIZATION) != null) return;
+
+            ViewGroup listContainer = findSettingsListByStructure(root);
+            if (listContainer != null) {
+                View accountRow = findAccountRow(listContainer, activity);
+                if (accountRow != null) {
+                    int insertionIndex = listContainer.indexOfChild(accountRow);
+                    View waexSettingsRow = listContainer.findViewById(VIEW_ID_WAEX_SETTINGS);
+                    if (waexSettingsRow != null) {
+                        insertionIndex = listContainer.indexOfChild(waexSettingsRow) + 1;
+                    }
+                    View customRow = createOptimizationSettingRow(activity, accountRow);
+                    if (customRow != null) {
+                        customRow.setId(VIEW_ID_WAEX_OPTIMIZATION);
+                        listContainer.addView(customRow, insertionIndex);
+                        return;
+                    }
+                }
+            }
+
+            View accountTextView = findTextViewWithText(root, getLocalizedText(activity, "settings_account", "Account"));
+            View privacyTextView = findTextViewWithText(root, getLocalizedText(activity, "settings_privacy", "Privacy"));
+            if (accountTextView == null && privacyTextView == null) return;
+
+            View found = accountTextView != null ? accountTextView : privacyTextView;
+            ViewGroup container = findVerticalContainer(found);
+            if (container != null) {
+                View row = findDirectChildOfContainer(container, found);
+                if (row != null) {
+                    int index = container.indexOfChild(row);
+                    View waexSettingsRow = container.findViewById(VIEW_ID_WAEX_SETTINGS);
+                    if (waexSettingsRow != null) {
+                        index = container.indexOfChild(waexSettingsRow) + 1;
+                    }
+                    View customRow = createOptimizationSettingRow(activity, row);
+                    if (customRow != null) {
+                        customRow.setId(VIEW_ID_WAEX_OPTIMIZATION);
+                        container.addView(customRow, index);
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] SettingsInjector: optimization view tile error: " + t.getMessage());
+        }
+    }
+
+    private void removeOptimizationTile(Activity activity) {
+        try {
+            ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root == null) return;
+            View customRow = root.findViewById(VIEW_ID_WAEX_OPTIMIZATION);
+            if (customRow != null && customRow.getParent() instanceof ViewGroup) {
+                ((ViewGroup) customRow.getParent()).removeView(customRow);
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private View createOptimizationSettingRow(Activity activity, View anchorView) {
+        try {
+            android.widget.LinearLayout rowLayout = new android.widget.LinearLayout(activity);
+            rowLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            rowLayout.setGravity(Gravity.CENTER_VERTICAL);
+
+            if (anchorView.getLayoutParams() != null) {
+                rowLayout.setLayoutParams(anchorView.getLayoutParams());
+            } else {
+                rowLayout.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ));
+            }
+
+            int padLeft = dp(activity, 24);
+            int padRight = dp(activity, 24);
+            int padTop = anchorView.getPaddingTop() > 0 ? anchorView.getPaddingTop() : dp(activity, 15);
+            int padBottom = anchorView.getPaddingBottom() > 0 ? anchorView.getPaddingBottom() : dp(activity, 15);
+            rowLayout.setPadding(padLeft, padTop, padRight, padBottom);
+
+            TypedValue outValue = new TypedValue();
+            activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+            rowLayout.setBackgroundResource(outValue.resourceId);
+
+            rowLayout.setClickable(true);
+            rowLayout.setFocusable(true);
+
+            ImageView anchorIcon = findImageView(anchorView);
+            java.util.List<android.widget.TextView> anchorTextViews = new java.util.ArrayList<>();
+            findTextViews(anchorView, anchorTextViews);
+
+            android.widget.TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
+            android.widget.TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
+
+            ImageView iconView = new ImageView(activity);
+            android.widget.LinearLayout.LayoutParams iconParams = new android.widget.LinearLayout.LayoutParams(dp(activity, 24), dp(activity, 24));
+            iconView.setLayoutParams(iconParams);
+
+            android.graphics.drawable.Drawable icon = DesignUtils.getDrawableByName("ic_settings");
+            if (icon != null) {
+                iconView.setImageDrawable(icon);
+            }
+
+            if (anchorIcon != null && anchorIcon.getImageTintList() != null) {
+                iconView.setImageTintList(anchorIcon.getImageTintList());
+                iconView.setColorFilter(anchorIcon.getColorFilter());
+                iconView.setAlpha(anchorIcon.getAlpha());
+            } else if (anchorSummary != null) {
+                iconView.setImageTintList(anchorSummary.getTextColors());
+                iconView.setAlpha(anchorSummary.getAlpha());
+            } else {
+                iconView.setImageTintList(android.content.res.ColorStateList.valueOf(0xff8696a0));
+            }
+            rowLayout.addView(iconView);
+
+            android.widget.LinearLayout textContainer = new android.widget.LinearLayout(activity);
+            textContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+            android.widget.LinearLayout.LayoutParams textContainerParams = new android.widget.LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1.0f
+            );
+            textContainerParams.setMarginStart(dp(activity, 24));
+            textContainer.setLayoutParams(textContainerParams);
+
+            android.widget.TextView titleText = new android.widget.TextView(activity);
+            titleText.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+                activity,
+                R.string.waenhancer_db_optimization,
+                "WaEnhancerX db Optimization"
+            ));
+
+            if (anchorTitle != null) {
+                titleText.setTextSize(TypedValue.COMPLEX_UNIT_PX, anchorTitle.getTextSize());
+                titleText.setTextColor(anchorTitle.getTextColors());
+                titleText.setTypeface(anchorTitle.getTypeface());
+            } else {
+                titleText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                titleText.setTextColor(0xffe9edef);
+            }
+            titleText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            titleText.setSingleLine(true);
+
+            android.widget.TextView summaryText = new android.widget.TextView(activity);
+            summaryText.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+                activity,
+                R.string.waenhancer_db_optimization_desc,
+                "Optimize database performance by creating speed-boosting query indexes."
+            ));
+
+            if (anchorSummary != null) {
+                summaryText.setTextSize(TypedValue.COMPLEX_UNIT_PX, anchorSummary.getTextSize());
+                summaryText.setTextColor(anchorSummary.getTextColors());
+                summaryText.setTypeface(anchorSummary.getTypeface());
+                summaryText.setAlpha(anchorSummary.getAlpha());
+            } else {
+                summaryText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                summaryText.setTextColor(0xff8696a0);
+            }
+            summaryText.setPadding(0, dp(activity, 2), 0, 0);
+            summaryText.setMaxLines(2);
+            summaryText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+
+            textContainer.addView(titleText);
+            textContainer.addView(summaryText);
+            rowLayout.addView(textContainer);
+
+            rowLayout.setOnClickListener(v -> {
+                try {
+                    Class<?> aboutClass = WppCore.getAboutActivityClass(activity.getClassLoader());
+                    if (aboutClass != null) {
+                        android.content.Intent intent = new android.content.Intent(activity, aboutClass);
+                        intent.putExtra("wae_optimize_db", true);
+                        activity.startActivity(intent);
+                    }
+                } catch (Throwable t) {
+                    XposedBridge.log("[WAEX] Failed to start optimization from settings: " + t.getMessage());
+                }
+            });
+
+            return rowLayout;
+        } catch (Throwable t) {
+            XposedBridge.log("[WaEnhancerX] SettingsInjector: Error creating database optimization row: " + t.getMessage());
+            return null;
         }
     }
 

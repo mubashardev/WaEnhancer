@@ -100,7 +100,9 @@ public class ActivityController extends Feature {
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     Activity activity = (Activity) param.thisObject;
                     Intent intent = activity.getIntent();
-                    if (intent.getBooleanExtra("wae_optimize_db", false)) {
+                    boolean shouldOptimize = intent.getBooleanExtra("wae_optimize_db", false);
+                    XposedBridge.log("[WAEX] About onCreate called, wae_optimize_db: " + shouldOptimize);
+                    if (shouldOptimize) {
                         runDbOptimizationScreen(activity);
                     }
                 }
@@ -268,25 +270,64 @@ public class ActivityController extends Feature {
         // Keep screen on
         activity.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // Hide toolbar/action bar for full screen feel
+        // Show/style action bar natively
         try {
             if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
                 var actionBar = ((androidx.appcompat.app.AppCompatActivity) activity).getSupportActionBar();
-                if (actionBar != null) actionBar.hide();
-            }
-            if (activity.getActionBar() != null) {
-                activity.getActionBar().hide();
+                if (actionBar != null) {
+                    actionBar.show();
+                    actionBar.setTitle("Database Optimization");
+                    actionBar.setDisplayHomeAsUpEnabled(true);
+                }
+            } else if (activity.getActionBar() != null) {
+                activity.getActionBar().show();
+                activity.getActionBar().setTitle("Database Optimization");
+                activity.getActionBar().setDisplayHomeAsUpEnabled(true);
             }
         } catch (Throwable ignored) {}
 
         // Check if dark theme is active
         boolean isDarkTheme = (activity.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES;
 
-        final String bgColor = isDarkTheme ? "#0b141a" : "#ffffff";
+        // Resolve theme colors dynamically
+        android.util.TypedValue bgTv = new android.util.TypedValue();
+        int colorBgVal = isDarkTheme ? 0xff0b141a : 0xffffffff;
+        if (activity.getTheme().resolveAttribute(android.R.attr.windowBackground, bgTv, true)) {
+            colorBgVal = bgTv.resourceId != 0 ? activity.getResources().getColor(bgTv.resourceId) : bgTv.data;
+        }
+        final String bgColor = String.format("#%06X", (0xFFFFFF & colorBgVal));
+
+        android.util.TypedValue primaryTv = new android.util.TypedValue();
+        int colorPrimaryVal = isDarkTheme ? 0xffe9edef : 0xff111b21;
+        if (activity.getTheme().resolveAttribute(android.R.attr.textColorPrimary, primaryTv, true)) {
+            colorPrimaryVal = primaryTv.resourceId != 0 ? activity.getResources().getColor(primaryTv.resourceId) : primaryTv.data;
+        }
+        final String txtPrimary = String.format("#%06X", (0xFFFFFF & colorPrimaryVal));
+
+        android.util.TypedValue secondaryTv = new android.util.TypedValue();
+        int colorSecondaryVal = isDarkTheme ? 0xff8696a0 : 0xff667781;
+        if (activity.getTheme().resolveAttribute(android.R.attr.textColorSecondary, secondaryTv, true)) {
+            colorSecondaryVal = secondaryTv.resourceId != 0 ? activity.getResources().getColor(secondaryTv.resourceId) : secondaryTv.data;
+        }
+        final String txtSecondary = String.format("#%06X", (0xFFFFFF & colorSecondaryVal));
+
+        android.util.TypedValue accentTv = new android.util.TypedValue();
+        int colorAccentVal = isDarkTheme ? 0xff00a884 : 0xff008069;
+        boolean foundAccent = false;
+        int colorAccentAttr = activity.getResources().getIdentifier("colorAccent", "attr", activity.getPackageName());
+        if (colorAccentAttr != 0 && activity.getTheme().resolveAttribute(colorAccentAttr, accentTv, true)) {
+            colorAccentVal = accentTv.resourceId != 0 ? activity.getResources().getColor(accentTv.resourceId) : accentTv.data;
+            foundAccent = true;
+        }
+        if (!foundAccent) {
+            int controlActivatedAttr = activity.getResources().getIdentifier("colorControlActivated", "attr", activity.getPackageName());
+            if (controlActivatedAttr != 0 && activity.getTheme().resolveAttribute(controlActivatedAttr, accentTv, true)) {
+                colorAccentVal = accentTv.resourceId != 0 ? activity.getResources().getColor(accentTv.resourceId) : accentTv.data;
+            }
+        }
+        final String accentColor = String.format("#%06X", (0xFFFFFF & colorAccentVal));
+
         final String cardBgColor = isDarkTheme ? "#1f2c34" : "#f0f2f5";
-        final String txtPrimary = isDarkTheme ? "#e9edef" : "#111b21";
-        final String txtSecondary = isDarkTheme ? "#8696a0" : "#667781";
-        final String accentColor = isDarkTheme ? "#00a884" : "#008069";
         final String dividerColor = isDarkTheme ? "#202c33" : "#e9edef";
         final String failedColor = isDarkTheme ? "#ea0038" : "#ba1a1a";
 
@@ -674,21 +715,29 @@ public class ActivityController extends Feature {
             Thread dbThread = new Thread(() -> {
                 try {
                     java.io.File dbFile = activity.getDatabasePath("msgstore.db");
+                    XposedBridge.log("[WAEX] dbThread started. optFilter=" + optFilter + ", optSeparate=" + optSeparate + ", dbFile=" + dbFile.getAbsolutePath());
                     if (dbFile.exists()) {
+                        XposedBridge.log("[WAEX] Opening database for indexing...");
                         SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null,
                                 SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+                        XposedBridge.log("[WAEX] Database opened. Creating indexes...");
                         try {
                             if (optFilter) {
+                                XposedBridge.log("[WAEX] Executing CREATE INDEX for wae_msg_filter_idx and wae_msg_from_me_idx...");
                                 db.execSQL("CREATE INDEX IF NOT EXISTS wae_msg_filter_idx ON message (chat_row_id, sender_jid_row_id, from_me, message_type)");
                                 db.execSQL("CREATE INDEX IF NOT EXISTS wae_msg_from_me_idx ON message (chat_row_id, from_me, message_type)");
                             }
                             if (optSeparate) {
+                                XposedBridge.log("[WAEX] Executing CREATE INDEX for wae_chat_unseen_idx...");
                                 db.execSQL("CREATE INDEX IF NOT EXISTS wae_chat_unseen_idx ON chat (unseen_message_count, archived, chat_lock, jid_row_id)");
                             }
+                            XposedBridge.log("[WAEX] Index creation SQL commands executed successfully.");
                         } finally {
                             db.close();
+                            XposedBridge.log("[WAEX] Database closed.");
                         }
                     } else {
+                        XposedBridge.log("[WAEX] dbFile does not exist!");
                         dbSuccess[0] = false;
                     }
                 } catch (Throwable e) {
@@ -783,7 +832,10 @@ public class ActivityController extends Feature {
 
             mainHandler.post(() -> {
                 if (finalSuccess) {
-                    Toast.makeText(activity, "Optimization finished! (UI Test Mode)", Toast.LENGTH_LONG).show();
+                    Toast.makeText(activity, "Optimization completed successfully! Restarting WhatsApp...", Toast.LENGTH_LONG).show();
+                    mainHandler.postDelayed(() -> {
+                        android.os.Process.killProcess(android.os.Process.myPid());
+                    }, 2000);
                 } else {
                     // Show failure and allow exit via crash-proof standard AlertDialog
                     new android.app.AlertDialog.Builder(activity)

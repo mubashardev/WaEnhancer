@@ -150,6 +150,7 @@ public class FeatureLoader {
     private static volatile boolean isLoaded = false;
     private static boolean isRestartDialogShowing = false;
     private static final AtomicLong lastRestartCheckMs = new AtomicLong(0);
+    private static boolean hasPromptedOptimization = false;
 
     public final static String PACKAGE_WPP = "com.whatsapp";
     public final static String PACKAGE_BUSINESS = "com.whatsapp.w4b";
@@ -370,40 +371,65 @@ public class FeatureLoader {
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         super.afterHookedMethod(param);
                         Activity activity = (Activity) param.thisObject;
+                        boolean needFilterIndex = pref.getBoolean("filter_group_members_messages", false);
+                        boolean needSeparateIndex = pref.getBoolean("separategroups", false);
+                        XposedBridge.log("[WAEX] HomeActivity onCreate called. needFilterIndex: " + needFilterIndex + ", needSeparateIndex: " + needSeparateIndex + ", hasPromptedOptimization: " + hasPromptedOptimization);
 
-                        // Check if group message filter is enabled and database index is missing
-                        if (pref.getBoolean("filter_group_members_messages", false)) {
+                        if (!hasPromptedOptimization && (needFilterIndex || needSeparateIndex)) {
                             try {
                                 java.io.File dbFile = activity.getDatabasePath("msgstore.db");
-                                boolean indexed = false;
+                                boolean filterIndexed = !needFilterIndex;
+                                boolean separateIndexed = !needSeparateIndex;
                                 if (dbFile.exists()) {
                                     SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null,
                                             SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-                                    try (Cursor c = db.rawQuery(
-                                            "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
-                                        indexed = c != null && c.moveToFirst();
+                                    try {
+                                        if (needFilterIndex) {
+                                            try (Cursor c = db.rawQuery(
+                                                    "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
+                                                filterIndexed = c != null && c.moveToFirst();
+                                            }
+                                        }
+                                        if (needSeparateIndex) {
+                                            try (Cursor c = db.rawQuery(
+                                                    "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_chat_unseen_idx'", null)) {
+                                                separateIndexed = c != null && c.moveToFirst();
+                                            }
+                                        }
                                     } finally {
                                         db.close();
                                     }
                                 }
-                                if (!indexed) {
+                                if (!filterIndexed || !separateIndexed) {
+                                    final android.content.SharedPreferences localPrefs = activity.getSharedPreferences("wae_local_prefs", android.content.Context.MODE_PRIVATE);
+                                    if (localPrefs.getBoolean("dont_ask_optimize_db", false)) {
+                                        return;
+                                    }
+                                    hasPromptedOptimization = true;
                                     new AlertDialogWpp(activity)
-                                            .asBottomSheet()
-                                            .setTitle("Database Optimization Needed")
-                                            .setMessage("WaEnhancer database optimization indexes are missing or were removed due to a recent WhatsApp update. Optimize now for fast group message filtering?")
-                                            .setPositiveButton("Optimize Now", (dialog, which) -> {
-                                                try {
-                                                    Class<?> settingsClass = WppCore.getAboutActivityClass(activity.getClassLoader());
-                                                    Intent intent = new Intent(activity, settingsClass);
-                                                    intent.putExtra("wae_optimize_db", true);
-                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                                    activity.startActivity(intent);
-                                                } catch (Throwable t) {
-                                                    XposedBridge.log("[WAEX] Failed to start optimization: " + t.toString());
-                                                }
-                                            })
-                                            .setNegativeButton("Later", null)
-                                            .show();
+                                             .asBottomSheet()
+                                             .setTitle("Database Optimization Needed")
+                                             .setMessage("WaEnhancer database optimization indexes are missing or were removed due to a recent WhatsApp update. Optimize now for maximum performance?")
+                                             .setPositiveButton("Optimize Now", (dialog, which) -> {
+                                                 try {
+                                                     Class<?> settingsClass = WppCore.getAboutActivityClass(activity.getClassLoader());
+                                                     Intent intent = new Intent(activity, settingsClass);
+                                                     intent.putExtra("wae_optimize_db", true);
+                                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                     activity.startActivity(intent);
+                                                 } catch (Throwable t) {
+                                                     XposedBridge.log("[WAEX] Failed to start optimization: " + t.toString());
+                                                 }
+                                             })
+                                             .setNegativeButton("Don't Ask Again", (dialog, which) -> {
+                                                 try {
+                                                     localPrefs.edit().putBoolean("dont_ask_optimize_db", true).apply();
+                                                     android.widget.Toast.makeText(activity, "You can find database optimizations in WhatsApp Settings > WaEnhancerX db Optimization.", android.widget.Toast.LENGTH_LONG).show();
+                                                 } catch (Throwable t) {
+                                                     XposedBridge.log("[WAEX] Failed to save dont_ask_optimize_db: " + t.toString());
+                                                 }
+                                             })
+                                             .show();
                                 }
                             } catch (Throwable t) {
                                 XposedBridge.log("[WAEX] Error checking database index at startup: " + t.toString());

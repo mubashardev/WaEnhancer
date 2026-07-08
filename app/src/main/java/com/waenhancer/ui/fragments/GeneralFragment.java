@@ -212,16 +212,12 @@ public class GeneralFragment extends BaseFragment {
             androidx.preference.Preference filterPref = findPreference("filter_group_members_messages");
             if (filterPref != null) {
                 filterPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                    boolean enabled = (Boolean) newValue;
-                    if (enabled) {
-                        handleFilterGroupMessagesEnable(filterPref);
-                        return false; // Toggle manually after indexing is successful
-                    }
                     return true;
                 });
             }
         }
 
+        /*
         private void handleFilterGroupMessagesEnable(final androidx.preference.Preference filterPref) {
             final Context context = getContext();
             if (context == null) return;
@@ -378,6 +374,7 @@ public class GeneralFragment extends BaseFragment {
                 });
             });
         }
+        */
 
         private void updateProgress(ProgressBar progressBar, TextView label, int progress, String text, Handler mainHandler) {
             mainHandler.post(() -> {

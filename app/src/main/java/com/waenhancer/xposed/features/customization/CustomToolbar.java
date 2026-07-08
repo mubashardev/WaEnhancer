@@ -153,8 +153,13 @@ public class CustomToolbar extends Feature {
                         var version = (TextView) viewRoot.findViewById(Utils.getID("version", "id"));
 
                         if (version != null) {
-                            var expirationText = activity.getString(R.string.expiration, mDateExpiration);
-                            version.setText(version.getText() + " " + expirationText);
+                            try {
+                                var expirationText = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.expiration, "expires %s");
+                                String formatted = String.format(expirationText, mDateExpiration);
+                                version.setText(version.getText() + " " + formatted);
+                            } catch (Throwable t) {
+                                XposedBridge.log("[WAEX] Error setting expiration text: " + t.toString());
+                            }
                         }
                     }
                 }

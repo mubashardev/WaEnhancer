@@ -251,35 +251,38 @@ public class WdsSettingsTileRenderer {
                 String summary = pref.optString("summary", "");
 
                 View tile = null;
-                if ("switch".equals(type)) {
-                    boolean def = pref.optBoolean("default", false);
-                    tile = createSwitchTile(context, key, title, summary, def, prefs, listener, tileViews, prefsArray);
-                } else if ("list".equals(type)) {
-                    tile = createListTile(context, pref, prefs, listener);
-                } else if ("multi".equals(type)) {
-                    tile = createMultiTile(context, pref, prefs, listener);
-                } else if ("text".equals(type)) {
-                    tile = createTextTile(context, pref, prefs, listener);
-                } else if ("action".equals(type)) {
-                    tile = createActionTile(context, pref);
+                if (!isEnabled) {
+                    final String displayTitle = title;
+                    tile = createWdsRow(context, title, summary, null, v -> {
+                        try {
+                            AlertDialogWpp builder = new AlertDialogWpp(context);
+                            builder.asBottomSheet();
+                            builder.setTitle(displayTitle);
+                            builder.setMessage("This feature is under development and will be available in the future updates. Stay tuned.");
+                            builder.setPositiveButton("Dismiss", null);
+                            builder.show();
+                        } catch (Throwable t) {
+                            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
+                        }
+                    });
                 } else {
-                    tile = createWdsRow(context, title, summary, null, null);
+                    if ("switch".equals(type)) {
+                        boolean def = pref.optBoolean("default", false);
+                        tile = createSwitchTile(context, key, title, summary, def, prefs, listener, tileViews, prefsArray);
+                    } else if ("list".equals(type)) {
+                        tile = createListTile(context, pref, prefs, listener);
+                    } else if ("multi".equals(type)) {
+                        tile = createMultiTile(context, pref, prefs, listener);
+                    } else if ("text".equals(type)) {
+                        tile = createTextTile(context, pref, prefs, listener);
+                    } else if ("action".equals(type)) {
+                        tile = createActionTile(context, pref);
+                    } else {
+                        tile = createWdsRow(context, title, summary, null, null);
+                    }
                 }
 
                 if (tile != null) {
-                    if (!isEnabled) {
-                        tile.setEnabled(false);
-                        tile.setAlpha(0.4f);
-                        tile.setOnClickListener(null);
-                        if (tile instanceof android.view.ViewGroup) {
-                            android.view.ViewGroup vg = (android.view.ViewGroup) tile;
-                            for (int k = 0; k < vg.getChildCount(); k++) {
-                                android.view.View child = vg.getChildAt(k);
-                                child.setEnabled(false);
-                                child.setClickable(false);
-                            }
-                        }
-                    }
                     tileViews.put(key, tile);
                     container.addView(tile);
                 }

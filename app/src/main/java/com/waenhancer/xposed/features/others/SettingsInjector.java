@@ -100,6 +100,16 @@ public class SettingsInjector extends Feature {
                     return;
                 }
 
+                // Check for pending restart on main settings screen
+                try {
+                    boolean needRestart = com.waenhancer.xposed.core.WppCore.getPrivBoolean("need_restart", false);
+                    if (needRestart) {
+                        com.waenhancer.xposed.core.FeatureLoader.showRestartDialog(activity);
+                    }
+                } catch (Throwable t) {
+                    XposedBridge.log("[WAEX] Error checking pending restart on settings resume: " + t.getMessage());
+                }
+
                 String entryPoint = getSafeString("open_waex", "2");
 
                 // Clean up elements that shouldn't be present in the current mode
@@ -109,13 +119,8 @@ public class SettingsInjector extends Feature {
                     removeToolbarButton(activity);
                 }
 
-                // Check and inject/remove optimization tile dynamically
-                boolean needOpt = needDatabaseOptimization(activity);
-                if (needOpt) {
-                    injectOptimizationTile(activity);
-                } else {
-                    removeOptimizationTile(activity);
-                }
+                // Always remove optimization tile from main settings screen
+                removeOptimizationTile(activity);
 
                 if ("0".equals(entryPoint)) {
                     removeToolbarButton(activity);
@@ -529,29 +534,123 @@ public class SettingsInjector extends Feature {
                 View contentView;
                 String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(
                         activity, R.string.waenhancer_settings, "WaeX Settings");
+                
+                SharedPreferences localPrefs = activity.getSharedPreferences(com.waenhancer.BuildConfig.APPLICATION_ID + "_preferences", android.content.Context.MODE_PRIVATE);
+                SharedPreferences readWritePrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(activity, localPrefs, prefs);
+
                 if ("root".equals(screenId)) {
-                    contentView = WdsSettingsTileRenderer.buildCategoryList(activity, settingsMap, prefs, (key, newValue) -> {
+                    contentView = WdsSettingsTileRenderer.buildCategoryList(activity, settingsMap, readWritePrefs, (key, newValue) -> {
+                        try {
+                            com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
+                            String prefTitle = key;
+                            try {
+                                org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                                for (int i = 0; i < categories.length(); i++) {
+                                    org.json.JSONObject category = categories.getJSONObject(i);
+                                    org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                                    if (subScreens != null) {
+                                        for (int j = 0; j < subScreens.length(); j++) {
+                                            org.json.JSONObject subScreen = subScreens.getJSONObject(j);
+                                            org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                                            if (prefsArray != null) {
+                                                for (int k = 0; k < prefsArray.length(); k++) {
+                                                    org.json.JSONObject prefObj = prefsArray.getJSONObject(k);
+                                                    if (key.equals(prefObj.optString("key"))) {
+                                                        prefTitle = prefObj.optString("title", key);
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (Exception ignored) {}
+                            String existing = com.waenhancer.xposed.core.WppCore.getPrivString("pending_changes", "");
+                            java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                            if (!existing.isEmpty()) {
+                                for (String t : existing.split("\\|")) {
+                                    if (!t.trim().isEmpty()) all.add(t.trim());
+                                }
+                            }
+                            all.add(prefTitle);
+                            com.waenhancer.xposed.core.WppCore.setPrivString("pending_changes", String.join("|", all));
+                        } catch (Throwable t) {
+                            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
+                        }
+
                         android.content.Intent intent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
                         intent.putExtra("key", key);
                         intent.setPackage(activity.getPackageName());
                         activity.sendBroadcast(intent);
                     });
                 } else {
-                    contentView = WdsSettingsTileRenderer.buildSubScreenById(activity, settingsMap, screenId, prefs, (key, newValue) -> {
+                    contentView = WdsSettingsTileRenderer.buildSubScreenById(activity, settingsMap, screenId, readWritePrefs, (key, newValue) -> {
+                        try {
+                            com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
+                            String prefTitle = key;
+                            try {
+                                org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                                for (int i = 0; i < categories.length(); i++) {
+                                    org.json.JSONObject category = categories.getJSONObject(i);
+                                    org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                                    if (subScreens != null) {
+                                        for (int j = 0; j < subScreens.length(); j++) {
+                                            org.json.JSONObject subScreen = subScreens.getJSONObject(j);
+                                            org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                                            if (prefsArray != null) {
+                                                for (int k = 0; k < prefsArray.length(); k++) {
+                                                    org.json.JSONObject prefObj = prefsArray.getJSONObject(k);
+                                                    if (key.equals(prefObj.optString("key"))) {
+                                                        prefTitle = prefObj.optString("title", key);
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (Exception ignored) {}
+                            String existing = com.waenhancer.xposed.core.WppCore.getPrivString("pending_changes", "");
+                            java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                            if (!existing.isEmpty()) {
+                                for (String t : existing.split("\\|")) {
+                                    if (!t.trim().isEmpty()) all.add(t.trim());
+                                }
+                            }
+                            all.add(prefTitle);
+                            com.waenhancer.xposed.core.WppCore.setPrivString("pending_changes", String.join("|", all));
+                        } catch (Throwable t) {
+                            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
+                        }
+
                         android.content.Intent intent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
                         intent.putExtra("key", key);
                         intent.setPackage(activity.getPackageName());
                         activity.sendBroadcast(intent);
                     });
-                    // Resolve title from JSON categories
+                    // Resolve title from JSON categories or sub-screens
                     try {
                         org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                        boolean titleFound = false;
                         for (int i = 0; i < categories.length(); i++) {
-                            JSONObject cat = categories.getJSONObject(i);
+                            org.json.JSONObject cat = categories.getJSONObject(i);
                             if (cat.getString("id").equals(screenId)) {
                                 title = cat.getString("title");
+                                titleFound = true;
                                 break;
                             }
+                            org.json.JSONArray subScreens = cat.optJSONArray("sub_screens");
+                            if (subScreens != null) {
+                                for (int j = 0; j < subScreens.length(); j++) {
+                                    org.json.JSONObject sub = subScreens.getJSONObject(j);
+                                    if (sub.getString("id").equals(screenId)) {
+                                        title = sub.getString("title");
+                                        titleFound = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (titleFound) break;
                         }
                     } catch (Exception ignored) {}
                 }

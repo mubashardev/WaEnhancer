@@ -1,5 +1,9 @@
+[Added]
+- WhatsApp Native Embedded Settings
+
 [Improved]
 - Enhanced Edited messages history to show the difference between original and edited message by highlighting the changes
+- Fully polished WhatsApp Embedded Settings following WhatsApp Design
 
 [Fixes]
 - Fixed module for some devices not working
@@ -7,5 +11,7 @@
 - Fixed edit message history to keep complete history instead of keeping only recent 2 versions of message. 
 
 
-
-Note: This update may clear old editted messages histories.
+[Notes] 
+- This update may clear old editted messages histories.
+- Embedded Settings are not fully completed, more features will be added in future updates.
+- Your support is appreciated. <3

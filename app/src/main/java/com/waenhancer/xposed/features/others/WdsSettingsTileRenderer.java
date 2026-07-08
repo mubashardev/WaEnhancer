@@ -51,6 +51,31 @@ public class WdsSettingsTileRenderer {
         }
     }
 
+    public static String resolveString(Context context, String str) {
+        if (str == null) return "";
+        if (str.startsWith("@string/")) {
+            try {
+                String name = str.substring(8);
+                android.content.res.Resources res = com.waenhancer.xposed.utils.XResManager.moduleResources;
+                int id = 0;
+                if (res != null) {
+                    id = res.getIdentifier(name, "string", "com.waenhancer");
+                }
+                if (id == 0) {
+                    res = context.getResources();
+                    id = res.getIdentifier(name, "string", context.getPackageName());
+                }
+                if (id == 0) {
+                    id = res.getIdentifier(name, "string", "com.waenhancer");
+                }
+                if (id != 0) {
+                    return res.getString(id);
+                }
+            } catch (Throwable ignored) {}
+        }
+        return str;
+    }
+
     public static View buildCategoryList(Activity activity, JSONObject settingsMap, SharedPreferences prefs, PrefChangeListener listener) {
         LinearLayout container = new LinearLayout(activity);
         container.setOrientation(LinearLayout.VERTICAL);
@@ -75,10 +100,23 @@ public class WdsSettingsTileRenderer {
                 }
                 de.robv.android.xposed.XposedBridge.log("[WAEX] Category id: " + id + ", iconName: " + iconName + ", icon: " + icon);
 
-                View row = createWdsRow(activity, title, summary, icon, v -> {
-                    android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
-                    intent.putExtra("waex_screen_id", id);
-                    activity.startActivity(intent);
+                View row = createWdsRow(activity, title, summary, icon, iconName, v -> {
+                    if ("optimization".equals(id)) {
+                        try {
+                            Class<?> aboutClass = com.waenhancer.xposed.core.WppCore.getAboutActivityClass(activity.getClassLoader());
+                            if (aboutClass != null) {
+                                android.content.Intent intent = new android.content.Intent(activity, aboutClass);
+                                intent.putExtra("wae_optimize_db", true);
+                                activity.startActivity(intent);
+                            }
+                        } catch (Throwable t) {
+                            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to start optimization from settings: " + t.getMessage());
+                        }
+                    } else {
+                        android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                        intent.putExtra("waex_screen_id", id);
+                        activity.startActivity(intent);
+                    }
                 });
                 container.addView(row);
             }
@@ -97,82 +135,165 @@ public class WdsSettingsTileRenderer {
                 if (cat.getString("id").equals(catId)) {
                     return buildSubScreen(activity, cat, prefs, listener);
                 }
+
+                JSONArray subScreens = cat.optJSONArray("sub_screens");
+                if (subScreens != null) {
+                    for (int j = 0; j < subScreens.length(); j++) {
+                        JSONObject sub = subScreens.getJSONObject(j);
+                        if (sub.getString("id").equals(catId)) {
+                            return buildSingleSubScreen(activity, sub, prefs, listener);
+                        }
+                    }
+                }
             }
         } catch (Exception ignored) {}
         return null;
     }
 
-    private static View buildSubScreen(Context context, JSONObject category, SharedPreferences prefs, PrefChangeListener listener) {
-        LinearLayout container = new LinearLayout(context);
+    private static View buildSingleSubScreen(Activity activity, JSONObject sub, SharedPreferences prefs, PrefChangeListener listener) {
+        LinearLayout container = new LinearLayout(activity);
+        container.setOrientation(LinearLayout.VERTICAL);
+        String subTitle = sub.optString("title", "Settings");
+        container.setTag(subTitle);
+
+        float density = activity.getResources().getDisplayMetrics().density;
+        int pad = (int) (16 * density);
+        container.setPadding(0, pad, 0, pad);
+
+        try {
+            JSONArray prefsArray = sub.getJSONArray("prefs");
+            renderPrefsArray(activity, container, prefsArray, prefs, listener);
+        } catch (Exception ignored) {}
+
+        ScrollView scrollView = new ScrollView(activity);
+        scrollView.addView(container);
+        return scrollView;
+    }
+
+    private static View buildSubScreen(Activity activity, JSONObject category, SharedPreferences prefs, PrefChangeListener listener) {
+        LinearLayout container = new LinearLayout(activity);
         container.setOrientation(LinearLayout.VERTICAL);
         String catTitle = category.optString("title", "Settings");
         container.setTag(catTitle);
 
-        float density = context.getResources().getDisplayMetrics().density;
+        float density = activity.getResources().getDisplayMetrics().density;
         int pad = (int) (16 * density);
         container.setPadding(0, pad, 0, pad);
 
         try {
             JSONArray subScreens = category.getJSONArray("sub_screens");
-            for (int i = 0; i < subScreens.length(); i++) {
+            
+            // Add Category tiles for the remaining sub-screens at the TOP
+            for (int i = 1; i < subScreens.length(); i++) {
                 JSONObject sub = subScreens.getJSONObject(i);
+                String subId = sub.getString("id");
                 String subTitle = sub.getString("title");
-                JSONArray prefsArray = sub.getJSONArray("prefs");
-
-                // Add header for sub-screen section if multiple sub_screens exist
-                if (subScreens.length() > 1) {
-                    TextView header = new TextView(context);
-                    header.setText(subTitle.toUpperCase());
-                    header.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-                    header.setTypeface(Typeface.DEFAULT_BOLD);
-                    header.setTextColor(0xFF21c063);
-                    header.setPadding((int) (24 * density), (int) (16 * density), (int) (24 * density), (int) (8 * density));
-                    container.addView(header);
+                String subSummary = sub.optString("summary", "Customize " + subTitle + " settings");
+                
+                android.graphics.drawable.Drawable icon = null;
+                String iconName = "";
+                if ("home_screen_main".equals(subId)) {
+                    iconName = "ic_home_black_24dp";
+                } else if ("conversation_main".equals(subId)) {
+                    iconName = "ic_home_tab_chats_unfilled";
                 }
-
-                Map<String, View> tileViews = new HashMap<>();
-
-                for (int j = 0; j < prefsArray.length(); j++) {
-                    JSONObject pref = prefsArray.getJSONObject(j);
-                    String type = pref.getString("type");
-                    String key = pref.getString("key");
-                    String title = pref.getString("title");
-                    String summary = pref.optString("summary", "");
-
-                    View tile = null;
-                    if ("switch".equals(type)) {
-                        boolean def = pref.optBoolean("default_bool", false);
-                        tile = createSwitchTile(context, key, title, summary, def, prefs, listener, tileViews, prefsArray);
-                    } else if ("list".equals(type)) {
-                        tile = createListTile(context, pref, prefs, listener);
-                    } else if ("multi".equals(type)) {
-                        tile = createMultiTile(context, pref, prefs, listener);
-                    } else if ("text".equals(type)) {
-                        tile = createTextTile(context, pref, prefs, listener);
-                    } else if ("action".equals(type)) {
-                        tile = createActionTile(context, pref);
-                    } else {
-                        // Standard tile for unsupported or other types
-                        tile = createWdsRow(context, title, summary, null, null);
-                    }
-
-                    if (tile != null) {
-                        tileViews.put(key, tile);
-                        container.addView(tile);
-                    }
+                
+                if (!iconName.isEmpty()) {
+                    icon = com.waenhancer.xposed.utils.DesignUtils.getDrawableByName(iconName);
                 }
-
-                // Initial dependency check
-                checkDependencies(prefsArray, prefs, tileViews);
+                if (icon == null) {
+                    icon = com.waenhancer.xposed.utils.DesignUtils.getDrawableByName("ic_chevron_right");
+                }
+                
+                View catTile = createWdsRow(activity, subTitle, subSummary, icon, iconName, v -> {
+                    android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                    intent.putExtra("waex_screen_id", subId);
+                    activity.startActivity(intent);
+                });
+                container.addView(catTile);
+            }
+            
+            if (subScreens.length() > 1) {
+                View divider = new View(activity);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (1 * density));
+                lp.setMargins(0, (int) (16 * density), 0, (int) (16 * density));
+                divider.setLayoutParams(lp);
+                divider.setBackgroundColor(0xFF222d34);
+                container.addView(divider);
+            }
+            
+            // Render the first main sub-screen (general_main)
+            if (subScreens.length() > 0) {
+                JSONObject mainSub = subScreens.getJSONObject(0);
+                JSONArray prefsArray = mainSub.getJSONArray("prefs");
+                renderPrefsArray(activity, container, prefsArray, prefs, listener);
             }
         } catch (Exception ignored) {}
 
-        ScrollView scrollView = new ScrollView(context);
+        ScrollView scrollView = new ScrollView(activity);
         scrollView.addView(container);
         return scrollView;
     }
 
+    private static void renderPrefsArray(Context context, LinearLayout container, JSONArray prefsArray, SharedPreferences prefs, PrefChangeListener listener) {
+        try {
+            Map<String, View> tileViews = new HashMap<>();
+            
+            for (int j = 0; j < prefsArray.length(); j++) {
+                JSONObject pref = prefsArray.getJSONObject(j);
+                String type = pref.getString("type");
+                String key = pref.getString("key");
+                String title = pref.getString("title");
+                boolean isEnabled = pref.optBoolean("enabled", true);
+                if (!isEnabled) {
+                    title = title + " [Pro]";
+                }
+                String summary = pref.optString("summary", "");
+
+                View tile = null;
+                if ("switch".equals(type)) {
+                    boolean def = pref.optBoolean("default", false);
+                    tile = createSwitchTile(context, key, title, summary, def, prefs, listener, tileViews, prefsArray);
+                } else if ("list".equals(type)) {
+                    tile = createListTile(context, pref, prefs, listener);
+                } else if ("multi".equals(type)) {
+                    tile = createMultiTile(context, pref, prefs, listener);
+                } else if ("text".equals(type)) {
+                    tile = createTextTile(context, pref, prefs, listener);
+                } else if ("action".equals(type)) {
+                    tile = createActionTile(context, pref);
+                } else {
+                    tile = createWdsRow(context, title, summary, null, null);
+                }
+
+                if (tile != null) {
+                    if (!isEnabled) {
+                        tile.setEnabled(false);
+                        tile.setAlpha(0.4f);
+                        tile.setOnClickListener(null);
+                        if (tile instanceof android.view.ViewGroup) {
+                            android.view.ViewGroup vg = (android.view.ViewGroup) tile;
+                            for (int k = 0; k < vg.getChildCount(); k++) {
+                                android.view.View child = vg.getChildAt(k);
+                                child.setEnabled(false);
+                                child.setClickable(false);
+                            }
+                        }
+                    }
+                    tileViews.put(key, tile);
+                    container.addView(tile);
+                }
+            }
+
+            checkDependencies(prefsArray, prefs, tileViews);
+        } catch (Exception ignored) {}
+    }
+
     private static View createWdsRow(Context context, String title, String summary, android.graphics.drawable.Drawable icon, View.OnClickListener clickListener) {
+        return createWdsRow(context, title, summary, icon, null, clickListener);
+    }
+
+    private static View createWdsRow(Context context, String title, String summary, android.graphics.drawable.Drawable icon, String iconName, View.OnClickListener clickListener) {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -201,10 +322,19 @@ public class WdsSettingsTileRenderer {
             }
         } catch (Exception ignored) {}
 
+        title = resolveString(context, title);
+        summary = resolveString(context, summary);
+
         if (icon != null) {
             ImageView iconView = new ImageView(context);
-            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams((int) (24 * density), (int) (24 * density));
-            iconParams.setMarginEnd((int) (20 * density));
+            int iconSizeDp = 24;
+            int marginEndDp = 20;
+            if ("ic_home_tab_status_unfilled".equals(iconName)) {
+                iconSizeDp = 28; // Make status icon slightly larger to balance visual weight
+                marginEndDp = 16; // Keep the total spacing (iconSizeDp + marginEndDp = 44dp) constant for alignment
+            }
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams((int) (iconSizeDp * density), (int) (iconSizeDp * density));
+            iconParams.setMarginEnd((int) (marginEndDp * density));
             iconView.setLayoutParams(iconParams);
             iconView.setImageDrawable(icon);
             iconView.setImageTintList(android.content.res.ColorStateList.valueOf(secondaryTextColor));
@@ -225,6 +355,7 @@ public class WdsSettingsTileRenderer {
         if (!TextUtils.isEmpty(summary)) {
             TextView summaryView = createWdsTextView(context);
             summaryView.setText(summary);
+            summaryView.setTag("wds_summary");
             summaryView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
             summaryView.setTextColor(secondaryTextColor);
             summaryView.setPadding(0, (int) (4 * density), 0, 0);
@@ -312,26 +443,93 @@ public class WdsSettingsTileRenderer {
     private static View createListTile(Context context, JSONObject pref, SharedPreferences prefs, PrefChangeListener listener) {
         try {
             String key = pref.getString("key");
-            String title = pref.getString("title");
-            String summary = pref.optString("summary", "");
-            String defVal = pref.optString("default_str", "");
+            String title = resolveString(context, pref.getString("title"));
+            String summary = resolveString(context, pref.optString("summary", ""));
+            String valueType = pref.optString("value_type", "string");
             JSONArray entriesJson = pref.getJSONArray("entries");
-            JSONArray valuesJson = pref.getJSONArray("entry_values");
 
             String[] entries = new String[entriesJson.length()];
-            String[] values = new String[valuesJson.length()];
+            String[] values = new String[entriesJson.length()];
             for (int i = 0; i < entriesJson.length(); i++) {
-                entries[i] = entriesJson.getString(i);
-                values[i] = valuesJson.getString(i);
+                JSONObject entryObj = entriesJson.getJSONObject(i);
+                entries[i] = resolveString(context, entryObj.getString("label"));
+                values[i] = String.valueOf(entryObj.get("value"));
             }
 
-            return createWdsRow(context, title, summary, null, v -> {
-                String current = prefs.getString(key, defVal);
-                int selectedIndex = 0;
+            int initialSelectedIndex = 0;
+            if ("int".equals(valueType)) {
+                int defaultVal = pref.optInt("default", 0);
+                int current = prefs.getInt(key, defaultVal);
+                for (int i = 0; i < values.length; i++) {
+                    try {
+                        if (Integer.parseInt(values[i]) == current) {
+                            initialSelectedIndex = i;
+                            break;
+                        }
+                    } catch (Exception ignored) {}
+                }
+            } else if ("boolean".equals(valueType)) {
+                boolean defaultVal = pref.optBoolean("default", false);
+                boolean current = prefs.getBoolean(key, defaultVal);
+                for (int i = 0; i < values.length; i++) {
+                    if (Boolean.parseBoolean(values[i]) == current) {
+                        initialSelectedIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                String defaultVal = pref.optString("default", "");
+                String current = prefs.getString(key, defaultVal);
                 for (int i = 0; i < values.length; i++) {
                     if (values[i].equals(current)) {
-                        selectedIndex = i;
+                        initialSelectedIndex = i;
                         break;
+                    }
+                }
+            }
+
+            String currentLabel = initialSelectedIndex < entries.length ? entries[initialSelectedIndex] : "";
+            String displaySummary = summary;
+            if (displaySummary.contains("%s")) {
+                displaySummary = displaySummary.replace("%s", currentLabel);
+            } else if (displaySummary.isEmpty()) {
+                displaySummary = currentLabel;
+            }
+
+            final String rawSummary = summary;
+            final int finalInitialSelectedIndex = initialSelectedIndex;
+            final View[] rowHolder = new View[1];
+            
+            rowHolder[0] = createWdsRow(context, title, displaySummary, null, v -> {
+                int selectedIndex = 0;
+                if ("int".equals(valueType)) {
+                    int defaultVal = pref.optInt("default", 0);
+                    int current = prefs.getInt(key, defaultVal);
+                    for (int i = 0; i < values.length; i++) {
+                        try {
+                            if (Integer.parseInt(values[i]) == current) {
+                                selectedIndex = i;
+                                break;
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                } else if ("boolean".equals(valueType)) {
+                    boolean defaultVal = pref.optBoolean("default", false);
+                    boolean current = prefs.getBoolean(key, defaultVal);
+                    for (int i = 0; i < values.length; i++) {
+                        if (Boolean.parseBoolean(values[i]) == current) {
+                            selectedIndex = i;
+                            break;
+                        }
+                    }
+                } else {
+                    String defaultVal = pref.optString("default", "");
+                    String current = prefs.getString(key, defaultVal);
+                    for (int i = 0; i < values.length; i++) {
+                        if (values[i].equals(current)) {
+                            selectedIndex = i;
+                            break;
+                        }
                     }
                 }
 
@@ -339,13 +537,41 @@ public class WdsSettingsTileRenderer {
                 builder.setTitle(title);
                 builder.setSingleChoiceItems(entries, selectedIndex, (dialog, which) -> {
                     String selectedVal = values[which];
-                    prefs.edit().putString(key, selectedVal).apply();
-                    if (listener != null) listener.onPrefChanged(key, selectedVal);
+                    String selectedLabel = entries[which];
+                    if ("int".equals(valueType)) {
+                        int intVal = Integer.parseInt(selectedVal);
+                        prefs.edit().putInt(key, intVal).apply();
+                        if (listener != null) listener.onPrefChanged(key, intVal);
+                    } else if ("boolean".equals(valueType)) {
+                        boolean boolVal = Boolean.parseBoolean(selectedVal);
+                        prefs.edit().putBoolean(key, boolVal).apply();
+                        if (listener != null) listener.onPrefChanged(key, boolVal);
+                    } else {
+                        prefs.edit().putString(key, selectedVal).apply();
+                        if (listener != null) listener.onPrefChanged(key, selectedVal);
+                    }
+
+                    // Dynamically update the summary text view on selection
+                    try {
+                        TextView summaryView = rowHolder[0].findViewWithTag("wds_summary");
+                        if (summaryView != null) {
+                            String newSummary = rawSummary;
+                            if (newSummary.contains("%s")) {
+                                newSummary = newSummary.replace("%s", selectedLabel);
+                            } else if (newSummary.isEmpty()) {
+                                newSummary = selectedLabel;
+                            }
+                            summaryView.setText(newSummary);
+                        }
+                    } catch (Exception ignored) {}
+
                     dialog.dismiss();
                 });
                 builder.setNegativeButton("Cancel", null);
                 builder.show();
             });
+
+            return rowHolder[0];
         } catch (Exception e) {
             return null;
         }
@@ -357,13 +583,13 @@ public class WdsSettingsTileRenderer {
             String title = pref.getString("title");
             String summary = pref.optString("summary", "");
             JSONArray entriesJson = pref.getJSONArray("entries");
-            JSONArray valuesJson = pref.getJSONArray("entry_values");
 
             String[] entries = new String[entriesJson.length()];
-            String[] values = new String[valuesJson.length()];
+            String[] values = new String[entriesJson.length()];
             for (int i = 0; i < entriesJson.length(); i++) {
-                entries[i] = entriesJson.getString(i);
-                values[i] = valuesJson.getString(i);
+                JSONObject entryObj = entriesJson.getJSONObject(i);
+                entries[i] = entryObj.getString("label");
+                values[i] = String.valueOf(entryObj.get("value"));
             }
 
             return createWdsRow(context, title, summary, null, v -> {
@@ -403,7 +629,7 @@ public class WdsSettingsTileRenderer {
             String key = pref.getString("key");
             String title = pref.getString("title");
             String summary = pref.optString("summary", "");
-            String defVal = pref.optString("default_str", "");
+            String valueType = pref.optString("value_type", "string");
 
             return createWdsRow(context, title, summary, null, v -> {
                 AlertDialogWpp builder = new AlertDialogWpp(context);
@@ -411,7 +637,13 @@ public class WdsSettingsTileRenderer {
 
                 float density = context.getResources().getDisplayMetrics().density;
                 EditText input = new EditText(context);
-                input.setText(prefs.getString(key, defVal));
+                String currentText;
+                if ("int".equals(valueType)) {
+                    currentText = String.valueOf(prefs.getInt(key, pref.optInt("default", 0)));
+                } else {
+                    currentText = prefs.getString(key, pref.optString("default", ""));
+                }
+                input.setText(currentText);
                 input.setTextColor(0xFFE9EDEF);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -426,8 +658,17 @@ public class WdsSettingsTileRenderer {
 
                 builder.setPositiveButton("Save", (dialog, which) -> {
                     String newVal = input.getText().toString();
-                    prefs.edit().putString(key, newVal).apply();
-                    if (listener != null) listener.onPrefChanged(key, newVal);
+                    if ("int".equals(valueType)) {
+                        int intVal = 0;
+                        try {
+                            intVal = Integer.parseInt(newVal);
+                        } catch (Exception ignored) {}
+                        prefs.edit().putInt(key, intVal).apply();
+                        if (listener != null) listener.onPrefChanged(key, intVal);
+                    } else {
+                        prefs.edit().putString(key, newVal).apply();
+                        if (listener != null) listener.onPrefChanged(key, newVal);
+                    }
                 });
                 builder.setNegativeButton("Cancel", null);
                 builder.show();

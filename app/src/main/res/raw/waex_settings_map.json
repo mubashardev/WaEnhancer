@@ -3,57 +3,658 @@
     {
       "id": "general",
       "title": "General",
-      "summary": "Anti-revoke, chats, limits",
+      "summary": "Theme, language, home screen customization & conversation options",
       "icon": "ic_general",
       "sub_screens": [
         {
           "id": "general_main",
-          "title": "General",
+          "title": "General Settings",
+          "summary": "Theme, language, auto-updates & basic settings",
           "prefs": [
-            { "key": "anti_revoke",            "type": "switch", "default_bool": false, "title": "Anti-Revoke Messages",     "summary": "Prevent others from deleting their messages for you", "tags": ["anti revoke","delete","deleted"] },
-            { "key": "show_revoked_indicator", "type": "switch", "default_bool": true,  "title": "Show Revoked Indicator",   "summary": "Show a marker on revoked messages",  "dep": "anti_revoke" },
-            { "key": "anti_revoke_groups",     "type": "switch", "default_bool": false, "title": "Anti-Revoke in Groups",    "summary": "Also prevent deletion in groups",     "dep": "anti_revoke" },
-            { "key": "anti_revoke_status",     "type": "switch", "default_bool": false, "title": "Anti-Revoke Status",       "summary": "Prevent status revocation",           "dep": "anti_revoke" },
-            { "key": "recover_delete_for_me",  "type": "switch", "default_bool": false, "title": "Recover Delete for Me",    "summary": "Recover messages you deleted for yourself", "tags": ["recover","delete for me"] },
-            { "key": "show_edit_message",      "type": "switch", "default_bool": false, "title": "Show Edited Messages",     "summary": "View original text before edits",    "tags": ["edit","edited message"] },
-            { "key": "new_chat",               "type": "switch", "default_bool": false, "title": "New Chat Enhancements",    "summary": "Improved new chat flow",             "tags": ["new chat"] },
-            { "key": "call_type",              "type": "list",   "default_str":  "0",   "title": "Default Call Type",        "summary": "Choose voice or video as default",   "dep": "new_chat", "entries": ["Voice","Video"], "entry_values": ["0","1"] },
-            { "key": "shareable_limit",        "type": "switch", "default_bool": false, "title": "Share Limit Bypass",       "summary": "Share to unlimited contacts at once", "tags": ["share limit","forward"] },
-            { "key": "pinned_limit",           "type": "switch", "default_bool": false, "title": "Pinned Chat Limit Bypass", "summary": "Pin unlimited chats",                "tags": ["pin limit"] },
-            { "key": "delete_status",          "type": "switch", "default_bool": false, "title": "Delete Status Option",     "summary": "Add delete button in status viewer",  "tags": ["delete status"] },
-            { "key": "lite_mode",              "type": "switch", "default_bool": false, "title": "Lite Mode",                "summary": "Reduce animations for better performance", "tags": ["lite","performance"] },
-            { "key": "lite_mode_folder",       "type": "file",   "default_str":  "",    "title": "Lite Mode Folder",         "summary": "Select a folder for lite mode",      "dep": "lite_mode" }
+            {
+              "key": "thememode",
+              "type": "list",
+              "value_type": "string",
+              "default": null,
+              "title": "Dark Theme WaEnhancer X",
+              "summary": "%s",
+              "entries": [
+                {
+                  "label": "@string/follow_system",
+                  "value": "0"
+                },
+                {
+                  "label": "@string/dark_theme_on",
+                  "value": "1"
+                },
+                {
+                  "label": "@string/dark_theme_off",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "wae_color_mode",
+              "type": "list",
+              "value_type": "string",
+              "default": "preset",
+              "title": "WAE color mode",
+              "summary": "%s",
+              "entries": [
+                {
+                  "label": "Preset",
+                  "value": "preset"
+                },
+                {
+                  "label": "Automatic (Monet)",
+                  "value": "monet"
+                }
+              ]
+            },
+            {
+              "key": "wae_color_preset",
+              "type": "list",
+              "value_type": "string",
+              "default": "green",
+              "title": "Preset color",
+              "summary": "%s",
+              "entries": [
+                {
+                  "label": "Green",
+                  "value": "green"
+                },
+                {
+                  "label": "Blue",
+                  "value": "blue"
+                },
+                {
+                  "label": "Cyan",
+                  "value": "cyan"
+                },
+                {
+                  "label": "Purple",
+                  "value": "purple"
+                },
+                {
+                  "label": "Orange",
+                  "value": "orange"
+                },
+                {
+                  "label": "Red",
+                  "value": "red"
+                },
+                {
+                  "label": "Pink",
+                  "value": "pink"
+                }
+              ]
+            },
+            {
+              "key": "update_check",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Automatically Check for Update",
+              "summary": "Enable or Disable Auto Check for Update. This will disable the popup inside the WhatsApp Application."
+            },
+            {
+              "key": "lite_mode",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Lite Mode",
+              "summary": "Lite Mode disables most theme features and the connection bridge that keeps WhatsApp always active is turned off."
+            },
+            {
+              "key": "force_english",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Force English WaEnhancer X",
+              "summary": ""
+            },
+            {
+              "key": "show_hook_toast",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Show Hook Loading Toast",
+              "summary": "Show toast and snackbar notifications during hook initialization and when hooks finish loading"
+            },
+            {
+              "key": "enable_crash_analytics",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Share Anonymous Crash Logs",
+              "summary": "Help us fix bugs by sharing anonymous crash logs to Firebase Crashlytics."
+            }
           ]
         },
         {
-          "id": "general_home",
+          "id": "home_screen_main",
           "title": "Home Screen",
+          "summary": "Toolbar style, name, bio, tabs, groups & filters",
           "prefs": [
-            { "key": "floating_bottom_bar", "type": "switch", "default_bool": false,    "title": "Floating Bottom Bar",     "summary": "Replace default navigation with floating bar",    "tags": ["bottom bar","fab"] },
-            { "key": "filter_groups",       "type": "switch", "default_bool": false,    "title": "Separate Groups Tab",     "summary": "Move groups to a dedicated tab",                  "tags": ["groups tab","separate groups"] },
-            { "key": "ig_status",           "type": "switch", "default_bool": false,    "title": "Instagram-Style Status",  "summary": "Display contacts status as story rings",           "tags": ["ig status","instagram"] },
-            { "key": "show_online",         "type": "switch", "default_bool": false,    "title": "Show Online Indicator",   "summary": "Show green dot on online contacts",                "tags": ["online","online dot"] },
-            { "key": "menu_home",           "type": "switch", "default_bool": false,    "title": "Custom Home Menu Items",  "summary": "Add extra items to the home toolbar",             "tags": ["menu","toolbar menu"] },
-            { "key": "hidetabs",            "type": "multi",  "default_str":  "",       "title": "Hide Tabs",               "summary": "Choose which tabs to hide on home screen",         "tags": ["hide tabs"], "entries": ["Chats","Status","Communities","Calls"], "entry_values": ["0","1","2","3"] },
-            { "key": "animation_list",      "type": "list",   "default_str":  "default","title": "List Animation",          "summary": "Animation style for chat list",                   "tags": ["animation"], "entries": ["Default","Slide","Fade","None"], "entry_values": ["default","slide","fade","none"] }
+            {
+              "key": "show_home_menu",
+              "type": "list",
+              "value_type": "string",
+              "default": "1",
+              "title": "Show WaEnhancerX Home Menu",
+              "summary": "%s",
+              "entries": [
+                {
+                  "label": "Disabled",
+                  "value": "0"
+                },
+                {
+                  "label": "Show as icon",
+                  "value": "1"
+                },
+                {
+                  "label": "Show in 3-dots menu",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "shownamehome",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show Name",
+              "summary": "Show your profile name at the top of home screen, instead of \"WhatsApp\""
+            },
+            {
+              "key": "showbiohome",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show Bio",
+              "summary": "Show your bio below the title of toolbar"
+            },
+            {
+              "key": "show_dndmode",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show DND Button",
+              "summary": "Show button for DND Mode on home screen toolbar"
+            },
+            {
+              "key": "newchat",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Long-Press FAB for New Chat",
+              "summary": "Start a chat with any phone number by long-pressing the home screen action button"
+            },
+            {
+              "key": "restartbutton",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Enable Restart Button",
+              "summary": "Add button in Home Screen to Restart App"
+            },
+            {
+              "key": "open_waex",
+              "type": "list",
+              "value_type": "string",
+              "default": "2",
+              "title": "Settings Entry Point Placement",
+              "summary": "%s",
+              "entries": [
+                {
+                  "label": "Home Screen Menu",
+                  "value": "1"
+                },
+                {
+                  "label": "WhatsApp Settings",
+                  "value": "2"
+                },
+                {
+                  "label": "Disabled",
+                  "value": "0"
+                }
+              ]
+            },
+            {
+              "key": "open_settings_mode",
+              "type": "list",
+              "value_type": "string",
+              "default": "1",
+              "title": "Open WaEnhancerX Settings as",
+              "summary": "%s",
+              "entries": [
+                {
+                  "label": "Embedded",
+                  "value": "1"
+                },
+                {
+                  "label": "External App",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "separategroups",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Separate Groups",
+              "summary": "Separate your chats by: Groups, Private Chats, Status, Calls, Communities"
+            },
+            {
+              "key": "separategroups_counter_type",
+              "type": "list",
+              "value_type": "string",
+              "default": "conversations",
+              "title": "Separate Groups Counter",
+              "summary": "%s",
+              "dep": "separategroups",
+              "entries": [
+                {
+                  "label": "Unread Conversations",
+                  "value": "conversations"
+                },
+                {
+                  "label": "Unread Messages",
+                  "value": "messages"
+                }
+              ]
+            },
+            {
+              "key": "filtergroups",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "New UI Group Filter",
+              "summary": "Disabled: This feature is currently incompatible with the latest WhatsApp build due to significant internal layout changes. It will be restored in a future update."
+            },
+            {
+              "key": "dotonline",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show Online Dot in Conversation List",
+              "summary": "Show a green online dot on home screen\n(NOTE: Must activate show online for everyone in WhatsApp\\'s Privacy Settings menu)"
+            },
+            {
+              "key": "showonlinetext",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show Online/Last seen in Conversation List",
+              "summary": "Show a text online or last seen on home screen\n(NOTE: Must activate show online for everyone in WhatsApp\\'s Privacy Settings menu)"
+            },
+            {
+              "key": "filterseen",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable filter chats for type",
+              "summary": "Show options to filter chats for groups, contacts and unseen messages"
+            },
+            {
+              "key": "metaai",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Meta Ai Functions",
+              "summary": "Disable meta ai only for those who have it enabled by default"
+            },
+            {
+              "key": "chatfilter",
+              "type": "list",
+              "value_type": "string",
+              "default": "2",
+              "title": "Search Functions",
+              "summary": "Choose between Search Icon, Search Bar, or No Search",
+              "entries": [
+                {
+                  "label": "No search",
+                  "value": "0"
+                },
+                {
+                  "label": "Search icon",
+                  "value": "1"
+                },
+                {
+                  "label": "Search bar",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "disable_profile_status",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Status in the profile photo",
+              "summary": "Disables the circle that appears in the profile photo of each contact when there is new status"
+            },
+            {
+              "key": "menuwicon",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Menu Icons",
+              "summary": "Add icons next to menu options across the app"
+            },
+            {
+              "key": "novaconfig",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "New Settings Style",
+              "summary": "Enable the new settings style, with profile photo on home screen toolbar"
+            }
           ]
         },
         {
-          "id": "general_conversation",
+          "id": "conversation_main",
           "title": "Conversation",
+          "summary": "Anti-revoke, deleted colors, forward limits & tools",
           "prefs": [
-            { "key": "customforwardlimit",            "type": "text",   "default_str":  "",    "title": "Custom Forward Limit",       "summary": "Max contacts for forwarding messages",  "tags": ["forward limit"] },
-            { "key": "filter_group_members_messages", "type": "switch", "default_bool": false, "title": "Filter Group Messages",      "summary": "Show only messages from specific members", "tags": ["filter group"] },
-            { "key": "seentick",                      "type": "list",   "default_str":  "0",   "title": "Blue Tick Button",           "summary": "Add manual blue tick send button",      "tags": ["seen tick","blue tick"], "entries": ["Disabled","In Text Toolbar","In Reply"], "entry_values": ["0","1","2"] },
-            { "key": "chat_scroll_button",            "type": "switch", "default_bool": false, "title": "Chat Scroll Buttons",        "summary": "Show up/down scroll buttons in chat",   "tags": ["scroll button"] },
-            { "key": "custom_time",                   "type": "switch", "default_bool": false, "title": "Custom Time Format",         "summary": "Override timestamp display format",    "tags": ["time format"] },
-            { "key": "video_note_attachment",         "type": "switch", "default_bool": false, "title": "Video Note in Attachments",  "summary": "Add video note option to attachment picker", "tags": ["video note"] },
-            { "key": "tag_message",                   "type": "switch", "default_bool": false, "title": "Tag Message Feature",        "summary": "Tag and pin messages in chats",         "tags": ["tag","mention"] },
-            { "key": "group_admin_tools",             "type": "switch", "default_bool": false, "title": "Group Admin Tools",          "summary": "Extra tools for group administrators",  "tags": ["admin","group tools"] },
-            { "key": "stickers_pack",                 "type": "switch", "default_bool": false, "title": "Sticker Enhancements",       "summary": "Improved sticker browsing and sending", "tags": ["stickers"] },
-            { "key": "copy_status_text",              "type": "switch", "default_bool": false, "title": "Copy Status Text",           "summary": "Allow copying text from status updates","tags": ["copy status"] },
-            { "key": "google_translate",              "type": "switch", "default_bool": false, "title": "Google Translate in Chat",   "summary": "Translate messages with a long press",  "tags": ["translate"] },
-            { "key": "audio_transcript",              "type": "switch", "default_bool": false, "title": "Audio Transcript",           "summary": "Transcribe voice messages to text",     "tags": ["transcript","audio to text"] }
+            {
+              "key": "showonline",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show toast on contact online",
+              "summary": "Show a toast when a contact is online"
+            },
+            {
+              "key": "toastdeleted",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show toast notification on delete message",
+              "summary": "Show toast notification if any contact deletes any message"
+            },
+            {
+              "key": "toast_viewed_message",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show toast on viewed your message",
+              "summary": "Shows a toast if someone views your message"
+            },
+            {
+              "key": "antirevoke",
+              "type": "list",
+              "value_type": "string",
+              "default": null,
+              "title": "Anti-Revoke Messages",
+              "summary": "Messages will not be deleted for you",
+              "entries": [
+                {
+                  "label": "Disabled",
+                  "value": "0"
+                },
+                {
+                  "label": "Show Text",
+                  "value": "1"
+                },
+                {
+                  "label": "Show Icon",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "antirevokestatus",
+              "type": "list",
+              "value_type": "string",
+              "default": null,
+              "title": "Anti-Delete Status",
+              "summary": "View statuses that users have since deleted",
+              "entries": [
+                {
+                  "label": "Disabled",
+                  "value": "0"
+                },
+                {
+                  "label": "Show Text",
+                  "value": "1"
+                },
+                {
+                  "label": "Show Icon",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "deleted_message_color",
+              "type": "color",
+              "value_type": "int",
+              "default": null,
+              "title": "Deleted Message Color",
+              "summary": "Customize the text color of deleted messages (includes message text and timestamp text)"
+            },
+            {
+              "key": "antidisappearing",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Anti Disappearing Messages",
+              "summary": "Temporary messages will not be deleted for you"
+            },
+            {
+              "key": "broadcast_tag",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show chat broadcast icon",
+              "summary": "Shows an icon if the contact sent a message via broadcast"
+            },
+            {
+              "key": "pinnedlimit",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Pinned Chats Limit",
+              "summary": "Disable limit of 3 pinned chats"
+            },
+            {
+              "key": "removeforwardlimit",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Remove Forward Limit",
+              "summary": "Remove forward limit for 5 chats (normal) and 1 chat (multiple times)\n(Note: Use with caution, you may be banned for spam)"
+            },
+            {
+              "key": "customforwardlimit",
+              "type": "text",
+              "value_type": "string",
+              "default": "9999",
+              "title": "Custom Forward Limit",
+              "summary": "Set a custom max forward limit for chat selection (default: 9999)",
+              "dep": "removeforwardlimit"
+            },
+            {
+              "key": "hidetag",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide \"Forwarded\" Tag",
+              "summary": "Forward messages without the tag \"Forwarded\""
+            },
+            {
+              "key": "revokeallmessages",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Increase limit of \"Delete for everyone\" option",
+              "summary": "Increases the limit to 3 days in the option to delete messages for everyone"
+            },
+            {
+              "key": "removeseemore",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Remove \"See More\" Button",
+              "summary": "Disable \"See More\" button and show all long message"
+            },
+            {
+              "key": "antieditmessages",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show Edited Message History",
+              "summary": "Show edited message history when clicking \"Edited\" on a message"
+            },
+            {
+              "key": "alertsticker",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Confirmation Before Sending Sticker",
+              "summary": "Show a dialog before sending the sticker"
+            },
+            {
+              "key": "calltype",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable selection of call type",
+              "summary": "Show an option to select whether you want a call via phone or WhatsApp"
+            },
+            {
+              "key": "disable_defemojis",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Default Emojis",
+              "summary": "Disables Whatsapp\\'s default emojis and uses system emojis\n(NOTE: Whatsapp emojis will disappear from the selector, use the keyboard to insert)."
+            },
+            {
+              "key": "stamp_copied_message",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Remove Stamp from Copied Messages",
+              "summary": "Removes name and date when copying more than one message"
+            },
+            {
+              "key": "message_device_source",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Show Message Device Source",
+              "summary": "Shows whether a message was sent from the primary device or a linked device"
+            },
+            {
+              "key": "doubletap2like",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Enable Double Click to React",
+              "summary": "Activates the possibility of double-clicking on the message to react it"
+            },
+            {
+              "key": "doubletap2like_emoji",
+              "type": "text",
+              "value_type": "string",
+              "default": "\ud83d\udc4d",
+              "title": "Custom Reaction",
+              "summary": "Select which reaction will be sent when double clicking on the message",
+              "dep": "doubletap2like"
+            },
+            {
+              "key": "selectable_message",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Make Message Text Selectable",
+              "summary": "Long-pressing message text opens a bottom sheet to select and copy text. Native selection is disabled to prevent scrolling lag and format issues."
+            },
+            {
+              "key": "google_translate",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable Google Translate",
+              "summary": "Replaces Whatsapp\\'s native translator with Google Translate"
+            },
+            {
+              "key": "verify_blocked_contact",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show Contact Blocked in Conversation",
+              "summary": "Disabled due to recent WhatsApp updates patching this method."
+            },
+            {
+              "key": "go_to_first_message",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Go to First Message",
+              "summary": "Add menu option to scroll to first message in chat"
+            },
+            {
+              "key": "filter_group_members_messages",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Filter Group Members",
+              "summary": "Add menu option in group chats to filter members\\' messages"
+            },
+            {
+              "key": "admin_grp",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show Admin Group Icon",
+              "summary": "Show an admin icon next to the name of the user who is the group admin"
+            },
+            {
+              "key": "floatingmenu",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "New Context Menu UI",
+              "summary": "The new iOS-style message context menu will be enabled."
+            },
+            {
+              "key": "animation_emojis",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Animation Emojis",
+              "summary": "Activate animated emojis (This creates large emojis in conversations)"
+            },
+            {
+              "key": "message_bomber",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Message Bomber",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "delete_message_file",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Delete message media file",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "delete_message_file_sent",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Also apply for my sent messages",
+              "summary": "Show the delete option for your own sent media messages as well.",
+              "dep": "delete_message_file"
+            }
           ]
         }
       ]
@@ -61,35 +662,217 @@
     {
       "id": "privacy",
       "title": "Privacy",
-      "summary": "Last seen, typing, ghost mode",
-      "icon": "ic_privacy",
+      "summary": "Ghost mode, freeze last seen, tick options & incognito",
+      "icon": "ic_shield",
       "sub_screens": [
         {
           "id": "privacy_main",
-          "title": "Privacy",
+          "title": "Stealth & Privacy",
+          "summary": "Ghost mode, freeze last seen, tick options & incognito",
           "prefs": [
-            { "key": "freezelastseen",              "type": "switch", "default_bool": false, "title": "Freeze Last Seen",             "summary": "Stop updating your last seen timestamp",     "tags": ["last seen","freeze"] },
-            { "key": "hideread",                    "type": "switch", "default_bool": false, "title": "Hide Blue Ticks",              "summary": "Do not send blue read receipts",              "tags": ["hide read","blue tick","read receipt"] },
-            { "key": "hide_seen_view",              "type": "switch", "default_bool": false, "title": "Hide Seen on View",            "summary": "Mark as seen only on deliberate action",     "dep": "hideread" },
-            { "key": "blueonreply",                 "type": "switch", "default_bool": false, "title": "Blue Tick on Reply Only",      "summary": "Show blue tick only when you reply",         "dep": "hideread" },
-            { "key": "hideread_group",              "type": "switch", "default_bool": false, "title": "Hide Blue Ticks in Groups",    "summary": "Suppress group read receipts",               "tags": ["group read"] },
-            { "key": "hidereceipt",                 "type": "switch", "default_bool": false, "title": "Hide Delivery Receipt",        "summary": "Stop sending delivery receipts",             "tags": ["delivery receipt"] },
-            { "key": "ghostmode_t",                 "type": "switch", "default_bool": false, "title": "Hide Typing Indicator",        "summary": "Do not broadcast typing status",             "tags": ["ghost mode","typing"] },
-            { "key": "ghostmode_r",                 "type": "switch", "default_bool": false, "title": "Hide Recording Indicator",     "summary": "Do not broadcast recording status",          "tags": ["ghost recording","recording"] },
-            { "key": "hideonceseen",                "type": "switch", "default_bool": false, "title": "Hide View Once Seen",          "summary": "Mark view-once seen silently",               "tags": ["view once"] },
-            { "key": "hideaudioseen",               "type": "switch", "default_bool": false, "title": "Hide Audio Seen",              "summary": "Do not send audio listened receipt",        "tags": ["audio seen"] },
-            { "key": "viewonce",                    "type": "switch", "default_bool": false, "title": "Save View Once Media",         "summary": "Save view-once photos and videos",           "tags": ["view once save"] },
-            { "key": "hidestatusview",              "type": "switch", "default_bool": false, "title": "Hide Status Viewed",           "summary": "Watch status without marking viewed",        "tags": ["status view"] },
-            { "key": "custom_privacy_type",         "type": "list",   "default_str":  "0",   "title": "Per-Contact Custom Privacy",   "summary": "Set privacy rules per contact",              "tags": ["custom privacy","per contact"], "entries": ["Disabled","Whitelist","Blacklist"], "entry_values": ["0","1","2"] },
-            { "key": "open_deleted_messages",       "type": "action", "title": "Deleted Messages Viewer",      "summary": "Browse anti-revoked messages",               "tags": ["deleted messages"] },
-            { "key": "always_typing_global",        "type": "switch", "default_bool": false, "title": "Always Typing Simulation",     "summary": "Simulate typing to selected contacts",       "tags": ["always typing","typing simulation"] },
-            { "key": "always_typing_global_target", "type": "list",   "default_str":  "1",   "title": "Typing Simulation Target",     "summary": "Who to simulate typing for",                 "dep": "always_typing_global", "entries": ["All Contacts","Specific Contacts"], "entry_values": ["0","1"] },
-            { "key": "always_typing_global_mode",   "type": "list",   "default_str":  "1",   "title": "Typing Simulation Mode",       "summary": "How typing is simulated",                    "dep": "always_typing_global", "entries": ["Conversation Mode","Global Mode"], "entry_values": ["1","2"] },
-            { "key": "dnd_mode",                    "type": "switch", "default_bool": false, "title": "DND Mode",                     "summary": "Block all incoming messages temporarily",    "tags": ["dnd","do not disturb"] },
-            { "key": "anti_wa",                     "type": "switch", "default_bool": false, "title": "Anti-WA (Block Tracking)",     "summary": "Block WhatsApp telemetry",                   "tags": ["anti wa","tracking"] },
-            { "key": "hide_chat",                   "type": "switch", "default_bool": false, "title": "Hide Chats",                   "summary": "Hide specific chats from list",              "tags": ["hide chat"] },
-            { "key": "locked_chats_enhancer",       "type": "switch", "default_bool": false, "title": "Locked Chats Enhancer",        "summary": "Improve locked chat experience",             "tags": ["locked chat"] },
-            { "key": "call_privacy",                "type": "switch", "default_bool": false, "title": "Call Privacy",                 "summary": "Control who can call you",                   "tags": ["call privacy","block calls"] }
+            {
+              "key": "typearchive",
+              "type": "list",
+              "value_type": "string",
+              "default": "0",
+              "title": "Hide Archived Chats",
+              "summary": "Hide archived chats, to access click 5 times or hold on the \"WhatsApp\" title in the header on Home Screen",
+              "entries": [
+                {
+                  "label": "Disabled",
+                  "value": "0"
+                },
+                {
+                  "label": "Click 5 times on the WhatsApp title",
+                  "value": "1"
+                },
+                {
+                  "label": "Hold on WhatsApp title",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "show_freezeLastSeen",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Show Freeze Last Seen Button",
+              "summary": "Show button for Freezing Last Seen on home screen toolbar"
+            },
+            {
+              "key": "ghostmode",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Show Ghost Mode Button",
+              "summary": "Show a Ghost Mode button on the home screen toolbar"
+            },
+            {
+              "key": "always_online",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Always Online",
+              "summary": "Show you online even if you minimize WhatsApp (Doesn\\'t work if you remove it from recents)"
+            },
+            {
+              "key": "lockedchats_enhancer",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enhanced Locked Chats",
+              "summary": "Improve locked chats by hiding notifications and contacts from the contact list"
+            },
+            {
+              "key": "open_deleted_messages",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Deleted By Me",
+              "summary": "View messages deleted by others"
+            },
+            {
+              "key": "custom_privacy_type",
+              "type": "list",
+              "value_type": "string",
+              "default": "0",
+              "title": "Custom Privacy per contact",
+              "summary": "Activate the custom privacy button on the contact information screen",
+              "entries": [
+                {
+                  "label": "Disabled",
+                  "value": "0"
+                },
+                {
+                  "label": "Show in contact info",
+                  "value": "1"
+                },
+                {
+                  "label": "Show in contact info menu",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "freezelastseen",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Freeze Last Seen",
+              "summary": "Your last seen time will be frozen\n(CAUTION: You will not see any presence updates from other users, like typing, recording, online)"
+            },
+            {
+              "key": "hideread",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide Blue Ticks",
+              "summary": "View messages within conversation screen without users knowing"
+            },
+            {
+              "key": "hide_seen_view",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "View Seen Tick",
+              "summary": "Show an icon if the message view was sent to the recipient or unique view was seen",
+              "dep": "hideread"
+            },
+            {
+              "key": "blueonreply",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Send Blue Ticks upon Reply",
+              "summary": "Sends blue ticks after replying to a message\n(NOTE: Must have \"Hide Blue Ticks\" active)"
+            },
+            {
+              "key": "hideread_group",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide Blue Tick in Groups",
+              "summary": "View messages in groups screen without users knowing"
+            },
+            {
+              "key": "hidereceipt",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide Delivered",
+              "summary": "Users will not know that their messages have been delivered to you\n(CAUTION: May cause delay in receiving messages)"
+            },
+            {
+              "key": "ghostmode_t",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide Typing",
+              "summary": "Users cannot see that you are typing"
+            },
+            {
+              "key": "ghostmode_r",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide Recording Audio",
+              "summary": "Users cannot see that you are recording audio"
+            },
+            {
+              "key": "hideonceseen",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide View Once Seen",
+              "summary": "Hide that view one media has been seen"
+            },
+            {
+              "key": "hideaudioseen",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide audio seen",
+              "summary": "Hides the sending of audio reading when listening to it"
+            },
+            {
+              "key": "viewonce",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Unlimited View Once",
+              "summary": "Allows you to open view once media multiple times"
+            },
+            {
+              "key": "seentick",
+              "type": "list",
+              "value_type": "string",
+              "default": null,
+              "title": "Show Button to send blue tick",
+              "summary": "Show Button to send blue tick (mark as read/viewed)",
+              "entries": [
+                {
+                  "label": "Disabled",
+                  "value": "0"
+                },
+                {
+                  "label": "Show Button in Screen",
+                  "value": "1"
+                },
+                {
+                  "label": "Show Button in 3 dot Menu",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "hidestatusview",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide Status View",
+              "summary": "View statuses without users knowing"
+            }
           ]
         }
       ]
@@ -97,47 +880,262 @@
     {
       "id": "status",
       "title": "Status",
-      "summary": "Download, forward, viewer tweaks",
-      "icon": "ic_notifications_black_24dp",
+      "summary": "Download status, status style, splitters & custom rules",
+      "icon": "ic_home_tab_status_unfilled",
       "sub_screens": [
         {
           "id": "status_main",
-          "title": "Status",
+          "title": "Status & Stories",
+          "summary": "Download status, status style, splitters & custom rules",
           "prefs": [
-            { "key": "status_download",                "type": "switch", "default_bool": false, "title": "Status Downloader",           "summary": "Save status photos and videos",         "tags": ["status download","save status"] },
-            { "key": "send_audio_as_voice_status",     "type": "switch", "default_bool": false, "title": "Send Audio as Voice Status",  "summary": "Post audio files as voice status",      "tags": ["voice status","audio status"] },
-            { "key": "auto_status_forward",            "type": "switch", "default_bool": false, "title": "Auto Status Forward",         "summary": "Automatically forward status updates",  "tags": ["auto forward status"] },
-            { "key": "auto_status_forward_rules_pref", "type": "action", "title": "Auto Forward Rules",          "summary": "Configure forwarding rules",            "dep": "auto_status_forward" },
-            { "key": "pro_status_splitter",            "type": "switch", "default_bool": false, "title": "Status Splitter [Pro]",       "summary": "Split long status videos automatically","tags": ["status splitter"] },
-            { "key": "remove_status_bottom_tile",      "type": "switch", "default_bool": false, "title": "Remove Status Bottom Bar",    "summary": "Hide the bottom action bar on status",  "tags": ["status ui"] },
-            { "key": "disable_status_swipe_up",        "type": "switch", "default_bool": false, "title": "Disable Swipe Up on Status",  "summary": "Disable accidental swipe-up",           "tags": ["status swipe"] },
-            { "key": "remove_status_quick_reactions",  "type": "switch", "default_bool": false, "title": "Remove Quick Reactions",      "summary": "Hide quick emoji reactions in status",  "tags": ["reactions","status reactions"] },
-            { "key": "remove_status_heart_button",     "type": "switch", "default_bool": false, "title": "Remove Heart Button",         "summary": "Hide the heart like button",            "tags": ["heart","status heart"] },
-            { "key": "add_status_reply_menu_item",     "type": "switch", "default_bool": false, "title": "Add Reply to Menu",           "summary": "Add a reply option to status menu",     "tags": ["status reply"] },
-            { "key": "status_video_fast_gesture",      "type": "switch", "default_bool": false, "title": "Fast Playback Gesture",       "summary": "Double-tap to speed up status video",   "tags": ["status fast","speed"] },
-            { "key": "status_video_fast_speed",        "type": "list",   "default_str":  "2.0", "title": "Fast Playback Speed",         "summary": "Speed multiplier for fast gesture",     "dep": "status_video_fast_gesture", "entries": ["1.5x","2x","3x"], "entry_values": ["1.5","2.0","3.0"] },
-            { "key": "status_bottom_play_pause_button","type": "switch", "default_bool": false, "title": "Play/Pause Button on Status", "summary": "Show play/pause button on status",      "tags": ["play pause status"] }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "media",
-      "title": "Media & Downloads",
-      "summary": "Quality, profiles, call recording",
-      "icon": "ic_media",
-      "sub_screens": [
-        {
-          "id": "media_main",
-          "title": "Media & Downloads",
-          "prefs": [
-            { "key": "media_quality",      "type": "switch", "default_bool": false, "title": "Max Media Quality",           "summary": "Send photos/videos in original quality", "tags": ["media quality","image quality"] },
-            { "key": "download_profile",   "type": "switch", "default_bool": false, "title": "Download Profile Photos",     "summary": "Save any contact profile photo",          "tags": ["download profile","profile photo"] },
-            { "key": "download_view_once", "type": "switch", "default_bool": false, "title": "Save View Once Media",        "summary": "Save view-once photos and videos",        "tags": ["view once download"] },
-            { "key": "download_video_note","type": "switch", "default_bool": false, "title": "Download Video Notes",        "summary": "Save video message bubbles",              "tags": ["video note download"] },
-            { "key": "call_recording",     "type": "switch", "default_bool": false, "title": "Call Recording",              "summary": "Record WhatsApp calls",                   "tags": ["call record","record call"] },
-            { "key": "media_preview",      "type": "switch", "default_bool": false, "title": "Media Preview Enhancements",  "summary": "Improved media preview experience",       "tags": ["media preview"] },
-            { "key": "file_size_spoofer",  "type": "switch", "default_bool": false, "title": "File Size Spoofer",           "summary": "Bypass file size sending limits",         "tags": ["file size","spoof"] }
+            {
+              "key": "autonext_status",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Auto Skip Status",
+              "summary": "Prevents the current status from advancing automatically to the next one."
+            },
+            {
+              "key": "copystatus",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable Copy Status",
+              "summary": "Activates the possibility of copying the description and caption of statuses by holding on them"
+            },
+            {
+              "key": "toast_viewed_status",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show toast on viewed your status",
+              "summary": "Shows a toast if someone views your status"
+            },
+            {
+              "key": "enable_spy",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable Spy Tool",
+              "summary": "Logs internal events to Xposed log for debugging."
+            },
+            {
+              "key": "igstatus",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable IGStatus on Home Screen",
+              "summary": "Show status style Instagram in Home Screen"
+            },
+            {
+              "key": "channels",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide Channels",
+              "summary": "Hide Channels from Updates tab"
+            },
+            {
+              "key": "removechannel_rec",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Remove Channel Recomendations",
+              "summary": "Remove Channel Recomendations from tab Status"
+            },
+            {
+              "key": "disable_ads",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Status Ads",
+              "summary": "Blocks ads from appearing in WhatsApp status stories"
+            },
+            {
+              "key": "status_style",
+              "type": "list",
+              "value_type": "string",
+              "default": "1",
+              "title": "Style of Stories/Status",
+              "summary": "Changes Stories/Status style to some models available on WhatsApp",
+              "entries": [
+                {
+                  "label": "Disabled",
+                  "value": "0"
+                },
+                {
+                  "label": "Facebook Style (1 row)",
+                  "value": "1"
+                },
+                {
+                  "label": "Facebook Style (Table)",
+                  "value": "5"
+                },
+                {
+                  "label": "Status Vertical (No Preview)",
+                  "value": "4"
+                },
+                {
+                  "label": "Status Vertical (Circle)",
+                  "value": "3"
+                },
+                {
+                  "label": "Status Vertical (Square)",
+                  "value": "9"
+                }
+              ]
+            },
+            {
+              "key": "oldstatus",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Old Statuses",
+              "summary": "Change to the old statuses page vertically and without channels (NOTE: May cause lag in the interface)"
+            },
+            {
+              "key": "statuscomposer",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Custom colors for text status",
+              "summary": "Press and hold on the color selector in the status to customize it"
+            },
+            {
+              "key": "send_audio_as_voice_status",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Send Audio as Voice Status",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "auto_status_forward",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable Auto Status Forward",
+              "summary": "Automatically forward your status to a contact when they reply to it with a matching keyword. Leave rules empty to forward on any reply."
+            },
+            {
+              "key": "auto_status_forward_rules_pref",
+              "type": "forward_rules",
+              "value_type": "string",
+              "default": null,
+              "title": "Keyword Rules",
+              "summary": "",
+              "dep": "auto_status_forward"
+            },
+            {
+              "key": "pro_status_splitter",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Status Video Splitter",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "remove_status_bottom_tile",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Remove bottom visible tile",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "disable_status_swipe_up",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Swipe Up to reply",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "remove_status_quick_reactions",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Remove quick reactions row",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "remove_status_heart_button",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Remove heart button",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "add_status_reply_menu_item",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Add option to menu to open reply",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "status_video_fast_gesture",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Long press to fast forward/rewind",
+              "summary": "Under Development",
+              "enabled": false
+            },
+            {
+              "key": "status_video_fast_speed",
+              "type": "list",
+              "value_type": "string",
+              "default": "2.0",
+              "title": "Playback speed",
+              "summary": "Under Development",
+              "enabled": false,
+              "dep": "status_video_fast_gesture",
+              "entries": [
+                {
+                  "label": "1.2x",
+                  "value": "1.2"
+                },
+                {
+                  "label": "1.5x",
+                  "value": "1.5"
+                },
+                {
+                  "label": "1.8x",
+                  "value": "1.8"
+                },
+                {
+                  "label": "2.0x",
+                  "value": "2.0"
+                },
+                {
+                  "label": "2.5x",
+                  "value": "2.5"
+                },
+                {
+                  "label": "3.0x",
+                  "value": "3.0"
+                }
+              ]
+            },
+            {
+              "key": "status_bottom_play_pause_button",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show play/pause button in bottom bar",
+              "summary": "Under Development",
+              "enabled": false
+            }
           ]
         }
       ]
@@ -145,16 +1143,411 @@
     {
       "id": "calls",
       "title": "Calls",
-      "summary": "Recording, privacy, call types",
-      "icon": "ic_recording",
+      "summary": "Call blocker, call recorder & custom contact lists",
+      "icon": "ic_call",
       "sub_screens": [
         {
           "id": "calls_main",
           "title": "Calls",
+          "summary": "Call blocker, call recorder & custom contact lists",
           "prefs": [
-            { "key": "call_privacy",   "type": "switch", "default_bool": false, "title": "Call Privacy",      "summary": "Control incoming call behavior",      "tags": ["call privacy"] },
-            { "key": "call_type",      "type": "list",   "default_str":  "0",   "title": "Default Call Type", "summary": "Voice or video when starting a call", "tags": ["call type","video call","voice call"], "entries": ["Voice","Video"], "entry_values": ["0","1"] },
-            { "key": "call_recording", "type": "switch", "default_bool": false, "title": "Call Recording",    "summary": "Record WhatsApp calls",               "tags": ["record call"] }
+            {
+              "key": "call_info",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Additional call information",
+              "summary": "Receive a notification with additional information after the call ends"
+            },
+            {
+              "key": "call_privacy",
+              "type": "list",
+              "value_type": "string",
+              "default": null,
+              "title": "Block Calls",
+              "summary": "Block WhatsApp calls based on privacy type",
+              "entries": [
+                {
+                  "label": "No Block",
+                  "value": "0"
+                },
+                {
+                  "label": "Block all calls",
+                  "value": "1"
+                },
+                {
+                  "label": "Block only unknown numbers",
+                  "value": "2"
+                },
+                {
+                  "label": "List of blocked contacts",
+                  "value": "3"
+                },
+                {
+                  "label": "List of allowed contacts",
+                  "value": "4"
+                }
+              ]
+            },
+            {
+              "key": "call_type",
+              "type": "list",
+              "value_type": "string",
+              "default": null,
+              "title": "Call blocking type",
+              "summary": "Select the method by which the call blocking will be done.",
+              "entries": [
+                {
+                  "label": "No internet (\"Calling\")",
+                  "value": "no_internet"
+                },
+                {
+                  "label": "Busy (On another call)",
+                  "value": "busy"
+                },
+                {
+                  "label": "Not answered",
+                  "value": "ended"
+                },
+                {
+                  "label": "Unable to receive WhatsApp calls",
+                  "value": "uncallable"
+                }
+              ]
+            },
+            {
+              "key": "call_block_contacts",
+              "type": "contact_picker",
+              "value_type": "string",
+              "default": null,
+              "title": "List of blocked contacts",
+              "summary": ""
+            },
+            {
+              "key": "call_white_contacts",
+              "type": "contact_picker",
+              "value_type": "string",
+              "default": null,
+              "title": "List of allowed contacts",
+              "summary": ""
+            },
+            {
+              "key": "call_recording_enable",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable Call Recording",
+              "summary": "Record incoming and outgoing calls (Voice & Video) as audio."
+            },
+            {
+              "key": "call_recording_calls_tab_menu",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Manage recordings in calls tab",
+              "summary": "Enable \"Manage Recordings\" option in WhatsApp calls tab menu",
+              "dep": "call_recording_enable"
+            },
+            {
+              "key": "call_recording_path",
+              "type": "file",
+              "value_type": "string",
+              "default": "/sdcard/Download",
+              "title": "Recordings Output Folder",
+              "summary": "",
+              "dep": "call_recording_enable"
+            },
+            {
+              "key": "call_recording_mode",
+              "type": "list",
+              "value_type": "string",
+              "default": "0",
+              "title": "Recording Mode",
+              "summary": "",
+              "dep": "call_recording_enable",
+              "entries": [
+                {
+                  "label": "Record All Calls",
+                  "value": "0"
+                },
+                {
+                  "label": "Record Unknown Numbers Only",
+                  "value": "1"
+                },
+                {
+                  "label": "Record All Except Selected",
+                  "value": "2"
+                },
+                {
+                  "label": "Record Only Selected Contacts",
+                  "value": "3"
+                }
+              ]
+            },
+            {
+              "key": "call_recording_whitelist",
+              "type": "contact_picker",
+              "value_type": "string",
+              "default": null,
+              "title": "Included Contacts",
+              "summary": "",
+              "dep": "call_recording_enable"
+            },
+            {
+              "key": "call_recording_blacklist",
+              "type": "contact_picker",
+              "value_type": "string",
+              "default": null,
+              "title": "Excluded Contacts",
+              "summary": "",
+              "dep": "call_recording_enable"
+            },
+            {
+              "key": "call_recording_toast",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Show Recording Notifications",
+              "summary": "Show a toast when recording starts or stops.",
+              "dep": "call_recording_enable"
+            },
+            {
+              "key": "call_recording_settings",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Recording Settings",
+              "summary": "Choose how call audio is captured. Root mode provides better quality but requires a rooted device.",
+              "dep": "call_recording_enable"
+            },
+            {
+              "key": "call_recording_manage",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Manage Recordings",
+              "summary": "Browse, play, share and delete saved call recordings.",
+              "dep": "call_recording_enable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "media",
+      "title": "Media & Downloads",
+      "summary": "Image/video quality, custom directory & size spoofer",
+      "icon": "ic_media",
+      "sub_screens": [
+        {
+          "id": "media_main",
+          "title": "Media & Call Recorder",
+          "summary": "Image/video quality, custom directory & size spoofer",
+          "prefs": [
+            {
+              "key": "imagequality",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "HD Quality Images",
+              "summary": "Send images in HD quality, by default"
+            },
+            {
+              "key": "download_local",
+              "type": "file",
+              "value_type": "string",
+              "default": "/sdcard/Download",
+              "title": "Local Download",
+              "summary": ""
+            },
+            {
+              "key": "downloadstatus",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Download and Share Status",
+              "summary": "Shows two buttons to share and download status"
+            },
+            {
+              "key": "downloadviewonce",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Download View Once",
+              "summary": "Show button to download view once media"
+            },
+            {
+              "key": "download_video_note",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Save Video Notes",
+              "summary": "Enable long press on video note to save it to the gallery"
+            },
+            {
+              "key": "video_limit_size",
+              "type": "slider",
+              "value_type": "float",
+              "default": 60.0,
+              "title": "Increase Video Size Limit (MB)",
+              "summary": ""
+            },
+            {
+              "key": "videoquality",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "HD Quality Videos",
+              "summary": "Send videos in HD quality, by default"
+            },
+            {
+              "key": "video_real_resolution",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Send Video in Real Resolution",
+              "summary": "Send Video in Real Resolution for status, group and chats",
+              "dep": "videoquality"
+            },
+            {
+              "key": "video_maxfps",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Send Video in 60fps",
+              "summary": "Send Video in 60 fps for status, group and chats",
+              "dep": "videoquality"
+            },
+            {
+              "key": "send_video_as_video_note",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "[Experimental] Video Note Features",
+              "summary": "Add a \"Video Note\" button to the attachment menu and allow sending shared videos as video notes"
+            },
+            {
+              "key": "media_preview",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Enable Media Preview",
+              "summary": "Add a button to preview media in a temporary file (without downloading it permanently)"
+            },
+            {
+              "key": "file_size_spoofer",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "File Size Spoofer",
+              "summary": "Add a button in the send preview screen to spoof the displayed file size shown to the recipient"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "audio",
+      "title": "Voice & Audio",
+      "summary": "Proximity sensor, voice note speed & transcription options",
+      "icon": "ic_mic",
+      "sub_screens": [
+        {
+          "id": "audio_main",
+          "title": "Voice & Audio Settings",
+          "summary": "Proximity sensor, voice note speed & transcription options",
+          "prefs": [
+            {
+              "key": "disable_sensor_proximity",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Screen off on proximity sensor",
+              "summary": "Disable Screen off on proximity sensor to the whole WhatsApp"
+            },
+            {
+              "key": "proximity_audios",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Audio Sensor",
+              "summary": "Disable audio switching with the proximity sensor"
+            },
+            {
+              "key": "audio_type",
+              "type": "list",
+              "value_type": "string",
+              "default": "0",
+              "title": "Send audio as voice/audio Note",
+              "summary": "Always sends audio media/forward as a voice note or audio note",
+              "entries": [
+                {
+                  "label": "Standard",
+                  "value": "0"
+                },
+                {
+                  "label": "Audio note",
+                  "value": "1"
+                },
+                {
+                  "label": "Voice note",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "voicenote_speed",
+              "type": "slider",
+              "value_type": "float",
+              "default": 2.0,
+              "title": "Voice Note Speed",
+              "summary": ""
+            },
+            {
+              "key": "audio_transcription",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Audio transcription",
+              "summary": "Enable native WhatsApp audio transcription (Check the connection menu for transcription options)"
+            },
+            {
+              "key": "transcription_provider",
+              "type": "list",
+              "value_type": "string",
+              "default": "assemblyai",
+              "title": "Transcription Provider",
+              "summary": "Choose the AI service for audio transcription",
+              "dep": "audio_transcription",
+              "entries": [
+                {
+                  "label": "AssemblyAI",
+                  "value": "assemblyai"
+                },
+                {
+                  "label": "Groq AI (Whisper v3 Turbo)",
+                  "value": "groq"
+                }
+              ]
+            },
+            {
+              "key": "assemblyai_key",
+              "type": "text",
+              "value_type": "string",
+              "default": null,
+              "title": "AssemblyAI API Key",
+              "summary": "AssemblyAI API access key (Get it at assemblyai.com)",
+              "dep": "audio_transcription"
+            },
+            {
+              "key": "groq_api_key",
+              "type": "text",
+              "value_type": "string",
+              "default": null,
+              "title": "Groq API Key",
+              "summary": "Groq API access key (Get it at console.groq.com)",
+              "dep": "audio_transcription"
+            }
           ]
         }
       ]
@@ -162,30 +1555,200 @@
     {
       "id": "appearance",
       "title": "Appearance",
-      "summary": "Colors, wallpaper, themes, tabs",
-      "icon": "ic_dashboard_black_24dp",
+      "summary": "Custom bubble colors, wallpapers & animations",
+      "icon": "ic_palette",
       "sub_screens": [
         {
           "id": "appearance_main",
-          "title": "Appearance",
+          "title": "Customize Appearance",
+          "summary": "Custom bubble colors, wallpapers & animations",
           "prefs": [
-            { "key": "changecolor",                "type": "switch", "default_bool": false,     "title": "Custom Colors",            "summary": "Override WhatsApp primary color",        "tags": ["color","theme color"] },
-            { "key": "changecolor_mode",           "type": "list",   "default_str":  "manual",  "title": "Color Mode",               "summary": "Manual color or preset",                "dep": "changecolor", "entries": ["Manual","Preset"], "entry_values": ["manual","preset"] },
-            { "key": "primary_color",              "type": "color",  "title": "Primary Color",            "summary": "Main accent color",                     "dep": "changecolor" },
-            { "key": "background_color",           "type": "color",  "title": "Background Color",         "summary": "Chat/screen background color",           "dep": "changecolor" },
-            { "key": "text_color",                 "type": "color",  "title": "Text Color",               "summary": "Primary text color",                    "dep": "changecolor" },
-            { "key": "wallpaper",                  "type": "switch", "default_bool": false,     "title": "Home Screen Wallpaper",    "summary": "Set a custom wallpaper on home",        "tags": ["wallpaper"] },
-            { "key": "wallpaper_file",             "type": "file",   "default_str":  "",        "title": "Select Wallpaper",         "summary": "Choose wallpaper image file",           "dep": "wallpaper" },
-            { "key": "wallpaper_alpha",            "type": "slider", "default_int":  60,        "title": "Wallpaper Transparency",   "summary": "Wallpaper opacity",                    "dep": "wallpaper", "min": 0, "max": 100 },
-            { "key": "wallpaper_alpha_toolbar",    "type": "slider", "default_int":  75,        "title": "Toolbar Transparency",     "summary": "Toolbar opacity",                      "dep": "wallpaper", "min": 0, "max": 100 },
-            { "key": "wallpaper_alpha_navigation", "type": "slider", "default_int":  15,        "title": "Navigation Transparency",  "summary": "Navigation bar opacity",               "dep": "wallpaper", "min": 0, "max": 100 },
-            { "key": "hidetabs",                   "type": "multi",  "default_str":  "",        "title": "Hide Tabs",                "summary": "Select tabs to hide from home",         "tags": ["tabs","hide tabs"], "entries": ["Chats","Status","Communities","Calls"], "entry_values": ["0","1","2","3"] },
-            { "key": "bubble_color",               "type": "switch", "default_bool": false,     "title": "Custom Bubble Colors",     "summary": "Change message bubble colors",          "tags": ["bubble","chat bubble"] },
-            { "key": "bubble_left",                "type": "color",  "title": "Left Bubble Color",        "summary": "Incoming message bubble color",          "dep": "bubble_color" },
-            { "key": "bubble_right",               "type": "color",  "title": "Right Bubble Color",       "summary": "Outgoing message bubble color",          "dep": "bubble_color" },
-            { "key": "animation_list",             "type": "list",   "default_str":  "default", "title": "List Animation",           "summary": "Animation for chat list scrolling",     "tags": ["animation"], "entries": ["Default","Slide","Fade","None"], "entry_values": ["default","slide","fade","none"] },
-            { "key": "custom_toolbar",             "type": "switch", "default_bool": false,     "title": "Custom Toolbar",           "summary": "Modify the toolbar appearance",         "tags": ["toolbar"] },
-            { "key": "custom_view",                "type": "switch", "default_bool": false,     "title": "Custom View Overrides",    "summary": "Apply custom view modifications",       "tags": ["custom view"] }
+            {
+              "key": "changecolor",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Customize your colors",
+              "summary": "Change all colors in your WhatsApp (Working only in Dark Theme)"
+            },
+            {
+              "key": "changecolor_mode",
+              "type": "list",
+              "value_type": "string",
+              "default": "manual",
+              "title": "Color source",
+              "summary": "%s",
+              "dep": "changecolor",
+              "entries": [
+                {
+                  "label": "Color picker",
+                  "value": "manual"
+                },
+                {
+                  "label": "Automatic (Monet, Android 12+)",
+                  "value": "monet"
+                }
+              ]
+            },
+            {
+              "key": "primary_color",
+              "type": "color",
+              "value_type": "int",
+              "default": null,
+              "title": "Primary Color",
+              "summary": "Set color #00000000 to default color",
+              "dep": "changecolor"
+            },
+            {
+              "key": "background_color",
+              "type": "color",
+              "value_type": "int",
+              "default": null,
+              "title": "Background Color",
+              "summary": "Set color #00000000 to default color",
+              "dep": "changecolor"
+            },
+            {
+              "key": "text_color",
+              "type": "color",
+              "value_type": "int",
+              "default": null,
+              "title": "Text Color",
+              "summary": "Set color #00000000 to default color",
+              "dep": "changecolor"
+            },
+            {
+              "key": "wallpaper",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable Wallpaper in home screen",
+              "summary": "Show selected wallpaper in home screen with transparency"
+            },
+            {
+              "key": "wallpaper_file",
+              "type": "file",
+              "value_type": "string",
+              "default": null,
+              "title": "Select Wallpaper",
+              "summary": "Wallpaper not selected",
+              "dep": "wallpaper"
+            },
+            {
+              "key": "wallpaper_alpha",
+              "type": "slider",
+              "value_type": "float",
+              "default": 60.0,
+              "title": "Wallpaper Transparency",
+              "summary": "",
+              "dep": "wallpaper"
+            },
+            {
+              "key": "wallpaper_alpha_toolbar",
+              "type": "slider",
+              "value_type": "float",
+              "default": 75.0,
+              "title": "Toolbar Transparency",
+              "summary": "",
+              "dep": "wallpaper"
+            },
+            {
+              "key": "wallpaper_alpha_navigation",
+              "type": "slider",
+              "value_type": "float",
+              "default": 15.0,
+              "title": "Navigation Transparency",
+              "summary": "",
+              "dep": "wallpaper"
+            },
+            {
+              "key": "hidetabs",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Hide Tabs on Home",
+              "summary": "Hide tabs on the home screen such as Updates, Communities and Calls"
+            },
+            {
+              "key": "bubble_color",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Change Bubble Colors",
+              "summary": "Change Bubble Color on Conversation Screen"
+            },
+            {
+              "key": "bubble_left",
+              "type": "color",
+              "value_type": "int",
+              "default": null,
+              "title": "Left Bubble",
+              "summary": "Set color #00000000 to default color",
+              "dep": "bubble_color"
+            },
+            {
+              "key": "bubble_right",
+              "type": "color",
+              "value_type": "int",
+              "default": null,
+              "title": "Right Bubble",
+              "summary": "Set color #00000000 to default color",
+              "dep": "bubble_color"
+            },
+            {
+              "key": "animation_list",
+              "type": "list",
+              "value_type": "string",
+              "default": "default",
+              "title": "List animations (Home Screen)",
+              "summary": "Add animations when swiping the chat list",
+              "entries": [
+                {
+                  "label": "Default",
+                  "value": "default"
+                },
+                {
+                  "label": "Fade in",
+                  "value": "fade_in"
+                },
+                {
+                  "label": "Fade out",
+                  "value": "fade_out"
+                },
+                {
+                  "label": "Scale up",
+                  "value": "scale_up"
+                },
+                {
+                  "label": "Slide up",
+                  "value": "slide_up"
+                },
+                {
+                  "label": "Slide right to left",
+                  "value": "slide_right_to_left"
+                },
+                {
+                  "label": "Rotate",
+                  "value": "rotate"
+                },
+                {
+                  "label": "Bounce",
+                  "value": "bounce"
+                },
+                {
+                  "label": "Shrink",
+                  "value": "shrink"
+                },
+                {
+                  "label": "Flip",
+                  "value": "flip"
+                },
+                {
+                  "label": "Hyperspace out",
+                  "value": "hyperspace_out"
+                }
+              ]
+            }
           ]
         }
       ]
@@ -193,34 +1756,166 @@
     {
       "id": "advanced",
       "title": "Advanced",
-      "summary": "Versions, spoofer, time, Tasker",
-      "icon": "ic_round_settings_24",
+      "summary": "Expiration bypass, backup features & bootloader spoofer",
+      "icon": "ic_settings",
       "sub_screens": [
         {
           "id": "advanced_main",
-          "title": "Advanced",
+          "title": "Advanced Settings",
+          "summary": "Expiration bypass, backup features & bootloader spoofer",
           "prefs": [
-            { "key": "disable_expiration",          "type": "switch", "default_bool": false, "title": "Disable WA Expiration",     "summary": "Prevent WhatsApp from expiring",           "tags": ["expiration"] },
-            { "key": "force_restore_backup_feature","type": "switch", "default_bool": false, "title": "Force Restore Backup",      "summary": "Restore backup without restrictions",      "tags": ["backup","restore"] },
-            { "key": "bypass_version_check",        "type": "switch", "default_bool": false, "title": "Bypass Version Check",      "summary": "Disable WA version enforcement",           "tags": ["version check"] },
-            { "key": "customize_supported_versions","type": "switch", "default_bool": false, "title": "Custom Supported Versions", "summary": "Define your own supported version list",   "tags": ["supported versions"] },
-            { "key": "manage_supported_versions",   "type": "action", "title": "Manage Supported Versions","summary": "Open supported version manager",          "dep": "customize_supported_versions" },
-            { "key": "bootloader_spoofer",          "type": "switch", "default_bool": false, "title": "Bootloader Spoofer",        "summary": "Spoof bootloader state for integrity",     "tags": ["bootloader","spoof"] },
-            { "key": "bootloader_spoofer_custom",   "type": "switch", "default_bool": false, "title": "Use Custom KeyBox",         "summary": "Use your own keybox.xml",                 "dep": "bootloader_spoofer" },
-            { "key": "bootloader_spoofer_xml",      "type": "file",   "default_str":  "",    "title": "Custom keybox.xml",         "summary": "Select the keybox.xml file",              "dep": "bootloader_spoofer_custom" },
-            { "key": "bootloader_spoofer_verify",   "type": "action", "title": "Verify Spoofer",           "summary": "Check spoofer trust chain and keys" },
-            { "key": "ampm",                        "type": "switch", "default_bool": false, "title": "12-Hour (AM/PM) Time",      "summary": "Show time in 12-hour format",              "tags": ["ampm","time format"] },
-            { "key": "segundos",                    "type": "switch", "default_bool": false, "title": "Show Seconds in Time",      "summary": "Display seconds in timestamps",            "tags": ["seconds"] },
-            { "key": "secondstotime",               "type": "text",   "default_str":  "",    "title": "Custom Time Suffix",        "summary": "Append text after the time display" },
-            { "key": "tasker_automation",           "type": "screen", "title": "Tasker Automation",        "summary": "Configure Tasker integration",             "tags": ["tasker"] },
-            { "key": "custom_filters",              "type": "switch", "default_bool": true,  "title": "Custom Appearance Filters", "summary": "Apply UI filter tweaks and CSS overrides", "tags": ["filters","css"] },
-            { "key": "filter_items",                "type": "text",   "default_str":  "",    "title": "Filter Items by ID",        "summary": "Comma-separated view IDs to filter",      "dep": "custom_filters" },
-            { "key": "css_theme",                   "type": "text",   "default_str":  "",    "title": "Custom CSS Theme",          "summary": "Apply a CSS theme string",                "dep": "custom_filters" },
-            { "key": "change_dpi",                  "type": "text",   "default_str":  "0",   "title": "Override DPI",              "summary": "Force a specific DPI (0 = default)",      "dep": "custom_filters" },
-            { "key": "folder_theme",                "type": "action", "title": "Theme Manager",            "summary": "Browse and apply saved themes",            "dep": "custom_filters" }
+            {
+              "key": "disable_expiration",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable WhatsApp Expiration",
+              "summary": "Deactivates the expired version of WhatsApp, (Note: Manual Disable to update WhatsApp on the Play Store or mark the Play Store on LSposed)"
+            },
+            {
+              "key": "force_restore_backup_feature",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Force Restore Backup",
+              "summary": "Launch the restore backup screen manually. Use this if you skipped restoration during setup."
+            },
+            {
+              "key": "bypass_version_check",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Disable Version Check",
+              "summary": "Disables the supported version check of WhatsApp (Bugs may occur in unsupported versions that will not be fixed soon)"
+            },
+            {
+              "key": "customize_supported_versions",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Customize Supported Versions",
+              "summary": "Allow adding and modifying supported WhatsApp versions"
+            },
+            {
+              "key": "manage_supported_versions",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Manage Supported Versions",
+              "summary": "Add, edit, or delete custom supported versions",
+              "dep": "customize_supported_versions"
+            },
+            {
+              "key": "bootloader_spoofer",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Bootloader Spoofer",
+              "summary": "Use this if you have been banned and are receiving the unofficial Whatsapp message"
+            },
+            {
+              "key": "bootloader_spoofer_custom",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable Custom KeyBox",
+              "summary": "Use this if you have been banned and are receiving the unofficial Whatsapp message"
+            },
+            {
+              "key": "bootloader_spoofer_xml",
+              "type": "file_reader",
+              "value_type": "string",
+              "default": null,
+              "title": "Use Custom keybox.xml file",
+              "summary": "No file selected",
+              "dep": "bootloader_spoofer_custom"
+            },
+            {
+              "key": "bootloader_spoofer_verify",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Verify Spoofer",
+              "summary": "Check spoofer trust chain, keys, and expiration"
+            },
+            {
+              "key": "ampm",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Time in 12-Hour Format",
+              "summary": ""
+            },
+            {
+              "key": "segundos",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Seconds on Timestamp",
+              "summary": "Show seconds next to any timestamp in the WhatsApp app"
+            },
+            {
+              "key": "secondstotime",
+              "type": "text",
+              "value_type": "string",
+              "default": null,
+              "title": "Text next to Timestamp",
+              "summary": "Show text next to any timestamp in the WhatsApp app"
+            },
+            {
+              "key": "custom_filters",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": true,
+              "title": "Custom Appearance",
+              "summary": "Activate filters by ID and Custom CSS"
+            },
+            {
+              "key": "filter_items",
+              "type": "text",
+              "value_type": "string",
+              "default": null,
+              "title": "Filter Items By ID",
+              "summary": "Custom Behaviours:-\n- Change Color\n- Change Opacity\n- Resize",
+              "dep": "custom_filters"
+            },
+            {
+              "key": "css_theme",
+              "type": "text",
+              "value_type": "string",
+              "default": null,
+              "title": "Custom Theme CSS",
+              "summary": "Customize your WhatsApp using CSS styles",
+              "dep": "custom_filters"
+            },
+            {
+              "key": "change_dpi",
+              "type": "text",
+              "value_type": "string",
+              "default": "0",
+              "title": "Change Default DPI",
+              "summary": "Change the DPI setting for the application. Use 0 to reset to default.",
+              "dep": "custom_filters"
+            },
+            {
+              "key": "folder_theme",
+              "type": "theme_manager",
+              "value_type": "string",
+              "default": null,
+              "title": "Theme Manager",
+              "summary": "Manage themes using CSS for WhatsApp",
+              "dep": "custom_filters"
+            }
           ]
         }
       ]
+    },
+    {
+      "id": "optimization",
+      "title": "Optimizations",
+      "summary": "Database performance tuning & optimizations",
+      "icon": "ic_flash_on",
+      "sub_screens": []
     }
   ]
 }

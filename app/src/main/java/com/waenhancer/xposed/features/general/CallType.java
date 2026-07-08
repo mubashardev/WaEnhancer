@@ -35,7 +35,17 @@ public class CallType extends Feature {
     @Override
     public void doHook() throws Throwable {
 
-        if (!prefs.getBoolean("calltype", false)) return;
+        boolean callTypeEnabled = false;
+        try {
+            callTypeEnabled = prefs.getBoolean("calltype", false);
+        } catch (ClassCastException e) {
+            try {
+                String strVal = prefs.getString("calltype", "false");
+                callTypeEnabled = "true".equalsIgnoreCase(strVal) || "1".equals(strVal);
+                prefs.edit().putBoolean("calltype", callTypeEnabled).apply();
+            } catch (Exception ignored) {}
+        }
+        if (!callTypeEnabled) return;
 
         SharedPreferencesWrapper.addHook((key, value) -> {
             if (Objects.equals(key, "call_confirmation_dialog_count")) {

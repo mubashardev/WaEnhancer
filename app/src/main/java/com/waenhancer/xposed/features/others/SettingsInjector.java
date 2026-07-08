@@ -92,14 +92,15 @@ public class SettingsInjector extends Feature {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
-                String screenId = activity.getIntent().getStringExtra("waex_screen_id");
+                android.content.Intent intent = activity.getIntent();
+                XposedBridge.log("[WAEX] SettingsInjector onResume called, intent: " + intent + ", extras: " + (intent != null ? intent.getExtras() : "null"));
+                String screenId = intent != null ? intent.getStringExtra("waex_screen_id") : null;
                 if (screenId != null) {
                     hijackWholeScreen(activity, screenId);
                     return;
                 }
 
                 String entryPoint = getSafeString("open_waex", "2");
-                XposedBridge.log("[WAEX] SettingsInjector onResume called, entryPoint: " + entryPoint);
 
                 // Clean up elements that shouldn't be present in the current mode
                 if (!"2".equals(entryPoint)) {
@@ -502,6 +503,7 @@ public class SettingsInjector extends Feature {
 
     private void hijackWholeScreen(Activity activity, String screenId) {
         try {
+            XposedBridge.log("[WAEX] hijackWholeScreen called for screenId: " + screenId);
             ViewGroup root = activity.findViewById(android.R.id.content);
             if (root == null) return;
 

@@ -63,18 +63,25 @@ public class DesignUtils {
 
     @Nullable
     public static Drawable getDrawableByName(String name) {
-        var id = Utils.getID(name, "drawable");
-        if (id == 0)
-            return null;
-        return DesignUtils.getDrawable(id);
+        int id = Utils.getID(name, "drawable");
+        if (id > 0) {
+            Drawable d = DesignUtils.getDrawable(id);
+            if (d != null) return d;
+        }
+        if (XResManager.moduleResources != null) {
+            try {
+                int moduleId = XResManager.moduleResources.getIdentifier(name, "drawable", "com.waenhancer");
+                if (moduleId > 0) {
+                    return XResManager.moduleResources.getDrawable(moduleId, null);
+                }
+            } catch (Throwable ignored) {}
+        }
+        return null;
     }
 
     @Nullable
     public static Drawable getIconByName(String name, boolean isTheme) {
-        var id = Utils.getID(name, "drawable");
-        if (id == 0)
-            return null;
-        var icon = DesignUtils.getDrawable(id);
+        Drawable icon = getDrawableByName(name);
         if (isTheme && icon != null) {
             return DesignUtils.coloredDrawable(icon, isNightMode() ? Color.WHITE : Color.BLACK);
         }

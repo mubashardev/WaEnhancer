@@ -11,6 +11,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -67,7 +68,14 @@ public class WdsSettingsTileRenderer {
                 String title = cat.getString("title");
                 String summary = cat.optString("summary", "");
 
-                View row = createWdsRow(activity, title, summary, v -> {
+                String iconName = cat.optString("icon", "ic_settings");
+                android.graphics.drawable.Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawableByName(iconName);
+                if (icon == null) {
+                    icon = com.waenhancer.xposed.utils.DesignUtils.getDrawableByName("ic_settings");
+                }
+                de.robv.android.xposed.XposedBridge.log("[WAEX] Category id: " + id + ", iconName: " + iconName + ", icon: " + icon);
+
+                View row = createWdsRow(activity, title, summary, icon, v -> {
                     android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
                     intent.putExtra("waex_screen_id", id);
                     activity.startActivity(intent);
@@ -145,7 +153,7 @@ public class WdsSettingsTileRenderer {
                         tile = createActionTile(context, pref);
                     } else {
                         // Standard tile for unsupported or other types
-                        tile = createWdsRow(context, title, summary, null);
+                        tile = createWdsRow(context, title, summary, null, null);
                     }
 
                     if (tile != null) {
@@ -164,9 +172,10 @@ public class WdsSettingsTileRenderer {
         return scrollView;
     }
 
-    private static View createWdsRow(Context context, String title, String summary, View.OnClickListener clickListener) {
+    private static View createWdsRow(Context context, String title, String summary, android.graphics.drawable.Drawable icon, View.OnClickListener clickListener) {
         LinearLayout row = new LinearLayout(context);
-        row.setOrientation(LinearLayout.VERTICAL);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
         float density = context.getResources().getDisplayMetrics().density;
         row.setPadding((int) (24 * density), (int) (12 * density), (int) (24 * density), (int) (12 * density));
 
@@ -192,11 +201,26 @@ public class WdsSettingsTileRenderer {
             }
         } catch (Exception ignored) {}
 
+        if (icon != null) {
+            ImageView iconView = new ImageView(context);
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams((int) (24 * density), (int) (24 * density));
+            iconParams.setMarginEnd((int) (20 * density));
+            iconView.setLayoutParams(iconParams);
+            iconView.setImageDrawable(icon);
+            iconView.setImageTintList(android.content.res.ColorStateList.valueOf(secondaryTextColor));
+            row.addView(iconView);
+        }
+
+        LinearLayout textLayout = new LinearLayout(context);
+        textLayout.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+        textLayout.setLayoutParams(textParams);
+
         TextView titleView = createWdsTextView(context);
         titleView.setText(title);
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         titleView.setTextColor(primaryTextColor);
-        row.addView(titleView);
+        textLayout.addView(titleView);
 
         if (!TextUtils.isEmpty(summary)) {
             TextView summaryView = createWdsTextView(context);
@@ -204,8 +228,9 @@ public class WdsSettingsTileRenderer {
             summaryView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
             summaryView.setTextColor(secondaryTextColor);
             summaryView.setPadding(0, (int) (4 * density), 0, 0);
-            row.addView(summaryView);
+            textLayout.addView(summaryView);
         }
+        row.addView(textLayout);
 
         if (clickListener != null) {
             row.setOnClickListener(clickListener);
@@ -300,7 +325,7 @@ public class WdsSettingsTileRenderer {
                 values[i] = valuesJson.getString(i);
             }
 
-            return createWdsRow(context, title, summary, v -> {
+            return createWdsRow(context, title, summary, null, v -> {
                 String current = prefs.getString(key, defVal);
                 int selectedIndex = 0;
                 for (int i = 0; i < values.length; i++) {
@@ -341,7 +366,7 @@ public class WdsSettingsTileRenderer {
                 values[i] = valuesJson.getString(i);
             }
 
-            return createWdsRow(context, title, summary, v -> {
+            return createWdsRow(context, title, summary, null, v -> {
                 String savedVal = prefs.getString(key, "");
                 boolean[] checkedStates = new boolean[values.length];
                 for (int i = 0; i < values.length; i++) {
@@ -380,7 +405,7 @@ public class WdsSettingsTileRenderer {
             String summary = pref.optString("summary", "");
             String defVal = pref.optString("default_str", "");
 
-            return createWdsRow(context, title, summary, v -> {
+            return createWdsRow(context, title, summary, null, v -> {
                 AlertDialogWpp builder = new AlertDialogWpp(context);
                 builder.setTitle(title);
 
@@ -418,7 +443,7 @@ public class WdsSettingsTileRenderer {
             String title = pref.getString("title");
             String summary = pref.optString("summary", "");
 
-            return createWdsRow(context, title, summary, v -> {
+            return createWdsRow(context, title, summary, null, v -> {
                 if ("open_deleted_messages".equals(key)) {
                     try {
                         android.content.Intent intent = new android.content.Intent();

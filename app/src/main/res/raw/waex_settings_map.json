@@ -98,7 +98,7 @@
       "id": "status",
       "title": "Status",
       "summary": "Download, forward, viewer tweaks",
-      "icon": "ic_status",
+      "icon": "ic_notifications_black_24dp",
       "sub_screens": [
         {
           "id": "status_main",
@@ -146,7 +146,7 @@
       "id": "calls",
       "title": "Calls",
       "summary": "Recording, privacy, call types",
-      "icon": "ic_calls",
+      "icon": "ic_recording",
       "sub_screens": [
         {
           "id": "calls_main",
@@ -194,7 +194,7 @@
       "id": "advanced",
       "title": "Advanced",
       "summary": "Versions, spoofer, time, Tasker",
-      "icon": "ic_settings",
+      "icon": "ic_round_settings_24",
       "sub_screens": [
         {
           "id": "advanced_main",

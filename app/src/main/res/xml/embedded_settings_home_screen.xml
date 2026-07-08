@@ -42,7 +42,7 @@
             app:title="@string/enable_restart_button" />
 
         <ListPreference
-            app:defaultValue="1"
+            app:defaultValue="2"
             app:entries="@array/wa_enhancer_entry_point_entries"
             app:entryValues="@array/wa_enhancer_entry_point_values"
             app:key="open_waex"

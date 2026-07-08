@@ -59,7 +59,7 @@ public class SettingsInjector extends Feature {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
-                String entryPoint = getSafeString("open_waex", "1");
+                String entryPoint = getSafeString("open_waex", "2");
                 if ("0".equals(entryPoint) || "2".equals(entryPoint)) return;
                 Menu menu = (Menu) param.args[0];
                 injectToolbarMenu(menu, activity);
@@ -72,7 +72,7 @@ public class SettingsInjector extends Feature {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
-                String entryPoint = getSafeString("open_waex", "1");
+                String entryPoint = getSafeString("open_waex", "2");
                 XposedBridge.log("[WAEX] SettingsInjector onResume called, entryPoint: " + entryPoint);
 
                 // Clean up elements that shouldn't be present in the current mode

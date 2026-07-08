@@ -124,7 +124,7 @@ public class MenuHome extends Feature {
     }
 
     private void InsertOpenWaex(Menu menu, Activity activity) {
-        String entryPoint = prefs.getString("open_waex", "1");
+        String entryPoint = prefs.getString("open_waex", "2");
         if (!"1".equals(entryPoint)) return; // Only show in home menu if explicitly set to '1'
         if (!prefs.getBoolean("wa_enhancer_button", true)) return;
         if (menu.findItem(MENU_ID_OPEN_WAEX) != null) return;

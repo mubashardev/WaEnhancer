@@ -95,7 +95,7 @@ public class LiteMode extends Feature {
     }
 
     private void InsertDownloadFolderButton(Menu menu, Activity activity) {
-        var entryPoint = getSafeString("open_waex", "1");
+        var entryPoint = getSafeString("open_waex", "2");
         if (!"1".equals(entryPoint)) return;
         int MENU_ID_DOWNLOAD_FOLDER = 0x7EAE0006;
         if (menu.findItem(MENU_ID_DOWNLOAD_FOLDER) != null) return;

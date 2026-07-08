@@ -325,7 +325,7 @@ public class ActivityController extends Feature {
                 colorAccentVal = accentTv.resourceId != 0 ? activity.getResources().getColor(accentTv.resourceId) : accentTv.data;
             }
         }
-        final String accentColor = String.format("#%06X", (0xFFFFFF & colorAccentVal));
+        final String accentColor = isDarkTheme ? "#21c063" : "#008069";
 
         final String cardBgColor = isDarkTheme ? "#1f2c34" : "#f0f2f5";
         final String dividerColor = isDarkTheme ? "#202c33" : "#e9edef";
@@ -399,17 +399,17 @@ public class ActivityController extends Feature {
         }
         root.addView(iconFrame);
 
-        // Title TextView
-        TextView title = new TextView(activity);
+        // Title TextView (using WDSTextView)
+        TextView title = createWDSTextView(activity);
         title.setText("Database Optimization");
         title.setTextColor(android.graphics.Color.parseColor(txtPrimary));
-        title.setTextSize(20);
+        title.setTextSize(22);
         title.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
         title.setGravity(Gravity.CENTER_HORIZONTAL);
         root.addView(title);
 
-        // Message/Subtitle TextView
-        final TextView message = new TextView(activity);
+        // Message/Subtitle TextView (using WDSTextView)
+        final TextView message = createWDSTextView(activity);
         message.setPadding(0, dpToPx(activity, 8), 0, dpToPx(activity, 32));
         message.setText("Select optimizations to apply to your WhatsApp database.");
         message.setTextColor(android.graphics.Color.parseColor(txtSecondary));
@@ -421,119 +421,191 @@ public class ActivityController extends Feature {
         final LinearLayout optionsContainer = new LinearLayout(activity);
         optionsContainer.setOrientation(LinearLayout.VERTICAL);
         optionsContainer.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f));
 
-        // Options Card (Vertical list with rounded corners and card styling)
-        LinearLayout optionsCard = new LinearLayout(activity);
-        optionsCard.setOrientation(LinearLayout.VERTICAL);
-        android.graphics.drawable.GradientDrawable cardBg = new android.graphics.drawable.GradientDrawable();
-        cardBg.setColor(android.graphics.Color.parseColor(cardBgColor));
-        cardBg.setCornerRadius(dpToPx(activity, 12));
-        optionsCard.setBackground(cardBg);
-        optionsCard.setPadding(dpToPx(activity, 16), dpToPx(activity, 16), dpToPx(activity, 16), dpToPx(activity, 16));
-        
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        cardParams.setMargins(0, 0, 0, dpToPx(activity, 24));
-        optionsCard.setLayoutParams(cardParams);
+        // Helper to load WDSSwitch
+        Class<?> wdsSwitchClass = null;
+        try {
+            wdsSwitchClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.toggle.WDSSwitch");
+        } catch (Throwable ignored) {}
 
         // Item 1: Group Message Filter
         LinearLayout item1 = new LinearLayout(activity);
         item1.setOrientation(LinearLayout.HORIZONTAL);
         item1.setGravity(Gravity.CENTER_VERTICAL);
-        item1.setPadding(0, 0, 0, dpToPx(activity, 12));
-
-        final android.widget.CheckBox cb1 = new android.widget.CheckBox(activity);
-        cb1.setChecked(true);
-        cb1.setButtonTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(accentColor)));
-        LinearLayout.LayoutParams cb1Lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        cb1Lp.setMarginEnd(dpToPx(activity, 8));
-        cb1.setLayoutParams(cb1Lp);
-        item1.addView(cb1);
+        item1.setPadding(dpToPx(activity, 16), dpToPx(activity, 16), dpToPx(activity, 16), dpToPx(activity, 16));
+        
+        android.util.TypedValue outValue = new android.util.TypedValue();
+        activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+        item1.setBackgroundResource(outValue.resourceId);
+        item1.setClickable(true);
+        item1.setFocusable(true);
 
         LinearLayout textLayout1 = new LinearLayout(activity);
         textLayout1.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams textLp1 = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
         textLayout1.setLayoutParams(textLp1);
 
-        TextView label1 = new TextView(activity);
+        TextView label1 = createWDSTextView(activity);
         label1.setText("Group Message Filter");
         label1.setTextColor(android.graphics.Color.parseColor(txtPrimary));
-        label1.setTextSize(14);
-        label1.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        label1.setTextSize(16);
+        label1.setTypeface(android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL));
         textLayout1.addView(label1);
 
-        TextView desc1 = new TextView(activity);
+        TextView desc1 = createWDSTextView(activity);
         desc1.setText("Rebuilds database indexes for lightning-fast group member message counting.");
         desc1.setTextColor(android.graphics.Color.parseColor(txtSecondary));
-        desc1.setTextSize(12);
-        desc1.setPadding(0, dpToPx(activity, 2), 0, 0);
+        desc1.setTextSize(13);
+        desc1.setPadding(0, dpToPx(activity, 4), 0, 0);
         textLayout1.addView(desc1);
         item1.addView(textLayout1);
-        optionsCard.addView(item1);
+
+        android.view.View switchView1 = null;
+        if (wdsSwitchClass != null) {
+            try {
+                switchView1 = (android.view.View) wdsSwitchClass.getConstructor(android.content.Context.class).newInstance(activity);
+            } catch (Throwable ignored) {}
+        }
+        if (switchView1 == null) {
+            switchView1 = new android.widget.Switch(activity);
+        }
+        final android.view.View finalSwitch1 = switchView1;
+        if (finalSwitch1 instanceof android.widget.CompoundButton) {
+            ((android.widget.CompoundButton) finalSwitch1).setChecked(true);
+        }
+        LinearLayout.LayoutParams swLp1 = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        swLp1.setMarginStart(dpToPx(activity, 16));
+        finalSwitch1.setLayoutParams(swLp1);
+        item1.addView(finalSwitch1);
+        
+        item1.setOnClickListener(v -> {
+            if (finalSwitch1 instanceof android.widget.CompoundButton) {
+                ((android.widget.CompoundButton) finalSwitch1).toggle();
+            }
+        });
+
+        optionsContainer.addView(item1);
 
         // Divider
-        android.view.View divider = new android.view.View(activity);
-        divider.setBackgroundColor(android.graphics.Color.parseColor(dividerColor));
-        LinearLayout.LayoutParams divParams = new LinearLayout.LayoutParams(
+        android.view.View optDivider = new android.view.View(activity);
+        optDivider.setBackgroundColor(android.graphics.Color.parseColor(dividerColor));
+        LinearLayout.LayoutParams optDivParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(activity, 1));
-        divParams.setMargins(dpToPx(activity, 32), 0, 0, 0);
-        divider.setLayoutParams(divParams);
-        optionsCard.addView(divider);
+        optDivParams.setMargins(dpToPx(activity, 16), 0, dpToPx(activity, 16), 0);
+        optDivider.setLayoutParams(optDivParams);
+        optionsContainer.addView(optDivider);
 
         // Item 2: Separate Groups
         LinearLayout item2 = new LinearLayout(activity);
         item2.setOrientation(LinearLayout.HORIZONTAL);
         item2.setGravity(Gravity.CENTER_VERTICAL);
-        item2.setPadding(0, dpToPx(activity, 12), 0, 0);
-
-        final android.widget.CheckBox cb2 = new android.widget.CheckBox(activity);
-        cb2.setChecked(true);
-        cb2.setButtonTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(accentColor)));
-        LinearLayout.LayoutParams cb2Lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        cb2Lp.setMarginEnd(dpToPx(activity, 8));
-        cb2.setLayoutParams(cb2Lp);
-        item2.addView(cb2);
+        item2.setPadding(dpToPx(activity, 16), dpToPx(activity, 16), dpToPx(activity, 16), dpToPx(activity, 16));
+        item2.setBackgroundResource(outValue.resourceId);
+        item2.setClickable(true);
+        item2.setFocusable(true);
 
         LinearLayout textLayout2 = new LinearLayout(activity);
         textLayout2.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams textLp2 = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
         textLayout2.setLayoutParams(textLp2);
 
-        TextView label2 = new TextView(activity);
+        TextView label2 = createWDSTextView(activity);
         label2.setText("Separate Groups");
         label2.setTextColor(android.graphics.Color.parseColor(txtPrimary));
-        label2.setTextSize(14);
-        label2.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        label2.setTextSize(16);
+        label2.setTypeface(android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL));
         textLayout2.addView(label2);
 
-        TextView desc2 = new TextView(activity);
+        TextView desc2 = createWDSTextView(activity);
         desc2.setText("Optimizes chat database for fast loading of separate chats and groups tabs.");
         desc2.setTextColor(android.graphics.Color.parseColor(txtSecondary));
-        desc2.setTextSize(12);
-        desc2.setPadding(0, dpToPx(activity, 2), 0, 0);
+        desc2.setTextSize(13);
+        desc2.setPadding(0, dpToPx(activity, 4), 0, 0);
         textLayout2.addView(desc2);
         item2.addView(textLayout2);
-        optionsCard.addView(item2);
 
-        optionsContainer.addView(optionsCard);
+        android.view.View switchView2 = null;
+        if (wdsSwitchClass != null) {
+            try {
+                switchView2 = (android.view.View) wdsSwitchClass.getConstructor(android.content.Context.class).newInstance(activity);
+            } catch (Throwable ignored) {}
+        }
+        if (switchView2 == null) {
+            switchView2 = new android.widget.Switch(activity);
+        }
+        final android.view.View finalSwitch2 = switchView2;
+        if (finalSwitch2 instanceof android.widget.CompoundButton) {
+            ((android.widget.CompoundButton) finalSwitch2).setChecked(true);
+        }
+        LinearLayout.LayoutParams swLp2 = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        swLp2.setMarginStart(dpToPx(activity, 16));
+        finalSwitch2.setLayoutParams(swLp2);
+        item2.addView(finalSwitch2);
+
+        item2.setOnClickListener(v -> {
+            if (finalSwitch2 instanceof android.widget.CompoundButton) {
+                ((android.widget.CompoundButton) finalSwitch2).toggle();
+            }
+        });
+
+        optionsContainer.addView(item2);
+
+        // Spacer to push the warning text and button to the bottom of the screen
+        android.view.View optSpacer = new android.view.View(activity);
+        LinearLayout.LayoutParams optSpacerParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
+        optSpacer.setLayoutParams(optSpacerParams);
+        optionsContainer.addView(optSpacer);
+
+        // Warning Text (Normal text above the continue button)
+        TextView cardDesc = createWDSTextView(activity);
+        cardDesc.setText("Do not close the app or lock your device. Optimization takes up to 15 seconds.");
+        cardDesc.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+        cardDesc.setTextSize(13);
+        cardDesc.setGravity(Gravity.CENTER_HORIZONTAL);
+        LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        descParams.setMargins(dpToPx(activity, 16), 0, dpToPx(activity, 16), dpToPx(activity, 12));
+        cardDesc.setLayoutParams(descParams);
+        optionsContainer.addView(cardDesc);
 
         // Continue Button
-        final android.widget.Button btnContinue = new android.widget.Button(activity);
-        btnContinue.setText("Continue");
-        btnContinue.setTextColor(android.graphics.Color.WHITE);
-        btnContinue.setTextSize(14);
-        btnContinue.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        android.view.View continueBtn = null;
+        try {
+            Class<?> wdsButtonClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.button.WDSButton");
+            continueBtn = (android.view.View) wdsButtonClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class)
+                    .newInstance(activity, null);
+            
+            // Set variant to FILLED to style it as a primary green button
+            try {
+                Class<?> variantEnum = activity.getClassLoader().loadClass("X.0xb");
+                Object filledVariant = Enum.valueOf((Class<Enum>) variantEnum, "FILLED");
+                XposedHelpers.callMethod(continueBtn, "setVariant", filledVariant);
+            } catch (Throwable t) {
+                XposedBridge.log("[WAEX] Failed to set WDSButton variant: " + t.toString());
+            }
+        } catch (Throwable ignored) {}
 
-        android.graphics.drawable.GradientDrawable btnBg = new android.graphics.drawable.GradientDrawable();
-        btnBg.setColor(android.graphics.Color.parseColor(accentColor));
-        btnBg.setCornerRadius(dpToPx(activity, 24));
-        btnContinue.setBackground(btnBg);
+        if (continueBtn == null) {
+            continueBtn = new android.widget.Button(activity);
+        }
+        final android.view.View btnContinue = continueBtn;
+        if (btnContinue instanceof android.widget.TextView) {
+            android.widget.TextView tv = (android.widget.TextView) btnContinue;
+            tv.setText("Continue");
+            tv.setGravity(Gravity.CENTER);
+        } else {
+            try {
+                XposedHelpers.callMethod(btnContinue, "setText", "Continue");
+            } catch (Throwable ignored) {}
+        }
 
         LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(activity, 48));
+        btnParams.setMargins(dpToPx(activity, 16), 0, dpToPx(activity, 16), dpToPx(activity, 16));
         btnContinue.setLayoutParams(btnParams);
         optionsContainer.addView(btnContinue);
 
@@ -550,15 +622,17 @@ public class ActivityController extends Feature {
         final ProgressBar progressBar = new ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal);
         progressBar.setMax(100);
         progressBar.setProgress(0);
-        progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(accentColor)));
-        progressBar.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(dividerColor)));
+        final String trueWaGreen = accentColor;
+        final String pbTrackColor = isDarkTheme ? "#2a3942" : "#e9edef";
+        progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(trueWaGreen)));
+        progressBar.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(pbTrackColor)));
         LinearLayout.LayoutParams pbParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(activity, 4));
         progressBar.setLayoutParams(pbParams);
         progressContainer.addView(progressBar);
 
         // Progress/Percentage Text
-        final TextView percentText = new TextView(activity);
+        final TextView percentText = createWDSTextView(activity);
         percentText.setPadding(0, dpToPx(activity, 8), 0, dpToPx(activity, 24));
         percentText.setText("0%");
         percentText.setTextColor(android.graphics.Color.parseColor(txtPrimary));
@@ -575,83 +649,47 @@ public class ActivityController extends Feature {
         stepLayoutParams.setMargins(dpToPx(activity, 8), 0, dpToPx(activity, 8), 0);
         stepLayout.setLayoutParams(stepLayoutParams);
 
-        final TextView step1 = new TextView(activity);
-        step1.setText("• Stopping background processes...");
-        step1.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+        final TextView step1 = createWDSTextView(activity);
         step1.setTextSize(13);
+        setStepState(activity, step1, "Stopping background processes...", STATE_ACTIVE, accentColor, txtPrimary, txtSecondary);
         stepLayout.addView(step1);
 
-        final TextView step2 = new TextView(activity);
-        step2.setText("• Rebuilding message filter indexes...");
-        step2.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+        final TextView step2 = createWDSTextView(activity);
         step2.setTextSize(13);
         step2.setPadding(0, dpToPx(activity, 8), 0, 0);
+        setStepState(activity, step2, "Rebuilding message filter indexes...", STATE_INCOMPLETE, accentColor, txtPrimary, txtSecondary);
         stepLayout.addView(step2);
 
-        final TextView step3 = new TextView(activity);
-        step3.setText("• Rebuilding database indexes...");
-        step3.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+        final TextView step3 = createWDSTextView(activity);
         step3.setTextSize(13);
         step3.setPadding(0, dpToPx(activity, 8), 0, 0);
+        setStepState(activity, step3, "Rebuilding database indexes...", STATE_INCOMPLETE, accentColor, txtPrimary, txtSecondary);
         stepLayout.addView(step3);
 
         progressContainer.addView(stepLayout);
         root.addView(progressContainer);
 
-        // Spacer to push card to the bottom
-        android.view.View spacer = new android.view.View(activity);
-        LinearLayout.LayoutParams spacerParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
-        spacer.setLayoutParams(spacerParams);
-        root.addView(spacer);
-
-        // Warning Card (Bottom aligned with margin)
-        LinearLayout card = new LinearLayout(activity);
-        card.setOrientation(LinearLayout.VERTICAL);
-        android.graphics.drawable.GradientDrawable warningCardBg = new android.graphics.drawable.GradientDrawable();
-        warningCardBg.setColor(android.graphics.Color.parseColor(cardBgColor));
-        warningCardBg.setCornerRadius(dpToPx(activity, 12));
-        card.setBackground(warningCardBg);
-        
-        LinearLayout.LayoutParams warningCardParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        warningCardParams.setMargins(0, 0, 0, dpToPx(activity, 16));
-        card.setLayoutParams(warningCardParams);
-        card.setPadding(dpToPx(activity, 16), dpToPx(activity, 16), dpToPx(activity, 16), dpToPx(activity, 16));
-
-        TextView cardTitle = new TextView(activity);
-        cardTitle.setText("Keep WhatsApp open");
-        cardTitle.setTextColor(android.graphics.Color.parseColor(txtPrimary));
-        cardTitle.setTextSize(14);
-        cardTitle.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        card.addView(cardTitle);
-
-        TextView cardDesc = new TextView(activity);
-        cardDesc.setText("Do not close the app or lock your device. Optimization takes up to 15 seconds.");
-        cardDesc.setTextColor(android.graphics.Color.parseColor(txtSecondary));
-        cardDesc.setTextSize(12);
-        cardDesc.setPadding(0, dpToPx(activity, 6), 0, 0);
-        card.addView(cardDesc);
-
-        root.addView(card);
-
         activity.setContentView(root);
 
         // Enable/Disable Continue button dynamically
-        cb1.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            btnContinue.setEnabled(cb1.isChecked() || cb2.isChecked());
-            btnContinue.setAlpha((cb1.isChecked() || cb2.isChecked()) ? 1.0f : 0.5f);
-        });
-        cb2.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            btnContinue.setEnabled(cb1.isChecked() || cb2.isChecked());
-            btnContinue.setAlpha((cb1.isChecked() || cb2.isChecked()) ? 1.0f : 0.5f);
-        });
+        if (finalSwitch1 instanceof android.widget.CompoundButton && finalSwitch2 instanceof android.widget.CompoundButton) {
+            android.widget.CompoundButton s1 = (android.widget.CompoundButton) finalSwitch1;
+            android.widget.CompoundButton s2 = (android.widget.CompoundButton) finalSwitch2;
+            s1.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                btnContinue.setEnabled(s1.isChecked() || s2.isChecked());
+                btnContinue.setAlpha((s1.isChecked() || s2.isChecked()) ? 1.0f : 0.5f);
+            });
+            s2.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                btnContinue.setEnabled(s1.isChecked() || s2.isChecked());
+                btnContinue.setAlpha((s1.isChecked() || s2.isChecked()) ? 1.0f : 0.5f);
+            });
+        }
 
         final Handler mainHandler = new Handler(Looper.getMainLooper());
 
         btnContinue.setOnClickListener(v -> {
-            boolean optFilter = cb1.isChecked();
-            boolean optSeparate = cb2.isChecked();
+            boolean optFilter = finalSwitch1 instanceof android.widget.CompoundButton && ((android.widget.CompoundButton) finalSwitch1).isChecked();
+            boolean optSeparate = finalSwitch2 instanceof android.widget.CompoundButton && ((android.widget.CompoundButton) finalSwitch2).isChecked();
 
             optionsContainer.setVisibility(View.GONE);
             progressContainer.setVisibility(View.VISIBLE);
@@ -660,24 +698,17 @@ public class ActivityController extends Feature {
 
             // Set up steps visibility and text
             if (optFilter && optSeparate) {
-                step1.setText("• Stopping background processes...");
-                step2.setText("• Indexing group messages...");
-                step3.setText("• Optimizing chat database...");
-                step1.setTextColor(android.graphics.Color.parseColor(txtPrimary));
-                step2.setTextColor(android.graphics.Color.parseColor(txtSecondary));
-                step3.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+                setStepState(activity, step1, "Stopping background processes...", STATE_ACTIVE, accentColor, txtPrimary, txtSecondary);
+                setStepState(activity, step2, "Indexing group messages...", STATE_INCOMPLETE, accentColor, txtPrimary, txtSecondary);
+                setStepState(activity, step3, "Optimizing chat database...", STATE_INCOMPLETE, accentColor, txtPrimary, txtSecondary);
                 step3.setVisibility(View.VISIBLE);
             } else if (optFilter) {
-                step1.setText("• Stopping background processes...");
-                step2.setText("• Indexing group messages...");
-                step1.setTextColor(android.graphics.Color.parseColor(txtPrimary));
-                step2.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+                setStepState(activity, step1, "Stopping background processes...", STATE_ACTIVE, accentColor, txtPrimary, txtSecondary);
+                setStepState(activity, step2, "Indexing group messages...", STATE_INCOMPLETE, accentColor, txtPrimary, txtSecondary);
                 step3.setVisibility(View.GONE);
             } else {
-                step1.setText("• Stopping background processes...");
-                step2.setText("• Optimizing chat database...");
-                step1.setTextColor(android.graphics.Color.parseColor(txtPrimary));
-                step2.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+                setStepState(activity, step1, "Stopping background processes...", STATE_ACTIVE, accentColor, txtPrimary, txtSecondary);
+                setStepState(activity, step2, "Optimizing chat database...", STATE_INCOMPLETE, accentColor, txtPrimary, txtSecondary);
                 step3.setVisibility(View.GONE);
             }
 
@@ -761,21 +792,17 @@ public class ActivityController extends Feature {
 
                         if (optFilter && optSeparate) {
                             if (currentP >= 25 && currentP < 70) {
-                                step1.setText("✓ Background services stopped");
-                                step1.setTextColor(android.graphics.Color.parseColor(accentColor));
-                                step2.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+                                setStepState(activity, step1, "Background services stopped", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
+                                setStepState(activity, step2, "Indexing group messages...", STATE_ACTIVE, accentColor, txtPrimary, txtSecondary);
                             } else if (currentP >= 70) {
-                                step1.setText("✓ Background services stopped");
-                                step1.setTextColor(android.graphics.Color.parseColor(accentColor));
-                                step2.setText("✓ Group messages indexed");
-                                step2.setTextColor(android.graphics.Color.parseColor(accentColor));
-                                step3.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+                                setStepState(activity, step1, "Background services stopped", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
+                                setStepState(activity, step2, "Group messages indexed", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
+                                setStepState(activity, step3, "Optimizing chat database...", STATE_ACTIVE, accentColor, txtPrimary, txtSecondary);
                             }
                         } else {
                             if (currentP >= 30) {
-                                step1.setText("✓ Background services stopped");
-                                step1.setTextColor(android.graphics.Color.parseColor(accentColor));
-                                step2.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+                                setStepState(activity, step1, "Background services stopped", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
+                                setStepState(activity, step2, optFilter ? "Indexing group messages..." : "Optimizing chat database...", STATE_ACTIVE, accentColor, txtPrimary, txtSecondary);
                             }
                         }
                     });
@@ -803,22 +830,15 @@ public class ActivityController extends Feature {
                 if (finalSuccess) {
                     percentText.setText("100%");
                     if (optFilter && optSeparate) {
-                        step1.setText("✓ Background services stopped");
-                        step1.setTextColor(android.graphics.Color.parseColor(accentColor));
-                        step2.setText("✓ Group messages indexed");
-                        step2.setTextColor(android.graphics.Color.parseColor(accentColor));
-                        step3.setText("✓ Chat database optimized");
-                        step3.setTextColor(android.graphics.Color.parseColor(accentColor));
+                        setStepState(activity, step1, "Background services stopped", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
+                        setStepState(activity, step2, "Group messages indexed", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
+                        setStepState(activity, step3, "Chat database optimized", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
                     } else if (optFilter) {
-                        step1.setText("✓ Background services stopped");
-                        step1.setTextColor(android.graphics.Color.parseColor(accentColor));
-                        step2.setText("✓ Group messages indexed");
-                        step2.setTextColor(android.graphics.Color.parseColor(accentColor));
+                        setStepState(activity, step1, "Background services stopped", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
+                        setStepState(activity, step2, "Group messages indexed", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
                     } else {
-                        step1.setText("✓ Background services stopped");
-                        step1.setTextColor(android.graphics.Color.parseColor(accentColor));
-                        step2.setText("✓ Chat database optimized");
-                        step2.setTextColor(android.graphics.Color.parseColor(accentColor));
+                        setStepState(activity, step1, "Background services stopped", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
+                        setStepState(activity, step2, "Chat database optimized", STATE_COMPLETED, accentColor, txtPrimary, txtSecondary);
                     }
                 } else {
                     percentText.setText("Failed");
@@ -854,6 +874,132 @@ public class ActivityController extends Feature {
     private int dpToPx(Context context, int dp) {
         float density = context.getResources().getDisplayMetrics().density;
         return Math.round((float) dp * density);
+    }
+
+    private TextView createWDSTextView(Activity activity) {
+        try {
+            Class<?> wdsTextViewClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.textview.WDSTextView");
+            return (TextView) wdsTextViewClass.getConstructor(android.content.Context.class).newInstance(activity);
+        } catch (Throwable ignored) {
+            return new TextView(activity);
+        }
+    }
+
+    private static final int STATE_INCOMPLETE = 0;
+    private static final int STATE_ACTIVE = 1;
+    private static final int STATE_COMPLETED = 2;
+
+    private void setStepState(Activity activity, TextView textView, String text, int state, String accentColor, String txtPrimary, String txtSecondary) {
+        textView.setText(text);
+        int size = dpToPx(activity, 16);
+        android.graphics.drawable.Drawable drawable;
+        if (state == STATE_COMPLETED) {
+            drawable = new CheckCircleDrawable(android.graphics.Color.parseColor(accentColor));
+            textView.setTextColor(android.graphics.Color.parseColor(accentColor));
+        } else if (state == STATE_ACTIVE) {
+            drawable = new BulletCircleDrawable(android.graphics.Color.parseColor(txtPrimary), true);
+            textView.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+        } else {
+            drawable = new BulletCircleDrawable(android.graphics.Color.parseColor(txtSecondary), false);
+            textView.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+        }
+        drawable.setBounds(0, 0, size, size);
+        textView.setCompoundDrawables(drawable, null, null, null);
+        textView.setCompoundDrawablePadding(dpToPx(activity, 12));
+    }
+
+    public static class CheckCircleDrawable extends android.graphics.drawable.Drawable {
+        private final android.graphics.Paint circlePaint;
+        private final android.graphics.Paint checkPaint;
+        private final android.graphics.Path checkPath;
+
+        public CheckCircleDrawable(int color) {
+            circlePaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            circlePaint.setColor(color);
+            circlePaint.setStyle(android.graphics.Paint.Style.FILL);
+
+            checkPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            checkPaint.setColor(android.graphics.Color.WHITE);
+            checkPaint.setStyle(android.graphics.Paint.Style.STROKE);
+            checkPaint.setStrokeWidth(4f);
+            checkPaint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+            checkPaint.setStrokeJoin(android.graphics.Paint.Join.ROUND);
+
+            checkPath = new android.graphics.Path();
+        }
+
+        @Override
+        public void draw(@NonNull android.graphics.Canvas canvas) {
+            android.graphics.Rect bounds = getBounds();
+            float cx = bounds.centerX();
+            float cy = bounds.centerY();
+            float radius = Math.min(bounds.width(), bounds.height()) / 2f;
+
+            // Draw circle
+            canvas.drawCircle(cx, cy, radius, circlePaint);
+
+            // Draw checkmark inside circle
+            checkPath.reset();
+            float size = radius * 2f;
+            checkPath.moveTo(cx - size * 0.2f, cy + size * 0.02f);
+            checkPath.lineTo(cx - size * 0.05f, cy + size * 0.17f);
+            checkPath.lineTo(cx + size * 0.22f, cy - size * 0.13f);
+            canvas.drawPath(checkPath, checkPaint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            circlePaint.setAlpha(alpha);
+            checkPaint.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(android.graphics.ColorFilter colorFilter) {
+            circlePaint.setColorFilter(colorFilter);
+        }
+
+        @Override
+        public int getOpacity() {
+            return android.graphics.PixelFormat.TRANSLUCENT;
+        }
+    }
+
+    public static class BulletCircleDrawable extends android.graphics.drawable.Drawable {
+        private final android.graphics.Paint paint;
+        private final boolean isActive;
+
+        public BulletCircleDrawable(int color, boolean isActive) {
+            paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            paint.setColor(color);
+            this.isActive = isActive;
+            if (isActive) {
+                paint.setStyle(android.graphics.Paint.Style.FILL);
+            } else {
+                paint.setStyle(android.graphics.Paint.Style.STROKE);
+                paint.setStrokeWidth(3f);
+            }
+        }
+
+        @Override
+        public void draw(@NonNull android.graphics.Canvas canvas) {
+            android.graphics.Rect bounds = getBounds();
+            float cx = bounds.centerX();
+            float cy = bounds.centerY();
+            float radius;
+            if (isActive) {
+                radius = Math.min(bounds.width(), bounds.height()) / 4f; // smaller filled bullet
+            } else {
+                radius = Math.min(bounds.width(), bounds.height()) / 2.5f; // outline circle
+            }
+            canvas.drawCircle(cx, cy, radius, paint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) { paint.setAlpha(alpha); }
+        @Override
+        public void setColorFilter(android.graphics.ColorFilter cf) {}
+        @Override
+        public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
     }
 
     @NonNull

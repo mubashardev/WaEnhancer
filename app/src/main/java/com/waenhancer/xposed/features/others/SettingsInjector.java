@@ -35,6 +35,7 @@ import de.robv.android.xposed.XposedHelpers;
 public class SettingsInjector extends Feature {
     private static final String SETTINGS_TAB_ACTIVITY = "com.whatsapp.settings.ui.SettingsTabActivity";
     private static final int VIEW_ID_WAEX_SETTINGS = 10001;
+    private static final int VIEW_ID_WAEX_TEST_SWITCH = 10003;
     private final Set<Integer> processedActivities = new HashSet<>();
     private static final int MENU_ID_WAEX_SETTINGS = 9999;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -118,6 +119,22 @@ public class SettingsInjector extends Feature {
                 processedActivities.remove(System.identityHashCode(param.thisObject));
             }
         });
+
+        Class<?> settingsNotificationsClass = null;
+        try {
+            settingsNotificationsClass = WppCore.getSettingsNotificationsActivityClass(classLoader);
+        } catch (Throwable t) {
+        }
+
+        if (settingsNotificationsClass != null) {
+            XposedBridge.hookAllMethods(settingsNotificationsClass, "onResume", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    Activity activity = (Activity) param.thisObject;
+                    injectTestNotificationTile(activity);
+                }
+            });
+        }
     }
 
     private View findAccountRow(ViewGroup listContainer, Activity activity) {
@@ -819,6 +836,142 @@ public class SettingsInjector extends Feature {
             XposedBridge.log("[WaEnhancerX] SettingsInjector: Error creating database optimization row: " + t.getMessage());
             return null;
         }
+    }
+
+    private void injectTestNotificationTile(Activity activity) {
+        try {
+            ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root == null) return;
+
+            if (root.findViewById(VIEW_ID_WAEX_TEST_SWITCH) != null) return;
+
+            ViewGroup listContainer = findSettingsListByStructure(root);
+            if (listContainer != null && listContainer.getChildCount() > 0) {
+                View anchorRow = listContainer.getChildAt(0); // This is conversation_sound_setting
+                View testRow = createTestSwitchRow(activity, anchorRow);
+                if (testRow != null) {
+                    testRow.setId(VIEW_ID_WAEX_TEST_SWITCH);
+                    listContainer.addView(testRow, 1); // Insert it at index 1 (just below conversation_sound_setting)
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Error injecting test notification switch: " + t.toString());
+        }
+    }
+
+    private View createTestSwitchRow(Activity activity, View anchorView) {
+        try {
+            android.widget.LinearLayout rowLayout = new android.widget.LinearLayout(activity);
+            rowLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            rowLayout.setGravity(Gravity.CENTER_VERTICAL);
+
+            if (anchorView.getLayoutParams() != null) {
+                rowLayout.setLayoutParams(anchorView.getLayoutParams());
+            } else {
+                rowLayout.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ));
+            }
+
+            int padLeft = dp(activity, 24);
+            int padRight = dp(activity, 24);
+            int padTop = anchorView.getPaddingTop() > 0 ? anchorView.getPaddingTop() : dp(activity, 15);
+            int padBottom = anchorView.getPaddingBottom() > 0 ? anchorView.getPaddingBottom() : dp(activity, 15);
+            rowLayout.setPadding(padLeft, padTop, padRight, padBottom);
+
+            TypedValue outValue = new TypedValue();
+            activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+            rowLayout.setBackgroundResource(outValue.resourceId);
+
+            rowLayout.setClickable(true);
+            rowLayout.setFocusable(true);
+
+            // Find typography from anchorView
+            java.util.List<android.widget.TextView> anchorTextViews = new java.util.ArrayList<>();
+            findTextViews(anchorView, anchorTextViews);
+            android.widget.TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
+            android.widget.TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
+
+            // Left side text container (Vertical)
+            android.widget.LinearLayout textContainer = new android.widget.LinearLayout(activity);
+            textContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+            android.widget.LinearLayout.LayoutParams textContainerParams = new android.widget.LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1.0f
+            );
+            textContainer.setLayoutParams(textContainerParams);
+
+            // Title TextView
+            android.widget.TextView titleText = new android.widget.TextView(activity);
+            titleText.setText("WAEX Test Option");
+            if (anchorTitle != null) {
+                titleText.setTextSize(TypedValue.COMPLEX_UNIT_PX, anchorTitle.getTextSize());
+                titleText.setTextColor(anchorTitle.getTextColors());
+                titleText.setTypeface(anchorTitle.getTypeface());
+            } else {
+                titleText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                titleText.setTextColor(0xffe9edef);
+            }
+            titleText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            titleText.setSingleLine(true);
+
+            // Summary TextView
+            android.widget.TextView summaryText = new android.widget.TextView(activity);
+            summaryText.setText("Toggle to print true/false state to system log.");
+            if (anchorSummary != null) {
+                summaryText.setTextSize(TypedValue.COMPLEX_UNIT_PX, anchorSummary.getTextSize());
+                summaryText.setTextColor(anchorSummary.getTextColors());
+                summaryText.setTypeface(anchorSummary.getTypeface());
+                summaryText.setAlpha(anchorSummary.getAlpha());
+            } else {
+                summaryText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                summaryText.setTextColor(0xff8696a0);
+            }
+            summaryText.setPadding(0, dp(activity, 2), 0, 0);
+            summaryText.setMaxLines(2);
+            summaryText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+
+            textContainer.addView(titleText);
+            textContainer.addView(summaryText);
+            rowLayout.addView(textContainer);
+
+            // Right side: WDSSwitch
+            Class<?> wdsSwitchClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.toggle.WDSSwitch");
+            android.view.View switchView = (android.view.View) wdsSwitchClass.getConstructor(android.content.Context.class).newInstance(activity);
+
+            // Standard layout parameters for the switch
+            android.widget.LinearLayout.LayoutParams switchParams = new android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            switchView.setLayoutParams(switchParams);
+
+            if (switchView instanceof android.widget.CompoundButton) {
+                android.widget.CompoundButton compoundButton = (android.widget.CompoundButton) switchView;
+                compoundButton.setChecked(true); // Default to checked
+                compoundButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    android.widget.Toast.makeText(activity, "WAEX Test: " + isChecked, android.widget.Toast.LENGTH_SHORT).show();
+                    XposedBridge.log("[WAEX] WAEX Test switch toggled: " + isChecked);
+                });
+            }
+
+            rowLayout.addView(switchView);
+
+            // Clicking the row toggles the switch
+            rowLayout.setOnClickListener(v -> {
+                if (switchView instanceof android.widget.CompoundButton) {
+                    android.widget.CompoundButton cb = (android.widget.CompoundButton) switchView;
+                    cb.toggle();
+                }
+            });
+
+            return rowLayout;
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Error creating test switch row: " + t.toString());
+        }
+        return null;
     }
 
     @NonNull

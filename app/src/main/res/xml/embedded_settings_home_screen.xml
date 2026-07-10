@@ -117,11 +117,6 @@
             app:summary="@string/menuwicon_sum"
             app:title="@string/menuwicon" />
 
-        <rikka.material.preference.MaterialSwitchPreference
-            app:key="novaconfig"
-            app:summary="@string/novaconfig_sum"
-            app:title="@string/novaconfig" />
-
     </PreferenceCategory>
 
 </PreferenceScreen>

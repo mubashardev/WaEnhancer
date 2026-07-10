@@ -116,7 +116,6 @@ public class Others extends Feature {
         properties = Utils.getProperties(prefs, "custom_css", "custom_filters");
 
         var menuWIcons = prefs.getBoolean("menuwicon", false);
-        var newSettings = prefs.getBoolean("novaconfig", false);
         var filterChats = prefs.getString("chatfilter", "2");
         var filterSeen = prefs.getBoolean("filterseen", false);
         var status_style = Integer.parseInt(prefs.getString("status_style", "1"));
@@ -143,9 +142,7 @@ public class Others extends Feature {
         propsBoolean.put(11528, false);
 
         propsBoolean.put(4497, menuWIcons);
-        propsBoolean.put(4023, false);
-        propsBoolean.put(14862, newSettings);
-        propsInteger.put(18564, newSettings ? 1 : 0);
+        // propsBoolean.put(4023, false);
 
         propsBoolean.put(2889, floatingMenu);
 

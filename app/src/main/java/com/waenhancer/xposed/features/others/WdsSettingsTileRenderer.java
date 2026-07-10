@@ -235,7 +235,7 @@ public class WdsSettingsTileRenderer {
         return scrollView;
     }
 
-    private static void renderPrefsArray(Context context, LinearLayout container, JSONArray prefsArray, SharedPreferences prefs, PrefChangeListener listener) {
+    static void renderPrefsArray(Context context, LinearLayout container, JSONArray prefsArray, SharedPreferences prefs, PrefChangeListener listener) {
         try {
             Map<String, View> tileViews = new HashMap<>();
             
@@ -297,6 +297,69 @@ public class WdsSettingsTileRenderer {
     }
 
     private static View createWdsRow(Context context, String title, String summary, android.graphics.drawable.Drawable icon, String iconName, View.OnClickListener clickListener) {
+        try {
+            Class<?> wdsListItemClass = context.getClassLoader().loadClass("com.whatsapp.ui.wds.components.list.listitem.WDSListItem");
+            View wdsListItem = (View) wdsListItemClass.getConstructor(Context.class, android.util.AttributeSet.class).newInstance(context, null);
+            
+            // Set text/title
+            de.robv.android.xposed.XposedHelpers.callMethod(wdsListItem, "setText", resolveString(context, title));
+            
+            // Set subtext/summary
+            String resolvedSummary = resolveString(context, summary);
+            if (!android.text.TextUtils.isEmpty(resolvedSummary)) {
+                de.robv.android.xposed.XposedHelpers.callMethod(wdsListItem, "setSubText", resolvedSummary);
+            }
+            
+            // Set icon
+            if (icon != null) {
+                try {
+                    float density = context.getResources().getDisplayMetrics().density;
+                    
+                    // Container FrameLayout of 40dp
+                    android.widget.FrameLayout container = new android.widget.FrameLayout(context);
+                    android.widget.LinearLayout.LayoutParams containerLp = new android.widget.LinearLayout.LayoutParams(
+                            (int) (40 * density), (int) (40 * density)
+                    );
+                    containerLp.gravity = android.view.Gravity.CENTER_VERTICAL;
+                    containerLp.setMarginStart(0);
+                    containerLp.setMarginEnd((int) (16 * density));
+                    container.setLayoutParams(containerLp);
+                    
+                    // ImageView centered inside container
+                    android.widget.ImageView iconView = new android.widget.ImageView(context);
+                    iconView.setImageDrawable(icon);
+                    
+                    boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                    iconView.setImageTintList(android.content.res.ColorStateList.valueOf(isNight ? 0xFF8696a0 : 0xFF667781));
+                    
+                    int iconSizeDp = 24;
+                    if ("ic_home_tab_status_unfilled".equals(iconName)) {
+                        iconSizeDp = 28;
+                    }
+                    android.widget.FrameLayout.LayoutParams iconLp = new android.widget.FrameLayout.LayoutParams(
+                            (int) (iconSizeDp * density), (int) (iconSizeDp * density)
+                    );
+                    iconLp.gravity = android.view.Gravity.CENTER;
+                    iconView.setLayoutParams(iconLp);
+                    
+                    container.addView(iconView);
+                    ((android.view.ViewGroup) wdsListItem).addView(container, 0);
+                } catch (Throwable t2) {
+                    de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to add leading icon view: " + t2.getMessage());
+                }
+            }
+            
+            if (clickListener != null) {
+                wdsListItem.setOnClickListener(clickListener);
+                wdsListItem.setClickable(true);
+                wdsListItem.setFocusable(true);
+            }
+            
+            return wdsListItem;
+        } catch (Throwable t) {
+            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to instantiate WDSListItem, falling back: " + t.getMessage());
+        }
+
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -329,19 +392,33 @@ public class WdsSettingsTileRenderer {
         summary = resolveString(context, summary);
 
         if (icon != null) {
-            ImageView iconView = new ImageView(context);
-            int iconSizeDp = 24;
-            int marginEndDp = 20;
-            if ("ic_home_tab_status_unfilled".equals(iconName)) {
-                iconSizeDp = 28; // Make status icon slightly larger to balance visual weight
-                marginEndDp = 16; // Keep the total spacing (iconSizeDp + marginEndDp = 44dp) constant for alignment
-            }
-            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams((int) (iconSizeDp * density), (int) (iconSizeDp * density));
-            iconParams.setMarginEnd((int) (marginEndDp * density));
-            iconView.setLayoutParams(iconParams);
+            // Container FrameLayout of 40dp
+            android.widget.FrameLayout container = new android.widget.FrameLayout(context);
+            android.widget.LinearLayout.LayoutParams containerLp = new android.widget.LinearLayout.LayoutParams(
+                    (int) (40 * density), (int) (40 * density)
+            );
+            containerLp.gravity = android.view.Gravity.CENTER_VERTICAL;
+            containerLp.setMarginStart(0);
+            containerLp.setMarginEnd((int) (16 * density));
+            container.setLayoutParams(containerLp);
+            
+            // ImageView centered inside container
+            android.widget.ImageView iconView = new android.widget.ImageView(context);
             iconView.setImageDrawable(icon);
             iconView.setImageTintList(android.content.res.ColorStateList.valueOf(secondaryTextColor));
-            row.addView(iconView);
+            
+            int iconSizeDp = 24;
+            if ("ic_home_tab_status_unfilled".equals(iconName)) {
+                iconSizeDp = 28;
+            }
+            android.widget.FrameLayout.LayoutParams iconLp = new android.widget.FrameLayout.LayoutParams(
+                    (int) (iconSizeDp * density), (int) (iconSizeDp * density)
+            );
+            iconLp.gravity = android.view.Gravity.CENTER;
+            iconView.setLayoutParams(iconLp);
+            
+            container.addView(iconView);
+            row.addView(container);
         }
 
         LinearLayout textLayout = new LinearLayout(context);
@@ -380,7 +457,7 @@ public class WdsSettingsTileRenderer {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         float density = context.getResources().getDisplayMetrics().density;
-        row.setPadding((int) (24 * density), (int) (12 * density), (int) (24 * density), (int) (12 * density));
+        row.setPadding((int) (16 * density), (int) (12 * density), (int) (24 * density), (int) (12 * density));
 
         TypedValue outValue = new TypedValue();
         context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);

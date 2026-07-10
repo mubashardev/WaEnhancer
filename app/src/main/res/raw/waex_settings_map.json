@@ -342,14 +342,6 @@
               "default": false,
               "title": "Menu Icons",
               "summary": "Add icons next to menu options across the app"
-            },
-            {
-              "key": "novaconfig",
-              "type": "switch",
-              "value_type": "boolean",
-              "default": false,
-              "title": "New Settings Style",
-              "summary": "Enable the new settings style, with profile photo on home screen toolbar"
             }
           ]
         },

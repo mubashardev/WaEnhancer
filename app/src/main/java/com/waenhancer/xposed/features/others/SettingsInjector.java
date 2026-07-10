@@ -36,6 +36,7 @@ import de.robv.android.xposed.XposedHelpers;
 public class SettingsInjector extends Feature {
     private static final String SETTINGS_TAB_ACTIVITY = "com.whatsapp.settings.ui.SettingsTabActivity";
     private static final int VIEW_ID_WAEX_SETTINGS = 10001;
+    private static final int VIEW_ID_WAEX_SEARCH = 10004;
     private static final int VIEW_ID_WAEX_TEST_SWITCH = 10003;
     private final Set<Integer> processedActivities = new HashSet<>();
     private static final int MENU_ID_WAEX_SETTINGS = 9999;
@@ -66,6 +67,24 @@ public class SettingsInjector extends Feature {
                     Menu menu = (Menu) param.args[0];
                     if (menu != null) {
                         menu.clear(); // Hides all native menu items (including search!)
+                        if ("root".equals(screenId)) {
+                            if (menu.findItem(VIEW_ID_WAEX_SEARCH) == null) {
+                                android.view.MenuItem searchItem = menu.add(0, VIEW_ID_WAEX_SEARCH, 0, "Search");
+                                android.graphics.drawable.Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_search);
+                                if (icon != null) {
+                                    boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                                    icon = com.waenhancer.xposed.utils.DesignUtils.coloredDrawable(icon, isNight ? android.graphics.Color.WHITE : android.graphics.Color.BLACK);
+                                    searchItem.setIcon(icon);
+                                }
+                                searchItem.setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+                                searchItem.setOnMenuItemClickListener(item -> {
+                                    android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                                    intent.putExtra("waex_screen_id", "search");
+                                    activity.startActivity(intent);
+                                    return true;
+                                });
+                            }
+                        }
                     }
                     return;
                 }
@@ -183,8 +202,62 @@ public class SettingsInjector extends Feature {
 
             if (root.findViewById(VIEW_ID_WAEX_SETTINGS) != null) return;
 
-            // Strategy 1: Find main settings container by structure (Vertical LinearLayout with multiple clickable rows)
-            ViewGroup listContainer = findSettingsListByStructure(root);
+            // Strategy 1: Find main settings container by ID 'settings_nested_scroll_view' -> 'container' and insert above Account.
+            int scrollId = activity.getResources().getIdentifier("settings_nested_scroll_view", "id", activity.getPackageName());
+            if (scrollId == 0) {
+                scrollId = activity.getResources().getIdentifier("settings_scroll_view", "id", activity.getPackageName());
+            }
+
+            ViewGroup listContainer = null;
+            if (scrollId != 0) {
+                View scrollView = activity.findViewById(scrollId);
+                if (scrollView != null) {
+                    int containerId = activity.getResources().getIdentifier("container", "id", activity.getPackageName());
+                    if (containerId != 0) {
+                        View v = scrollView.findViewById(containerId);
+                        if (v instanceof ViewGroup) {
+                            listContainer = (ViewGroup) v;
+                        }
+                    }
+                }
+            }
+
+            if (listContainer != null) {
+                int accountInfoId = activity.getResources().getIdentifier("settings_account_info", "id", activity.getPackageName());
+                View accountRow = null;
+                if (accountInfoId != 0) {
+                    accountRow = listContainer.findViewById(accountInfoId);
+                }
+                if (accountRow == null) {
+                    accountRow = findAccountRow(listContainer, activity);
+                }
+
+                int insertionIndex = 0;
+                if (accountRow != null) {
+                    insertionIndex = listContainer.indexOfChild(accountRow);
+                } else {
+                    int profileId = activity.getResources().getIdentifier("profile_info", "id", activity.getPackageName());
+                    if (profileId != 0) {
+                        View profileInfo = listContainer.findViewById(profileId);
+                        if (profileInfo != null) {
+                            insertionIndex = listContainer.indexOfChild(profileInfo) + 1;
+                        }
+                    }
+                }
+
+                View anchor = accountRow != null ? accountRow : (listContainer.getChildCount() > 0 ? listContainer.getChildAt(0) : null);
+                if (anchor != null) {
+                    View customRow = createDynamicSettingRow(activity, anchor);
+                    if (customRow != null) {
+                        customRow.setId(VIEW_ID_WAEX_SETTINGS);
+                        listContainer.addView(customRow, insertionIndex);
+                        return; // Success
+                    }
+                }
+            }
+
+            // Strategy 2: Find main settings container by structure (Vertical LinearLayout with multiple clickable rows)
+            listContainer = findSettingsListByStructure(root);
             if (listContainer != null) {
                 View accountRow = findAccountRow(listContainer, activity);
                 if (accountRow != null) {
@@ -198,7 +271,7 @@ public class SettingsInjector extends Feature {
                 }
             }
 
-            // Strategy 2: Fallback to finding TextViews for Account and Privacy using localized resources
+            // Strategy 3: Fallback to finding TextViews for Account and Privacy using localized resources
             View accountTextView = findTextViewWithText(root, getLocalizedText(activity, "settings_account", "Account"));
             View privacyTextView = findTextViewWithText(root, getLocalizedText(activity, "settings_privacy", "Privacy"));
 
@@ -386,8 +459,8 @@ public class SettingsInjector extends Feature {
                 ));
             }
 
-            // Standard Material Design paddings for settings row (starts at 24dp)
-            int padLeft = dp(activity, 24);
+            // Standard WDS paddings for settings row (starts at 16dp left, 24dp right)
+            int padLeft = dp(activity, 16);
             int padRight = dp(activity, 24);
             int padTop = anchorView.getPaddingTop() > 0 ? anchorView.getPaddingTop() : dp(activity, 15);
             int padBottom = anchorView.getPaddingBottom() > 0 ? anchorView.getPaddingBottom() : dp(activity, 15);
@@ -409,9 +482,24 @@ public class SettingsInjector extends Feature {
             android.widget.TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
             android.widget.TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
 
-            // Icon ImageView (Styled perfectly to match keylines)
+            // FrameLayout container for the icon to match 40dp width/height native bounds
+            android.widget.FrameLayout container = new android.widget.FrameLayout(activity);
+            android.widget.LinearLayout.LayoutParams containerParams = new android.widget.LinearLayout.LayoutParams(
+                dp(activity, 40),
+                dp(activity, 40)
+            );
+            containerParams.gravity = android.view.Gravity.CENTER_VERTICAL;
+            containerParams.setMarginStart(0);
+            containerParams.setMarginEnd(dp(activity, 16));
+            container.setLayoutParams(containerParams);
+
+            // Icon ImageView (Styled centered inside container)
             ImageView iconView = new ImageView(activity);
-            android.widget.LinearLayout.LayoutParams iconParams = new android.widget.LinearLayout.LayoutParams(dp(activity, 24), dp(activity, 24));
+            android.widget.FrameLayout.LayoutParams iconParams = new android.widget.FrameLayout.LayoutParams(
+                dp(activity, 24),
+                dp(activity, 24)
+            );
+            iconParams.gravity = android.view.Gravity.CENTER;
             iconView.setLayoutParams(iconParams);
 
             android.graphics.drawable.Drawable icon = DesignUtils.getDrawableByName("ic_settings");
@@ -419,7 +507,7 @@ public class SettingsInjector extends Feature {
                 iconView.setImageDrawable(icon);
             }
 
-            // Extract the native icon's exact tint to match colors perfectly (with fallback to description text colors for theme-awareness)
+            // Extract the native icon's exact tint to match colors perfectly
             if (anchorIcon != null && anchorIcon.getImageTintList() != null) {
                 iconView.setImageTintList(anchorIcon.getImageTintList());
                 iconView.setColorFilter(anchorIcon.getColorFilter());
@@ -430,9 +518,10 @@ public class SettingsInjector extends Feature {
             } else {
                 iconView.setImageTintList(android.content.res.ColorStateList.valueOf(0xff8696a0));
             }
-            rowLayout.addView(iconView);
+            container.addView(iconView);
+            rowLayout.addView(container);
 
-            // Text vertical container (starts at 72dp keyline, meaning leftMargin = 24dp)
+            // Text vertical container (starts at 72dp keyline, meaning leftMargin = 0 since container handles marginEnd)
             android.widget.LinearLayout textContainer = new android.widget.LinearLayout(activity);
             textContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
             android.widget.LinearLayout.LayoutParams textContainerParams = new android.widget.LinearLayout.LayoutParams(
@@ -440,7 +529,7 @@ public class SettingsInjector extends Feature {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 1.0f
             );
-            textContainerParams.setMarginStart(dp(activity, 24));
+            textContainerParams.setMarginStart(0);
             textContainer.setLayoutParams(textContainerParams);
 
             // Title TextView
@@ -512,6 +601,21 @@ public class SettingsInjector extends Feature {
             ViewGroup root = activity.findViewById(android.R.id.content);
             if (root == null) return;
 
+            // Hide profile info and top divider on hijacked settings sub-screens
+            String[] profileIds = {
+                "profile_info", "profile_container", "settings_profile_info", "profile_header", "settings_top_divider",
+                "me_tab_cover_photo", "me_tab_container", "me_tab_profile_picture_container", "me_tab_profile_info_name_area"
+            };
+            for (String id : profileIds) {
+                int resId = activity.getResources().getIdentifier(id, "id", activity.getPackageName());
+                if (resId != 0) {
+                    View v = activity.findViewById(resId);
+                    if (v != null) {
+                        v.setVisibility(View.GONE);
+                    }
+                }
+            }
+
             View originalList = findSettingsListByStructure(root);
             if (originalList == null) {
                 originalList = root.findViewById(android.R.id.list);
@@ -531,14 +635,130 @@ public class SettingsInjector extends Feature {
 
             JSONObject settingsMap = WdsSettingsTileRenderer.loadSettingsMap(activity);
             if (settingsMap != null) {
-                View contentView;
+                View contentView = null;
                 String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(
-                        activity, R.string.waenhancer_settings, "WaeX Settings");
+                        activity, R.string.waenhancer_settings, "WaeX");
                 
                 SharedPreferences localPrefs = activity.getSharedPreferences(com.waenhancer.BuildConfig.APPLICATION_ID + "_preferences", android.content.Context.MODE_PRIVATE);
                 SharedPreferences readWritePrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(activity, localPrefs, prefs);
 
-                if ("root".equals(screenId)) {
+                boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                WdsSettingsTileRenderer.PrefChangeListener listener = (key, newValue) -> {
+                    try {
+                        com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
+                        String prefTitle = key;
+                        try {
+                            org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                            for (int i = 0; i < categories.length(); i++) {
+                                org.json.JSONObject category = categories.getJSONObject(i);
+                                org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                                if (subScreens != null) {
+                                    for (int j = 0; j < subScreens.length(); j++) {
+                                        org.json.JSONObject subScreen = subScreens.getJSONObject(j);
+                                        org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                                        if (prefsArray != null) {
+                                            for (int k = 0; k < prefsArray.length(); k++) {
+                                                org.json.JSONObject prefObj = prefsArray.getJSONObject(k);
+                                                if (key.equals(prefObj.optString("key"))) {
+                                                    prefTitle = prefObj.optString("title", key);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Exception ignored) {}
+                        String existing = com.waenhancer.xposed.core.WppCore.getPrivString("pending_changes", "");
+                        java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                        if (!existing.isEmpty()) {
+                            for (String t : existing.split("\\|")) {
+                                if (!t.trim().isEmpty()) all.add(t.trim());
+                            }
+                        }
+                        all.add(prefTitle);
+                        com.waenhancer.xposed.core.WppCore.setPrivString("pending_changes", String.join("|", all));
+                    } catch (Throwable t) {
+                        de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
+                    }
+
+                    android.content.Intent changeIntent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                    changeIntent.putExtra("key", key);
+                    changeIntent.setPackage(activity.getPackageName());
+                    activity.sendBroadcast(changeIntent);
+                };
+
+                if ("search".equals(screenId)) {
+                    title = "Search";
+                    
+                    android.widget.ScrollView scrollView = new android.widget.ScrollView(activity);
+                    android.widget.LinearLayout containerLayout = new android.widget.LinearLayout(activity);
+                    containerLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    float density = activity.getResources().getDisplayMetrics().density;
+                    containerLayout.setPadding(0, (int) (16 * density), 0, (int) (16 * density));
+                    scrollView.addView(containerLayout);
+                    
+                    // Render all items initially
+                    performSearch(activity, "", containerLayout, settingsMap, readWritePrefs, listener, isNight, density);
+                    
+                    // Setup native WDSSearchView at the top
+                    try {
+                        int searchBarId = activity.getResources().getIdentifier("wds_search_bar", "id", activity.getPackageName());
+                        ViewGroup searchBar = activity.findViewById(searchBarId);
+                        if (searchBar != null) {
+                            // Find and hide standard toolbar child of wds_search_bar
+                            ViewGroup rootToolbar = findToolbar(root);
+                            if (rootToolbar != null) {
+                                rootToolbar.setVisibility(View.GONE);
+                            }
+                            
+                            // Instantiate com.whatsapp.ui.wds.components.search.WDSSearchView via reflection
+                            Class<?> searchViewClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.search.WDSSearchView");
+                            View wdsSearchView = (View) searchViewClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class).newInstance(activity, null);
+                            
+                            de.robv.android.xposed.XposedHelpers.callMethod(wdsSearchView, "setHint", "Search features...");
+                            
+                            // Back button close activity
+                            android.widget.ImageButton backBtn = (android.widget.ImageButton) de.robv.android.xposed.XposedHelpers.callMethod(wdsSearchView, "getBackButton");
+                            if (backBtn != null) {
+                                backBtn.setOnClickListener(v -> activity.finish());
+                            }
+                            
+                            // Add search view to the bar on top
+                            searchBar.addView(wdsSearchView);
+                            
+                            // Get input field and bind TextWatcher
+                            int editId = activity.getResources().getIdentifier("search_src_text", "id", activity.getPackageName());
+                            android.widget.EditText searchInput = wdsSearchView.findViewById(editId);
+                            if (searchInput != null) {
+                                searchInput.addTextChangedListener(new android.text.TextWatcher() {
+                                    @Override
+                                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                                    
+                                    @Override
+                                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                                        String query = s.toString().trim().toLowerCase();
+                                        performSearch(activity, query, containerLayout, settingsMap, readWritePrefs, listener, isNight, density);
+                                    }
+                                    
+                                    @Override
+                                    public void afterTextChanged(android.text.Editable s) {}
+                                });
+                                
+                                // Auto-focus and open keyboard on start
+                                searchInput.requestFocus();
+                                android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) activity.getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                                if (imm != null) {
+                                    imm.toggleSoftInput(android.view.inputmethod.InputMethodManager.SHOW_FORCED, 0);
+                                }
+                            }
+                        }
+                    } catch (Throwable t) {
+                        de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to initialize native WDSSearchView, using fallback: " + t.getMessage());
+                    }
+                    
+                    contentView = scrollView;
+                } else if ("root".equals(screenId)) {
                     contentView = WdsSettingsTileRenderer.buildCategoryList(activity, settingsMap, readWritePrefs, (key, newValue) -> {
                         try {
                             com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
@@ -658,10 +878,90 @@ public class SettingsInjector extends Feature {
                 if (contentView != null) {
                     container.addView(contentView);
                     setToolbarTitle(activity, title);
+                    if ("root".equals(screenId)) {
+                        ViewGroup rootToolbar = findToolbar(root);
+                        XposedBridge.log("[WAEX] hijackWholeScreen findToolbar: " + (rootToolbar != null ? rootToolbar.getClass().getName() : "null"));
+                        if (rootToolbar != null) {
+                            try {
+                                Object menuObj = XposedHelpers.callMethod(rootToolbar, "getMenu");
+                                XposedBridge.log("[WAEX] hijackWholeScreen getMenu: " + (menuObj != null ? menuObj.getClass().getName() : "null"));
+                                if (menuObj instanceof android.view.Menu) {
+                                    android.view.Menu menu = (android.view.Menu) menuObj;
+                                    XposedBridge.log("[WAEX] hijackWholeScreen menu size: " + menu.size());
+                                    if (menu.findItem(VIEW_ID_WAEX_SEARCH) == null) {
+                                        android.view.MenuItem searchItem = menu.add(0, VIEW_ID_WAEX_SEARCH, 0, "Search");
+                                        android.graphics.drawable.Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_search);
+                                        if (icon != null) {
+                                            icon = com.waenhancer.xposed.utils.DesignUtils.coloredDrawable(icon, isNight ? android.graphics.Color.WHITE : android.graphics.Color.BLACK);
+                                            searchItem.setIcon(icon);
+                                        }
+                                        searchItem.setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+                                        searchItem.setOnMenuItemClickListener(item -> {
+                                            android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                                            intent.putExtra("waex_screen_id", "search");
+                                            activity.startActivity(intent);
+                                            return true;
+                                        });
+                                    }
+                                }
+                            } catch (Throwable t) {
+                                XposedBridge.log("[WAEX] hijackWholeScreen getMenu error: " + t.getMessage());
+                            }
+                        }
+                    }
                 }
             }
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancerX] SettingsInjector: Hijack failed: " + t.getMessage());
+        }
+    }
+
+    private void performSearch(Activity activity, String query, ViewGroup containerLayout, JSONObject settingsMap, SharedPreferences readWritePrefs, WdsSettingsTileRenderer.PrefChangeListener listener, boolean isNight, float density) {
+        containerLayout.removeAllViews();
+        try {
+            org.json.JSONArray matchingPrefs = new org.json.JSONArray();
+            org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+            for (int i = 0; i < categories.length(); i++) {
+                org.json.JSONObject category = categories.getJSONObject(i);
+                org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                if (subScreens != null) {
+                    for (int j = 0; j < subScreens.length(); j++) {
+                        org.json.JSONObject subScreen = subScreens.getJSONObject(j);
+                        org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                        if (prefsArray != null) {
+                            for (int k = 0; k < prefsArray.length(); k++) {
+                                org.json.JSONObject pref = prefsArray.getJSONObject(k);
+                                String t = pref.optString("title", "").toLowerCase();
+                                String sum = pref.optString("summary", "").toLowerCase();
+                                if (query.isEmpty() || t.contains(query) || sum.contains(query)) {
+                                    org.json.JSONObject copyPref = new org.json.JSONObject(pref.toString());
+                                    String catTitle = category.optString("title", "");
+                                    String subTitle = subScreen.optString("title", "");
+                                    String breadcrumb = catTitle + " > " + subTitle;
+                                    copyPref.put("summary", breadcrumb);
+                                    matchingPrefs.put(copyPref);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (matchingPrefs.length() > 0) {
+                WdsSettingsTileRenderer.renderPrefsArray(activity, (android.widget.LinearLayout) containerLayout, matchingPrefs, readWritePrefs, listener);
+            } else {
+                android.widget.TextView noResults = new android.widget.TextView(activity);
+                noResults.setText("No features found matching \"" + query + "\"");
+                noResults.setGravity(android.view.Gravity.CENTER);
+                noResults.setTextColor(isNight ? 0x88FFFFFF : 0x88111B21);
+                noResults.setTextSize(16);
+                android.widget.LinearLayout.LayoutParams noResultsParams = new android.widget.LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                noResultsParams.topMargin = (int) (40 * density);
+                noResults.setLayoutParams(noResultsParams);
+                containerLayout.addView(noResults);
+            }
+        } catch (Exception ex) {
+            de.robv.android.xposed.XposedBridge.log("[WAEX] Search filtering error: " + ex.getMessage());
         }
     }
 
@@ -680,16 +980,36 @@ public class SettingsInjector extends Feature {
             if (root != null) {
                 ViewGroup toolbar = findToolbar(root);
                 if (toolbar != null) {
+                    try {
+                        XposedHelpers.callMethod(toolbar, "setTitle", title);
+                    } catch (Throwable ignored) {}
+                    
+                    boolean titleSet = false;
                     for (int i = 0; i < toolbar.getChildCount(); i++) {
                         View child = toolbar.getChildAt(i);
                         if (child instanceof android.widget.TextView) {
                             ((android.widget.TextView) child).setText(title);
+                            titleSet = true;
                         } else if (child instanceof ViewGroup) {
                             android.widget.TextView tv = findTextView(child);
                             if (tv != null) {
                                 tv.setText(title);
+                                titleSet = true;
                             }
                         }
+                    }
+                    if (!titleSet) {
+                        android.widget.TextView titleView = new android.widget.TextView(activity);
+                        titleView.setText(title);
+                        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 18);
+                        boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                        titleView.setTextColor(isNight ? 0xFFFFFFFF : 0xFF111B21);
+                        titleView.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                        ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
+                                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        params.setMarginStart(dp(activity, 16));
+                        titleView.setLayoutParams(params);
+                        toolbar.addView(titleView);
                     }
                 }
             }
@@ -781,6 +1101,18 @@ public class SettingsInjector extends Feature {
     }
 
     private ViewGroup findToolbar(View view) {
+        if (view == null) return null;
+        try {
+            android.content.Context context = view.getContext();
+            int toolbarId = context.getResources().getIdentifier("toolbar", "id", context.getPackageName());
+            if (toolbarId != 0) {
+                View toolbar = view.findViewById(toolbarId);
+                if (toolbar instanceof ViewGroup) {
+                    return (ViewGroup) toolbar;
+                }
+            }
+        } catch (Throwable ignored) {}
+
         if (!(view instanceof ViewGroup)) {
             return null;
         }

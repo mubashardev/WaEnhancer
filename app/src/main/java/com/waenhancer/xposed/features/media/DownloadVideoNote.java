@@ -68,19 +68,21 @@ public class DownloadVideoNote extends Feature {
         return null;
     }
 
-    private void setupLongClickHooks(View view, View.OnLongClickListener customListener) {
+    private void setupLongClickHooks(View view, View.OnLongClickListener customListener, boolean isRoot) {
         if (view == null) return;
         View.OnLongClickListener orig = getOriginalListener(view);
-        if (orig != null && !orig.getClass().getName().contains("DownloadVideoNote")) {
-            if (!originalListeners.containsKey(view)) {
-                originalListeners.put(view, orig);
+        if (isRoot || orig != null || view.isClickable()) {
+            if (orig != null && !orig.getClass().getName().contains("DownloadVideoNote")) {
+                if (!originalListeners.containsKey(view)) {
+                    originalListeners.put(view, orig);
+                }
             }
+            view.setOnLongClickListener(customListener);
         }
-        view.setOnLongClickListener(customListener);
         if (view instanceof ViewGroup) {
             ViewGroup vg = (ViewGroup) view;
             for (int i = 0; i < vg.getChildCount(); i++) {
-                setupLongClickHooks(vg.getChildAt(i), customListener);
+                setupLongClickHooks(vg.getChildAt(i), customListener, false);
             }
         }
     }
@@ -141,7 +143,7 @@ public class DownloadVideoNote extends Feature {
                         return true;
                     }
                 };
-                setupLongClickHooks(viewGroup, listener);
+                setupLongClickHooks(viewGroup, listener, true);
             }
         });
     }

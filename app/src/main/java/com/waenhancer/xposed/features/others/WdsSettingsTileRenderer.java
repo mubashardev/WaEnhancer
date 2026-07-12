@@ -123,6 +123,8 @@ public class WdsSettingsTileRenderer {
         } catch (Exception ignored) {}
 
         ScrollView scrollView = new ScrollView(activity);
+        scrollView.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         scrollView.addView(container);
         return scrollView;
     }
@@ -162,10 +164,12 @@ public class WdsSettingsTileRenderer {
 
         try {
             JSONArray prefsArray = sub.getJSONArray("prefs");
-            renderPrefsArray(activity, container, prefsArray, prefs, listener);
+            renderPrefsArray(activity, container, prefsArray, prefs, listener, false);
         } catch (Exception ignored) {}
 
         ScrollView scrollView = new ScrollView(activity);
+        scrollView.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         scrollView.addView(container);
         return scrollView;
     }
@@ -226,19 +230,25 @@ public class WdsSettingsTileRenderer {
             if (subScreens.length() > 0) {
                 JSONObject mainSub = subScreens.getJSONObject(0);
                 JSONArray prefsArray = mainSub.getJSONArray("prefs");
-                renderPrefsArray(activity, container, prefsArray, prefs, listener);
+                renderPrefsArray(activity, container, prefsArray, prefs, listener, false);
             }
         } catch (Exception ignored) {}
 
         ScrollView scrollView = new ScrollView(activity);
+        scrollView.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         scrollView.addView(container);
         return scrollView;
     }
 
-    static void renderPrefsArray(Context context, LinearLayout container, JSONArray prefsArray, SharedPreferences prefs, PrefChangeListener listener) {
+    static void renderPrefsArray(Context context, LinearLayout container, JSONArray prefsArray, SharedPreferences prefs, PrefChangeListener listener, boolean isSearch) {
+        renderPrefsArray(context, container, prefsArray, prefs, listener, isSearch, null);
+    }
+
+    static void renderPrefsArray(Context context, LinearLayout container, JSONArray prefsArray, SharedPreferences prefs, PrefChangeListener listener, boolean isSearch, java.util.function.BiConsumer<String, String> navigateCallback) {
         try {
             Map<String, View> tileViews = new HashMap<>();
-            
+
             for (int j = 0; j < prefsArray.length(); j++) {
                 JSONObject pref = prefsArray.getJSONObject(j);
                 String type = pref.getString("type");
@@ -251,24 +261,54 @@ public class WdsSettingsTileRenderer {
                 String summary = pref.optString("summary", "");
 
                 View tile = null;
-                if (!isEnabled) {
-                    final String displayTitle = title;
-                    tile = createWdsRow(context, title, summary, null, v -> {
-                        try {
-                            AlertDialogWpp builder = new AlertDialogWpp(context);
-                            builder.asBottomSheet();
-                            builder.setTitle(displayTitle);
-                            builder.setMessage("This feature is under development and will be available in the future updates. Stay tuned.");
-                            builder.setPositiveButton("Dismiss", null);
-                            builder.show();
-                        } catch (Throwable t) {
-                            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
+
+                if (isSearch) {
+                    // In search mode: switch tiles get switch-only toggle + row navigates
+                    // All other tiles: row click navigates, no dialogs/inputs shown
+                    if ("switch".equals(type) && isEnabled) {
+                        tile = createSearchSwitchTile(context, key, title, summary, pref.optBoolean("default", false), prefs, listener, navigateCallback);
+                    } else {
+                        // Simple navigation row for list/multi/text/action
+                        String activeValue = isEnabled ? getActiveValueText(context, pref, prefs) : "";
+                        String displaySummary = summary;
+                        if (!android.text.TextUtils.isEmpty(activeValue) && !android.text.TextUtils.isEmpty(displaySummary)) {
+                            displaySummary = displaySummary;  // keep breadcrumb
                         }
-                    });
+                        final String fKey = key;
+                        final String fActiveValue = activeValue;
+                        tile = createWdsRow(context, title, displaySummary, null, v -> {
+                            if (navigateCallback != null) navigateCallback.accept(fKey, "");
+                        });
+                        // Append active value as trailing text if possible
+                        if (!android.text.TextUtils.isEmpty(activeValue)) {
+                            try {
+                                boolean isDarkMode = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                                TextView trailingView = new TextView(context);
+                                trailingView.setText(fActiveValue);
+                                trailingView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                                trailingView.setTextColor(isDarkMode ? 0xFF8696a0 : 0xFF667781);
+                                de.robv.android.xposed.XposedHelpers.callMethod(tile, "setEndAddon", trailingView);
+                            } catch (Throwable ignored) {}
+                        }
+                    }
                 } else {
-                    if ("switch".equals(type)) {
+                    if (!isEnabled) {
+                        final String displayTitle = title;
+                        tile = createWdsRow(context, title, summary, null, v -> {
+                            try {
+                                AlertDialogWpp builder = new AlertDialogWpp(context);
+                                builder.asBottomSheet();
+                                builder.setTitle(displayTitle);
+                                builder.setMessage("This feature is under development and will be available in the future updates. Stay tuned.");
+                                builder.setPositiveButton("Dismiss", null);
+                                builder.show();
+                            } catch (Throwable t) {
+                                de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
+                            }
+                        });
+                    } else if ("switch".equals(type)) {
                         boolean def = pref.optBoolean("default", false);
-                        tile = createSwitchTile(context, key, title, summary, def, prefs, listener, tileViews, prefsArray);
+                        tile = createSwitchTile(context, key, title, summary, def, prefs, listener, tileViews, prefsArray, false);
                     } else if ("list".equals(type)) {
                         tile = createListTile(context, pref, prefs, listener);
                     } else if ("multi".equals(type)) {
@@ -283,13 +323,168 @@ public class WdsSettingsTileRenderer {
                 }
 
                 if (tile != null) {
+                    tile.setTag(key);
                     tileViews.put(key, tile);
                     container.addView(tile);
                 }
             }
 
-            checkDependencies(prefsArray, prefs, tileViews);
+            if (!isSearch) {
+                checkDependencies(prefsArray, prefs, tileViews);
+            }
         } catch (Exception ignored) {}
+    }
+
+    /**
+     * Search-mode switch tile: only the switch widget toggles the pref.
+     * Clicking anywhere else on the row fires the navigateCallback.
+     */
+    private static View createSearchSwitchTile(Context context, String key, String title, String summary, boolean defVal, SharedPreferences prefs, PrefChangeListener listener, java.util.function.BiConsumer<String, String> navigateCallback) {
+        // Build the row as a plain WDSListItem/fallback LinearLayout
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        float density = context.getResources().getDisplayMetrics().density;
+        row.setPadding((int)(16 * density), (int)(12 * density), (int)(16 * density), (int)(12 * density));
+
+        android.util.TypedValue outValue = new android.util.TypedValue();
+        context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+        row.setBackgroundResource(outValue.resourceId);
+
+        boolean isDarkMode = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+        int primaryColor = isDarkMode ? 0xFFe9edef : 0xFF111B21;
+        int secondaryColor = isDarkMode ? 0xFF8696a0 : 0xFF667781;
+
+        // Text block
+        LinearLayout textLayout = new LinearLayout(context);
+        textLayout.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+        textLayout.setLayoutParams(textLp);
+
+        TextView titleView = createWdsTextView(context);
+        titleView.setText(resolveString(context, title));
+        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);
+        titleView.setTextColor(primaryColor);
+        textLayout.addView(titleView);
+
+        if (!android.text.TextUtils.isEmpty(summary)) {
+            TextView summaryView = createWdsTextView(context);
+            summaryView.setText(resolveString(context, summary));
+            summaryView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
+            summaryView.setTextColor(secondaryColor);
+            summaryView.setPadding(0, (int)(2 * density), 0, 0);
+            textLayout.addView(summaryView);
+        }
+        row.addView(textLayout);
+
+        // Switch widget — only this toggles the value
+        View wdsSwitch = createWdsSwitch(context);
+        boolean currentVal = prefs.getBoolean(key, defVal);
+        setSwitchChecked(wdsSwitch, currentVal);
+        wdsSwitch.setClickable(true);
+        wdsSwitch.setFocusable(true);
+        LinearLayout.LayoutParams switchLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        switchLp.setMarginStart((int)(8 * density));
+        wdsSwitch.setLayoutParams(switchLp);
+        wdsSwitch.setOnClickListener(v -> {
+            boolean newVal = !getSwitchChecked(wdsSwitch);
+            setSwitchChecked(wdsSwitch, newVal);
+            prefs.edit().putBoolean(key, newVal).apply();
+            if (listener != null) listener.onPrefChanged(key, newVal);
+        });
+        row.addView(wdsSwitch);
+
+        // Row click navigates (but not when touching switch area)
+        row.setOnClickListener(v -> {
+            if (navigateCallback != null) navigateCallback.accept(key, "");
+        });
+
+        return row;
+    }
+
+    public static String getActiveValueText(Context context, JSONObject pref, SharedPreferences prefs) {
+        try {
+            String type = pref.getString("type");
+            String key = pref.getString("key");
+            if ("switch".equals(type)) {
+                return "";
+            } else if ("list".equals(type)) {
+                String valueType = pref.optString("value_type", "string");
+                JSONArray entriesJson = pref.getJSONArray("entries");
+                String[] entries = new String[entriesJson.length()];
+                String[] values = new String[entriesJson.length()];
+                for (int i = 0; i < entriesJson.length(); i++) {
+                    JSONObject entryObj = entriesJson.getJSONObject(i);
+                    entries[i] = resolveString(context, entryObj.getString("label"));
+                    values[i] = String.valueOf(entryObj.get("value"));
+                }
+                int initialSelectedIndex = 0;
+                if ("int".equals(valueType)) {
+                    int defaultVal = pref.optInt("default", 0);
+                    int current = prefs.getInt(key, defaultVal);
+                    for (int i = 0; i < values.length; i++) {
+                        try {
+                            if (Integer.parseInt(values[i]) == current) {
+                                initialSelectedIndex = i;
+                                break;
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                } else if ("boolean".equals(valueType)) {
+                    boolean defaultVal = pref.optBoolean("default", false);
+                    boolean current = prefs.getBoolean(key, defaultVal);
+                    for (int i = 0; i < values.length; i++) {
+                        if (Boolean.parseBoolean(values[i]) == current) {
+                            initialSelectedIndex = i;
+                            break;
+                        }
+                    }
+                } else {
+                    String defaultVal = pref.optString("default", "");
+                    String current = prefs.getString(key, defaultVal);
+                    for (int i = 0; i < values.length; i++) {
+                        if (values[i].equals(current)) {
+                            initialSelectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                return initialSelectedIndex < entries.length ? entries[initialSelectedIndex] : "";
+            } else if ("multi".equals(type)) {
+                JSONArray entriesJson = pref.getJSONArray("entries");
+                String[] entries = new String[entriesJson.length()];
+                String[] values = new String[entriesJson.length()];
+                for (int i = 0; i < entriesJson.length(); i++) {
+                    JSONObject entryObj = entriesJson.getJSONObject(i);
+                    entries[i] = resolveString(context, entryObj.getString("label"));
+                    values[i] = String.valueOf(entryObj.get("value"));
+                }
+                String current = prefs.getString(key, "");
+                if (current.isEmpty()) {
+                    return "None";
+                }
+                java.util.List<String> selectedLabels = new java.util.ArrayList<>();
+                String[] selectedValues = current.split(",");
+                for (String val : selectedValues) {
+                    for (int i = 0; i < values.length; i++) {
+                        if (values[i].equals(val.trim())) {
+                            selectedLabels.add(entries[i]);
+                            break;
+                        }
+                    }
+                }
+                return String.join(", ", selectedLabels);
+            } else if ("text".equals(type)) {
+                String valueType = pref.optString("value_type", "string");
+                if ("int".equals(valueType)) {
+                    return String.valueOf(prefs.getInt(key, pref.optInt("default", 0)));
+                } else {
+                    return prefs.getString(key, pref.optString("default", ""));
+                }
+            }
+        } catch (Exception ignored) {}
+        return "";
     }
 
     private static View createWdsRow(Context context, String title, String summary, android.graphics.drawable.Drawable icon, View.OnClickListener clickListener) {
@@ -452,7 +647,7 @@ public class WdsSettingsTileRenderer {
         return row;
     }
 
-    private static View createSwitchTile(Context context, String key, String title, String summary, boolean defVal, SharedPreferences prefs, PrefChangeListener listener, Map<String, View> tileViews, JSONArray prefsArray) {
+    private static View createSwitchTile(Context context, String key, String title, String summary, boolean defVal, SharedPreferences prefs, PrefChangeListener listener, Map<String, View> tileViews, JSONArray prefsArray, boolean isSearch) {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -508,13 +703,24 @@ public class WdsSettingsTileRenderer {
         setSwitchChecked(wdsSwitch, currentVal);
 
         final View finalSwitch = wdsSwitch;
-        row.setOnClickListener(v -> {
-            boolean newVal = !getSwitchChecked(finalSwitch);
-            setSwitchChecked(finalSwitch, newVal);
-            prefs.edit().putBoolean(key, newVal).apply();
-            if (listener != null) listener.onPrefChanged(key, newVal);
-            checkDependencies(prefsArray, prefs, tileViews);
-        });
+        if (isSearch) {
+            wdsSwitch.setClickable(true);
+            wdsSwitch.setFocusable(true);
+            wdsSwitch.setOnClickListener(v -> {
+                boolean newVal = !getSwitchChecked(finalSwitch);
+                setSwitchChecked(finalSwitch, newVal);
+                prefs.edit().putBoolean(key, newVal).apply();
+                if (listener != null) listener.onPrefChanged(key, newVal);
+            });
+        } else {
+            row.setOnClickListener(v -> {
+                boolean newVal = !getSwitchChecked(finalSwitch);
+                setSwitchChecked(finalSwitch, newVal);
+                prefs.edit().putBoolean(key, newVal).apply();
+                if (listener != null) listener.onPrefChanged(key, newVal);
+                checkDependencies(prefsArray, prefs, tileViews);
+            });
+        }
 
         row.addView(wdsSwitch);
         return row;

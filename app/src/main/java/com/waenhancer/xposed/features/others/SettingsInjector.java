@@ -601,6 +601,17 @@ public class SettingsInjector extends Feature {
             ViewGroup root = activity.findViewById(android.R.id.content);
             if (root == null) return;
 
+            View existingContainer = root.findViewWithTag("waex_container_" + screenId);
+            if (existingContainer != null) {
+                XposedBridge.log("[WAEX] hijackWholeScreen: already hijacked for " + screenId);
+                final String scrollToPref = activity.getIntent().getStringExtra("scroll_to_pref");
+                if (scrollToPref != null) {
+                    activity.getIntent().removeExtra("scroll_to_pref");
+                    safeScrollTo(existingContainer, scrollToPref, 30);
+                }
+                return;
+            }
+
             // Hide profile info and top divider on hijacked settings sub-screens
             String[] profileIds = {
                 "profile_info", "profile_container", "settings_profile_info", "profile_header", "settings_top_divider",
@@ -625,9 +636,15 @@ public class SettingsInjector extends Feature {
             ViewGroup parent = (ViewGroup) originalList.getParent();
             if (parent == null) return;
 
+            ViewGroup.LayoutParams origParams = originalList.getLayoutParams();
             FrameLayout container = new FrameLayout(activity);
-            container.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            if (origParams != null) {
+                container.setLayoutParams(origParams);
+            } else {
+                container.setLayoutParams(new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+            container.setTag("waex_container_" + screenId);
 
             int listIndex = parent.indexOfChild(originalList);
             parent.removeView(originalList);
@@ -727,11 +744,24 @@ public class SettingsInjector extends Feature {
                             // Add search view to the bar on top
                             searchBar.addView(wdsSearchView);
                             
-                            // Get input field and bind TextWatcher
-                            int editId = activity.getResources().getIdentifier("search_src_text", "id", activity.getPackageName());
-                            android.widget.EditText searchInput = wdsSearchView.findViewById(editId);
+                            // Get input field - try by public field A09 (WDSEditText), then resource id, then tree walk
+                            android.widget.EditText searchInput = null;
+                            try {
+                                searchInput = (android.widget.EditText) de.robv.android.xposed.XposedHelpers.getObjectField(wdsSearchView, "A09");
+                            } catch (Throwable ignored) {}
+                            if (searchInput == null) {
+                                int editId = activity.getResources().getIdentifier("search_src_text", "id", activity.getPackageName());
+                                if (editId != 0) {
+                                    searchInput = wdsSearchView.findViewById(editId);
+                                }
+                            }
+                            if (searchInput == null) {
+                                searchInput = findFirstEditText((ViewGroup) wdsSearchView);
+                            }
+
                             if (searchInput != null) {
-                                searchInput.addTextChangedListener(new android.text.TextWatcher() {
+                                final android.widget.EditText finalSearchInput = searchInput;
+                                finalSearchInput.addTextChangedListener(new android.text.TextWatcher() {
                                     @Override
                                     public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                                     
@@ -746,11 +776,15 @@ public class SettingsInjector extends Feature {
                                 });
                                 
                                 // Auto-focus and open keyboard on start
-                                searchInput.requestFocus();
-                                android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) activity.getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
-                                if (imm != null) {
-                                    imm.toggleSoftInput(android.view.inputmethod.InputMethodManager.SHOW_FORCED, 0);
-                                }
+                                finalSearchInput.requestFocus();
+                                finalSearchInput.post(() -> {
+                                    android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) activity.getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                                    if (imm != null) {
+                                        imm.showSoftInput(finalSearchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                                    }
+                                });
+                            } else {
+                                de.robv.android.xposed.XposedBridge.log("[WAEX] WDSSearchView: could not find EditText field A09");
                             }
                         }
                     } catch (Throwable t) {
@@ -876,8 +910,17 @@ public class SettingsInjector extends Feature {
                 }
 
                 if (contentView != null) {
-                    container.addView(contentView);
+                    FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                    container.addView(contentView, lp);
                     setToolbarTitle(activity, title);
+                    
+                    // Handle scroll to target preference if navigating from search
+                    final String scrollToPref = activity.getIntent().getStringExtra("scroll_to_pref");
+                    if (scrollToPref != null) {
+                        activity.getIntent().removeExtra("scroll_to_pref"); // prevent repeated scrolling
+                        safeScrollTo(contentView, scrollToPref, 30); // retry up to 30 times (1.5 seconds)
+                    }
                     if ("root".equals(screenId)) {
                         ViewGroup rootToolbar = findToolbar(root);
                         XposedBridge.log("[WAEX] hijackWholeScreen findToolbar: " + (rootToolbar != null ? rootToolbar.getClass().getName() : "null"));
@@ -920,6 +963,7 @@ public class SettingsInjector extends Feature {
         containerLayout.removeAllViews();
         try {
             org.json.JSONArray matchingPrefs = new org.json.JSONArray();
+            final java.util.Map<String, String> prefToSubScreenMap = new java.util.HashMap<>();
             org.json.JSONArray categories = settingsMap.getJSONArray("categories");
             for (int i = 0; i < categories.length(); i++) {
                 org.json.JSONObject category = categories.getJSONObject(i);
@@ -927,10 +971,12 @@ public class SettingsInjector extends Feature {
                 if (subScreens != null) {
                     for (int j = 0; j < subScreens.length(); j++) {
                         org.json.JSONObject subScreen = subScreens.getJSONObject(j);
+                        String subScreenId = subScreen.optString("id", "");
                         org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
                         if (prefsArray != null) {
                             for (int k = 0; k < prefsArray.length(); k++) {
                                 org.json.JSONObject pref = prefsArray.getJSONObject(k);
+                                String key = pref.optString("key", "");
                                 String t = pref.optString("title", "").toLowerCase();
                                 String sum = pref.optString("summary", "").toLowerCase();
                                 if (query.isEmpty() || t.contains(query) || sum.contains(query)) {
@@ -940,6 +986,7 @@ public class SettingsInjector extends Feature {
                                     String breadcrumb = catTitle + " > " + subTitle;
                                     copyPref.put("summary", breadcrumb);
                                     matchingPrefs.put(copyPref);
+                                    prefToSubScreenMap.put(key, subScreenId);
                                 }
                             }
                         }
@@ -947,7 +994,16 @@ public class SettingsInjector extends Feature {
                 }
             }
             if (matchingPrefs.length() > 0) {
-                WdsSettingsTileRenderer.renderPrefsArray(activity, (android.widget.LinearLayout) containerLayout, matchingPrefs, readWritePrefs, listener);
+                java.util.function.BiConsumer<String, String> navigateCallback = (prefKey, ignored) -> {
+                    String targetScreenId = prefToSubScreenMap.get(prefKey);
+                    if (targetScreenId != null) {
+                        android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                        intent.putExtra("waex_screen_id", targetScreenId);
+                        intent.putExtra("scroll_to_pref", prefKey);
+                        activity.startActivity(intent);
+                    }
+                };
+                WdsSettingsTileRenderer.renderPrefsArray(activity, (android.widget.LinearLayout) containerLayout, matchingPrefs, readWritePrefs, listener, true, navigateCallback);
             } else {
                 android.widget.TextView noResults = new android.widget.TextView(activity);
                 noResults.setText("No features found matching \"" + query + "\"");
@@ -964,6 +1020,74 @@ public class SettingsInjector extends Feature {
             de.robv.android.xposed.XposedBridge.log("[WAEX] Search filtering error: " + ex.getMessage());
         }
     }
+
+    private android.widget.EditText findFirstEditText(ViewGroup group) {
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (child instanceof android.widget.EditText) {
+                return (android.widget.EditText) child;
+            } else if (child instanceof ViewGroup) {
+                android.widget.EditText found = findFirstEditText((ViewGroup) child);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private void blinkView(View view, int times) {
+        if (times <= 0 || view == null) return;
+        view.animate()
+            .alpha(0.3f)
+            .setDuration(250)
+            .withEndAction(() -> {
+                view.animate()
+                    .alpha(1.0f)
+                    .setDuration(250)
+                    .withEndAction(() -> blinkView(view, times - 1))
+                    .start();
+            })
+            .start();
+    }
+
+    private void safeScrollTo(View startView, String tag, int attempts) {
+        if (attempts <= 0 || startView == null) return;
+        View target = startView.findViewWithTag(tag);
+        if (target != null && startView.getHeight() > 0 && target.getHeight() > 0) {
+            final View finalTarget = target;
+            startView.postDelayed(() -> {
+                // Walk up parent hierarchy to find first scrollable ancestor
+                View scrollingParent = null;
+                android.view.ViewParent pWalk = finalTarget.getParent();
+                while (pWalk instanceof View) {
+                    View v = (View) pWalk;
+                    if (v.getClass().getName().contains("ScrollView")) {
+                        scrollingParent = v;
+                    }
+                    pWalk = v.getParent();
+                }
+
+                if (scrollingParent != null) {
+                    int offset = 0;
+                    android.view.View curr = finalTarget;
+                    while (curr != null && curr != scrollingParent) {
+                        offset += curr.getTop();
+                        android.view.ViewParent p = curr.getParent();
+                        curr = (p instanceof android.view.View) ? (android.view.View) p : null;
+                    }
+                    int scrollY = Math.max(0, offset - (int)(16 * scrollingParent.getResources().getDisplayMetrics().density));
+                    try {
+                        de.robv.android.xposed.XposedHelpers.callMethod(scrollingParent, "smoothScrollTo", 0, scrollY);
+                    } catch (Throwable t) {
+                        scrollingParent.scrollTo(0, scrollY);
+                    }
+                }
+            }, 300);
+            startView.postDelayed(() -> blinkView(finalTarget, 2), 600);
+        } else {
+            startView.postDelayed(() -> safeScrollTo(startView, tag, attempts - 1), 50);
+        }
+    }
+
 
     private void setToolbarTitle(Activity activity, String title) {
         try {

@@ -164,16 +164,25 @@ WaEnhancerX is structured to enforce strict legal, compilation, and architectura
 #### 1. Modular Architecture & Licensing Boundaries
 The project is structured to enforce strict legal, compilation, and architectural boundaries between the open-source framework and the proprietary helper features:
 
-```
-[ Helper Plugin APK ] (Proprietary / Closed-Source Companion APK)
-        │
-        │ (Compile-Time: Depends ONLY on :api & compileOnly signature stubs)
-        ▼
-[ :api Module ] (Apache-2.0 License - Open Interface & DTO Bridge)
-        ▲
-        │ (Compile-Time: Linked as shared dependency)
-        │
-[ :app Module ] (GPL-3.0 License - Open-Source Host Hooking Framework)
+```mermaid
+flowchart TB
+
+    Helper([Helper Plugin APK<br/>🔒 Proprietary / Closed-Source])
+
+    API{{:api Module<br/>Apache-2.0<br/>Open Interface & DTO Bridge}}
+
+    App[:app Module<br/>GPL-3.0<br/>Open-Source Host Hooking Framework]
+
+    Helper -->|Compile-Time Dependency| API
+    App -->|Shared API Dependency| API
+
+    classDef proprietary fill:#ffe5e5,stroke:#d32f2f,color:#000,stroke-width:2px;
+    classDef apache fill:#e3f2fd,stroke:#1976d2,color:#000,stroke-width:2px;
+    classDef gpl fill:#e8f5e9,stroke:#2e7d32,color:#000,stroke-width:2px;
+
+    class Helper proprietary;
+    class API apache;
+    class App gpl;
 ```
 
 *   **Host Hooking Framework (`:app` Module - GPL-3.0)**: The open-source core application and injection framework. It handles process initialization, Xposed hooks, and base features. It is licensed under the GNU General Public License v3.

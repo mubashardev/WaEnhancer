@@ -1908,6 +1908,20 @@
       "summary": "Database performance tuning & optimizations",
       "icon": "ic_flash_on",
       "sub_screens": []
+    },
+    {
+      "id": "pro_plans",
+      "title": "@string/become_pro",
+      "summary": "@string/become_pro_summary",
+      "icon": "ic_star",
+      "sub_screens": [
+        {
+          "id": "premium_features",
+          "title": "@string/premium_features_title",
+          "summary": "View all available Pro and Limited Free features",
+          "prefs": []
+        }
+      ]
     }
   ]
 }

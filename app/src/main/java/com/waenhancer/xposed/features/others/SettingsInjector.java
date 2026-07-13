@@ -579,11 +579,14 @@ public class SettingsInjector extends Feature {
             // Dynamic Click Action to open Settings
             rowLayout.setOnClickListener(v -> {
                 String entryPoint = getSafeString("open_waex", "2");
-                if ("2".equals(entryPoint)) {
+                String openMode = getSafeString("open_settings_mode", "1");
+                if ("2".equals(entryPoint) && "1".equals(openMode)) {
+                    // Embedded: open within WhatsApp's hijacked SettingsTabActivity
                     android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
                     intent.putExtra("waex_screen_id", "root");
                     activity.startActivity(intent);
                 } else {
+                    // External: open the WaEnhancerX module app
                     Utils.openModule(activity);
                 }
             });

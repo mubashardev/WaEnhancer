@@ -10,7 +10,6 @@ import androidx.annotation.NonNull;
 
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.components.FMessageWpp;
-import com.waenhancer.xposed.core.components.AlertDialogWpp;
 import com.waenhancer.xposed.features.listeners.ConversationItemListener;
 import com.waenhancer.xposed.utils.Utils;
 
@@ -23,66 +22,6 @@ public class DownloadVideoNote extends Feature {
 
     public DownloadVideoNote(@NonNull ClassLoader loader, @NonNull SharedPreferences preferences) {
         super(loader, preferences);
-    }
-
-    private final java.util.WeakHashMap<View, View.OnLongClickListener> originalListeners = new java.util.WeakHashMap<>();
-    private boolean isBypassingLongClick = false;
-
-    private boolean isSelectionModeActive(Context context) {
-        try {
-            if (context instanceof android.app.Activity) {
-                android.app.Activity activity = (android.app.Activity) context;
-                android.view.View decorView = activity.getWindow().getDecorView();
-                
-                int barId = activity.getResources().getIdentifier("action_mode_bar", "id", "android");
-                if (barId != 0) {
-                    android.view.View bar = decorView.findViewById(barId);
-                    if (bar != null && bar.getVisibility() == android.view.View.VISIBLE) {
-                        return true;
-                    }
-                }
-                
-                int appCompatBarId = activity.getResources().getIdentifier("action_context_bar", "id", activity.getPackageName());
-                if (appCompatBarId != 0) {
-                    android.view.View bar = decorView.findViewById(appCompatBarId);
-                    if (bar != null && bar.getVisibility() == android.view.View.VISIBLE) {
-                        return true;
-                    }
-                }
-            }
-        } catch (Throwable ignored) {}
-        return false;
-    }
-
-    private View.OnLongClickListener getOriginalListener(View view) {
-        try {
-            java.lang.reflect.Field listenerInfoField = View.class.getDeclaredField("mListenerInfo");
-            listenerInfoField.setAccessible(true);
-            Object listenerInfo = listenerInfoField.get(view);
-            if (listenerInfo != null) {
-                java.lang.reflect.Field longClickListenerField = listenerInfo.getClass().getDeclaredField("mOnLongClickListener");
-                longClickListenerField.setAccessible(true);
-                return (View.OnLongClickListener) longClickListenerField.get(listenerInfo);
-            }
-        } catch (Throwable ignored) {}
-        return null;
-    }
-
-    private void setupLongClickHooks(View view, View.OnLongClickListener customListener) {
-        if (view == null) return;
-        View.OnLongClickListener orig = getOriginalListener(view);
-        if (orig != null && !orig.getClass().getName().contains("DownloadVideoNote")) {
-            if (!originalListeners.containsKey(view)) {
-                originalListeners.put(view, orig);
-            }
-        }
-        view.setOnLongClickListener(customListener);
-        if (view instanceof ViewGroup) {
-            ViewGroup vg = (ViewGroup) view;
-            for (int i = 0; i < vg.getChildCount(); i++) {
-                setupLongClickHooks(vg.getChildAt(i), customListener);
-            }
-        }
     }
 
     @Override
@@ -106,63 +45,89 @@ public class DownloadVideoNote extends Feature {
 
                 if (!isVideoNote) return;
 
-                var listener = new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        if (isBypassingLongClick || isSelectionModeActive(v.getContext())) {
-                            return false;
-                        }
-                        showBottomSheetOptions(v.getContext(), fMessage, () -> {
-                            View current = v;
-                            View.OnLongClickListener orig = null;
-                            while (current != null) {
-                                orig = originalListeners.get(current);
-                                if (orig != null) {
-                                    break;
-                                }
-                                if (current == viewGroup) {
-                                    break;
-                                }
-                                android.view.ViewParent parent = current.getParent();
-                                current = (parent instanceof View) ? (View) parent : null;
-                            }
+                // Find the action button container next to the bubble
+                int actionButtonId = Utils.getID("action_button", "id");
+                if (actionButtonId == 0) return;
 
-                            try {
-                                isBypassingLongClick = true;
-                                if (orig != null) {
-                                    orig.onLongClick(current);
-                                } else {
-                                    viewGroup.performLongClick();
-                                }
-                            } finally {
-                                isBypassingLongClick = false;
+                View actionButton = viewGroup.findViewById(actionButtonId);
+                if (actionButton instanceof android.widget.ImageView) {
+                    android.widget.ImageView origAction = (android.widget.ImageView) actionButton;
+                    ViewGroup parent = (ViewGroup) origAction.getParent();
+                    if (parent instanceof android.widget.LinearLayout) {
+                        android.widget.LinearLayout actionContainer = (android.widget.LinearLayout) parent;
+
+                        String tag = "wae_download_video_note_btn";
+                        if (actionContainer.findViewWithTag(tag) != null) return;
+
+                        // Create duplicate button
+                        android.widget.ImageView downloadBtn = new android.widget.ImageView(actionButton.getContext());
+                        downloadBtn.setTag(tag);
+
+                        // Try to load our custom download drawable from the module package
+                        android.graphics.drawable.Drawable customIcon = null;
+                        try {
+                            Context modContext = actionButton.getContext().createPackageContext(
+                                    "com.waenhancer",
+                                    Context.CONTEXT_IGNORE_SECURITY
+                            );
+                            int resId = modContext.getResources().getIdentifier("download", "drawable", "com.waenhancer");
+                            if (resId != 0) {
+                                customIcon = modContext.getResources().getDrawable(resId);
                             }
-                        });
-                        return true;
+                        } catch (Throwable e) {
+                            XposedBridge.log("[WAEX] Failed to load custom download drawable: " + e.toString());
+                        }
+
+                        // Fall back to original action button image if custom drawable fails
+                        if (customIcon != null) {
+                            downloadBtn.setImageDrawable(customIcon);
+                        } else {
+                            downloadBtn.setImageDrawable(origAction.getDrawable());
+                        }
+
+                        if (origAction.getBackground() != null) {
+                            try {
+                                downloadBtn.setBackground(origAction.getBackground().getConstantState().newDrawable());
+                            } catch (Throwable e) {
+                                downloadBtn.setBackground(origAction.getBackground());
+                            }
+                        }
+                        downloadBtn.setScaleType(origAction.getScaleType());
+                        downloadBtn.setPadding(
+                                origAction.getPaddingLeft(),
+                                origAction.getPaddingTop(),
+                                origAction.getPaddingRight(),
+                                origAction.getPaddingBottom()
+                        );
+
+                        // Copy layout params
+                        ViewGroup.LayoutParams origLp = origAction.getLayoutParams();
+                        android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                                origLp.width,
+                                origLp.height
+                        );
+                        if (origLp instanceof android.widget.LinearLayout.LayoutParams) {
+                            android.widget.LinearLayout.LayoutParams origLpLinear = (android.widget.LinearLayout.LayoutParams) origLp;
+                            lp.gravity = origLpLinear.gravity;
+                            lp.weight = origLpLinear.weight;
+                            lp.setMargins(
+                                    origLpLinear.leftMargin,
+                                    origLpLinear.topMargin,
+                                    origLpLinear.rightMargin,
+                                    origLpLinear.bottomMargin
+                            );
+                        }
+                        downloadBtn.setLayoutParams(lp);
+
+                        // Set tap-to-save click listener
+                        downloadBtn.setOnClickListener(v -> saveVideoNote(fMessage));
+
+                        // Add the button right next to the original action button
+                        actionContainer.addView(downloadBtn);
                     }
-                };
-                setupLongClickHooks(viewGroup, listener);
+                }
             }
         });
-    }
-
-    private void showBottomSheetOptions(Context context, FMessageWpp fMessage, Runnable triggerDefaultLongClick) {
-        try {
-            AlertDialogWpp alert = new AlertDialogWpp(context);
-            alert.setTitle("Video Note Options");
-            alert.setMessage("Choose what you want to do with this video note");
-            alert.setItems(new CharSequence[]{"Save to Gallery", "Select Message"}, (dialog, which) -> {
-                if (which == 0) {
-                    saveVideoNote(fMessage);
-                } else if (which == 1) {
-                    triggerDefaultLongClick.run();
-                }
-            });
-            alert.show();
-        } catch (Throwable t) {
-            XposedBridge.log("[WAEX] Error showing video note bottom sheet: " + t.getMessage());
-            triggerDefaultLongClick.run();
-        }
     }
 
     private void saveVideoNote(FMessageWpp fMessage) {
@@ -175,7 +140,18 @@ public class DownloadVideoNote extends Feature {
 
             var userJid = fMessage.getKey().remoteJid;
             var destination = Utils.getDestination("Video Notes");
-            var name = Utils.generateName(userJid, "mp4");
+            
+            // Build a unique, deterministic filename using the messageID to prevent duplicates
+            var contactName = com.waenhancer.xposed.core.WppCore.getContactName(userJid);
+            var number = userJid.getPhoneRawString();
+            var name = Utils.toValidFileName(contactName) + "_" + number + "_" + fMessage.getKey().messageID + ".mp4";
+            
+            File destFile = new File(destination, name);
+            if (destFile.exists()) {
+                Utils.showToast("Already saved!", Toast.LENGTH_SHORT);
+                return;
+            }
+
             var error = Utils.copyFile(file, destination, name);
 
             if (TextUtils.isEmpty(error)) {

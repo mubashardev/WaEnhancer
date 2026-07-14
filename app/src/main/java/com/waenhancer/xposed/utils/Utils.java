@@ -91,16 +91,29 @@ public class Utils {
             SharedPreferences prefs = XPrefManager.getPref(context);
             String mode = prefs != null ? prefs.getString("open_settings_mode", "1") : "1";
             if ("1".equals(mode) && context instanceof Activity) {
-                com.waenhancer.xposed.features.others.EmbeddedSettingsDialogFragment.show((Activity) context);
-            } else {
-                Intent intent = context.getPackageManager().getLaunchIntentForPackage("com.waenhancer");
-                if (intent == null) {
-                    intent = new Intent();
-                    intent.setComponent(new ComponentName("com.waenhancer", "com.waenhancer.activities.MainActivity"));
+                // Embedded: launch WhatsApp's SettingsTabActivity hijacked by WaEnhancerX
+                try {
+                    Class<?> settingsActivityClass = Class.forName(
+                            "com.whatsapp.settings.ui.SettingsTabActivity", false, context.getClassLoader());
+                    Intent intent = new Intent(context, settingsActivityClass);
+                    intent.putExtra("waex_screen_id", "root");
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                    return;
+                } catch (Throwable t) {
+                    // SettingsTabActivity not directly accessible — fall through to external
+                    de.robv.android.xposed.XposedBridge.log(
+                            "[WaEnhancerX] openModule embedded fallback: " + t.getMessage());
                 }
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
             }
+            // External: open the WaEnhancerX module app
+            Intent intent = context.getPackageManager().getLaunchIntentForPackage("com.waenhancer");
+            if (intent == null) {
+                intent = new Intent();
+                intent.setComponent(new ComponentName("com.waenhancer", "com.waenhancer.activities.MainActivity"));
+            }
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         } catch (Exception e) {
             Toast.makeText(context, "Error opening WaEnhancer X: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }

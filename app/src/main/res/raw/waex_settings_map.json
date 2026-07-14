@@ -342,14 +342,6 @@
               "default": false,
               "title": "Menu Icons",
               "summary": "Add icons next to menu options across the app"
-            },
-            {
-              "key": "novaconfig",
-              "type": "switch",
-              "value_type": "boolean",
-              "default": false,
-              "title": "New Settings Style",
-              "summary": "Enable the new settings style, with profile photo on home screen toolbar"
             }
           ]
         },
@@ -1916,6 +1908,20 @@
       "summary": "Database performance tuning & optimizations",
       "icon": "ic_flash_on",
       "sub_screens": []
+    },
+    {
+      "id": "pro_plans",
+      "title": "@string/become_pro",
+      "summary": "@string/become_pro_summary",
+      "icon": "ic_star",
+      "sub_screens": [
+        {
+          "id": "premium_features",
+          "title": "@string/premium_features_title",
+          "summary": "View all available Pro and Limited Free features",
+          "prefs": []
+        }
+      ]
     }
   ]
 }

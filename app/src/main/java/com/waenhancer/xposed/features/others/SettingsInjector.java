@@ -23,6 +23,8 @@ import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 import java.util.HashSet;
 import java.util.Set;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import org.json.JSONObject;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -36,6 +38,7 @@ import de.robv.android.xposed.XposedHelpers;
 public class SettingsInjector extends Feature {
     private static final String SETTINGS_TAB_ACTIVITY = "com.whatsapp.settings.ui.SettingsTabActivity";
     private static final int VIEW_ID_WAEX_SETTINGS = 10001;
+    private static final int VIEW_ID_WAEX_SEARCH = 10004;
     private static final int VIEW_ID_WAEX_TEST_SWITCH = 10003;
     private final Set<Integer> processedActivities = new HashSet<>();
     private static final int MENU_ID_WAEX_SETTINGS = 9999;
@@ -66,6 +69,24 @@ public class SettingsInjector extends Feature {
                     Menu menu = (Menu) param.args[0];
                     if (menu != null) {
                         menu.clear(); // Hides all native menu items (including search!)
+                        if ("root".equals(screenId)) {
+                            if (menu.findItem(VIEW_ID_WAEX_SEARCH) == null) {
+                                android.view.MenuItem searchItem = menu.add(0, VIEW_ID_WAEX_SEARCH, 0, "Search");
+                                android.graphics.drawable.Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_search);
+                                if (icon != null) {
+                                    boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                                    icon = com.waenhancer.xposed.utils.DesignUtils.coloredDrawable(icon, isNight ? android.graphics.Color.WHITE : android.graphics.Color.BLACK);
+                                    searchItem.setIcon(icon);
+                                }
+                                searchItem.setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+                                searchItem.setOnMenuItemClickListener(item -> {
+                                    android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                                    intent.putExtra("waex_screen_id", "search");
+                                    activity.startActivity(intent);
+                                    return true;
+                                });
+                            }
+                        }
                     }
                     return;
                 }
@@ -183,8 +204,62 @@ public class SettingsInjector extends Feature {
 
             if (root.findViewById(VIEW_ID_WAEX_SETTINGS) != null) return;
 
-            // Strategy 1: Find main settings container by structure (Vertical LinearLayout with multiple clickable rows)
-            ViewGroup listContainer = findSettingsListByStructure(root);
+            // Strategy 1: Find main settings container by ID 'settings_nested_scroll_view' -> 'container' and insert above Account.
+            int scrollId = activity.getResources().getIdentifier("settings_nested_scroll_view", "id", activity.getPackageName());
+            if (scrollId == 0) {
+                scrollId = activity.getResources().getIdentifier("settings_scroll_view", "id", activity.getPackageName());
+            }
+
+            ViewGroup listContainer = null;
+            if (scrollId != 0) {
+                View scrollView = activity.findViewById(scrollId);
+                if (scrollView != null) {
+                    int containerId = activity.getResources().getIdentifier("container", "id", activity.getPackageName());
+                    if (containerId != 0) {
+                        View v = scrollView.findViewById(containerId);
+                        if (v instanceof ViewGroup) {
+                            listContainer = (ViewGroup) v;
+                        }
+                    }
+                }
+            }
+
+            if (listContainer != null) {
+                int accountInfoId = activity.getResources().getIdentifier("settings_account_info", "id", activity.getPackageName());
+                View accountRow = null;
+                if (accountInfoId != 0) {
+                    accountRow = listContainer.findViewById(accountInfoId);
+                }
+                if (accountRow == null) {
+                    accountRow = findAccountRow(listContainer, activity);
+                }
+
+                int insertionIndex = 0;
+                if (accountRow != null) {
+                    insertionIndex = listContainer.indexOfChild(accountRow);
+                } else {
+                    int profileId = activity.getResources().getIdentifier("profile_info", "id", activity.getPackageName());
+                    if (profileId != 0) {
+                        View profileInfo = listContainer.findViewById(profileId);
+                        if (profileInfo != null) {
+                            insertionIndex = listContainer.indexOfChild(profileInfo) + 1;
+                        }
+                    }
+                }
+
+                View anchor = accountRow != null ? accountRow : (listContainer.getChildCount() > 0 ? listContainer.getChildAt(0) : null);
+                if (anchor != null) {
+                    View customRow = createDynamicSettingRow(activity, anchor);
+                    if (customRow != null) {
+                        customRow.setId(VIEW_ID_WAEX_SETTINGS);
+                        listContainer.addView(customRow, insertionIndex);
+                        return; // Success
+                    }
+                }
+            }
+
+            // Strategy 2: Find main settings container by structure (Vertical LinearLayout with multiple clickable rows)
+            listContainer = findSettingsListByStructure(root);
             if (listContainer != null) {
                 View accountRow = findAccountRow(listContainer, activity);
                 if (accountRow != null) {
@@ -198,7 +273,7 @@ public class SettingsInjector extends Feature {
                 }
             }
 
-            // Strategy 2: Fallback to finding TextViews for Account and Privacy using localized resources
+            // Strategy 3: Fallback to finding TextViews for Account and Privacy using localized resources
             View accountTextView = findTextViewWithText(root, getLocalizedText(activity, "settings_account", "Account"));
             View privacyTextView = findTextViewWithText(root, getLocalizedText(activity, "settings_privacy", "Privacy"));
 
@@ -386,8 +461,8 @@ public class SettingsInjector extends Feature {
                 ));
             }
 
-            // Standard Material Design paddings for settings row (starts at 24dp)
-            int padLeft = dp(activity, 24);
+            // Standard WDS paddings for settings row (starts at 16dp left, 24dp right)
+            int padLeft = dp(activity, 16);
             int padRight = dp(activity, 24);
             int padTop = anchorView.getPaddingTop() > 0 ? anchorView.getPaddingTop() : dp(activity, 15);
             int padBottom = anchorView.getPaddingBottom() > 0 ? anchorView.getPaddingBottom() : dp(activity, 15);
@@ -409,9 +484,24 @@ public class SettingsInjector extends Feature {
             android.widget.TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
             android.widget.TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
 
-            // Icon ImageView (Styled perfectly to match keylines)
+            // FrameLayout container for the icon to match 40dp width/height native bounds
+            android.widget.FrameLayout container = new android.widget.FrameLayout(activity);
+            android.widget.LinearLayout.LayoutParams containerParams = new android.widget.LinearLayout.LayoutParams(
+                dp(activity, 40),
+                dp(activity, 40)
+            );
+            containerParams.gravity = android.view.Gravity.CENTER_VERTICAL;
+            containerParams.setMarginStart(0);
+            containerParams.setMarginEnd(dp(activity, 16));
+            container.setLayoutParams(containerParams);
+
+            // Icon ImageView (Styled centered inside container)
             ImageView iconView = new ImageView(activity);
-            android.widget.LinearLayout.LayoutParams iconParams = new android.widget.LinearLayout.LayoutParams(dp(activity, 24), dp(activity, 24));
+            android.widget.FrameLayout.LayoutParams iconParams = new android.widget.FrameLayout.LayoutParams(
+                dp(activity, 24),
+                dp(activity, 24)
+            );
+            iconParams.gravity = android.view.Gravity.CENTER;
             iconView.setLayoutParams(iconParams);
 
             android.graphics.drawable.Drawable icon = DesignUtils.getDrawableByName("ic_settings");
@@ -419,7 +509,7 @@ public class SettingsInjector extends Feature {
                 iconView.setImageDrawable(icon);
             }
 
-            // Extract the native icon's exact tint to match colors perfectly (with fallback to description text colors for theme-awareness)
+            // Extract the native icon's exact tint to match colors perfectly
             if (anchorIcon != null && anchorIcon.getImageTintList() != null) {
                 iconView.setImageTintList(anchorIcon.getImageTintList());
                 iconView.setColorFilter(anchorIcon.getColorFilter());
@@ -430,9 +520,10 @@ public class SettingsInjector extends Feature {
             } else {
                 iconView.setImageTintList(android.content.res.ColorStateList.valueOf(0xff8696a0));
             }
-            rowLayout.addView(iconView);
+            container.addView(iconView);
+            rowLayout.addView(container);
 
-            // Text vertical container (starts at 72dp keyline, meaning leftMargin = 24dp)
+            // Text vertical container (starts at 72dp keyline, meaning leftMargin = 0 since container handles marginEnd)
             android.widget.LinearLayout textContainer = new android.widget.LinearLayout(activity);
             textContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
             android.widget.LinearLayout.LayoutParams textContainerParams = new android.widget.LinearLayout.LayoutParams(
@@ -440,7 +531,7 @@ public class SettingsInjector extends Feature {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 1.0f
             );
-            textContainerParams.setMarginStart(dp(activity, 24));
+            textContainerParams.setMarginStart(0);
             textContainer.setLayoutParams(textContainerParams);
 
             // Title TextView
@@ -490,11 +581,14 @@ public class SettingsInjector extends Feature {
             // Dynamic Click Action to open Settings
             rowLayout.setOnClickListener(v -> {
                 String entryPoint = getSafeString("open_waex", "2");
-                if ("2".equals(entryPoint)) {
+                String openMode = getSafeString("open_settings_mode", "1");
+                if ("2".equals(entryPoint) && "1".equals(openMode)) {
+                    // Embedded: open within WhatsApp's hijacked SettingsTabActivity
                     android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
                     intent.putExtra("waex_screen_id", "root");
                     activity.startActivity(intent);
                 } else {
+                    // External: open the WaEnhancerX module app
                     Utils.openModule(activity);
                 }
             });
@@ -512,6 +606,32 @@ public class SettingsInjector extends Feature {
             ViewGroup root = activity.findViewById(android.R.id.content);
             if (root == null) return;
 
+            View existingContainer = root.findViewWithTag("waex_container_" + screenId);
+            if (existingContainer != null) {
+                XposedBridge.log("[WAEX] hijackWholeScreen: already hijacked for " + screenId);
+                final String scrollToPref = activity.getIntent().getStringExtra("scroll_to_pref");
+                if (scrollToPref != null) {
+                    activity.getIntent().removeExtra("scroll_to_pref");
+                    safeScrollTo(existingContainer, scrollToPref, 30);
+                }
+                return;
+            }
+
+            // Hide profile info and top divider on hijacked settings sub-screens
+            String[] profileIds = {
+                "profile_info", "profile_container", "settings_profile_info", "profile_header", "settings_top_divider",
+                "me_tab_cover_photo", "me_tab_container", "me_tab_profile_picture_container", "me_tab_profile_info_name_area"
+            };
+            for (String id : profileIds) {
+                int resId = activity.getResources().getIdentifier(id, "id", activity.getPackageName());
+                if (resId != 0) {
+                    View v = activity.findViewById(resId);
+                    if (v != null) {
+                        v.setVisibility(View.GONE);
+                    }
+                }
+            }
+
             View originalList = findSettingsListByStructure(root);
             if (originalList == null) {
                 originalList = root.findViewById(android.R.id.list);
@@ -521,9 +641,15 @@ public class SettingsInjector extends Feature {
             ViewGroup parent = (ViewGroup) originalList.getParent();
             if (parent == null) return;
 
+            ViewGroup.LayoutParams origParams = originalList.getLayoutParams();
             FrameLayout container = new FrameLayout(activity);
-            container.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            if (origParams != null) {
+                container.setLayoutParams(origParams);
+            } else {
+                container.setLayoutParams(new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+            container.setTag("waex_container_" + screenId);
 
             int listIndex = parent.indexOfChild(originalList);
             parent.removeView(originalList);
@@ -531,14 +657,147 @@ public class SettingsInjector extends Feature {
 
             JSONObject settingsMap = WdsSettingsTileRenderer.loadSettingsMap(activity);
             if (settingsMap != null) {
-                View contentView;
+                View contentView = null;
                 String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(
-                        activity, R.string.waenhancer_settings, "WaeX Settings");
+                        activity, R.string.waenhancer_settings, "WaeX");
                 
                 SharedPreferences localPrefs = activity.getSharedPreferences(com.waenhancer.BuildConfig.APPLICATION_ID + "_preferences", android.content.Context.MODE_PRIVATE);
                 SharedPreferences readWritePrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(activity, localPrefs, prefs);
 
-                if ("root".equals(screenId)) {
+                boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                WdsSettingsTileRenderer.PrefChangeListener listener = (key, newValue) -> {
+                    try {
+                        com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
+                        String prefTitle = key;
+                        try {
+                            org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                            for (int i = 0; i < categories.length(); i++) {
+                                org.json.JSONObject category = categories.getJSONObject(i);
+                                org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                                if (subScreens != null) {
+                                    for (int j = 0; j < subScreens.length(); j++) {
+                                        org.json.JSONObject subScreen = subScreens.getJSONObject(j);
+                                        org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                                        if (prefsArray != null) {
+                                            for (int k = 0; k < prefsArray.length(); k++) {
+                                                org.json.JSONObject prefObj = prefsArray.getJSONObject(k);
+                                                if (key.equals(prefObj.optString("key"))) {
+                                                    prefTitle = prefObj.optString("title", key);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Exception ignored) {}
+                        String existing = com.waenhancer.xposed.core.WppCore.getPrivString("pending_changes", "");
+                        java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                        if (!existing.isEmpty()) {
+                            for (String t : existing.split("\\|")) {
+                                if (!t.trim().isEmpty()) all.add(t.trim());
+                            }
+                        }
+                        all.add(prefTitle);
+                        com.waenhancer.xposed.core.WppCore.setPrivString("pending_changes", String.join("|", all));
+                    } catch (Throwable t) {
+                        de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
+                    }
+
+                    android.content.Intent changeIntent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                    changeIntent.putExtra("key", key);
+                    changeIntent.setPackage(activity.getPackageName());
+                    activity.sendBroadcast(changeIntent);
+                };
+
+                if ("search".equals(screenId)) {
+                    title = "Search";
+                    
+                    android.widget.ScrollView scrollView = new android.widget.ScrollView(activity);
+                    android.widget.LinearLayout containerLayout = new android.widget.LinearLayout(activity);
+                    containerLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    float density = activity.getResources().getDisplayMetrics().density;
+                    containerLayout.setPadding(0, (int) (16 * density), 0, (int) (16 * density));
+                    scrollView.addView(containerLayout);
+                    
+                    // Render all items initially
+                    performSearch(activity, "", containerLayout, settingsMap, readWritePrefs, listener, isNight, density);
+                    
+                    // Setup native WDSSearchView at the top
+                    try {
+                        int searchBarId = activity.getResources().getIdentifier("wds_search_bar", "id", activity.getPackageName());
+                        ViewGroup searchBar = activity.findViewById(searchBarId);
+                        if (searchBar != null) {
+                            // Find and hide standard toolbar child of wds_search_bar
+                            ViewGroup rootToolbar = findToolbar(root);
+                            if (rootToolbar != null) {
+                                rootToolbar.setVisibility(View.GONE);
+                            }
+                            
+                            // Instantiate com.whatsapp.ui.wds.components.search.WDSSearchView via reflection
+                            Class<?> searchViewClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.search.WDSSearchView");
+                            View wdsSearchView = (View) searchViewClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class).newInstance(activity, null);
+                            
+                            de.robv.android.xposed.XposedHelpers.callMethod(wdsSearchView, "setHint", "Search features...");
+                            
+                            // Back button close activity
+                            android.widget.ImageButton backBtn = (android.widget.ImageButton) de.robv.android.xposed.XposedHelpers.callMethod(wdsSearchView, "getBackButton");
+                            if (backBtn != null) {
+                                backBtn.setOnClickListener(v -> activity.finish());
+                            }
+                            
+                            // Add search view to the bar on top
+                            searchBar.addView(wdsSearchView);
+                            
+                            // Get input field - try by public field A09 (WDSEditText), then resource id, then tree walk
+                            android.widget.EditText searchInput = null;
+                            try {
+                                searchInput = (android.widget.EditText) de.robv.android.xposed.XposedHelpers.getObjectField(wdsSearchView, "A09");
+                            } catch (Throwable ignored) {}
+                            if (searchInput == null) {
+                                int editId = activity.getResources().getIdentifier("search_src_text", "id", activity.getPackageName());
+                                if (editId != 0) {
+                                    searchInput = wdsSearchView.findViewById(editId);
+                                }
+                            }
+                            if (searchInput == null) {
+                                searchInput = findFirstEditText((ViewGroup) wdsSearchView);
+                            }
+
+                            if (searchInput != null) {
+                                final android.widget.EditText finalSearchInput = searchInput;
+                                finalSearchInput.addTextChangedListener(new android.text.TextWatcher() {
+                                    @Override
+                                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                                    
+                                    @Override
+                                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                                        String query = s.toString().trim().toLowerCase();
+                                        performSearch(activity, query, containerLayout, settingsMap, readWritePrefs, listener, isNight, density);
+                                    }
+                                    
+                                    @Override
+                                    public void afterTextChanged(android.text.Editable s) {}
+                                });
+                                
+                                // Auto-focus and open keyboard on start
+                                finalSearchInput.requestFocus();
+                                finalSearchInput.post(() -> {
+                                    android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) activity.getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                                    if (imm != null) {
+                                        imm.showSoftInput(finalSearchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                                    }
+                                });
+                            } else {
+                                de.robv.android.xposed.XposedBridge.log("[WAEX] WDSSearchView: could not find EditText field A09");
+                            }
+                        }
+                    } catch (Throwable t) {
+                        de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to initialize native WDSSearchView, using fallback: " + t.getMessage());
+                    }
+                    
+                    contentView = scrollView;
+                } else if ("root".equals(screenId)) {
                     contentView = WdsSettingsTileRenderer.buildCategoryList(activity, settingsMap, readWritePrefs, (key, newValue) -> {
                         try {
                             com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
@@ -583,6 +842,453 @@ public class SettingsInjector extends Feature {
                         intent.setPackage(activity.getPackageName());
                         activity.sendBroadcast(intent);
                     });
+                } else if ("pro_plans".equals(screenId)) {
+                    title = "Become Pro";
+                    
+                    // Exact colors matching native settings & cards
+                    int dialogBg = isNight ? 0xFF12181C : 0xFFFFFFFF; // Dialog/sheet surface background
+                    int cardBg = isNight ? 0xFF1F2C34 : 0xFFF0F2F5; // Cards background
+                    int primaryText = isNight ? 0xFFE9EDEF : 0xFF111B21;
+                    int secondaryText = isNight ? 0xFF8696A0 : 0xFF667781;
+                    int accentG = isNight ? 0xFF21C063 : 0xFF008069;
+                    int strokeColor = isNight ? 0xFF2D3B43 : 0xFFE1E3E6;
+
+                    android.widget.ScrollView scrollView = new android.widget.ScrollView(activity);
+                    scrollView.setLayoutParams(new ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                    // Keep native window background by not setting custom bg color on ScrollView
+                    
+                    android.widget.LinearLayout containerLayout = new android.widget.LinearLayout(activity);
+                    containerLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    float density = activity.getResources().getDisplayMetrics().density;
+                    int pad24 = (int) (24 * density);
+                    int pad16 = (int) (16 * density);
+                    containerLayout.setPadding(pad24, pad24, pad24, pad24);
+                    scrollView.addView(containerLayout);
+                    
+                    // 1. Description (Header removed)
+                    android.widget.TextView actDesc = new android.widget.TextView(activity);
+                    actDesc.setText("Enter your license key received from the Telegram Bot to unlock all premium capabilities.");
+                    actDesc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                    actDesc.setTextColor(secondaryText);
+                    android.widget.LinearLayout.LayoutParams descLp = new android.widget.LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    descLp.setMargins(0, 0, 0, (int)(16 * density));
+                    actDesc.setLayoutParams(descLp);
+                    containerLayout.addView(actDesc);
+                    
+                    // 2. Input field for License Key
+                    android.widget.EditText etLicense = new android.widget.EditText(activity);
+                    etLicense.setHint("WAEX-XXXX-XXXX-XXXX");
+                    etLicense.setSingleLine(true);
+                    etLicense.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                    etLicense.setHintTextColor(secondaryText);
+                    etLicense.setTextColor(primaryText);
+                    
+                    // Style edittext border dynamically
+                    android.graphics.drawable.GradientDrawable editGd = new android.graphics.drawable.GradientDrawable();
+                    editGd.setCornerRadius(8 * density);
+                    editGd.setColor(cardBg);
+                    editGd.setStroke((int) (1 * density), strokeColor);
+                    etLicense.setBackground(editGd);
+                    etLicense.setPadding(pad16, pad16, pad16, pad16);
+                    
+                    android.widget.LinearLayout.LayoutParams inputLp = new android.widget.LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    inputLp.bottomMargin = pad16;
+                    etLicense.setLayoutParams(inputLp);
+                    containerLayout.addView(etLicense);
+                    
+                    // 3. WDS Verification Button
+                    View btnVerify = null;
+                    try {
+                        Class<?> wdsButtonClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.button.WDSButton");
+                        btnVerify = (View) wdsButtonClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class).newInstance(activity, null);
+                        ((android.widget.TextView) btnVerify).setText("Verify & Activate");
+                        
+                        Class<?> variantClass = null;
+                        for (java.lang.reflect.Method m : wdsButtonClass.getDeclaredMethods()) {
+                            if (m.getName().equals("setVariant") && m.getParameterTypes().length == 1) {
+                                variantClass = m.getParameterTypes()[0];
+                                break;
+                            }
+                        }
+                        if (variantClass == null) {
+                            variantClass = activity.getClassLoader().loadClass("X.0xb");
+                        }
+                        Object variantVal = Enum.valueOf((Class<Enum>) variantClass, "FILLED");
+                        de.robv.android.xposed.XposedHelpers.callMethod(btnVerify, "setVariant", variantVal);
+                    } catch (Throwable t) {
+                        android.widget.TextView fbBtn = new android.widget.TextView(activity);
+                        fbBtn.setText("Verify & Activate");
+                        fbBtn.setGravity(Gravity.CENTER);
+                        fbBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                        fbBtn.setTextColor(0xFFFFFFFF);
+                        fbBtn.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                        fbBtn.setPadding(0, (int) (12 * density), 0, (int) (12 * density));
+                        
+                        android.graphics.drawable.GradientDrawable btnGd = new android.graphics.drawable.GradientDrawable();
+                        btnGd.setCornerRadius(24 * density);
+                        btnGd.setColor(accentG);
+                        fbBtn.setBackground(btnGd);
+                        btnVerify = fbBtn;
+                    }
+                    btnVerify.setClickable(true);
+                    btnVerify.setFocusable(true);
+                    
+                    // Click listener to verify license key
+                    btnVerify.setOnClickListener(v -> {
+                        String key = etLicense.getText().toString().trim().toUpperCase();
+                        if (key.isEmpty()) {
+                            android.widget.Toast.makeText(activity, "Key cannot be empty", android.widget.Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        
+                        // Reflection call to LicenseManager.verifyLicense
+                        try {
+                            Class<?> lmClass = activity.getClassLoader().loadClass("com.waenhancer.xposed.utils.LicenseManager");
+                            Class<?> cbClass = activity.getClassLoader().loadClass("com.waenhancer.xposed.utils.LicenseManager$LicenseCallback");
+                            
+                            Object callbackProxy = java.lang.reflect.Proxy.newProxyInstance(
+                                activity.getClassLoader(),
+                                new Class<?>[]{cbClass},
+                                (proxy, method, args) -> {
+                                    if ("onSuccess".equals(method.getName())) {
+                                        activity.runOnUiThread(() -> {
+                                            android.widget.Toast.makeText(activity, "Activation Successful! 🎉", android.widget.Toast.LENGTH_LONG).show();
+                                            // Trigger a restart notification to WhatsApp
+                                            try {
+                                                com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
+                                                android.content.Intent ri = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                                                ri.putExtra("key", "is_pro_verified");
+                                                ri.setPackage(activity.getPackageName());
+                                                activity.sendBroadcast(ri);
+                                            } catch (Throwable ignored) {}
+                                            activity.finish();
+                                        });
+                                    } else if ("onError".equals(method.getName())) {
+                                        final String err = (String) args[0];
+                                        activity.runOnUiThread(() -> {
+                                            android.widget.Toast.makeText(activity, "Verification Failed: " + err, android.widget.Toast.LENGTH_LONG).show();
+                                        });
+                                    }
+                                    return null;
+                                }
+                            );
+                            
+                            java.lang.reflect.Method verifyMethod = lmClass.getMethod("verifyLicense", android.content.Context.class, String.class, cbClass);
+                            verifyMethod.invoke(null, activity, key, callbackProxy);
+                        } catch (Throwable t) {
+                            android.widget.Toast.makeText(activity, "Failed to call LicenseManager: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    containerLayout.addView(btnVerify);
+                    
+                    // 4. "Show Features" button to display Sub Screen
+                    android.widget.TextView tvFeatures = new android.widget.TextView(activity);
+                    tvFeatures.setText("Show Premium & Free Features");
+                    tvFeatures.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                    tvFeatures.setTextColor(accentG);
+                    tvFeatures.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                    tvFeatures.setGravity(Gravity.CENTER);
+                    tvFeatures.setPadding(0, pad16, 0, pad16);
+                    tvFeatures.setClickable(true);
+                    tvFeatures.setFocusable(true);
+                    
+                    tvFeatures.setOnClickListener(v -> {
+                        try {
+                            android.content.Intent subScreenIntent = new android.content.Intent(activity, activity.getClass());
+                            subScreenIntent.putExtra("waex_screen_id", "premium_features");
+                            activity.startActivity(subScreenIntent);
+                        } catch (Throwable t) {
+                            android.widget.Toast.makeText(activity, "Failed to open Features: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    containerLayout.addView(tvFeatures);
+
+                    // 5. Divider
+                    View separator = new View(activity);
+                    android.widget.LinearLayout.LayoutParams sepLp = new android.widget.LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, (int) (1 * density));
+                    sepLp.setMargins(0, pad16, 0, pad16);
+                    separator.setLayoutParams(sepLp);
+                    separator.setBackgroundColor(strokeColor);
+                    containerLayout.addView(separator);
+                    
+                    // 6. Plans Section Header
+                    android.widget.TextView plansHeader = new android.widget.TextView(activity);
+                    plansHeader.setText("Purchase License Key");
+                    plansHeader.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                    plansHeader.setTextColor(primaryText);
+                    plansHeader.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                    plansHeader.setPadding(0, 0, 0, (int) (8 * density));
+                    containerLayout.addView(plansHeader);
+
+                    // 7. Dynamic plans container layout
+                    android.widget.LinearLayout plansContainer = new android.widget.LinearLayout(activity);
+                    plansContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    containerLayout.addView(plansContainer);
+                    
+                    // Fetch plans from API: https://waenhancer.com/api/plans.json
+                    new Thread(() -> {
+                        HttpURLConnection urlConnection = null;
+                        try {
+                            URL url = new URL("https://waenhancer.com/api/plans.json");
+                            urlConnection = (HttpURLConnection) url.openConnection();
+                            urlConnection.setRequestMethod("GET");
+                            urlConnection.setConnectTimeout(5000);
+                            urlConnection.setReadTimeout(5000);
+                            
+                            java.io.InputStream in = new java.io.BufferedInputStream(urlConnection.getInputStream());
+                            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(in, "UTF-8"));
+                            StringBuilder sb = new StringBuilder();
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                sb.append(line);
+                            }
+                            
+                            org.json.JSONObject result = new org.json.JSONObject(sb.toString());
+                            org.json.JSONArray plansArray = result.getJSONArray("plans");
+                            
+                            activity.runOnUiThread(() -> {
+                                plansContainer.removeAllViews();
+                                try {
+                                    for (int i = 0; i < plansArray.length(); i++) {
+                                        org.json.JSONObject planObj = plansArray.getJSONObject(i);
+                                        final String name = planObj.getString("name");
+                                        final String price = planObj.getString("price");
+                                        final String duration = planObj.getString("duration");
+                                        final String featuresText = planObj.optString("features", "");
+                                        final String command = planObj.optString("command", "/buy");
+                                        
+                                        // Build elegant card style dialog item
+                                        android.widget.LinearLayout planCard = new android.widget.LinearLayout(activity);
+                                        planCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+                                        planCard.setPadding(pad16, pad16, pad16, pad16);
+                                        
+                                        android.graphics.drawable.GradientDrawable pcGd = new android.graphics.drawable.GradientDrawable();
+                                        pcGd.setCornerRadius(12 * density);
+                                        pcGd.setColor(cardBg);
+                                        pcGd.setStroke((int) (1 * density), strokeColor);
+                                        planCard.setBackground(pcGd);
+                                        
+                                        android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
+                                                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                        pcLp.bottomMargin = (int) (12 * density);
+                                        planCard.setLayoutParams(pcLp);
+                                        
+                                        android.widget.TextView pct = new android.widget.TextView(activity);
+                                        pct.setText(name + " — " + price + " / " + duration);
+                                        pct.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                                        pct.setTextColor(primaryText);
+                                        pct.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                                        planCard.addView(pct);
+                                        
+                                        if (!featuresText.isEmpty()) {
+                                            android.widget.TextView pcf = new android.widget.TextView(activity);
+                                            pcf.setText(featuresText);
+                                            pcf.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+                                            pcf.setTextColor(secondaryText);
+                                            pcf.setPadding(0, (int)(4*density), 0, 0);
+                                            planCard.addView(pcf);
+                                        }
+                                        
+                                        planCard.setClickable(true);
+                                        planCard.setFocusable(true);
+                                        planCard.setOnClickListener(v -> {
+                                            try {
+                                                android.content.Intent browserIntent = new android.content.Intent(
+                                                        android.content.Intent.ACTION_VIEW,
+                                                        android.net.Uri.parse("https://t.me/waenhancerx_bot?start=" + command));
+                                                browserIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                activity.startActivity(browserIntent);
+                                            } catch (Throwable t) {
+                                                android.widget.Toast.makeText(activity, "Could not open Telegram", android.widget.Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                        
+                                        plansContainer.addView(planCard);
+                                    }
+                                } catch (Throwable t) {
+                                    android.widget.Toast.makeText(activity, "Error rendering plans: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        } catch (Throwable t) {
+                            activity.runOnUiThread(() -> {
+                                plansContainer.removeAllViews();
+                                // Fallback static plans in case API endpoint is unreachable
+                                String[][] fallbackPlans = {
+                                    {"1 Month Plan", "$1.99", "month", "1month"},
+                                    {"1 Year Plan", "$14.99", "year", "1year"}
+                                };
+                                for (String[] fp : fallbackPlans) {
+                                    android.widget.LinearLayout planCard = new android.widget.LinearLayout(activity);
+                                    planCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+                                    planCard.setPadding(pad16, pad16, pad16, pad16);
+                                    
+                                    android.graphics.drawable.GradientDrawable pcGd = new android.graphics.drawable.GradientDrawable();
+                                    pcGd.setCornerRadius(12 * density);
+                                    pcGd.setColor(cardBg);
+                                    pcGd.setStroke((int) (1 * density), strokeColor);
+                                    planCard.setBackground(pcGd);
+                                    
+                                    android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
+                                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                    pcLp.bottomMargin = (int) (12 * density);
+                                    planCard.setLayoutParams(pcLp);
+                                    
+                                    android.widget.TextView pct = new android.widget.TextView(activity);
+                                    pct.setText(fp[0] + " — " + fp[1]);
+                                    pct.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                                    pct.setTextColor(primaryText);
+                                    pct.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                                    planCard.addView(pct);
+                                    
+                                    planCard.setClickable(true);
+                                    planCard.setFocusable(true);
+                                    planCard.setOnClickListener(v -> {
+                                        try {
+                                            android.content.Intent browserIntent = new android.content.Intent(
+                                                    android.content.Intent.ACTION_VIEW,
+                                                    android.net.Uri.parse("https://t.me/waenhancerx_bot?start=" + fp[3]));
+                                            browserIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                                            activity.startActivity(browserIntent);
+                                        } catch (Throwable t2) {
+                                            android.widget.Toast.makeText(activity, "Could not open Telegram", android.widget.Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                    plansContainer.addView(planCard);
+                                }
+                            });
+                        } finally {
+                            if (urlConnection != null) {
+                                urlConnection.disconnect();
+                            }
+                        }
+                    }).start();
+                    
+                    contentView = scrollView;
+                } else if ("premium_features".equals(screenId)) {
+                    title = "Premium & Free Features";
+                    
+                    int cardBg = isNight ? 0xFF1F2C34 : 0xFFF0F2F5; // Cards background matching WDS sheet fill color
+                    int primaryText = isNight ? 0xFFE9EDEF : 0xFF111B21;
+                    int secondaryText = isNight ? 0xFF8696A0 : 0xFF667781;
+                    int accentG = isNight ? 0xFF21C063 : 0xFF008069;
+                    int strokeColor = isNight ? 0xFF2D3B43 : 0xFFE1E3E6;
+
+                    android.widget.ScrollView scrollView = new android.widget.ScrollView(activity);
+                    scrollView.setLayoutParams(new ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                    // Keep native window background
+
+                    android.widget.LinearLayout containerLayout = new android.widget.LinearLayout(activity);
+                    containerLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    float density = activity.getResources().getDisplayMetrics().density;
+                    int pad24 = (int) (24 * density);
+                    int pad16 = (int) (16 * density);
+                    containerLayout.setPadding(pad24, pad24, pad24, pad24);
+                    scrollView.addView(containerLayout);
+
+                    try {
+                        ClassLoader moduleLoader = com.waenhancer.xposed.utils.ProHelper.getPluginClassLoader(activity);
+                        if (moduleLoader == null) {
+                            moduleLoader = SettingsInjector.class.getClassLoader();
+                        }
+                        
+                        android.content.Context moduleContext = activity;
+                        try {
+                            moduleContext = activity.createPackageContext("com.waenhancer", android.content.Context.CONTEXT_IGNORE_SECURITY);
+                        } catch (Throwable ignored) {}
+                        
+                        Class<?> fcClass = moduleLoader.loadClass("com.waenhancer.utils.FeatureCatalog");
+                        java.util.List<?> allFeatures = (java.util.List<?>) fcClass.getMethod("getAllFeatures", android.content.Context.class).invoke(null, moduleContext);
+                        
+                        Class<?> sfClass = moduleLoader.loadClass("com.waenhancer.model.SearchableFeature");
+                        Class<?> phClass = moduleLoader.loadClass("com.waenhancer.xposed.utils.ProHelper");
+
+                        for (Object feature : allFeatures) {
+                            String key = (String) sfClass.getMethod("getKey").invoke(feature);
+                            String fTitle = (String) sfClass.getMethod("getTitle").invoke(feature);
+                            String fSummary = (String) sfClass.getMethod("getSummary").invoke(feature);
+                            
+                            boolean isProFeature = false;
+                            if ("file_size_spoofer".equals(key)
+                                    || "filter_group_members_messages".equals(key)
+                                    || "message_bomber".equals(key) 
+                                    || "delete_message_file".equals(key) 
+                                    || "pro_status_splitter".equals(key)
+                                    || "customize_status_view_category".equals(key)
+                                    || "always_typing_global".equals(key)
+                                    || "floating_bottom_bar_pill_design".equals(key)
+                                    || "filter_items".equals(key)
+                                    || "send_audio_as_voice_status".equals(key)) {
+                                
+                                boolean isLimited = (Boolean) phClass.getMethod("isLimitedFreePreferenceEnabled", String.class).invoke(null, key);
+                                if (!isLimited) {
+                                    isProFeature = true;
+                                }
+                            }
+
+                            // Strictly display Pro features only
+                            if (!isProFeature) {
+                                continue;
+                            }
+
+                            // Interactive premium card layout
+                            android.widget.LinearLayout card = new android.widget.LinearLayout(activity);
+                            card.setOrientation(android.widget.LinearLayout.VERTICAL);
+                            card.setPadding(pad16, pad16, pad16, pad16);
+                            card.setClickable(true);
+                            card.setFocusable(true);
+                            
+                            android.graphics.drawable.GradientDrawable normalGd = new android.graphics.drawable.GradientDrawable();
+                            normalGd.setCornerRadius(12 * density);
+                            normalGd.setColor(cardBg);
+                            normalGd.setStroke((int) (1 * density), strokeColor);
+
+                            android.graphics.drawable.RippleDrawable rippleDrawable = new android.graphics.drawable.RippleDrawable(
+                                    android.content.res.ColorStateList.valueOf(isNight ? 0x15FFFFFF : 0x0A000000),
+                                    normalGd,
+                                    null
+                            );
+                            card.setBackground(rippleDrawable);
+
+                            android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
+                                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                            pcLp.bottomMargin = (int) (12 * density);
+                            card.setLayoutParams(pcLp);
+
+                            android.widget.TextView titleTv = new android.widget.TextView(activity);
+                            titleTv.setText("⚡ " + fTitle);
+                            titleTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                            titleTv.setTextColor(accentG);
+                            titleTv.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                            card.addView(titleTv);
+
+                            android.widget.TextView summaryTv = new android.widget.TextView(activity);
+                            summaryTv.setText(fSummary);
+                            summaryTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+                            summaryTv.setTextColor(secondaryText);
+                            summaryTv.setPadding(0, (int)(4*density), 0, 0);
+                            card.addView(summaryTv);
+
+                            containerLayout.addView(card);
+                        }
+                    } catch (Throwable t) {
+                        Throwable actual = t;
+                        if (t instanceof java.lang.reflect.InvocationTargetException && t.getCause() != null) {
+                            actual = t.getCause();
+                        }
+                        java.io.StringWriter sw = new java.io.StringWriter();
+                        actual.printStackTrace(new java.io.PrintWriter(sw));
+                        android.widget.TextView errTv = new android.widget.TextView(activity);
+                        errTv.setText("Failed to load features: " + actual.toString() + "\n\nStack:\n" + sw.toString());
+                        errTv.setTextColor(primaryText);
+                        containerLayout.addView(errTv);
+                    }
+
+                    contentView = scrollView;
                 } else {
                     contentView = WdsSettingsTileRenderer.buildSubScreenById(activity, settingsMap, screenId, readWritePrefs, (key, newValue) -> {
                         try {
@@ -656,14 +1362,184 @@ public class SettingsInjector extends Feature {
                 }
 
                 if (contentView != null) {
-                    container.addView(contentView);
+                    FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                    container.addView(contentView, lp);
                     setToolbarTitle(activity, title);
+                    
+                    // Handle scroll to target preference if navigating from search
+                    final String scrollToPref = activity.getIntent().getStringExtra("scroll_to_pref");
+                    if (scrollToPref != null) {
+                        activity.getIntent().removeExtra("scroll_to_pref"); // prevent repeated scrolling
+                        safeScrollTo(contentView, scrollToPref, 30); // retry up to 30 times (1.5 seconds)
+                    }
+                    if ("root".equals(screenId)) {
+                        ViewGroup rootToolbar = findToolbar(root);
+                        XposedBridge.log("[WAEX] hijackWholeScreen findToolbar: " + (rootToolbar != null ? rootToolbar.getClass().getName() : "null"));
+                        if (rootToolbar != null) {
+                            try {
+                                Object menuObj = XposedHelpers.callMethod(rootToolbar, "getMenu");
+                                XposedBridge.log("[WAEX] hijackWholeScreen getMenu: " + (menuObj != null ? menuObj.getClass().getName() : "null"));
+                                if (menuObj instanceof android.view.Menu) {
+                                    android.view.Menu menu = (android.view.Menu) menuObj;
+                                    XposedBridge.log("[WAEX] hijackWholeScreen menu size: " + menu.size());
+                                    if (menu.findItem(VIEW_ID_WAEX_SEARCH) == null) {
+                                        android.view.MenuItem searchItem = menu.add(0, VIEW_ID_WAEX_SEARCH, 0, "Search");
+                                        android.graphics.drawable.Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_search);
+                                        if (icon != null) {
+                                            icon = com.waenhancer.xposed.utils.DesignUtils.coloredDrawable(icon, isNight ? android.graphics.Color.WHITE : android.graphics.Color.BLACK);
+                                            searchItem.setIcon(icon);
+                                        }
+                                        searchItem.setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+                                        searchItem.setOnMenuItemClickListener(item -> {
+                                            android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                                            intent.putExtra("waex_screen_id", "search");
+                                            activity.startActivity(intent);
+                                            return true;
+                                        });
+                                    }
+                                }
+                            } catch (Throwable t) {
+                                XposedBridge.log("[WAEX] hijackWholeScreen getMenu error: " + t.getMessage());
+                            }
+                        }
+                    }
                 }
             }
         } catch (Throwable t) {
             XposedBridge.log("[WaEnhancerX] SettingsInjector: Hijack failed: " + t.getMessage());
         }
     }
+
+    private void performSearch(Activity activity, String query, ViewGroup containerLayout, JSONObject settingsMap, SharedPreferences readWritePrefs, WdsSettingsTileRenderer.PrefChangeListener listener, boolean isNight, float density) {
+        containerLayout.removeAllViews();
+        try {
+            org.json.JSONArray matchingPrefs = new org.json.JSONArray();
+            final java.util.Map<String, String> prefToSubScreenMap = new java.util.HashMap<>();
+            org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+            for (int i = 0; i < categories.length(); i++) {
+                org.json.JSONObject category = categories.getJSONObject(i);
+                org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                if (subScreens != null) {
+                    for (int j = 0; j < subScreens.length(); j++) {
+                        org.json.JSONObject subScreen = subScreens.getJSONObject(j);
+                        String subScreenId = subScreen.optString("id", "");
+                        org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                        if (prefsArray != null) {
+                            for (int k = 0; k < prefsArray.length(); k++) {
+                                org.json.JSONObject pref = prefsArray.getJSONObject(k);
+                                String key = pref.optString("key", "");
+                                String t = pref.optString("title", "").toLowerCase();
+                                String sum = pref.optString("summary", "").toLowerCase();
+                                if (query.isEmpty() || t.contains(query) || sum.contains(query)) {
+                                    org.json.JSONObject copyPref = new org.json.JSONObject(pref.toString());
+                                    String catTitle = category.optString("title", "");
+                                    String subTitle = subScreen.optString("title", "");
+                                    String breadcrumb = catTitle + " > " + subTitle;
+                                    copyPref.put("summary", breadcrumb);
+                                    matchingPrefs.put(copyPref);
+                                    prefToSubScreenMap.put(key, subScreenId);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (matchingPrefs.length() > 0) {
+                java.util.function.BiConsumer<String, String> navigateCallback = (prefKey, ignored) -> {
+                    String targetScreenId = prefToSubScreenMap.get(prefKey);
+                    if (targetScreenId != null) {
+                        android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                        intent.putExtra("waex_screen_id", targetScreenId);
+                        intent.putExtra("scroll_to_pref", prefKey);
+                        activity.startActivity(intent);
+                    }
+                };
+                WdsSettingsTileRenderer.renderPrefsArray(activity, (android.widget.LinearLayout) containerLayout, matchingPrefs, readWritePrefs, listener, true, navigateCallback);
+            } else {
+                android.widget.TextView noResults = new android.widget.TextView(activity);
+                noResults.setText("No features found matching \"" + query + "\"");
+                noResults.setGravity(android.view.Gravity.CENTER);
+                noResults.setTextColor(isNight ? 0x88FFFFFF : 0x88111B21);
+                noResults.setTextSize(16);
+                android.widget.LinearLayout.LayoutParams noResultsParams = new android.widget.LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                noResultsParams.topMargin = (int) (40 * density);
+                noResults.setLayoutParams(noResultsParams);
+                containerLayout.addView(noResults);
+            }
+        } catch (Exception ex) {
+            de.robv.android.xposed.XposedBridge.log("[WAEX] Search filtering error: " + ex.getMessage());
+        }
+    }
+
+    private android.widget.EditText findFirstEditText(ViewGroup group) {
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (child instanceof android.widget.EditText) {
+                return (android.widget.EditText) child;
+            } else if (child instanceof ViewGroup) {
+                android.widget.EditText found = findFirstEditText((ViewGroup) child);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private void blinkView(View view, int times) {
+        if (times <= 0 || view == null) return;
+        view.animate()
+            .alpha(0.3f)
+            .setDuration(250)
+            .withEndAction(() -> {
+                view.animate()
+                    .alpha(1.0f)
+                    .setDuration(250)
+                    .withEndAction(() -> blinkView(view, times - 1))
+                    .start();
+            })
+            .start();
+    }
+
+    private void safeScrollTo(View startView, String tag, int attempts) {
+        if (attempts <= 0 || startView == null) return;
+        View target = startView.findViewWithTag(tag);
+        if (target != null && startView.getHeight() > 0 && target.getHeight() > 0) {
+            final View finalTarget = target;
+            startView.postDelayed(() -> {
+                // Walk up parent hierarchy to find first scrollable ancestor
+                View scrollingParent = null;
+                android.view.ViewParent pWalk = finalTarget.getParent();
+                while (pWalk instanceof View) {
+                    View v = (View) pWalk;
+                    if (v.getClass().getName().contains("ScrollView")) {
+                        scrollingParent = v;
+                    }
+                    pWalk = v.getParent();
+                }
+
+                if (scrollingParent != null) {
+                    int offset = 0;
+                    android.view.View curr = finalTarget;
+                    while (curr != null && curr != scrollingParent) {
+                        offset += curr.getTop();
+                        android.view.ViewParent p = curr.getParent();
+                        curr = (p instanceof android.view.View) ? (android.view.View) p : null;
+                    }
+                    int scrollY = Math.max(0, offset - (int)(16 * scrollingParent.getResources().getDisplayMetrics().density));
+                    try {
+                        de.robv.android.xposed.XposedHelpers.callMethod(scrollingParent, "smoothScrollTo", 0, scrollY);
+                    } catch (Throwable t) {
+                        scrollingParent.scrollTo(0, scrollY);
+                    }
+                }
+            }, 300);
+            startView.postDelayed(() -> blinkView(finalTarget, 2), 600);
+        } else {
+            startView.postDelayed(() -> safeScrollTo(startView, tag, attempts - 1), 50);
+        }
+    }
+
 
     private void setToolbarTitle(Activity activity, String title) {
         try {
@@ -680,16 +1556,36 @@ public class SettingsInjector extends Feature {
             if (root != null) {
                 ViewGroup toolbar = findToolbar(root);
                 if (toolbar != null) {
+                    try {
+                        XposedHelpers.callMethod(toolbar, "setTitle", title);
+                    } catch (Throwable ignored) {}
+                    
+                    boolean titleSet = false;
                     for (int i = 0; i < toolbar.getChildCount(); i++) {
                         View child = toolbar.getChildAt(i);
                         if (child instanceof android.widget.TextView) {
                             ((android.widget.TextView) child).setText(title);
+                            titleSet = true;
                         } else if (child instanceof ViewGroup) {
                             android.widget.TextView tv = findTextView(child);
                             if (tv != null) {
                                 tv.setText(title);
+                                titleSet = true;
                             }
                         }
+                    }
+                    if (!titleSet) {
+                        android.widget.TextView titleView = new android.widget.TextView(activity);
+                        titleView.setText(title);
+                        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 18);
+                        boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                        titleView.setTextColor(isNight ? 0xFFFFFFFF : 0xFF111B21);
+                        titleView.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                        ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
+                                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        params.setMarginStart(dp(activity, 16));
+                        titleView.setLayoutParams(params);
+                        toolbar.addView(titleView);
                     }
                 }
             }
@@ -781,6 +1677,18 @@ public class SettingsInjector extends Feature {
     }
 
     private ViewGroup findToolbar(View view) {
+        if (view == null) return null;
+        try {
+            android.content.Context context = view.getContext();
+            int toolbarId = context.getResources().getIdentifier("toolbar", "id", context.getPackageName());
+            if (toolbarId != 0) {
+                View toolbar = view.findViewById(toolbarId);
+                if (toolbar instanceof ViewGroup) {
+                    return (ViewGroup) toolbar;
+                }
+            }
+        } catch (Throwable ignored) {}
+
         if (!(view instanceof ViewGroup)) {
             return null;
         }

@@ -131,17 +131,6 @@ public class ResId {
         public static int fragment_privacy;
         public static int fragment_media;
         public static int fragment_customization;
-        public static int embedded_settings_root;
-        public static int embedded_settings_general;
-        public static int embedded_settings_home_screen;
-        public static int embedded_settings_conversation;
-        public static int embedded_settings_privacy;
-        public static int embedded_settings_status;
-        public static int embedded_settings_calls;
-        public static int embedded_settings_media;
-        public static int embedded_settings_audio;
-        public static int embedded_settings_appearance;
-        public static int embedded_settings_advanced;
     }
 
     public static class style {

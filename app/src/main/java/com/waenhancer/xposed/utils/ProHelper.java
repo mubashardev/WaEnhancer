@@ -1143,7 +1143,8 @@ public class ProHelper {
                 || key.equals("always_typing_global_type")
                 || key.equals("send_audio_as_voice_status")
                 || key.equals("file_size_spoofer")
-                || key.equals("filter_group_members_messages");
+                || key.equals("filter_group_members_messages")
+                || key.equals("recover_deleted_media");
     }
 
     private static boolean isProFeature(Preference pref) {

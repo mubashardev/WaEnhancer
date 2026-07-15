@@ -10,6 +10,9 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import android.os.ParcelFileDescriptor;
+import java.io.File;
+import java.io.FileNotFoundException;
 import com.waenhancer.xposed.core.db.DelMessageStore;
 
 public class DeletedMessagesProvider extends ContentProvider {
@@ -22,11 +25,13 @@ public class DeletedMessagesProvider extends ContentProvider {
 
     private static final int DELETED_MESSAGES = 1;
     private static final int PREFERENCES = 2;
+    private static final int MEDIA = 3;
     private static final UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     static {
         uriMatcher.addURI(AUTHORITY, PATH_DELETED_MESSAGES, DELETED_MESSAGES);
         uriMatcher.addURI(AUTHORITY, PATH_PREFERENCES, PREFERENCES);
+        uriMatcher.addURI(AUTHORITY, "media/*", MEDIA);
     }
 
     private DelMessageStore dbHelper;
@@ -35,6 +40,32 @@ public class DeletedMessagesProvider extends ContentProvider {
     public boolean onCreate() {
         dbHelper = DelMessageStore.getInstance(getContext());
         return true;
+    }
+
+    @Nullable
+    @Override
+    public ParcelFileDescriptor openFile(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
+        if (uriMatcher.match(uri) == MEDIA) {
+            String keyId = uri.getLastPathSegment();
+            String ext = uri.getQueryParameter("ext");
+            if (ext == null) ext = "";
+            
+            var context = getContext();
+            if (context == null) throw new FileNotFoundException("Context is null");
+            
+            File mediaDir = new File(context.getFilesDir(), "deleted_media");
+            if (!mediaDir.exists()) {
+                mediaDir.mkdirs();
+            }
+            
+            File file = new File(mediaDir, keyId + ext);
+            int fileMode = ParcelFileDescriptor.MODE_READ_ONLY;
+            if (mode.contains("w")) {
+                fileMode = ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_CREATE | ParcelFileDescriptor.MODE_TRUNCATE;
+            }
+            return ParcelFileDescriptor.open(file, fileMode);
+        }
+        return super.openFile(uri, mode);
     }
 
     @Nullable
@@ -83,6 +114,10 @@ public class DeletedMessagesProvider extends ContentProvider {
 
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
+        if (uriMatcher.match(uri) == DELETED_MESSAGES && values != null) {
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            return db.update(DelMessageStore.TABLE_DELETED_FOR_ME, values, selection, selectionArgs);
+        }
         return 0;
     }
 

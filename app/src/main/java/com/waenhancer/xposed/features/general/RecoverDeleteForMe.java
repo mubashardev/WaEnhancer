@@ -3,14 +3,13 @@ package com.waenhancer.xposed.features.general;
 import android.content.Context;
 
 import com.waenhancer.xposed.core.Feature;
+import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.components.WaContactWpp;
-import com.waenhancer.xposed.core.db.DelMessageStore;
 import com.waenhancer.xposed.core.db.DeletedMessage;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.Utils;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -66,8 +65,6 @@ public class RecoverDeleteForMe extends Feature {
                             ;
                             return;
                         }
-                        // DelMessageStore store = DelMessageStore.getInstance(ctx); // No longer needed
-                        // for insertion
                         for (Object msg : msgs) {
                             try {
                                 saveOne(ctx, msg);
@@ -184,15 +181,16 @@ public class RecoverDeleteForMe extends Feature {
             senderJid = isGroupChat ? "Unknown" : chatJid;
         }
 
-        // 8. Media Details
-        String mediaPath = null;
-        var mediaFile = fMessage.getMediaFile();
-        if (mediaFile != null && mediaFile.exists()) {
-            mediaPath = mediaFile.getAbsolutePath();
+        // 8. Media Details - media file storage is handled entirely by pro module
+        String mediaCaption = null;
+        if (mediaType > 0) {
+            String rawCaption = fMessage.getMessageStr();
+            if (rawCaption != null && !rawCaption.isEmpty()
+                    && !rawCaption.startsWith("http")
+                    && !(rawCaption.length() > 20 && !rawCaption.contains(" "))) {
+                mediaCaption = rawCaption;
+            }
         }
-
-        String mediaCaption = null; // FMessageWpp doesn't have getCaption yet, but we can add it or find it
-        // For now, let's keep the heuristic for caption if needed, or better, add to FMessageWpp
 
         long timestamp = System.currentTimeMillis();
 
@@ -272,14 +270,15 @@ public class RecoverDeleteForMe extends Feature {
             XposedBridge.log("[WAEX] Error extracting original timestamp: " + e.getMessage());
         }
 
-        // Create and Save
+        // Create and Save (media_path left null — pro module populates it when recover_deleted_media is enabled)
         DeletedMessage deletedMessage = new DeletedMessage(
-                0, keyId, chatJid, senderJid, timestamp, originalTimestamp, mediaType, textContent, mediaPath,
+                0, keyId, chatJid, senderJid, timestamp, originalTimestamp, mediaType, textContent, null,
                 mediaCaption, fromMe,
                 contactName, packageName);
 
         saveToDatabase(context, deletedMessage);
     }
+
 
     private String getContactName(Context context, String jid) {
         if (jid == null)
@@ -316,11 +315,30 @@ public class RecoverDeleteForMe extends Feature {
             values.put("original_timestamp", message.getOriginalTimestamp());
             values.put("media_type", message.getMediaType());
             values.put("text_content", message.getTextContent());
-            values.put("media_path", message.getMediaPath());
             values.put("media_caption", message.getMediaCaption());
             values.put("is_from_me", message.isFromMe() ? 1 : 0);
             values.put("contact_name", message.getContactName());
             values.put("package_name", message.getPackageName());
+
+            // Check if Pro module has a pending media path for this message
+            String mediaPath = null;
+            if (message.getKeyId() != null) {
+                try {
+                    ClassLoader proLoader = (ClassLoader) System.getProperties().get("com.waex.helper.classloader");
+                    if (proLoader != null) {
+                        Class<?> proClass = proLoader.loadClass("com.waex.helper.RecoverDeletedMediaPro");
+                        java.lang.reflect.Method consumeMethod = proClass.getMethod("consumePendingMediaPath", String.class);
+                        mediaPath = (String) consumeMethod.invoke(null, message.getKeyId());
+                    }
+                } catch (ClassNotFoundException e) {
+                    // Pro module not available — that's expected for free users
+                } catch (Throwable t) {
+                    XposedBridge.log("[WAEX] consumePendingMediaPath reflection failed: " + t.getMessage());
+                }
+            }
+            if (mediaPath != null) {
+                values.put("media_path", mediaPath);
+            }
 
             String authority = com.waenhancer.BuildConfig.APPLICATION_ID + ".provider";
             android.net.Uri uri = android.net.Uri.parse("content://" + authority + "/deleted_messages");

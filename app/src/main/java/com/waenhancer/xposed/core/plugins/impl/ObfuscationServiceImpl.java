@@ -251,4 +251,13 @@ public class ObfuscationServiceImpl implements IObfuscationService {
             return null;
         }
     }
+
+    @Override
+    public Class<?> loadCoreMessageStoreClass(ClassLoader classLoader) {
+        try {
+            return Unobfuscator.loadCoreMessageStore(classLoader);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

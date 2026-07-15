@@ -36,4 +36,5 @@ public interface IObfuscationService {
     java.lang.reflect.Method findVoiceGetPreviewStateMethod(ClassLoader classLoader, Class<?> delegateClass, String recorderTypeName, Class<?> stateSuperClass);
     Class<?> loadFStatusClass(ClassLoader classLoader);
     Class<?> loadFStatusKeyClass(ClassLoader classLoader);
+    Class<?> loadCoreMessageStoreClass(ClassLoader classLoader);
 }

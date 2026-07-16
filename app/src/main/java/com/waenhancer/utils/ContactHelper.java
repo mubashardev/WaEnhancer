@@ -7,12 +7,53 @@ import android.provider.ContactsContract;
 
 public class ContactHelper {
 
+    public static String normalizeJid(String jid) {
+        if (jid == null) return null;
+        String clean = jid.trim();
+        String server = "s.whatsapp.net";
+        if (clean.contains("@")) {
+            String[] parts = clean.split("@");
+            clean = parts[0];
+            server = parts[1];
+        }
+        if (clean.contains(":")) {
+            clean = clean.split(":")[0];
+        }
+        if (clean.contains(".")) {
+            clean = clean.split("\\.")[0];
+        }
+        return clean + "@" + server;
+    }
+
     public static String getContactName(Context context, String jid) {
         if (jid == null) return null;
-        if (context.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            return null;
+
+        String cleanJid = normalizeJid(jid);
+
+        boolean hasContactsPermission = context.checkSelfPermission(android.Manifest.permission.READ_CONTACTS)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+        // 1. If permission is granted, query system contacts
+        if (hasContactsPermission) {
+            String systemName = getSystemContactName(context, cleanJid);
+            if (systemName != null && !systemName.trim().isEmpty()) {
+                return systemName.trim();
+            }
         }
 
+        // 2. Fallback to locally synced WhatsApp contacts database
+        try {
+            String waName = com.waenhancer.xposed.core.db.DelMessageStore.getInstance(context)
+                    .getWhatsAppContactName(cleanJid);
+            if (waName != null && !waName.trim().isEmpty()) {
+                return waName.trim();
+            }
+        } catch (Throwable ignored) {}
+
+        return null;
+    }
+
+    private static String getSystemContactName(Context context, String jid) {
         String phoneNumber = jid.replace("@s.whatsapp.net", "").replace("@g.us", "");
         if (phoneNumber.contains("@")) phoneNumber = phoneNumber.split("@")[0];
 

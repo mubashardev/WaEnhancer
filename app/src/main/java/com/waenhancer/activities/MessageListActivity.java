@@ -45,11 +45,14 @@ public class MessageListActivity extends BaseActivity implements MessageListAdap
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            String title = chatJid;
-            if (title != null) {
-                title = title.replace("@s.whatsapp.net", "").replace("@g.us", "");
-                if (title.contains("@"))
-                    title = title.split("@")[0];
+            String title = com.waenhancer.utils.ContactHelper.getContactName(this, chatJid);
+            if (title == null || title.trim().isEmpty()) {
+                title = chatJid;
+                if (title != null) {
+                    title = title.replace("@s.whatsapp.net", "").replace("@g.us", "");
+                    if (title.contains("@"))
+                        title = title.split("@")[0];
+                }
             }
             getSupportActionBar().setTitle(title);
         }

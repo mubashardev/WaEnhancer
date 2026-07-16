@@ -75,17 +75,8 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
             boolean showName = !message.isFromMe() && message.getChatJid().contains("@g.us");
 
             if (showName) {
-                boolean hasContactsPermission = context.checkSelfPermission(android.Manifest.permission.READ_CONTACTS)
-                        == android.content.pm.PackageManager.PERMISSION_GRANTED;
-                String contactName = null;
-
-                if (hasContactsPermission) {
-                    contactName = message.getContactName();
-                    if (contactName == null) {
-                        contactName = com.waenhancer.utils.ContactHelper.getContactName(context,
-                                message.getSenderJid());
-                    }
-                }
+                String contactName = com.waenhancer.utils.ContactHelper.getContactName(context,
+                        message.getSenderJid());
 
                 if (contactName != null) {
                     holder.senderName.setText(contactName);

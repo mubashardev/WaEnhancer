@@ -123,36 +123,68 @@ public class ContactPickerActivity extends BaseActivity {
     @NonNull
     private List<SelectableContact> queryContacts() {
         Map<String, SelectableContact> uniqueContacts = new LinkedHashMap<>();
-        String[] projection = {
-                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                ContactsContract.CommonDataKinds.Phone.NUMBER
-        };
 
-        try (Cursor cursor = getContentResolver().query(
-                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                projection,
-                ContactsContract.CommonDataKinds.Phone.NUMBER + " IS NOT NULL",
-                null,
-                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE NOCASE ASC")) {
-            if (cursor == null) {
-                return new ArrayList<>();
-            }
+        // 1. Read phone contacts if permission is granted
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED) {
+            String[] projection = {
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER
+            };
 
-            int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
-            int numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-            while (cursor.moveToNext()) {
-                String name = nameIndex >= 0 ? cursor.getString(nameIndex) : null;
-                String number = numberIndex >= 0 ? cursor.getString(numberIndex) : null;
-                String normalized = normalizePhone(number);
-                if (normalized.isEmpty() || uniqueContacts.containsKey(normalized)) {
-                    continue;
+            try (Cursor cursor = getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    projection,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER + " IS NOT NULL",
+                    null,
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE NOCASE ASC")) {
+                if (cursor != null) {
+                    int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                    int numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                    while (cursor.moveToNext()) {
+                        String name = nameIndex >= 0 ? cursor.getString(nameIndex) : null;
+                        String number = numberIndex >= 0 ? cursor.getString(numberIndex) : null;
+                        String normalized = normalizePhone(number);
+                        if (normalized.isEmpty() || uniqueContacts.containsKey(normalized)) {
+                            continue;
+                        }
+                        String displayName = (name == null || name.trim().isEmpty()) ? normalized : name.trim();
+                        uniqueContacts.put(normalized,
+                                new SelectableContact(displayName, normalized, preselectedContacts.contains(normalized)));
+                    }
                 }
-                String displayName = (name == null || name.trim().isEmpty()) ? normalized : name.trim();
-                uniqueContacts.put(normalized,
-                        new SelectableContact(displayName, normalized, preselectedContacts.contains(normalized)));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            runOnUiThread(() -> Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show());
+        }
+
+        // 2. Read synced WhatsApp contacts from our local database
+        try {
+            java.util.ArrayList<com.waenhancer.xposed.core.db.DelMessageStore.ContactInfo> waContacts =
+                    com.waenhancer.xposed.core.db.DelMessageStore.getInstance(this).getWhatsAppContacts();
+            for (com.waenhancer.xposed.core.db.DelMessageStore.ContactInfo wa : waContacts) {
+                String normalized = wa.number;
+                if (normalized == null || normalized.isEmpty()) {
+                    normalized = wa.jid.replace("@s.whatsapp.net", "").replace("@g.us", "");
+                    if (normalized.contains("@")) normalized = normalized.split("@")[0];
+                }
+                normalized = normalizePhone(normalized);
+                if (normalized.isEmpty()) continue;
+
+                if (!uniqueContacts.containsKey(normalized)) {
+                    String displayName = wa.displayName;
+                    if (displayName == null || displayName.trim().isEmpty()) {
+                        displayName = wa.waName;
+                    }
+                    if (displayName == null || displayName.trim().isEmpty()) {
+                        displayName = normalized;
+                    }
+                    uniqueContacts.put(normalized,
+                            new SelectableContact(displayName.trim(), normalized, preselectedContacts.contains(normalized)));
+                }
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
 
         List<SelectableContact> resultList = new ArrayList<>(uniqueContacts.values());
@@ -237,8 +269,8 @@ public class ContactPickerActivity extends BaseActivity {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             loadContacts();
         } else {
-            Toast.makeText(this, R.string.grant_contacts_permission, Toast.LENGTH_SHORT).show();
-            finish();
+            Toast.makeText(this, "Listing WhatsApp contacts", Toast.LENGTH_SHORT).show();
+            loadContacts();
         }
     }
 

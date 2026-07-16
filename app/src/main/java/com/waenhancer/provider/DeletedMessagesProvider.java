@@ -161,6 +161,25 @@ public class DeletedMessagesProvider extends ContentProvider {
             return android.os.Bundle.EMPTY;
         }
 
+        if ("sync_contacts".equals(method) && extras != null) {
+            java.util.ArrayList<ContentValues> contacts = extras.getParcelableArrayList("contacts");
+            if (contacts != null && !contacts.isEmpty()) {
+                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                db.beginTransaction();
+                try {
+                    for (ContentValues values : contacts) {
+                        db.insertWithOnConflict(DelMessageStore.TABLE_WA_CONTACTS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                    }
+                    db.setTransactionSuccessful();
+                } catch (Throwable t) {
+                    android.util.Log.e("DeletedMessagesProvider", "sync_contacts failed", t);
+                } finally {
+                    db.endTransaction();
+                }
+            }
+            return android.os.Bundle.EMPTY;
+        }
+
         if ("put_preference".equals(method) && extras != null) {
             String key = extras.getString("key");
             Object value = extras.get("value");

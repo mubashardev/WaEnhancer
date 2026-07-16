@@ -22,8 +22,9 @@ public class DelMessageStore extends SQLiteOpenHelper {
         }
     });
 
-    private static final int DATABASE_VERSION = 10;
+    private static final int DATABASE_VERSION = 11;
     public static final String TABLE_DELETED_FOR_ME = "deleted_for_me";
+    public static final String TABLE_WA_CONTACTS = "wa_contacts";
 
     private DelMessageStore(@NonNull Context context) {
         super(context, "delmessages.db", null, DATABASE_VERSION);
@@ -89,6 +90,17 @@ public class DelMessageStore extends SQLiteOpenHelper {
                 }
             }
         }
+        if (oldVersion < 11) {
+            try {
+                sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_WA_CONTACTS + " (" +
+                        "jid TEXT PRIMARY KEY, " +
+                        "display_name TEXT, " +
+                        "wa_name TEXT, " +
+                        "number TEXT)");
+            } catch (Exception e) {
+                // Ignore if fails
+            }
+        }
     }
 
     @Override
@@ -100,6 +112,7 @@ public class DelMessageStore extends SQLiteOpenHelper {
         ;
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_DELETED_FOR_ME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS delmessages");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_WA_CONTACTS);
         onCreate(sqLiteDatabase);
     }
 
@@ -298,6 +311,11 @@ public class DelMessageStore extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(
                 "CREATE TABLE IF NOT EXISTS delmessages (_id INTEGER PRIMARY KEY AUTOINCREMENT, jid TEXT, msgid TEXT, timestamp INTEGER DEFAULT 0, UNIQUE(jid, msgid))");
         createDeletedForMeTable(sqLiteDatabase);
+        sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_WA_CONTACTS + " (" +
+                "jid TEXT PRIMARY KEY, " +
+                "display_name TEXT, " +
+                "wa_name TEXT, " +
+                "number TEXT)");
     }
 
     public long getTimestampByMessageId(String msgid) {
@@ -331,5 +349,52 @@ public class DelMessageStore extends SQLiteOpenHelper {
         } catch (Exception ignored) {
         }
         return false;
+    }
+
+    public static class ContactInfo {
+        public String jid;
+        public String displayName;
+        public String waName;
+        public String number;
+    }
+
+    public java.util.ArrayList<ContactInfo> getWhatsAppContacts() {
+        java.util.ArrayList<ContactInfo> list = new java.util.ArrayList<>();
+        SQLiteDatabase dbReader = this.getReadableDatabase();
+        try (Cursor cursor = dbReader.query(TABLE_WA_CONTACTS, null, null, null, null, null, "display_name COLLATE NOCASE ASC, jid ASC")) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int jidIdx = cursor.getColumnIndexOrThrow("jid");
+                int dispIdx = cursor.getColumnIndexOrThrow("display_name");
+                int waIdx = cursor.getColumnIndexOrThrow("wa_name");
+                int numIdx = cursor.getColumnIndexOrThrow("number");
+                do {
+                    ContactInfo info = new ContactInfo();
+                    info.jid = cursor.getString(jidIdx);
+                    info.displayName = cursor.getString(dispIdx);
+                    info.waName = cursor.getString(waIdx);
+                    info.number = cursor.getString(numIdx);
+                    list.add(info);
+                } while (cursor.moveToNext());
+            }
+        } catch (Throwable ignored) {}
+        return list;
+    }
+
+    public String getWhatsAppContactName(String jid) {
+        if (jid == null) return null;
+        String cleanJid = com.waenhancer.utils.ContactHelper.normalizeJid(jid);
+        SQLiteDatabase dbReader = this.getReadableDatabase();
+        try (Cursor cursor = dbReader.query(TABLE_WA_CONTACTS, new String[]{"display_name", "wa_name"}, "jid=?", new String[]{cleanJid}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                String name = cursor.getString(0);
+                if (name == null || name.trim().isEmpty()) {
+                    name = cursor.getString(1); // Try wa_name fallback
+                }
+                if (name != null && !name.trim().isEmpty()) {
+                    return name.trim();
+                }
+            }
+        } catch (Throwable ignored) {}
+        return null;
     }
 }

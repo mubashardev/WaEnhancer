@@ -371,6 +371,19 @@ public class FeatureLoader {
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         super.afterHookedMethod(param);
                         Activity activity = (Activity) param.thisObject;
+
+                        long now = System.currentTimeMillis();
+                        if (now - lastSyncTime > 15000) {
+                            lastSyncTime = now;
+                            new Thread(() -> {
+                                try {
+                                    Thread.sleep(2000); // Allow databases to initialize and release startup locks
+                                    syncWhatsAppContacts(activity, loader);
+                                } catch (Throwable t) {
+                                    XposedBridge.log("[WAEX] Contact sync background task failed: " + t.toString());
+                                }
+                            }).start();
+                        }
                         boolean needFilterIndex = pref.getBoolean("filter_group_members_messages", false);
                         boolean needSeparateIndex = pref.getBoolean("separategroups", false);
                         XposedBridge.log("[WAEX] HomeActivity onCreate called. needFilterIndex: " + needFilterIndex + ", needSeparateIndex: " + needSeparateIndex + ", hasPromptedOptimization: " + hasPromptedOptimization);
@@ -1365,5 +1378,195 @@ public class FeatureLoader {
                     "\nerror='" + getError() + '\'';
         }
 
+    }
+
+     private static long lastSyncTime = 0;
+
+    private static void syncWhatsAppContacts(Context context, ClassLoader classLoader) {
+        try {
+            java.io.File waDbFile = context.getDatabasePath("wa.db");
+            if (!waDbFile.exists()) return;
+
+            android.database.sqlite.SQLiteDatabase db = null;
+            int retries = 3;
+            while (retries > 0) {
+                try {
+                    db = android.database.sqlite.SQLiteDatabase.openDatabase(
+                            waDbFile.getAbsolutePath(), null,
+                            android.database.sqlite.SQLiteDatabase.OPEN_READONLY | android.database.sqlite.SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+                    break;
+                } catch (Throwable t) {
+                    retries--;
+                    if (retries <= 0) {
+                        XposedBridge.log("[WAEX] Failed to open wa.db after retries: " + t.getMessage());
+                        return;
+                    }
+                    try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+                }
+            }
+
+            java.util.ArrayList<android.content.ContentValues> contactList = new java.util.ArrayList<>();
+
+            try (android.database.Cursor cursor = db.rawQuery(
+                    "SELECT jid, display_name, wa_name, number FROM wa_contacts WHERE is_whatsapp_user = 1 OR jid LIKE '%@g.us'", null)) {
+                if (cursor != null) {
+                    int jidIdx = cursor.getColumnIndex("jid");
+                    int dispIdx = cursor.getColumnIndex("display_name");
+                    int waIdx = cursor.getColumnIndex("wa_name");
+                    int numIdx = cursor.getColumnIndex("number");
+
+                    while (cursor.moveToNext()) {
+                        String jid = cursor.getString(jidIdx);
+                        String displayName = cursor.getString(dispIdx);
+                        String waName = cursor.getString(waIdx);
+                        String number = cursor.getString(numIdx);
+
+                        android.content.ContentValues values = new android.content.ContentValues();
+                        values.put("jid", jid);
+                        values.put("display_name", displayName);
+                        values.put("wa_name", waName);
+                        values.put("number", number);
+                        contactList.add(values);
+                    }
+                }
+            } finally {
+                db.close();
+            }
+
+            java.io.File msgstoreDbFile = context.getDatabasePath("msgstore.db");
+            if (msgstoreDbFile.exists()) {
+                android.database.sqlite.SQLiteDatabase msgDb = null;
+                int msgRetries = 3;
+                while (msgRetries > 0) {
+                    try {
+                        msgDb = android.database.sqlite.SQLiteDatabase.openDatabase(
+                                msgstoreDbFile.getAbsolutePath(), null,
+                                android.database.sqlite.SQLiteDatabase.OPEN_READONLY | android.database.sqlite.SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+                        break;
+                    } catch (Throwable t) {
+                        msgRetries--;
+                        if (msgRetries <= 0) {
+                            XposedBridge.log("[WAEX] Failed to open msgstore.db: " + t.getMessage());
+                            break;
+                        }
+                        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+                    }
+                }
+
+                if (msgDb != null) {
+                    try {
+                        try (android.database.Cursor cursor = msgDb.rawQuery(
+                                "SELECT j.raw_string, c.subject FROM chat c JOIN jid j ON c.jid_row_id = j._id WHERE j.raw_string LIKE '%@g.us'", null)) {
+                            if (cursor != null) {
+                                int jidIdx = cursor.getColumnIndex("raw_string");
+                                int subjIdx = cursor.getColumnIndex("subject");
+
+                                java.util.Map<String, android.content.ContentValues> groupMap = new java.util.HashMap<>();
+                                for (android.content.ContentValues cv : contactList) {
+                                    String jid = cv.getAsString("jid");
+                                    if (jid != null && jid.endsWith("@g.us")) {
+                                        groupMap.put(jid, cv);
+                                    }
+                                }
+
+                                while (cursor.moveToNext()) {
+                                    String jid = cursor.getString(jidIdx);
+                                    String subject = cursor.getString(subjIdx);
+                                    if (subject != null && !subject.trim().isEmpty()) {
+                                        android.content.ContentValues cv = groupMap.get(jid);
+                                        if (cv != null) {
+                                            cv.put("display_name", subject);
+                                        } else {
+                                            android.content.ContentValues values = new android.content.ContentValues();
+                                            values.put("jid", jid);
+                                            values.put("display_name", subject);
+                                            contactList.add(values);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Query JID mapping to resolve LID names
+                        java.util.Map<String, String> lidToPhoneMap = new java.util.HashMap<>();
+                        try (android.database.Cursor mapCursor = msgDb.rawQuery(
+                                "SELECT j1.raw_string AS lid, j2.raw_string AS phone " +
+                                "FROM jid_map jm " +
+                                "JOIN jid j1 ON jm.lid_row_id = j1._id " +
+                                "JOIN jid j2 ON jm.jid_row_id = j2._id", null)) {
+                            if (mapCursor != null) {
+                                int lidCol = mapCursor.getColumnIndex("lid");
+                                int phoneCol = mapCursor.getColumnIndex("phone");
+                                while (mapCursor.moveToNext()) {
+                                    String lid = mapCursor.getString(lidCol);
+                                    String phone = mapCursor.getString(phoneCol);
+                                    if (lid != null && phone != null) {
+                                        lidToPhoneMap.put(lid, phone);
+                                    }
+                                }
+                            }
+                        } catch (Throwable t) {
+                            XposedBridge.log("[WAEX] Querying jid_map failed: " + t.getMessage());
+                        }
+
+                        if (!lidToPhoneMap.isEmpty()) {
+                            java.util.Map<String, android.content.ContentValues> phoneContactMap = new java.util.HashMap<>();
+                            for (android.content.ContentValues cv : contactList) {
+                                String jid = cv.getAsString("jid");
+                                if (jid != null && jid.endsWith("@s.whatsapp.net")) {
+                                    phoneContactMap.put(jid, cv);
+                                }
+                            }
+
+                            for (java.util.Map.Entry<String, String> entry : lidToPhoneMap.entrySet()) {
+                                String lidJid = entry.getKey();
+                                String phoneJid = entry.getValue();
+                                android.content.ContentValues phoneCv = phoneContactMap.get(phoneJid);
+                                if (phoneCv != null) {
+                                    android.content.ContentValues values = new android.content.ContentValues();
+                                    values.put("jid", lidJid);
+                                    values.put("display_name", phoneCv.getAsString("display_name"));
+                                    values.put("wa_name", phoneCv.getAsString("wa_name"));
+                                    values.put("number", phoneCv.getAsString("number"));
+                                    contactList.add(values);
+                                }
+                            }
+                        }
+                    } finally {
+                        msgDb.close();
+                    }
+                }
+            }
+
+            if (!contactList.isEmpty()) {
+                String authority = "com.waenhancer.provider";
+                try {
+                    Class<?> buildConfigClass = classLoader.loadClass("com.waenhancer.BuildConfig");
+                    java.lang.reflect.Field appIdField = buildConfigClass.getField("APPLICATION_ID");
+                    String appId = (String) appIdField.get(null);
+                    if (appId != null && !appId.trim().isEmpty()) {
+                        authority = appId + ".provider";
+                    }
+                } catch (Throwable ignored) {}
+
+                int chunkSize = 500;
+                for (int i = 0; i < contactList.size(); i += chunkSize) {
+                    int end = Math.min(i + chunkSize, contactList.size());
+                    java.util.ArrayList<android.content.ContentValues> chunk = new java.util.ArrayList<>(contactList.subList(i, end));
+
+                    android.os.Bundle bundle = new android.os.Bundle();
+                    bundle.putParcelableArrayList("contacts", chunk);
+
+                    context.getContentResolver().call(
+                            Uri.parse("content://" + authority),
+                            "sync_contacts",
+                            null,
+                            bundle
+                    );
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] syncWhatsAppContacts failed: " + t.getMessage());
+        }
     }
 }

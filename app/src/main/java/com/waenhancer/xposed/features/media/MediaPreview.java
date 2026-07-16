@@ -13,6 +13,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import android.view.ViewStub;
 
 import androidx.annotation.NonNull;
 
@@ -90,31 +91,28 @@ public class MediaPreview extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 if (param.args.length < 2) return;
                 var view = (View) param.thisObject;
-                var context = view.getContext();
-                var surface = (ViewGroup) view.findViewById(Utils.getID("invisible_press_surface", "id"));
-                if (surface == null || surface.getChildCount() == 0) return;
-                var controlFrame = surface.getChildAt(0);
-                surface.removeViewAt(0);
-                var linearLayout = new LinearLayout(context);
-                surface.addView(linearLayout);
-                linearLayout.addView(controlFrame);
-                var prevBtn = new ImageView(context);
-                var layoutParams = new LinearLayout.LayoutParams(Utils.dipToPixels(42), Utils.dipToPixels(32));
-                layoutParams.gravity = Gravity.CENTER;
-                prevBtn.setLayoutParams(layoutParams);
-                var drawable = DesignUtils.getDrawable(R.drawable.preview_eye);
-                drawable.setTint(Color.WHITE);
-                prevBtn.setImageDrawable(drawable);
-                prevBtn.setPadding(Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4));
-                prevBtn.setBackground(DesignUtils.getDrawableByName("download_background"));
-                prevBtn.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                linearLayout.addView(prevBtn);
-                prevBtn.setOnClickListener((v) -> {
-                    var objmessage = XposedHelpers.callMethod(param.thisObject, "getFMessage");
-                    var id = new FMessageWpp(objmessage).getRowId();
-                    var userJid = WppCore.getCurrentUserJid();
-                    startPlayer(id, context, userJid != null && userJid.isNewsletter());
-                });
+
+                ViewGroup surface = (ViewGroup) view.findViewById(Utils.getID("invisible_press_surface", "id"));
+                if (surface == null) {
+                    surface = (ViewGroup) view.findViewById(Utils.getID("video_control_frame_view", "id"));
+                }
+
+                if (surface != null && surface.getChildCount() > 0) {
+                    setupVideoPreviewButton(view, surface, param.thisObject);
+                } else {
+                    ViewStub legacyStub = view.findViewById(Utils.getID("video_control_frame_legacy_stub", "id"));
+                    if (legacyStub != null) {
+                        legacyStub.setOnInflateListener((stub, inflated) -> {
+                            setupVideoPreviewButton(view, (ViewGroup) inflated, param.thisObject);
+                        });
+                    }
+                    ViewStub viewStub = view.findViewById(Utils.getID("video_control_frame_view_stub", "id"));
+                    if (viewStub != null) {
+                        viewStub.setOnInflateListener((stub, inflated) -> {
+                            setupVideoPreviewButton(view, (ViewGroup) inflated, param.thisObject);
+                        });
+                    }
+                }
             }
         });
 
@@ -124,52 +122,137 @@ public class MediaPreview extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 if (param.args.length < 2) return;
                 var view = (View) param.thisObject;
-                var context = view.getContext();
 
                 ViewGroup mediaContainer = view.findViewById(Utils.getID("media_container", "id"));
-                ViewGroup controlFrame = view.findViewById(Utils.getID("control_frame", "id"));
-                if (mediaContainer == null || controlFrame == null) return;
+                if (mediaContainer == null) return;
 
-                LinearLayout linearLayout = new LinearLayout(context);
-                linearLayout.setLayoutParams(new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.WRAP_CONTENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT,
-                        Gravity.CENTER
-                ));
-                linearLayout.setOrientation(LinearLayout.VERTICAL);
-                linearLayout.setBackground(DesignUtils.getDrawableByName("fragment_transparent_divider"));
-                mediaContainer.removeView(controlFrame);
-                linearLayout.addView(controlFrame);
-                mediaContainer.addView(linearLayout);
-                var prevBtn = new ImageView(context);
-                var layoutParams2 = new LinearLayout.LayoutParams(Utils.dipToPixels(42), Utils.dipToPixels(32));
-                layoutParams2.gravity = Gravity.CENTER;
-                layoutParams2.topMargin = Utils.dipToPixels(8);
-                prevBtn.setLayoutParams(layoutParams2);
-                var drawable = DesignUtils.getDrawable(R.drawable.preview_eye);
-                drawable.setTint(Color.WHITE);
-                prevBtn.setImageDrawable(drawable);
-                prevBtn.setPadding(Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4));
-                prevBtn.setBackground(DesignUtils.getDrawableByName("download_background"));
-                prevBtn.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                linearLayout.addView(prevBtn);
-                prevBtn.setVisibility(controlFrame.getVisibility());
-                controlFrame.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-                    if (prevBtn.getVisibility() != controlFrame.getVisibility())
-                        prevBtn.setVisibility(controlFrame.getVisibility());
-                });
+                View controlFrame = view.findViewById(Utils.getID("control_frame", "id"));
+                if (controlFrame == null) {
+                    controlFrame = view.findViewById(Utils.getID("control_frame_new", "id"));
+                }
 
-                prevBtn.setOnClickListener((v) -> {
-                    var objmessage = XposedHelpers.callMethod(param.thisObject, "getFMessage");
-                    var id = new FMessageWpp(objmessage).getRowId();
-                    var userJid = WppCore.getCurrentUserJid();
-                    startPlayer(id, context, userJid != null && userJid.isNewsletter());
-                });
-
+                if (controlFrame != null) {
+                    setupImagePreviewButton(view, mediaContainer, controlFrame, param.thisObject);
+                } else {
+                    ViewStub legacyStub = view.findViewById(Utils.getID("control_frame_legacy_stub", "id"));
+                    if (legacyStub != null) {
+                        legacyStub.setOnInflateListener((stub, inflated) -> {
+                            setupImagePreviewButton(view, mediaContainer, inflated, param.thisObject);
+                        });
+                    }
+                    ViewStub viewStub = view.findViewById(Utils.getID("control_frame_view_stub", "id"));
+                    if (viewStub != null) {
+                        viewStub.setOnInflateListener((stub, inflated) -> {
+                            setupImagePreviewButton(view, mediaContainer, inflated, param.thisObject);
+                        });
+                    }
+                }
             }
         });
 
+    }
 
+    private void setupImagePreviewButton(View view, ViewGroup mediaContainer, View controlFrame, Object thisObject) {
+        if (mediaContainer == null || controlFrame == null) return;
+        Context context = view.getContext();
+
+        // Check if we already wrapped this controlFrame to avoid duplicate setups
+        if (controlFrame.getParent() instanceof LinearLayout) {
+            LinearLayout parent = (LinearLayout) controlFrame.getParent();
+            if ("preview_container".equals(parent.getTag())) {
+                return;
+            }
+        }
+
+        LinearLayout linearLayout = new LinearLayout(context);
+        linearLayout.setTag("preview_container");
+        linearLayout.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+        ));
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        linearLayout.setBackground(DesignUtils.getDrawableByName("fragment_transparent_divider"));
+
+        mediaContainer.removeView(controlFrame);
+        linearLayout.addView(controlFrame);
+        mediaContainer.addView(linearLayout);
+
+        var prevBtn = new ImageView(context);
+        var layoutParams2 = new LinearLayout.LayoutParams(Utils.dipToPixels(42), Utils.dipToPixels(32));
+        layoutParams2.gravity = Gravity.CENTER;
+        layoutParams2.topMargin = Utils.dipToPixels(8);
+        prevBtn.setLayoutParams(layoutParams2);
+        var drawable = DesignUtils.getDrawable(R.drawable.preview_eye);
+        if (drawable != null) {
+            drawable.setTint(Color.WHITE);
+            prevBtn.setImageDrawable(drawable);
+        }
+        prevBtn.setPadding(Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4));
+        prevBtn.setBackground(DesignUtils.getDrawableByName("download_background"));
+        prevBtn.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        linearLayout.addView(prevBtn);
+
+        prevBtn.setVisibility(controlFrame.getVisibility());
+        controlFrame.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            if (prevBtn.getVisibility() != controlFrame.getVisibility())
+                prevBtn.setVisibility(controlFrame.getVisibility());
+        });
+
+        prevBtn.setOnClickListener((v) -> {
+            try {
+                var objmessage = XposedHelpers.callMethod(thisObject, "getFMessage");
+                var id = new FMessageWpp(objmessage).getRowId();
+                var userJid = WppCore.getCurrentUserJid();
+                startPlayer(id, context, userJid != null && userJid.isNewsletter());
+            } catch (Throwable t) {
+                XposedBridge.log("[WAEX] MediaPreview onClick error: " + t.getMessage());
+            }
+        });
+    }
+
+    private void setupVideoPreviewButton(View view, ViewGroup surface, Object thisObject) {
+        if (surface == null || surface.getChildCount() == 0) return;
+        Context context = view.getContext();
+
+        // Check if already wrapped
+        if (surface.getChildCount() == 1 && surface.getChildAt(0) instanceof LinearLayout &&
+                "video_preview_container".equals(surface.getChildAt(0).getTag())) {
+            return;
+        }
+
+        var controlFrame = surface.getChildAt(0);
+        surface.removeViewAt(0);
+
+        var linearLayout = new LinearLayout(context);
+        linearLayout.setTag("video_preview_container");
+        surface.addView(linearLayout);
+        linearLayout.addView(controlFrame);
+
+        var prevBtn = new ImageView(context);
+        var layoutParams = new LinearLayout.LayoutParams(Utils.dipToPixels(42), Utils.dipToPixels(32));
+        layoutParams.gravity = Gravity.CENTER;
+        prevBtn.setLayoutParams(layoutParams);
+        var drawable = DesignUtils.getDrawable(R.drawable.preview_eye);
+        if (drawable != null) {
+            drawable.setTint(Color.WHITE);
+            prevBtn.setImageDrawable(drawable);
+        }
+        prevBtn.setPadding(Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4), Utils.dipToPixels(4));
+        prevBtn.setBackground(DesignUtils.getDrawableByName("download_background"));
+        prevBtn.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        linearLayout.addView(prevBtn);
+
+        prevBtn.setOnClickListener((v) -> {
+            try {
+                var objmessage = XposedHelpers.callMethod(thisObject, "getFMessage");
+                var id = new FMessageWpp(objmessage).getRowId();
+                var userJid = WppCore.getCurrentUserJid();
+                startPlayer(id, context, userJid != null && userJid.isNewsletter());
+            } catch (Throwable t) {
+                XposedBridge.log("[WAEX] MediaPreview video onClick error: " + t.getMessage());
+            }
+        });
     }
 
     /**

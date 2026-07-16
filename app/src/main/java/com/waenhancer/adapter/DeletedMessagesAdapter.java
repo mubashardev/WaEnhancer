@@ -59,24 +59,39 @@ public class DeletedMessagesAdapter extends RecyclerView.Adapter<DeletedMessages
         Context context = holder.itemView.getContext();
         String displayJid = message.getChatJid();
 
-        // Priority 1: Use Persisted Contact Name (from DB)
-        String contactName = message.getContactName();
+        boolean isGroup = displayJid != null && displayJid.endsWith("@g.us");
+        boolean hasContactsPermission = context.checkSelfPermission(android.Manifest.permission.READ_CONTACTS)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        String contactName = null;
 
-        // Check if DB value is invalid (Generic App Name)
-        if (contactName != null
-                && (contactName.equalsIgnoreCase("WhatsApp") || contactName.equalsIgnoreCase("WhatsApp Business"))) {
-            contactName = null;
-        }
+        if (isGroup) {
+            // Group chats: always show group name from database if available
+            contactName = message.getContactName();
+            if (contactName != null
+                    && (contactName.equalsIgnoreCase("WhatsApp") || contactName.equalsIgnoreCase("WhatsApp Business"))) {
+                contactName = null;
+            }
+        } else if (hasContactsPermission) {
+            // Personal chats: show contact name only if contacts permission is allowed
+            // Priority 1: Use Persisted Contact Name (from DB)
+            contactName = message.getContactName();
 
-        // Priority 2: Runtime Lookup (if not in DB or was invalid)
-        if ((contactName == null || contactName.isEmpty()) && displayJid != null) {
-            contactName = com.waenhancer.utils.ContactHelper.getContactName(context, displayJid);
-        }
+            // Check if DB value is invalid (Generic App Name)
+            if (contactName != null
+                    && (contactName.equalsIgnoreCase("WhatsApp") || contactName.equalsIgnoreCase("WhatsApp Business"))) {
+                contactName = null;
+            }
 
-        // Final Check: If Runtime Lookup also returned Generic App Name
-        if (contactName != null
-                && (contactName.equalsIgnoreCase("WhatsApp") || contactName.equalsIgnoreCase("WhatsApp Business"))) {
-            contactName = null;
+            // Priority 2: Runtime Lookup (if not in DB or was invalid)
+            if ((contactName == null || contactName.isEmpty()) && displayJid != null) {
+                contactName = com.waenhancer.utils.ContactHelper.getContactName(context, displayJid);
+            }
+
+            // Final Check: If Runtime Lookup also returned Generic App Name
+            if (contactName != null
+                    && (contactName.equalsIgnoreCase("WhatsApp") || contactName.equalsIgnoreCase("WhatsApp Business"))) {
+                contactName = null;
+            }
         }
         String displayText;
         if (contactName != null) {

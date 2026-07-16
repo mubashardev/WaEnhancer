@@ -218,6 +218,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.documentfile)
     implementation(libs.androidx.constraintlayout)
+    implementation("com.facebook.shimmer:shimmer:0.5.0")
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)

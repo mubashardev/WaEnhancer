@@ -25,10 +25,13 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
 
     private RecyclerView recyclerView;
     private View emptyView;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerViewContainer;
     private DeletedMessagesAdapter adapter;
     private DelMessageStore delMessageStore;
 
     private boolean isGroup;
+    private final android.os.Handler uiHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable showShimmerRunnable;
 
     public static DeletedMessagesFragment newInstance(boolean isGroup) {
         DeletedMessagesFragment fragment = new DeletedMessagesFragment();
@@ -80,6 +83,7 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
 
         recyclerView = view.findViewById(R.id.recyclerView);
         emptyView = view.findViewById(R.id.empty_view);
+        shimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
 
         delMessageStore = DelMessageStore.getInstance(requireContext());
         adapter = new DeletedMessagesAdapter(this);
@@ -108,9 +112,26 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
     }
 
     private void loadMessages() {
+        if (showShimmerRunnable != null) {
+            uiHandler.removeCallbacks(showShimmerRunnable);
+        }
+
+        showShimmerRunnable = () -> {
+            if (shimmerViewContainer != null) {
+                shimmerViewContainer.setVisibility(View.VISIBLE);
+                shimmerViewContainer.startShimmer();
+            }
+            if (recyclerView != null) {
+                recyclerView.setVisibility(View.GONE);
+            }
+            if (emptyView != null) {
+                emptyView.setVisibility(View.GONE);
+            }
+        };
+        uiHandler.postDelayed(showShimmerRunnable, 150);
+
         new Thread(() -> {
-            List<DeletedMessage> allMessages = delMessageStore.getDeletedMessages(isGroup); // Fetch ALL first, then
-                                                                                            // filter
+            List<DeletedMessage> allMessages = delMessageStore.getDeletedMessages(isGroup);
             Map<String, DeletedMessage> latestMessagesMap = new HashMap<>();
 
             for (DeletedMessage msg : allMessages) {
@@ -137,7 +158,17 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
             List<DeletedMessage> uniqueChats = new ArrayList<>(latestMessagesMap.values());
             uniqueChats.sort((m1, m2) -> Long.compare(m2.getTimestamp(), m1.getTimestamp()));
 
-            requireActivity().runOnUiThread(() -> {
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (showShimmerRunnable != null) {
+                    uiHandler.removeCallbacks(showShimmerRunnable);
+                }
+
+                if (shimmerViewContainer != null) {
+                    shimmerViewContainer.stopShimmer();
+                    shimmerViewContainer.setVisibility(View.GONE);
+                }
+
                 if (uniqueChats.isEmpty()) {
                     emptyView.setVisibility(View.VISIBLE);
                     recyclerView.setVisibility(View.GONE);
@@ -148,6 +179,14 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
                 }
             });
         }).start();
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (showShimmerRunnable != null) {
+            uiHandler.removeCallbacks(showShimmerRunnable);
+        }
+        super.onDestroyView();
     }
 
     private androidx.appcompat.view.ActionMode actionMode;

@@ -1027,150 +1027,38 @@ public class SettingsInjector extends Feature {
                     // 7. Dynamic plans container layout
                     android.widget.LinearLayout plansContainer = new android.widget.LinearLayout(activity);
                     plansContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    plansContainer.setClipChildren(false);
+                    plansContainer.setClipToPadding(false);
+                    containerLayout.setClipChildren(false);
+                    containerLayout.setClipToPadding(false);
                     containerLayout.addView(plansContainer);
                     
-                    // Fetch plans from API: https://waenhancer.com/api/plans.json
-                    new Thread(() -> {
-                        HttpURLConnection urlConnection = null;
+                    // Check cache for plans (1 hour TTL)
+                    SharedPreferences cachePrefs = activity.getSharedPreferences("waex_plans_cache", android.content.Context.MODE_PRIVATE);
+                    long cacheTime = cachePrefs.getLong("plans_cache_time", 0);
+                    String cachedData = cachePrefs.getString("plans_cache_data", null);
+                    long currentTime = System.currentTimeMillis();
+
+                    if (cachedData != null && (currentTime - cacheTime) < 3600000) {
                         try {
-                            URL url = new URL("https://waenhancer.com/api/plans.json");
-                            urlConnection = (HttpURLConnection) url.openConnection();
-                            urlConnection.setRequestMethod("GET");
-                            urlConnection.setConnectTimeout(5000);
-                            urlConnection.setReadTimeout(5000);
-                            
-                            java.io.InputStream in = new java.io.BufferedInputStream(urlConnection.getInputStream());
-                            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(in, "UTF-8"));
-                            StringBuilder sb = new StringBuilder();
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                sb.append(line);
+                            org.json.JSONArray plansArray = new org.json.JSONArray(cachedData);
+                            plansContainer.removeAllViews();
+                            for (int i = 0; i < plansArray.length(); i++) {
+                                org.json.JSONObject planObj = plansArray.getJSONObject(i);
+                                buildPlanCard(plansContainer, activity, density, pad16, dialogBg, strokeColor, primaryText, secondaryText, accentG, planObj);
                             }
-                            
-                            org.json.JSONObject result = new org.json.JSONObject(sb.toString());
-                            org.json.JSONArray plansArray = result.getJSONArray("plans");
-                            
-                            activity.runOnUiThread(() -> {
-                                plansContainer.removeAllViews();
-                                try {
-                                    for (int i = 0; i < plansArray.length(); i++) {
-                                        org.json.JSONObject planObj = plansArray.getJSONObject(i);
-                                        final String name = planObj.getString("name");
-                                        final String price = planObj.getString("price");
-                                        final String duration = planObj.getString("duration");
-                                        final String featuresText = planObj.optString("features", "");
-                                        final String command = planObj.optString("command", "/buy");
-                                        
-                                        // Build elegant card style dialog item
-                                        android.widget.LinearLayout planCard = new android.widget.LinearLayout(activity);
-                                        planCard.setOrientation(android.widget.LinearLayout.VERTICAL);
-                                        planCard.setPadding(pad16, pad16, pad16, pad16);
-                                        
-                                        android.graphics.drawable.GradientDrawable pcGd = new android.graphics.drawable.GradientDrawable();
-                                        pcGd.setCornerRadius(12 * density);
-                                        pcGd.setColor(cardBg);
-                                        pcGd.setStroke((int) (1 * density), strokeColor);
-                                        planCard.setBackground(pcGd);
-                                        
-                                        android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
-                                                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                                        pcLp.bottomMargin = (int) (12 * density);
-                                        planCard.setLayoutParams(pcLp);
-                                        
-                                        android.widget.TextView pct = new android.widget.TextView(activity);
-                                        pct.setText(name + " — " + price + " / " + duration);
-                                        pct.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-                                        pct.setTextColor(primaryText);
-                                        pct.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
-                                        planCard.addView(pct);
-                                        
-                                        if (!featuresText.isEmpty()) {
-                                            android.widget.TextView pcf = new android.widget.TextView(activity);
-                                            pcf.setText(featuresText);
-                                            pcf.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-                                            pcf.setTextColor(secondaryText);
-                                            pcf.setPadding(0, (int)(4*density), 0, 0);
-                                            planCard.addView(pcf);
-                                        }
-                                        
-                                        planCard.setClickable(true);
-                                        planCard.setFocusable(true);
-                                        planCard.setOnClickListener(v -> {
-                                            try {
-                                                android.content.Intent browserIntent = new android.content.Intent(
-                                                        android.content.Intent.ACTION_VIEW,
-                                                        android.net.Uri.parse("https://t.me/waenhancerx_bot?start=" + command));
-                                                browserIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                                                activity.startActivity(browserIntent);
-                                            } catch (Throwable t) {
-                                                android.widget.Toast.makeText(activity, "Could not open Telegram", android.widget.Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                                        
-                                        plansContainer.addView(planCard);
-                                    }
-                                } catch (Throwable t) {
-                                    android.widget.Toast.makeText(activity, "Error rendering plans: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
-                                }
-                            });
                         } catch (Throwable t) {
-                            activity.runOnUiThread(() -> {
-                                plansContainer.removeAllViews();
-                                // Fallback static plans in case API endpoint is unreachable
-                                String[][] fallbackPlans = {
-                                    {"1 Month Plan", "$1.99", "month", "1month"},
-                                    {"1 Year Plan", "$14.99", "year", "1year"}
-                                };
-                                for (String[] fp : fallbackPlans) {
-                                    android.widget.LinearLayout planCard = new android.widget.LinearLayout(activity);
-                                    planCard.setOrientation(android.widget.LinearLayout.VERTICAL);
-                                    planCard.setPadding(pad16, pad16, pad16, pad16);
-                                    
-                                    android.graphics.drawable.GradientDrawable pcGd = new android.graphics.drawable.GradientDrawable();
-                                    pcGd.setCornerRadius(12 * density);
-                                    pcGd.setColor(cardBg);
-                                    pcGd.setStroke((int) (1 * density), strokeColor);
-                                    planCard.setBackground(pcGd);
-                                    
-                                    android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
-                                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                                    pcLp.bottomMargin = (int) (12 * density);
-                                    planCard.setLayoutParams(pcLp);
-                                    
-                                    android.widget.TextView pct = new android.widget.TextView(activity);
-                                    pct.setText(fp[0] + " — " + fp[1]);
-                                    pct.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-                                    pct.setTextColor(primaryText);
-                                    pct.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
-                                    planCard.addView(pct);
-                                    
-                                    planCard.setClickable(true);
-                                    planCard.setFocusable(true);
-                                    planCard.setOnClickListener(v -> {
-                                        try {
-                                            android.content.Intent browserIntent = new android.content.Intent(
-                                                    android.content.Intent.ACTION_VIEW,
-                                                    android.net.Uri.parse("https://t.me/waenhancerx_bot?start=" + fp[3]));
-                                            browserIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                                            activity.startActivity(browserIntent);
-                                        } catch (Throwable t2) {
-                                            android.widget.Toast.makeText(activity, "Could not open Telegram", android.widget.Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
-                                    plansContainer.addView(planCard);
-                                }
-                            });
-                        } finally {
-                            if (urlConnection != null) {
-                                urlConnection.disconnect();
-                            }
+                            fetchPlansFromNetwork(plansContainer, activity, density, pad16, dialogBg, strokeColor, primaryText, secondaryText, accentG, cachePrefs);
                         }
-                    }).start();
+                    } else {
+                        fetchPlansFromNetwork(plansContainer, activity, density, pad16, dialogBg, strokeColor, primaryText, secondaryText, accentG, cachePrefs);
+                    }
                     
                     contentView = scrollView;
                 } else if ("premium_features".equals(screenId)) {
-                    title = "Premium & Free Features";
+                    title = "Premium Features";
                     
+                    int dialogBg = isNight ? 0xFF12181C : 0xFFFFFFFF; // Dialog/sheet surface background
                     int cardBg = isNight ? 0xFF1F2C34 : 0xFFF0F2F5; // Cards background matching WDS sheet fill color
                     int primaryText = isNight ? 0xFFE9EDEF : 0xFF111B21;
                     int secondaryText = isNight ? 0xFF8696A0 : 0xFF667781;
@@ -1184,6 +1072,8 @@ public class SettingsInjector extends Feature {
 
                     android.widget.LinearLayout containerLayout = new android.widget.LinearLayout(activity);
                     containerLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    containerLayout.setClipChildren(false);
+                    containerLayout.setClipToPadding(false);
                     float density = activity.getResources().getDisplayMetrics().density;
                     int pad24 = (int) (24 * density);
                     int pad16 = (int) (16 * density);
@@ -1244,23 +1134,28 @@ public class SettingsInjector extends Feature {
                             
                             android.graphics.drawable.GradientDrawable normalGd = new android.graphics.drawable.GradientDrawable();
                             normalGd.setCornerRadius(12 * density);
-                            normalGd.setColor(cardBg);
+                            normalGd.setColor(dialogBg);
                             normalGd.setStroke((int) (1 * density), strokeColor);
+                            card.setBackground(normalGd);
 
-                            android.graphics.drawable.RippleDrawable rippleDrawable = new android.graphics.drawable.RippleDrawable(
-                                    android.content.res.ColorStateList.valueOf(isNight ? 0x15FFFFFF : 0x0A000000),
-                                    normalGd,
-                                    null
-                            );
-                            card.setBackground(rippleDrawable);
+                            // Apply elevation for physical card shadow look
+                            card.setElevation(5 * density);
 
                             android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
                                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                            pcLp.bottomMargin = (int) (12 * density);
+                            int marginHoriz = (int) (6 * density);
+                            pcLp.setMargins(marginHoriz, (int)(2 * density), marginHoriz, (int)(14 * density));
                             card.setLayoutParams(pcLp);
 
+                            // Add material ripple foreground
+                            try {
+                                TypedValue outValue = new TypedValue();
+                                activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+                                card.setForeground(activity.getDrawable(outValue.resourceId));
+                            } catch (Throwable ignored) {}
+
                             android.widget.TextView titleTv = new android.widget.TextView(activity);
-                            titleTv.setText("⚡ " + fTitle);
+                            titleTv.setText(fTitle);
                             titleTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                             titleTv.setTextColor(accentG);
                             titleTv.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
@@ -2110,6 +2005,257 @@ public class SettingsInjector extends Feature {
             XposedBridge.log("[WAEX] Error creating test switch row: " + t.toString());
         }
         return null;
+    }
+
+    private void fetchPlansFromNetwork(
+            android.widget.LinearLayout plansContainer,
+            Activity activity,
+            float density,
+            int pad16,
+            int dialogBg,
+            int strokeColor,
+            int primaryText,
+            int secondaryText,
+            int accentG,
+            SharedPreferences cachePrefs
+    ) {
+        new Thread(() -> {
+            HttpURLConnection urlConnection = null;
+            try {
+                URL url = new URL("https://waex.mubashar.dev/api/v1/plans");
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.setConnectTimeout(5000);
+                urlConnection.setReadTimeout(5000);
+                
+                java.io.InputStream in = new java.io.BufferedInputStream(urlConnection.getInputStream());
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(in, "UTF-8"));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+                
+                String responseStr = sb.toString();
+                // Test parsing
+                org.json.JSONArray plansArray = new org.json.JSONArray(responseStr);
+                
+                // Cache successfully fetched plans
+                cachePrefs.edit()
+                        .putString("plans_cache_data", responseStr)
+                        .putLong("plans_cache_time", System.currentTimeMillis())
+                        .apply();
+                
+                activity.runOnUiThread(() -> {
+                    plansContainer.removeAllViews();
+                    try {
+                        for (int i = 0; i < plansArray.length(); i++) {
+                            org.json.JSONObject planObj = plansArray.getJSONObject(i);
+                            buildPlanCard(plansContainer, activity, density, pad16, dialogBg, strokeColor, primaryText, secondaryText, accentG, planObj);
+                        }
+                    } catch (Throwable t) {
+                        android.widget.Toast.makeText(activity, "Error rendering plans: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } catch (Throwable t) {
+                activity.runOnUiThread(() -> {
+                    plansContainer.removeAllViews();
+                    // Fallback static plans in case API endpoint is unreachable
+                    try {
+                        org.json.JSONObject monthlyFallback = new org.json.JSONObject();
+                        monthlyFallback.put("id", 2);
+                        monthlyFallback.put("name", "Pro Monthly");
+                        monthlyFallback.put("type", "offer");
+                        monthlyFallback.put("original_price", "3.50");
+                        monthlyFallback.put("offer_price", "2.30");
+                        monthlyFallback.put("badge", org.json.JSONObject.NULL);
+
+                        org.json.JSONObject yearlyFallback = new org.json.JSONObject();
+                        yearlyFallback.put("id", 3);
+                        yearlyFallback.put("name", "Pro Yearly");
+                        yearlyFallback.put("type", "offer");
+                        yearlyFallback.put("original_price", "28.50");
+                        yearlyFallback.put("offer_price", "18.99");
+                        yearlyFallback.put("badge", "Best Value");
+
+                        buildPlanCard(plansContainer, activity, density, pad16, dialogBg, strokeColor, primaryText, secondaryText, accentG, monthlyFallback);
+                        buildPlanCard(plansContainer, activity, density, pad16, dialogBg, strokeColor, primaryText, secondaryText, accentG, yearlyFallback);
+                    } catch (Throwable ignored) {}
+                });
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+            }
+        }).start();
+    }
+
+    private void buildPlanCard(
+            android.widget.LinearLayout plansContainer,
+            Activity activity,
+            float density,
+            int pad16,
+            int cardBg,
+            int strokeColor,
+            int primaryText,
+            int secondaryText,
+            int accentG,
+            org.json.JSONObject planObj
+    ) {
+        try {
+            final String name = planObj.getString("name");
+            final String originalPrice = planObj.getString("original_price");
+            final String offerPrice = planObj.getString("offer_price");
+            final String badge = planObj.isNull("badge") ? null : planObj.getString("badge");
+            
+            // Build elegant card style dialog item
+            android.widget.LinearLayout planCard = new android.widget.LinearLayout(activity);
+            planCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+            planCard.setPadding(pad16, pad16, pad16, pad16);
+            
+            android.graphics.drawable.GradientDrawable pcGd = new android.graphics.drawable.GradientDrawable();
+            pcGd.setCornerRadius(12 * density);
+            pcGd.setColor(cardBg);
+            pcGd.setStroke((int) (1 * density), strokeColor);
+            planCard.setBackground(pcGd);
+            
+            // Apply elevation for physical card shadow look
+            planCard.setElevation(5 * density);
+            
+            android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            int marginHoriz = (int) (6 * density);
+            pcLp.setMargins(marginHoriz, (int)(2 * density), marginHoriz, (int)(14 * density));
+            planCard.setLayoutParams(pcLp);
+
+            // Add material ripple foreground
+            try {
+                TypedValue outValue = new TypedValue();
+                activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+                planCard.setForeground(activity.getDrawable(outValue.resourceId));
+            } catch (Throwable ignored) {}
+
+            // Top Row (Name + Badge)
+            android.widget.LinearLayout topRow = new android.widget.LinearLayout(activity);
+            topRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            topRow.setGravity(Gravity.CENTER_VERTICAL);
+            android.widget.LinearLayout.LayoutParams topLp = new android.widget.LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            topLp.bottomMargin = (int) (8 * density);
+            topRow.setLayoutParams(topLp);
+
+            android.widget.TextView pct = new android.widget.TextView(activity);
+            pct.setText(name);
+            pct.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            pct.setTextColor(primaryText);
+            pct.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+            android.widget.LinearLayout.LayoutParams nameLp = new android.widget.LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+            pct.setLayoutParams(nameLp);
+            topRow.addView(pct);
+
+            if (badge != null && !badge.trim().isEmpty()) {
+                android.widget.TextView pcb = new android.widget.TextView(activity);
+                pcb.setText(badge.toUpperCase());
+                pcb.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
+                boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                pcb.setTextColor(isNight ? 0xFF111B21 : 0xFFFFFFFF);
+                pcb.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                pcb.setPadding((int) (8 * density), (int) (3 * density), (int) (8 * density), (int) (3 * density));
+                
+                android.graphics.drawable.GradientDrawable badgeGd = new android.graphics.drawable.GradientDrawable();
+                badgeGd.setCornerRadius(8 * density);
+                badgeGd.setColor(accentG);
+                pcb.setBackground(badgeGd);
+
+                android.widget.LinearLayout.LayoutParams badgeLp = new android.widget.LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                pcb.setLayoutParams(badgeLp);
+                topRow.addView(pcb);
+            }
+            planCard.addView(topRow);
+
+            // Bottom Row (Prices + Duration)
+            android.widget.LinearLayout priceRow = new android.widget.LinearLayout(activity);
+            priceRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            priceRow.setGravity(Gravity.BOTTOM);
+            android.widget.LinearLayout.LayoutParams priceRowLp = new android.widget.LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            priceRow.setLayoutParams(priceRowLp);
+
+            boolean hasOffer = !originalPrice.equals(offerPrice);
+            if (hasOffer) {
+                android.widget.TextView originalPriceTv = new android.widget.TextView(activity);
+                originalPriceTv.setText("$" + originalPrice);
+                originalPriceTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                originalPriceTv.setTextColor(secondaryText);
+                originalPriceTv.setPaintFlags(originalPriceTv.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+                android.widget.LinearLayout.LayoutParams origLp = new android.widget.LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                origLp.rightMargin = (int) (8 * density);
+                originalPriceTv.setLayoutParams(origLp);
+                priceRow.addView(originalPriceTv);
+            }
+
+            android.widget.TextView offerPriceTv = new android.widget.TextView(activity);
+            offerPriceTv.setText("$" + offerPrice);
+            offerPriceTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+            offerPriceTv.setTextColor(accentG);
+            offerPriceTv.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+            priceRow.addView(offerPriceTv);
+
+            String billingPeriod = "";
+            if (name.toLowerCase().contains("monthly")) {
+                billingPeriod = " / Month";
+            } else if (name.toLowerCase().contains("yearly")) {
+                billingPeriod = " / Year";
+            }
+            if (!billingPeriod.isEmpty()) {
+                android.widget.TextView periodTv = new android.widget.TextView(activity);
+                periodTv.setText(billingPeriod);
+                periodTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                periodTv.setTextColor(secondaryText);
+                priceRow.addView(periodTv);
+            }
+            planCard.addView(priceRow);
+
+            // Subtext/Features Description
+            String featureText = "";
+            if (name.toLowerCase().contains("monthly")) {
+                featureText = "Full access to all Pro features for 30 days";
+            } else if (name.toLowerCase().contains("yearly")) {
+                featureText = "Save more with full Pro access for 365 days";
+            } else {
+                featureText = "Unlock all premium Pro capabilities";
+            }
+            android.widget.TextView descTv = new android.widget.TextView(activity);
+            descTv.setText(featureText);
+            descTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            descTv.setTextColor(secondaryText);
+            android.widget.LinearLayout.LayoutParams descLp = new android.widget.LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            descLp.topMargin = (int) (6 * density);
+            descTv.setLayoutParams(descLp);
+            planCard.addView(descTv);
+
+            planCard.setClickable(true);
+            planCard.setFocusable(true);
+            planCard.setOnClickListener(v -> {
+                try {
+                    android.content.Intent browserIntent = new android.content.Intent(
+                            android.content.Intent.ACTION_VIEW,
+                            android.net.Uri.parse("https://t.me/waenhancerx_bot?start=subscribe"));
+                    browserIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    activity.startActivity(browserIntent);
+                } catch (Throwable t) {
+                    android.widget.Toast.makeText(activity, "Could not open Telegram", android.widget.Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            plansContainer.addView(planCard);
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Error rendering plan card: " + t.toString());
+        }
     }
 
     @NonNull

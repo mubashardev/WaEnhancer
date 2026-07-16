@@ -1,1 +1,11 @@
-Based on Stable [v1.7.0](https://github.com/mubashardev/WaEnhancer/releases/tag/v1.7.0)
+[Added]
+- [Pro] Added a delete for me messages media recovery system to recover and view deleted photos, videos, voice notes, and stickers directly in the deleted messages log
+- Added a search bar in embedded settings to easily find and navigate preferences
+- Added a direct download button for video notes (video messages) to quickly save them
+
+[Improved]
+- Improved Delete for me messages ui
+
+[Fixes]
+- Fixed the preview icon not showing/working on image messages
+- Improved the reliability of the long-press feature on messages

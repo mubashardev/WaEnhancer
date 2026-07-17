@@ -216,10 +216,72 @@ public class LicenseManager {
                     final String whitelistChannels = responseObj.optString("whitelist_channels", "");
                     final String planPrice = responseObj.optString("price", "");
 
-                    // Save verified status, tier parameters, and encrypted_config in a single transaction securely
+                    // Write values to the module using HookProvider content resolver call method
+                    try {
+                        android.net.Uri providerUri = android.net.Uri.parse("content://com.waenhancer.hookprovider");
+                        
+                        android.os.Bundle b1 = new android.os.Bundle();
+                        b1.putString("key", "is_pro_verified");
+                        b1.putString("type", "boolean");
+                        b1.putBoolean("value", true);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b1);
+                        
+                        android.os.Bundle b2 = new android.os.Bundle();
+                        b2.putString("key", "expires_at");
+                        b2.putString("type", "long");
+                        b2.putLong("value", expiresAt);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b2);
+
+                        android.os.Bundle b3 = new android.os.Bundle();
+                        b3.putString("key", "plan_name");
+                        b3.putString("type", "string");
+                        b3.putString("value", planName);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b3);
+
+                        android.os.Bundle b4 = new android.os.Bundle();
+                        b4.putString("key", "license_key");
+                        b4.putString("type", "string");
+                        b4.putString("value", normalizedKey);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b4);
+
+                        android.os.Bundle b5 = new android.os.Bundle();
+                        b5.putString("key", "tg_username");
+                        b5.putString("type", "string");
+                        b5.putString("value", tgUsername);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b5);
+
+                        android.os.Bundle b6 = new android.os.Bundle();
+                        b6.putString("key", "encrypted_config");
+                        b6.putString("type", "string");
+                        b6.putString("value", encryptedConfig);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b6);
+
+                        android.os.Bundle b7 = new android.os.Bundle();
+                        b7.putString("key", "whitelist_channels");
+                        b7.putString("type", "string");
+                        b7.putString("value", whitelistChannels);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b7);
+
+                        android.os.Bundle b8 = new android.os.Bundle();
+                        b8.putString("key", "plan_price");
+                        b8.putString("type", "string");
+                        b8.putString("value", planPrice);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b8);
+                    } catch (Throwable t) {
+                        Log.e(TAG, "Failed to write license via ContentResolver", t);
+                    }
+
+                    // Fallback local write (if we are in-process)
+                    android.content.Context moduleContext = context;
+                    if (!"com.waenhancer".equals(context.getPackageName())) {
+                        try {
+                            moduleContext = context.createPackageContext("com.waenhancer", android.content.Context.CONTEXT_IGNORE_SECURITY);
+                        } catch (Throwable ignored) {}
+                    }
+                    
                     SafeSharedPreferences safePrefs = 
                             new SafeSharedPreferences(
-                                    androidx.preference.PreferenceManager.getDefaultSharedPreferences(context));
+                                    androidx.preference.PreferenceManager.getDefaultSharedPreferences(moduleContext));
                     
                     safePrefs.edit()
                             .putBoolean("is_pro_verified", true)
@@ -231,9 +293,9 @@ public class LicenseManager {
                             .putString("whitelist_channels", whitelistChannels)
                             .putString("plan_price", planPrice)
                             .commit(); // Synchronous commit to ensure immediate disk write
-
+ 
                     // Make sure preferences are world-readable on disk
-                    makePrefsWorldReadable(context);
+                    makePrefsWorldReadable(moduleContext);
 
                     // Active key successfully validated, clear forced FREE status override
                     ProHelper.setForceFree(false);
@@ -628,15 +690,38 @@ public class LicenseManager {
             return;
         }
 
-        final SharedPreferences rawPrefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
-        final SafeSharedPreferences safePrefs =
-                new SafeSharedPreferences(rawPrefs);
-        final String licenseKey = safePrefs.getString("license_key", "").trim();
+        // When running inside WhatsApp's process (Xposed context), Utils.xprefs points to the
+        // module app's DefaultSharedPreferences — the authoritative source of license data.
+        // When called from inside the module app directly, fall back to context prefs.
+        String resolvedKey = "";
+        SafeSharedPreferences safePrefs = null;
+        try {
+            SharedPreferences xp = Utils.xprefs;
+            if (xp != null) {
+                SafeSharedPreferences xSafe = new SafeSharedPreferences(xp);
+                String xKey = xSafe.getString("license_key", "").trim();
+                if (!xKey.isEmpty()) {
+                    resolvedKey = xKey;
+                    safePrefs = xSafe;
+                }
+            }
+        } catch (Throwable ignored) {}
 
-        if (licenseKey.isEmpty()) {
+        if (resolvedKey.isEmpty()) {
+            // Fallback: normal in-app context (module app process)
+            final SharedPreferences rawPrefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+            safePrefs = new SafeSharedPreferences(rawPrefs);
+            resolvedKey = safePrefs.getString("license_key", "").trim();
+        }
+
+        if (resolvedKey.isEmpty()) {
             postUnlinkError(callback, "No license key found.");
             return;
         }
+
+        final String licenseKey = resolvedKey;
+        final SafeSharedPreferences finalSafePrefs = safePrefs != null ? safePrefs
+                : new SafeSharedPreferences(androidx.preference.PreferenceManager.getDefaultSharedPreferences(context));
 
         executorService.execute(() -> {
             HttpURLConnection conn = null;
@@ -692,7 +777,7 @@ public class LicenseManager {
 
                 if ("success".equalsIgnoreCase(status)) {
                     // Wipe all local license data
-                    clearLicenseData(safePrefs, context, "Your device has been unlinked from this license key.");
+                    clearLicenseData(finalSafePrefs, context, "Your device has been unlinked from this license key.");
                     ProHelper.setForceFree(true);
 
                     // Broadcast status change
@@ -703,8 +788,29 @@ public class LicenseManager {
 
                     mainHandler.post(callback::onSuccess);
                 } else {
-                    String errorMsg = responseObj.optString("message", "Unlink failed.");
-                    postUnlinkError(callback, errorMsg);
+                    String errorMsg = responseObj.optString("message", "Unlink failed.").trim();
+
+                    // If the server says no device is linked, that means the device was already
+                    // unlinked (e.g., via Telegram bot). Treat this as success — clear local data.
+                    boolean alreadyUnlinked =
+                            errorMsg.toLowerCase().contains("no device") ||
+                            errorMsg.toLowerCase().contains("not linked") ||
+                            errorMsg.toLowerCase().contains("already unlinked") ||
+                            errorMsg.toLowerCase().contains("device not found");
+
+                    if (alreadyUnlinked) {
+                        clearLicenseData(finalSafePrefs, context, null);
+                        ProHelper.setForceFree(true);
+
+                        android.content.Intent bi = new android.content.Intent(
+                                context.getPackageName() + ".ACTION_PRO_STATUS_CHANGED");
+                        bi.setPackage(context.getPackageName());
+                        context.sendBroadcast(bi);
+
+                        mainHandler.post(callback::onSuccess);
+                    } else {
+                        postUnlinkError(callback, errorMsg);
+                    }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "unlinkDevice error", e);

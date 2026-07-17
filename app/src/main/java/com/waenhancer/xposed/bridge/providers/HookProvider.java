@@ -186,6 +186,78 @@ public class HookProvider extends ContentProvider {
                 context.getContentResolver().notifyChange(Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
                 return Bundle.EMPTY;
             }
+            if ("verify_license".equals(method) && extras != null) {
+                String licenseKey = extras.getString("license_key");
+                Bundle result = new Bundle();
+                if (licenseKey != null && !licenseKey.isEmpty()) {
+                    // Synchronous/blocking verification logic within the background thread of the ContentProvider
+                    final Object lock = new Object();
+                    final Bundle verificationResult = new Bundle();
+                    
+                    com.waenhancer.xposed.utils.LicenseManager.verifyLicense(context, licenseKey, new com.waenhancer.xposed.utils.LicenseManager.LicenseCallback() {
+                        @Override
+                        public void onSuccess(String encryptedConfig) {
+                            synchronized (lock) {
+                                verificationResult.putBoolean("success", true);
+                                verificationResult.putString("encrypted_config", encryptedConfig);
+                                lock.notify();
+                            }
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            synchronized (lock) {
+                                verificationResult.putBoolean("success", false);
+                                verificationResult.putString("message", message);
+                                lock.notify();
+                            }
+                        }
+                    });
+                    
+                    synchronized (lock) {
+                        try {
+                            lock.wait(20000); // Wait up to 20 seconds for API response
+                        } catch (InterruptedException ignored) {}
+                    }
+                    
+                    result.putAll(verificationResult);
+                } else {
+                    result.putBoolean("success", false);
+                    result.putString("message", "License key is empty.");
+                }
+                return result;
+            }
+            if ("unlink_device".equals(method)) {
+                final Object lock = new Object();
+                final Bundle unlinkResult = new Bundle();
+                
+                com.waenhancer.xposed.utils.LicenseManager.unlinkDevice(context, new com.waenhancer.xposed.utils.LicenseManager.UnlinkCallback() {
+                    @Override
+                    public void onSuccess() {
+                        synchronized (lock) {
+                            unlinkResult.putBoolean("success", true);
+                            lock.notify();
+                        }
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        synchronized (lock) {
+                            unlinkResult.putBoolean("success", false);
+                            unlinkResult.putString("message", message);
+                            lock.notify();
+                        }
+                    }
+                });
+                
+                synchronized (lock) {
+                    try {
+                        lock.wait(20000);
+                    } catch (InterruptedException ignored) {}
+                }
+                
+                return unlinkResult;
+            }
             return null;
         } finally {
             android.os.Binder.restoreCallingIdentity(token);

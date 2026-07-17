@@ -856,17 +856,302 @@ public class SettingsInjector extends Feature {
                     android.widget.ScrollView scrollView = new android.widget.ScrollView(activity);
                     scrollView.setLayoutParams(new ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                    scrollView.setClipChildren(false);
                     // Keep native window background by not setting custom bg color on ScrollView
                     
                     android.widget.LinearLayout containerLayout = new android.widget.LinearLayout(activity);
                     containerLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    containerLayout.setClipChildren(false);
+                    containerLayout.setClipToPadding(false);
                     float density = activity.getResources().getDisplayMetrics().density;
                     int pad24 = (int) (24 * density);
                     int pad16 = (int) (16 * density);
                     containerLayout.setPadding(pad24, pad24, pad24, pad24);
                     scrollView.addView(containerLayout);
-                    
-                    // 1. Description (Header removed)
+
+                    // ── Read license state from Utils.xprefs (module prefs, already loaded at hook time) ──
+                    String proStatus;
+                    String planName;
+                    long expiresAt = 0;
+                    String tgUsername = "";
+                    String licenseKey = "";
+                    try {
+                        // Utils.xprefs is the XSharedPreferences pointing at the module app's
+                        // DefaultSharedPreferences — this is the authoritative source for license data.
+                        android.content.SharedPreferences xp = com.waenhancer.xposed.utils.Utils.xprefs;
+                        if (xp == null) {
+                            // Fallback: reload via reflection
+                            xp = (android.content.SharedPreferences)
+                                    Class.forName("com.waenhancer.xposed.utils.Utils")
+                                         .getField("xprefs").get(null);
+                        }
+
+                        boolean isVerified = xp != null && xp.getBoolean("is_pro_verified", false);
+                        String rawKey = xp != null ? xp.getString("license_key", "").trim() : "";
+
+                        if (xp != null) {
+                            try { expiresAt = xp.getLong("expires_at", 0); }
+                            catch (ClassCastException ignored) {
+                                try { expiresAt = Long.parseLong(xp.getString("expires_at", "0")); }
+                                catch (Exception ignored2) {}
+                            }
+                            tgUsername = xp.getString("tg_username", "");
+                            licenseKey = rawKey;
+                        }
+
+                        if (!isVerified || rawKey.isEmpty()) {
+                            proStatus = "FREE";
+                            planName  = "Free";
+                        } else if (expiresAt > 0 && expiresAt < System.currentTimeMillis()) {
+                            proStatus = "EXPIRED";
+                            String storedPlan = xp != null ? xp.getString("plan_name", "") : "";
+                            planName = storedPlan.isEmpty() ? "Pro Expired" : storedPlan;
+                        } else {
+                            proStatus = "ACTIVE";
+                            String storedPlan = xp != null ? xp.getString("plan_name", "") : "";
+                            planName = storedPlan.isEmpty() ? "Pro Active" : storedPlan;
+                        }
+                    } catch (Throwable t) {
+                        proStatus = "FREE";
+                        planName  = "Free";
+                    }
+
+                    boolean isActive  = "ACTIVE".equalsIgnoreCase(proStatus);
+                    boolean isExpired = "EXPIRED".equalsIgnoreCase(proStatus);
+
+                    if (isActive || isExpired) {
+                        // ─────────────────────────────────────────────
+                        //  ACTIVE / EXPIRED LICENSE CARD
+                        // ─────────────────────────────────────────────
+                        android.widget.LinearLayout licCard = new android.widget.LinearLayout(activity);
+                        licCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+                        licCard.setPadding(pad16, pad16, pad16, pad16);
+
+                        android.graphics.drawable.GradientDrawable licCardGd = new android.graphics.drawable.GradientDrawable();
+                        licCardGd.setCornerRadius(12 * density);
+                        licCardGd.setColor(dialogBg);
+                        licCardGd.setStroke((int)(1 * density), strokeColor);
+                        licCard.setBackground(licCardGd);
+                        licCard.setElevation(5 * density);
+
+                        android.widget.LinearLayout.LayoutParams licCardLp =
+                                new android.widget.LinearLayout.LayoutParams(
+                                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        int marginH = (int)(6 * density);
+                        licCardLp.setMargins(marginH, (int)(2 * density), marginH, (int)(20 * density));
+                        licCard.setLayoutParams(licCardLp);
+
+                        // ── Status badge row ──
+                        android.widget.LinearLayout badgeRow = new android.widget.LinearLayout(activity);
+                        badgeRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+                        badgeRow.setGravity(Gravity.CENTER_VERTICAL);
+                        android.widget.LinearLayout.LayoutParams badgeRowLp =
+                                new android.widget.LinearLayout.LayoutParams(
+                                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        badgeRowLp.bottomMargin = (int)(10 * density);
+                        badgeRow.setLayoutParams(badgeRowLp);
+
+                        // Plan name
+                        android.widget.TextView tvPlan = new android.widget.TextView(activity);
+                        tvPlan.setText(planName);
+                        tvPlan.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                        tvPlan.setTextColor(primaryText);
+                        tvPlan.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                        android.widget.LinearLayout.LayoutParams tvPlanLp =
+                                new android.widget.LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                        tvPlan.setLayoutParams(tvPlanLp);
+                        badgeRow.addView(tvPlan);
+
+                        // Status pill badge
+                        android.widget.TextView tvBadge = new android.widget.TextView(activity);
+                        tvBadge.setText(isActive ? "ACTIVE" : "EXPIRED");
+                        tvBadge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
+                        tvBadge.setTextColor(isNight ? 0xFF111B21 : 0xFFFFFFFF);
+                        tvBadge.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                        tvBadge.setPadding((int)(8 * density), (int)(3 * density), (int)(8 * density), (int)(3 * density));
+                        android.graphics.drawable.GradientDrawable badgeGd = new android.graphics.drawable.GradientDrawable();
+                        badgeGd.setCornerRadius(8 * density);
+                        badgeGd.setColor(isActive ? accentG : 0xFFC62828);
+                        tvBadge.setBackground(badgeGd);
+                        badgeRow.addView(tvBadge);
+                        licCard.addView(badgeRow);
+
+                        // ── Divider ──
+                        View licDiv = new View(activity);
+                        android.widget.LinearLayout.LayoutParams licDivLp =
+                                new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int)(1 * density));
+                        licDivLp.bottomMargin = (int)(10 * density);
+                        licDiv.setLayoutParams(licDivLp);
+                        licDiv.setBackgroundColor(strokeColor);
+                        licCard.addView(licDiv);
+
+                        // ── Expiry ──
+                        android.widget.TextView tvExpiry = new android.widget.TextView(activity);
+                        if (expiresAt > 0) {
+                            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault());
+                            String label = isActive ? "Valid until: " : "Expired on: ";
+                            tvExpiry.setText(label + sdf.format(new java.util.Date(expiresAt)));
+                            if (isExpired) tvExpiry.setTextColor(0xFFC62828);
+                            else tvExpiry.setTextColor(secondaryText);
+                        } else {
+                            tvExpiry.setText("Valid until: Lifetime Access");
+                            tvExpiry.setTextColor(accentG);
+                        }
+                        tvExpiry.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                        android.widget.LinearLayout.LayoutParams tvExpiryLp =
+                                new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        tvExpiryLp.bottomMargin = (int)(4 * density);
+                        tvExpiry.setLayoutParams(tvExpiryLp);
+                        licCard.addView(tvExpiry);
+
+                        // ── Telegram username ──
+                        if (tgUsername != null && !tgUsername.isEmpty()) {
+                            android.widget.TextView tvTg = new android.widget.TextView(activity);
+                            tvTg.setText("Linked to: @" + tgUsername);
+                            tvTg.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                            tvTg.setTextColor(secondaryText);
+                            android.widget.LinearLayout.LayoutParams tvTgLp =
+                                    new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                            tvTgLp.bottomMargin = (int)(4 * density);
+                            tvTg.setLayoutParams(tvTgLp);
+                            licCard.addView(tvTg);
+                        }
+
+                        // ── Masked license key ──
+                        if (licenseKey != null && !licenseKey.isEmpty()) {
+                            // Mask: show first 9 chars + ****-****
+                            String masked = licenseKey.length() > 9
+                                    ? licenseKey.substring(0, 9) + "****-****"
+                                    : licenseKey;
+                            android.widget.TextView tvKey = new android.widget.TextView(activity);
+                            tvKey.setText("Key: " + masked);
+                            tvKey.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                            tvKey.setTextColor(secondaryText);
+                            android.widget.LinearLayout.LayoutParams tvKeyLp =
+                                    new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                            tvKeyLp.bottomMargin = (int)(12 * density);
+                            tvKey.setLayoutParams(tvKeyLp);
+                            licCard.addView(tvKey);
+                        }
+
+                        // ── Unlink button — WDSButton OUTLINE ("OUTLINE" = correct enum name used by AlertDialogWpp) ──
+                        View btnUnlink = null;
+                        try {
+                            Class<?> wdsButtonClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.button.WDSButton");
+                            btnUnlink = (View) wdsButtonClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class).newInstance(activity, null);
+                            ((android.widget.TextView) btnUnlink).setText("Unlink Device");
+                            Class<?> variantClass = null;
+                            for (java.lang.reflect.Method m : wdsButtonClass.getDeclaredMethods()) {
+                                if (m.getName().equals("setVariant") && m.getParameterTypes().length == 1) {
+                                    variantClass = m.getParameterTypes()[0];
+                                    break;
+                                }
+                            }
+                            if (variantClass == null) {
+                                variantClass = activity.getClassLoader().loadClass("X.0xb");
+                            }
+                            Object outlineVariant = Enum.valueOf((Class<Enum>) variantClass, "OUTLINE");
+                            de.robv.android.xposed.XposedHelpers.callMethod(btnUnlink, "setVariant", outlineVariant);
+                        } catch (Throwable t) {
+                            // Fallback matching AlertDialogWpp negative button fallback style
+                            android.widget.TextView fbUnlink = new android.widget.TextView(activity);
+                            fbUnlink.setText("Unlink Device");
+                            fbUnlink.setGravity(Gravity.CENTER);
+                            fbUnlink.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                            fbUnlink.setTextColor(accentG);
+                            fbUnlink.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                            fbUnlink.setPadding(0, (int)(14 * density), 0, (int)(14 * density));
+                            btnUnlink = fbUnlink;
+                        }
+                        btnUnlink.setClickable(true);
+                        btnUnlink.setFocusable(true);
+
+                        // Confirmation: AlertDialogWpp — same as used across entire codebase
+                        final View finalBtnUnlink = btnUnlink;
+                        btnUnlink.setOnClickListener(v -> {
+                            // AlertDialogWpp — same pattern as showRestartDialog and all other dialogs
+                            new com.waenhancer.xposed.core.components.AlertDialogWpp(activity)
+                                .setTitle("Unlink this device?")
+                                .setMessage("This will remove your license from this device. You will lose access to all Pro features and will need to re-enter your key to reactivate.")
+                                .setPositiveButton("Unlink", (dialog, which) -> {
+                                    // Show loading spinner
+                                    final android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(activity);
+                                    progressDialog.setMessage("Unlinking device...");
+                                    progressDialog.setCancelable(false);
+                                    progressDialog.show();
+                                    
+                                    if (finalBtnUnlink != null) finalBtnUnlink.setEnabled(false);
+
+                                    com.waenhancer.App.getExecutorService().execute(() -> {
+                                        try {
+                                            android.net.Uri providerUri = android.net.Uri.parse("content://com.waenhancer.hookprovider");
+                                            final android.os.Bundle result = activity.getContentResolver().call(providerUri, "unlink_device", null, null);
+                                            
+                                            activity.runOnUiThread(() -> {
+                                                if (progressDialog.isShowing()) progressDialog.dismiss();
+                                                if (result != null && result.getBoolean("success", false)) {
+                                                    android.widget.Toast.makeText(activity, "Device unlinked successfully.", android.widget.Toast.LENGTH_SHORT).show();
+                                                    
+                                                    // Broadcast restart intent to the module app process
+                                                    try {
+                                                        android.content.Intent restartIntent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".WHATSAPP.RESTART");
+                                                        restartIntent.putExtra("PKG", com.waenhancer.BuildConfig.APPLICATION_ID);
+                                                        activity.sendBroadcast(restartIntent);
+                                                    } catch (Throwable ignored) {}
+
+                                                    // Restart WhatsApp itself (host app)
+                                                    try {
+                                                        com.waenhancer.xposed.utils.Utils.doRestart(activity);
+                                                    } catch (Throwable t) {
+                                                        activity.finish();
+                                                    }
+                                                } else {
+                                                    if (finalBtnUnlink != null) finalBtnUnlink.setEnabled(true);
+                                                    String err = result != null ? result.getString("message", "Unlink failed") : "Provider communication failed";
+                                                    android.widget.Toast.makeText(activity, "Unlink failed: " + err, android.widget.Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+                                        } catch (Throwable t) {
+                                            activity.runOnUiThread(() -> {
+                                                if (progressDialog.isShowing()) progressDialog.dismiss();
+                                                if (finalBtnUnlink != null) finalBtnUnlink.setEnabled(true);
+                                                android.widget.Toast.makeText(activity, "Unlink failed: " + t.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+                                            });
+                                        }
+                                    });
+                                })
+                                .setNegativeButton("Cancel", (dialog, which) -> {})
+                                .show();
+                        });
+                        licCard.addView(btnUnlink);
+
+                        containerLayout.addView(licCard);
+
+                        // ── Show features button ──
+                        android.widget.TextView tvFeaturesLinked = new android.widget.TextView(activity);
+                        tvFeaturesLinked.setText("View Premium Features");
+                        tvFeaturesLinked.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                        tvFeaturesLinked.setTextColor(accentG);
+                        tvFeaturesLinked.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                        tvFeaturesLinked.setGravity(Gravity.CENTER);
+                        tvFeaturesLinked.setPadding(0, pad16, 0, pad16);
+                        tvFeaturesLinked.setClickable(true);
+                        tvFeaturesLinked.setFocusable(true);
+                        tvFeaturesLinked.setOnClickListener(v -> {
+                            try {
+                                android.content.Intent subScreenIntent = new android.content.Intent(activity, activity.getClass());
+                                subScreenIntent.putExtra("waex_screen_id", "premium_features");
+                                activity.startActivity(subScreenIntent);
+                            } catch (Throwable ignored) {}
+                        });
+                        containerLayout.addView(tvFeaturesLinked);
+
+                    } else {
+                        // ─────────────────────────────────────────────
+                        //  FREE STATE: Activation form + plans section
+                        // ─────────────────────────────────────────────
+
+                    // 1. Description
                     android.widget.TextView actDesc = new android.widget.TextView(activity);
                     actDesc.setText("Enter your license key received from the Telegram Bot to unlock all premium capabilities.");
                     actDesc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
@@ -937,6 +1222,7 @@ public class SettingsInjector extends Feature {
                     btnVerify.setFocusable(true);
                     
                     // Click listener to verify license key
+                    final View finalBtnVerify = btnVerify;
                     btnVerify.setOnClickListener(v -> {
                         String key = etLicense.getText().toString().trim().toUpperCase();
                         if (key.isEmpty()) {
@@ -944,43 +1230,59 @@ public class SettingsInjector extends Feature {
                             return;
                         }
                         
-                        // Reflection call to LicenseManager.verifyLicense
-                        try {
-                            Class<?> lmClass = activity.getClassLoader().loadClass("com.waenhancer.xposed.utils.LicenseManager");
-                            Class<?> cbClass = activity.getClassLoader().loadClass("com.waenhancer.xposed.utils.LicenseManager$LicenseCallback");
-                            
-                            Object callbackProxy = java.lang.reflect.Proxy.newProxyInstance(
-                                activity.getClassLoader(),
-                                new Class<?>[]{cbClass},
-                                (proxy, method, args) -> {
-                                    if ("onSuccess".equals(method.getName())) {
-                                        activity.runOnUiThread(() -> {
-                                            android.widget.Toast.makeText(activity, "Activation Successful! 🎉", android.widget.Toast.LENGTH_LONG).show();
-                                            // Trigger a restart notification to WhatsApp
-                                            try {
-                                                com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
-                                                android.content.Intent ri = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
-                                                ri.putExtra("key", "is_pro_verified");
-                                                ri.setPackage(activity.getPackageName());
-                                                activity.sendBroadcast(ri);
-                                            } catch (Throwable ignored) {}
+                        // Show loading progress spinner
+                        final android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(activity);
+                        progressDialog.setMessage("Verifying license key...");
+                        progressDialog.setCancelable(false);
+                        progressDialog.show();
+                        
+                        // Disable UI elements
+                        if (finalBtnVerify != null) finalBtnVerify.setEnabled(false);
+                        etLicense.setEnabled(false);
+
+                        // Call the module's HookProvider to execute license verification in the module's process context
+                        com.waenhancer.App.getExecutorService().execute(() -> {
+                            try {
+                                android.net.Uri providerUri = android.net.Uri.parse("content://com.waenhancer.hookprovider");
+                                android.os.Bundle extras = new android.os.Bundle();
+                                extras.putString("license_key", key);
+                                
+                                final android.os.Bundle result = activity.getContentResolver().call(providerUri, "verify_license", null, extras);
+                                
+                                activity.runOnUiThread(() -> {
+                                    if (progressDialog.isShowing()) progressDialog.dismiss();
+                                    if (result != null && result.getBoolean("success", false)) {
+                                        android.widget.Toast.makeText(activity, "Activation Successful! 🎉", android.widget.Toast.LENGTH_LONG).show();
+                                        
+                                        // Broadcast restart intent to the module app process
+                                        try {
+                                            android.content.Intent restartIntent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".WHATSAPP.RESTART");
+                                            restartIntent.putExtra("PKG", com.waenhancer.BuildConfig.APPLICATION_ID);
+                                            activity.sendBroadcast(restartIntent);
+                                        } catch (Throwable ignored) {}
+
+                                        // Restart WhatsApp itself (host app)
+                                        try {
+                                            com.waenhancer.xposed.utils.Utils.doRestart(activity);
+                                        } catch (Throwable t) {
                                             activity.finish();
-                                        });
-                                    } else if ("onError".equals(method.getName())) {
-                                        final String err = (String) args[0];
-                                        activity.runOnUiThread(() -> {
-                                            android.widget.Toast.makeText(activity, "Verification Failed: " + err, android.widget.Toast.LENGTH_LONG).show();
-                                        });
+                                        }
+                                    } else {
+                                        if (finalBtnVerify != null) finalBtnVerify.setEnabled(true);
+                                        etLicense.setEnabled(true);
+                                        String err = result != null ? result.getString("message", "Verification Failed") : "Provider communication failed";
+                                        android.widget.Toast.makeText(activity, "Verification Failed: " + err, android.widget.Toast.LENGTH_LONG).show();
                                     }
-                                    return null;
-                                }
-                            );
-                            
-                            java.lang.reflect.Method verifyMethod = lmClass.getMethod("verifyLicense", android.content.Context.class, String.class, cbClass);
-                            verifyMethod.invoke(null, activity, key, callbackProxy);
-                        } catch (Throwable t) {
-                            android.widget.Toast.makeText(activity, "Failed to call LicenseManager: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
-                        }
+                                });
+                            } catch (Throwable t) {
+                                activity.runOnUiThread(() -> {
+                                    if (progressDialog.isShowing()) progressDialog.dismiss();
+                                    if (finalBtnVerify != null) finalBtnVerify.setEnabled(true);
+                                    etLicense.setEnabled(true);
+                                    android.widget.Toast.makeText(activity, "Failed to call LicenseManager: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        });
                     });
                     containerLayout.addView(btnVerify);
                     
@@ -1053,6 +1355,7 @@ public class SettingsInjector extends Feature {
                     } else {
                         fetchPlansFromNetwork(plansContainer, activity, density, pad16, dialogBg, strokeColor, primaryText, secondaryText, accentG, cachePrefs);
                     }
+                    } // end else FREE state
                     
                     contentView = scrollView;
                 } else if ("premium_features".equals(screenId)) {

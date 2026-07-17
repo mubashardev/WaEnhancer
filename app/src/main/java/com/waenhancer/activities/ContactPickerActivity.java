@@ -163,19 +163,31 @@ public class ContactPickerActivity extends BaseActivity {
             java.util.ArrayList<com.waenhancer.xposed.core.db.DelMessageStore.ContactInfo> waContacts =
                     com.waenhancer.xposed.core.db.DelMessageStore.getInstance(this).getWhatsAppContacts();
             for (com.waenhancer.xposed.core.db.DelMessageStore.ContactInfo wa : waContacts) {
+                // Skip groups, communities, broadcasts, or other non-individual JIDs
+                if (wa.jid == null || wa.jid.endsWith("@g.us") || wa.jid.contains("broadcast") || wa.jid.contains("call") || wa.jid.contains("temp")) {
+                    continue;
+                }
+
                 String normalized = wa.number;
                 if (normalized == null || normalized.isEmpty()) {
-                    normalized = wa.jid.replace("@s.whatsapp.net", "").replace("@g.us", "");
+                    normalized = wa.jid.replace("@s.whatsapp.net", "").replace("@lid", "");
                     if (normalized.contains("@")) normalized = normalized.split("@")[0];
                 }
                 normalized = normalizePhone(normalized);
                 if (normalized.isEmpty()) continue;
 
+                // Skip raw LID/JID entries that do not have a mapped readable contact name to avoid duplicate/garbled entries
+                boolean isRawLid = normalized.matches("\\d+") && normalized.length() >= 12;
+                String displayName = wa.displayName;
+                if (displayName == null || displayName.trim().isEmpty()) {
+                    displayName = wa.waName;
+                }
+                
+                if (isRawLid && (displayName == null || displayName.trim().isEmpty() || displayName.equals(normalized))) {
+                    continue; // Skip this unmapped raw LID contact
+                }
+
                 if (!uniqueContacts.containsKey(normalized)) {
-                    String displayName = wa.displayName;
-                    if (displayName == null || displayName.trim().isEmpty()) {
-                        displayName = wa.waName;
-                    }
                     if (displayName == null || displayName.trim().isEmpty()) {
                         displayName = normalized;
                     }

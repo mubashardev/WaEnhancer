@@ -1,4 +1,5 @@
 [Added]
+- Added support for WA/WB 2.26.28.xx
 - [Pro] Added a delete for me messages media recovery system to recover and view deleted photos, videos, voice notes, and stickers directly in the deleted messages log
 - Added a search bar in embedded settings to easily find and navigate preferences
 - Added a direct download button for video notes (video messages) to quickly save them

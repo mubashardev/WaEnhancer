@@ -148,6 +148,11 @@
             app:summary="@string/additional_call_information_sum"
             app:title="@string/additional_call_information" />
 
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="call_blocked_notification"
+            app:summary="@string/call_blocked_notification_sum"
+            app:title="@string/call_blocked_notification" />
+
         <ListPreference
             app:entries="@array/call_blocker_buttons"
             app:entryValues="@array/call_blocker_values"

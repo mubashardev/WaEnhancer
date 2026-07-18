@@ -121,7 +121,9 @@
 }
 
 
-# Suppress warnings for jStyleParser and CSS
+# Keep the CSS parser library (jStyleParser) intact to prevent NoSuchFieldException during reflective enum/field lookups
+-keep class cz.vutbr.web.** { *; }
+-keep class org.w3c.css.sac.** { *; }
 -dontwarn cz.vutbr.web.**
 -dontwarn org.w3c.css.sac.**
 

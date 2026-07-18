@@ -696,6 +696,8 @@ public class ProHelper {
             hookKey = "send_audio_as_voice_status";
         } else if (prefKey.equals("filter_group_members_messages")) {
             hookKey = "filter_group_members_messages";
+        } else if (prefKey.equals("unlock_premium_customization")) {
+            hookKey = "unlock_premium_customization";
         }
 
         if (hookKey != null) {
@@ -1192,6 +1194,12 @@ public class ProHelper {
         }
         if (key.equals("file_size_spoofer")) {
             return "file_size_spoofer";
+        }
+        if (key.equals("filter_group_members_messages")) {
+            return "filter_group_members_messages";
+        }
+        if (key.equals("unlock_premium_customization")) {
+            return "unlock_premium_customization";
         }
         return null;
     }

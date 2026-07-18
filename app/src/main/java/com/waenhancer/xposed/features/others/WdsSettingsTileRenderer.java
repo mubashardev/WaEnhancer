@@ -24,6 +24,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.util.AttributeSet;
+import android.widget.CompoundButton;
+import android.widget.FrameLayout;
+import android.widget.Toast;
+import androidx.appcompat.widget.SwitchCompat;
+import com.waenhancer.xposed.core.WppCore;
+import com.waenhancer.xposed.utils.DesignUtils;
+import com.waenhancer.xposed.utils.ProHelper;
+import com.waenhancer.xposed.utils.XResManager;
+import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
+import java.util.function.BiConsumer;
 
 public class WdsSettingsTileRenderer {
 
@@ -33,7 +50,7 @@ public class WdsSettingsTileRenderer {
 
     public static JSONObject loadSettingsMap(Context context) {
         try {
-            android.content.res.Resources res = com.waenhancer.xposed.utils.XResManager.moduleResources;
+            Resources res = XResManager.moduleResources;
             if (res == null) res = context.getResources();
             int resId = res.getIdentifier("waex_settings_map", "raw", "com.waenhancer");
             if (resId == 0) {
@@ -56,7 +73,7 @@ public class WdsSettingsTileRenderer {
         if (str.startsWith("@string/")) {
             try {
                 String name = str.substring(8);
-                android.content.res.Resources res = com.waenhancer.xposed.utils.XResManager.moduleResources;
+                Resources res = XResManager.moduleResources;
                 int id = 0;
                 if (res != null) {
                     id = res.getIdentifier(name, "string", "com.waenhancer");
@@ -94,26 +111,26 @@ public class WdsSettingsTileRenderer {
                 String summary = cat.optString("summary", "");
 
                 String iconName = cat.optString("icon", "ic_settings");
-                android.graphics.drawable.Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawableByName(iconName);
+                Drawable icon = DesignUtils.getDrawableByName(iconName);
                 if (icon == null) {
-                    icon = com.waenhancer.xposed.utils.DesignUtils.getDrawableByName("ic_settings");
+                    icon = DesignUtils.getDrawableByName("ic_settings");
                 }
-                de.robv.android.xposed.XposedBridge.log("[WAEX] Category id: " + id + ", iconName: " + iconName + ", icon: " + icon);
+                XposedBridge.log("[WAEX] Category id: " + id + ", iconName: " + iconName + ", icon: " + icon);
 
                 View row = createWdsRow(activity, title, summary, icon, iconName, v -> {
                     if ("optimization".equals(id)) {
                         try {
-                            Class<?> aboutClass = com.waenhancer.xposed.core.WppCore.getAboutActivityClass(activity.getClassLoader());
+                            Class<?> aboutClass = WppCore.getAboutActivityClass(activity.getClassLoader());
                             if (aboutClass != null) {
-                                android.content.Intent intent = new android.content.Intent(activity, aboutClass);
+                                Intent intent = new Intent(activity, aboutClass);
                                 intent.putExtra("wae_optimize_db", true);
                                 activity.startActivity(intent);
                             }
                         } catch (Throwable t) {
-                            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to start optimization from settings: " + t.getMessage());
+                            XposedBridge.log("[WAEX] Failed to start optimization from settings: " + t.getMessage());
                         }
                     } else {
-                        android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                        Intent intent = new Intent(activity, activity.getClass());
                         intent.putExtra("waex_screen_id", id);
                         activity.startActivity(intent);
                     }
@@ -194,7 +211,7 @@ public class WdsSettingsTileRenderer {
                 String subTitle = sub.getString("title");
                 String subSummary = sub.optString("summary", "Customize " + subTitle + " settings");
                 
-                android.graphics.drawable.Drawable icon = null;
+                Drawable icon = null;
                 String iconName = "";
                 if ("home_screen_main".equals(subId)) {
                     iconName = "ic_home_black_24dp";
@@ -203,14 +220,14 @@ public class WdsSettingsTileRenderer {
                 }
                 
                 if (!iconName.isEmpty()) {
-                    icon = com.waenhancer.xposed.utils.DesignUtils.getDrawableByName(iconName);
+                    icon = DesignUtils.getDrawableByName(iconName);
                 }
                 if (icon == null) {
-                    icon = com.waenhancer.xposed.utils.DesignUtils.getDrawableByName("ic_chevron_right");
+                    icon = DesignUtils.getDrawableByName("ic_chevron_right");
                 }
                 
                 View catTile = createWdsRow(activity, subTitle, subSummary, icon, iconName, v -> {
-                    android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                    Intent intent = new Intent(activity, activity.getClass());
                     intent.putExtra("waex_screen_id", subId);
                     activity.startActivity(intent);
                 });
@@ -245,7 +262,7 @@ public class WdsSettingsTileRenderer {
         renderPrefsArray(context, container, prefsArray, prefs, listener, isSearch, null);
     }
 
-    static void renderPrefsArray(Context context, LinearLayout container, JSONArray prefsArray, SharedPreferences prefs, PrefChangeListener listener, boolean isSearch, java.util.function.BiConsumer<String, String> navigateCallback) {
+    static void renderPrefsArray(Context context, LinearLayout container, JSONArray prefsArray, SharedPreferences prefs, PrefChangeListener listener, boolean isSearch, BiConsumer<String, String> navigateCallback) {
         try {
             Map<String, View> tileViews = new HashMap<>();
 
@@ -255,9 +272,9 @@ public class WdsSettingsTileRenderer {
                 String key = pref.getString("key");
                 String title = pref.getString("title");
                 
-                boolean isProKey = com.waenhancer.xposed.utils.ProHelper.isProFeature(key);
-                boolean isProEnabled = com.waenhancer.xposed.utils.ProHelper.isProEnabled();
-                boolean limitedFree = com.waenhancer.xposed.utils.ProHelper.isLimitedFreePreferenceEnabled(key);
+                boolean isProKey = ProHelper.isProFeature(key);
+                boolean isProEnabled = ProHelper.isProEnabled();
+                boolean limitedFree = ProHelper.isLimitedFreePreferenceEnabled(key);
                 boolean isProLocked = isProKey && !isProEnabled && !limitedFree;
 
                 boolean isEnabled = pref.optBoolean("enabled", true);
@@ -277,7 +294,7 @@ public class WdsSettingsTileRenderer {
                         // Simple navigation row for list/multi/text/action
                         String activeValue = (isEnabled && !isProLocked) ? getActiveValueText(context, pref, prefs) : "";
                         String displaySummary = summary;
-                        if (!android.text.TextUtils.isEmpty(activeValue) && !android.text.TextUtils.isEmpty(displaySummary)) {
+                        if (!TextUtils.isEmpty(activeValue) && !TextUtils.isEmpty(displaySummary)) {
                             displaySummary = displaySummary;  // keep breadcrumb
                         }
                         final String fKey = key;
@@ -286,14 +303,14 @@ public class WdsSettingsTileRenderer {
                             if (navigateCallback != null) navigateCallback.accept(fKey, "");
                         });
                         // Append active value as trailing text if possible
-                        if (!android.text.TextUtils.isEmpty(activeValue)) {
+                        if (!TextUtils.isEmpty(activeValue)) {
                             try {
-                                boolean isDarkMode = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                                boolean isDarkMode = DesignUtils.isNightMode();
                                 TextView trailingView = new TextView(context);
                                 trailingView.setText(fActiveValue);
                                 trailingView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
                                 trailingView.setTextColor(isDarkMode ? 0xFF8696a0 : 0xFF667781);
-                                de.robv.android.xposed.XposedHelpers.callMethod(tile, "setEndAddon", trailingView);
+                                XposedHelpers.callMethod(tile, "setEndAddon", trailingView);
                             } catch (Throwable ignored) {}
                         }
                     }
@@ -309,17 +326,17 @@ public class WdsSettingsTileRenderer {
                                 builder.setPositiveButton("Activate Pro", (dialog, which) -> {
                                     try {
                                         Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");
-                                        android.content.Intent intent = new android.content.Intent(context, clazz);
-                                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        Intent intent = new Intent(context, clazz);
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                         context.startActivity(intent);
                                     } catch (Throwable t) {
-                                        android.widget.Toast.makeText(context, "Pro license screen not available.", android.widget.Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(context, "Pro license screen not available.", Toast.LENGTH_SHORT).show();
                                     }
                                 });
                                 builder.setNegativeButton("Cancel", null);
                                 builder.show();
                             } catch (Throwable t) {
-                                de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
+                                XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
                             }
                         });
                     } else if (!isEnabled) {
@@ -333,7 +350,7 @@ public class WdsSettingsTileRenderer {
                                 builder.setPositiveButton("Dismiss", null);
                                 builder.show();
                             } catch (Throwable t) {
-                                de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
+                                XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
                             }
                         });
                     } else if ("switch".equals(type)) {
@@ -369,19 +386,19 @@ public class WdsSettingsTileRenderer {
      * Search-mode switch tile: only the switch widget toggles the pref.
      * Clicking anywhere else on the row fires the navigateCallback.
      */
-    private static View createSearchSwitchTile(Context context, String key, String title, String summary, boolean defVal, SharedPreferences prefs, PrefChangeListener listener, java.util.function.BiConsumer<String, String> navigateCallback) {
+    private static View createSearchSwitchTile(Context context, String key, String title, String summary, boolean defVal, SharedPreferences prefs, PrefChangeListener listener, BiConsumer<String, String> navigateCallback) {
         // Build the row as a plain WDSListItem/fallback LinearLayout
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
         float density = context.getResources().getDisplayMetrics().density;
         row.setPadding((int)(16 * density), (int)(12 * density), (int)(16 * density), (int)(12 * density));
 
-        android.util.TypedValue outValue = new android.util.TypedValue();
+        TypedValue outValue = new TypedValue();
         context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
         row.setBackgroundResource(outValue.resourceId);
 
-        boolean isDarkMode = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+        boolean isDarkMode = DesignUtils.isNightMode();
         int primaryColor = isDarkMode ? 0xFFe9edef : 0xFF111B21;
         int secondaryColor = isDarkMode ? 0xFF8696a0 : 0xFF667781;
 
@@ -393,14 +410,14 @@ public class WdsSettingsTileRenderer {
 
         TextView titleView = createWdsTextView(context);
         titleView.setText(resolveString(context, title));
-        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         titleView.setTextColor(primaryColor);
         textLayout.addView(titleView);
 
-        if (!android.text.TextUtils.isEmpty(summary)) {
+        if (!TextUtils.isEmpty(summary)) {
             TextView summaryView = createWdsTextView(context);
             summaryView.setText(resolveString(context, summary));
-            summaryView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
+            summaryView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
             summaryView.setTextColor(secondaryColor);
             summaryView.setPadding(0, (int)(2 * density), 0, 0);
             textLayout.addView(summaryView);
@@ -494,7 +511,7 @@ public class WdsSettingsTileRenderer {
                 if (current.isEmpty()) {
                     return "None";
                 }
-                java.util.List<String> selectedLabels = new java.util.ArrayList<>();
+                List<String> selectedLabels = new ArrayList<>();
                 String[] selectedValues = current.split(",");
                 for (String val : selectedValues) {
                     for (int i = 0; i < values.length; i++) {
@@ -517,22 +534,22 @@ public class WdsSettingsTileRenderer {
         return "";
     }
 
-    private static View createWdsRow(Context context, String title, String summary, android.graphics.drawable.Drawable icon, View.OnClickListener clickListener) {
+    private static View createWdsRow(Context context, String title, String summary, Drawable icon, View.OnClickListener clickListener) {
         return createWdsRow(context, title, summary, icon, null, clickListener);
     }
 
-    private static View createWdsRow(Context context, String title, String summary, android.graphics.drawable.Drawable icon, String iconName, View.OnClickListener clickListener) {
+    private static View createWdsRow(Context context, String title, String summary, Drawable icon, String iconName, View.OnClickListener clickListener) {
         try {
             Class<?> wdsListItemClass = context.getClassLoader().loadClass("com.whatsapp.ui.wds.components.list.listitem.WDSListItem");
-            View wdsListItem = (View) wdsListItemClass.getConstructor(Context.class, android.util.AttributeSet.class).newInstance(context, null);
+            View wdsListItem = (View) wdsListItemClass.getConstructor(Context.class, AttributeSet.class).newInstance(context, null);
             
             // Set text/title
-            de.robv.android.xposed.XposedHelpers.callMethod(wdsListItem, "setText", resolveString(context, title));
+            XposedHelpers.callMethod(wdsListItem, "setText", resolveString(context, title));
             
             // Set subtext/summary
             String resolvedSummary = resolveString(context, summary);
-            if (!android.text.TextUtils.isEmpty(resolvedSummary)) {
-                de.robv.android.xposed.XposedHelpers.callMethod(wdsListItem, "setSubText", resolvedSummary);
+            if (!TextUtils.isEmpty(resolvedSummary)) {
+                XposedHelpers.callMethod(wdsListItem, "setSubText", resolvedSummary);
             }
             
             // Set icon
@@ -541,36 +558,36 @@ public class WdsSettingsTileRenderer {
                     float density = context.getResources().getDisplayMetrics().density;
                     
                     // Container FrameLayout of 40dp
-                    android.widget.FrameLayout container = new android.widget.FrameLayout(context);
-                    android.widget.LinearLayout.LayoutParams containerLp = new android.widget.LinearLayout.LayoutParams(
+                    FrameLayout container = new FrameLayout(context);
+                    LinearLayout.LayoutParams containerLp = new LinearLayout.LayoutParams(
                             (int) (40 * density), (int) (40 * density)
                     );
-                    containerLp.gravity = android.view.Gravity.CENTER_VERTICAL;
+                    containerLp.gravity = Gravity.CENTER_VERTICAL;
                     containerLp.setMarginStart(0);
                     containerLp.setMarginEnd((int) (16 * density));
                     container.setLayoutParams(containerLp);
                     
                     // ImageView centered inside container
-                    android.widget.ImageView iconView = new android.widget.ImageView(context);
+                    ImageView iconView = new ImageView(context);
                     iconView.setImageDrawable(icon);
                     
-                    boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
-                    iconView.setImageTintList(android.content.res.ColorStateList.valueOf(isNight ? 0xFF8696a0 : 0xFF667781));
+                    boolean isNight = DesignUtils.isNightMode();
+                    iconView.setImageTintList(ColorStateList.valueOf(isNight ? 0xFF8696a0 : 0xFF667781));
                     
                     int iconSizeDp = 24;
                     if ("ic_home_tab_status_unfilled".equals(iconName)) {
                         iconSizeDp = 28;
                     }
-                    android.widget.FrameLayout.LayoutParams iconLp = new android.widget.FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams iconLp = new FrameLayout.LayoutParams(
                             (int) (iconSizeDp * density), (int) (iconSizeDp * density)
                     );
-                    iconLp.gravity = android.view.Gravity.CENTER;
+                    iconLp.gravity = Gravity.CENTER;
                     iconView.setLayoutParams(iconLp);
                     
                     container.addView(iconView);
-                    ((android.view.ViewGroup) wdsListItem).addView(container, 0);
+                    ((ViewGroup) wdsListItem).addView(container, 0);
                 } catch (Throwable t2) {
-                    de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to add leading icon view: " + t2.getMessage());
+                    XposedBridge.log("[WAEX] Failed to add leading icon view: " + t2.getMessage());
                 }
             }
             
@@ -582,7 +599,7 @@ public class WdsSettingsTileRenderer {
             
             return wdsListItem;
         } catch (Throwable t) {
-            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to instantiate WDSListItem, falling back: " + t.getMessage());
+            XposedBridge.log("[WAEX] Failed to instantiate WDSListItem, falling back: " + t.getMessage());
         }
 
         LinearLayout row = new LinearLayout(context);
@@ -598,8 +615,8 @@ public class WdsSettingsTileRenderer {
         // Resolve theme colors dynamically
         boolean isDarkMode = false;
         try {
-            int nightModeFlags = context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-            isDarkMode = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+            int nightModeFlags = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
         } catch (Exception ignored) {}
         int primaryTextColor = isDarkMode ? 0xFFe9edef : 0xFF111B21;
         int secondaryTextColor = isDarkMode ? 0xFF8696a0 : 0xFF667781;
@@ -618,28 +635,28 @@ public class WdsSettingsTileRenderer {
 
         if (icon != null) {
             // Container FrameLayout of 40dp
-            android.widget.FrameLayout container = new android.widget.FrameLayout(context);
-            android.widget.LinearLayout.LayoutParams containerLp = new android.widget.LinearLayout.LayoutParams(
+            FrameLayout container = new FrameLayout(context);
+            LinearLayout.LayoutParams containerLp = new LinearLayout.LayoutParams(
                     (int) (40 * density), (int) (40 * density)
             );
-            containerLp.gravity = android.view.Gravity.CENTER_VERTICAL;
+            containerLp.gravity = Gravity.CENTER_VERTICAL;
             containerLp.setMarginStart(0);
             containerLp.setMarginEnd((int) (16 * density));
             container.setLayoutParams(containerLp);
             
             // ImageView centered inside container
-            android.widget.ImageView iconView = new android.widget.ImageView(context);
+            ImageView iconView = new ImageView(context);
             iconView.setImageDrawable(icon);
-            iconView.setImageTintList(android.content.res.ColorStateList.valueOf(secondaryTextColor));
+            iconView.setImageTintList(ColorStateList.valueOf(secondaryTextColor));
             
             int iconSizeDp = 24;
             if ("ic_home_tab_status_unfilled".equals(iconName)) {
                 iconSizeDp = 28;
             }
-            android.widget.FrameLayout.LayoutParams iconLp = new android.widget.FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams iconLp = new FrameLayout.LayoutParams(
                     (int) (iconSizeDp * density), (int) (iconSizeDp * density)
             );
-            iconLp.gravity = android.view.Gravity.CENTER;
+            iconLp.gravity = Gravity.CENTER;
             iconView.setLayoutParams(iconLp);
             
             container.addView(iconView);
@@ -691,8 +708,8 @@ public class WdsSettingsTileRenderer {
         // Resolve theme colors dynamically
         boolean isDarkMode = false;
         try {
-            int nightModeFlags = context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-            isDarkMode = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+            int nightModeFlags = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
         } catch (Exception ignored) {}
         int primaryTextColor = isDarkMode ? 0xFFe9edef : 0xFF111B21;
         int secondaryTextColor = isDarkMode ? 0xFF8696a0 : 0xFF667781;
@@ -1005,7 +1022,7 @@ public class WdsSettingsTileRenderer {
             return createWdsRow(context, title, summary, null, v -> {
                 if ("open_deleted_messages".equals(key)) {
                     try {
-                        android.content.Intent intent = new android.content.Intent();
+                        Intent intent = new Intent();
                         intent.setClassName(context.getPackageName(), "com.waenhancer.activities.DeletedMessagesActivity");
                         context.startActivity(intent);
                     } catch (Exception ignored) {}
@@ -1018,20 +1035,20 @@ public class WdsSettingsTileRenderer {
 
     private static void setSwitchChecked(View view, boolean checked) {
         try {
-            de.robv.android.xposed.XposedHelpers.callMethod(view, "setChecked", checked);
+            XposedHelpers.callMethod(view, "setChecked", checked);
         } catch (Throwable ignored) {
-            if (view instanceof android.widget.CompoundButton) {
-                ((android.widget.CompoundButton) view).setChecked(checked);
+            if (view instanceof CompoundButton) {
+                ((CompoundButton) view).setChecked(checked);
             }
         }
     }
 
     private static boolean getSwitchChecked(View view) {
         try {
-            return (boolean) de.robv.android.xposed.XposedHelpers.callMethod(view, "isChecked");
+            return (boolean) XposedHelpers.callMethod(view, "isChecked");
         } catch (Throwable ignored) {
-            if (view instanceof android.widget.CompoundButton) {
-                return ((android.widget.CompoundButton) view).isChecked();
+            if (view instanceof CompoundButton) {
+                return ((CompoundButton) view).isChecked();
             }
             return false;
         }
@@ -1057,7 +1074,7 @@ public class WdsSettingsTileRenderer {
     private static TextView createWdsTextView(Context context) {
         try {
             Class<?> wdsTvClass = context.getClassLoader().loadClass("com.whatsapp.ui.wds.components.textview.WDSTextView");
-            return (TextView) wdsTvClass.getConstructor(Context.class, android.util.AttributeSet.class).newInstance(context, null);
+            return (TextView) wdsTvClass.getConstructor(Context.class, AttributeSet.class).newInstance(context, null);
         } catch (Throwable t) {
             return new TextView(context);
         }
@@ -1066,13 +1083,13 @@ public class WdsSettingsTileRenderer {
     private static View createWdsSwitch(Context context) {
         try {
             Class<?> wdsSwitchClass = context.getClassLoader().loadClass("com.whatsapp.ui.wds.components.toggle.WDSSwitch");
-            return (View) wdsSwitchClass.getConstructor(Context.class, android.util.AttributeSet.class).newInstance(context, null);
+            return (View) wdsSwitchClass.getConstructor(Context.class, AttributeSet.class).newInstance(context, null);
         } catch (Throwable t) {
             try {
                 Class<?> switchClass = Class.forName("X.0xb", true, context.getClassLoader());
-                return (View) switchClass.getConstructor(Context.class, android.util.AttributeSet.class).newInstance(context, null);
+                return (View) switchClass.getConstructor(Context.class, AttributeSet.class).newInstance(context, null);
             } catch (Throwable t2) {
-                return new androidx.appcompat.widget.SwitchCompat(context);
+                return new SwitchCompat(context);
             }
         }
     }

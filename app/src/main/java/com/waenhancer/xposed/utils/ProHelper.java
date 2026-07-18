@@ -34,6 +34,47 @@ import android.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
+import android.app.ProgressDialog;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Process;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import androidx.appcompat.app.AlertDialog;
+import androidx.preference.ListPreference;
+import androidx.preference.PreferenceFragmentCompat;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.textview.MaterialTextView;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
+import com.waenhancer.utils.KeyboxVerification;
+import com.waenhancer.utils.RootUtils;
+import com.waenhancer.xposed.utils.LicenseManager;
+import com.waex.helper.IProService;
+import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XSharedPreferences;
+import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Helper utility to bridge main set classes and pro submodule features cleanly,
@@ -42,11 +83,11 @@ import javax.crypto.spec.IvParameterSpec;
 public class ProHelper {
 
     private static volatile boolean forceFree = false;
-    private static java.lang.ref.WeakReference<Context> sContextRef = null;
+    private static WeakReference<Context> sContextRef = null;
 
     private static void saveContext(Context context) {
         if (context != null) {
-            sContextRef = new java.lang.ref.WeakReference<>(context.getApplicationContext());
+            sContextRef = new WeakReference<>(context.getApplicationContext());
         }
     }
 
@@ -94,7 +135,7 @@ public class ProHelper {
                 if (knownXposedClass != null) return knownXposedClass;
                 Class<?> xposedClass = loadFromKnownLoader(name, xposedLoader);
                 if (xposedClass != null) return xposedClass;
-                xposedClass = loadFromKnownLoader(name, de.robv.android.xposed.XC_MethodHook.class.getClassLoader());
+                xposedClass = loadFromKnownLoader(name, XC_MethodHook.class.getClassLoader());
                 if (xposedClass != null) return xposedClass;
                 xposedClass = loadFromKnownLoader(name, moduleLoader);
                 if (xposedClass != null) return xposedClass;
@@ -119,12 +160,12 @@ public class ProHelper {
         }
 
         private Class<?> loadKnownXposedClass(String name) {
-            if ("de.robv.android.xposed.XposedBridge".equals(name)) return de.robv.android.xposed.XposedBridge.class;
-            if ("de.robv.android.xposed.XposedHelpers".equals(name)) return de.robv.android.xposed.XposedHelpers.class;
-            if ("de.robv.android.xposed.XC_MethodHook".equals(name)) return de.robv.android.xposed.XC_MethodHook.class;
-            if ("de.robv.android.xposed.XC_MethodHook$MethodHookParam".equals(name)) return de.robv.android.xposed.XC_MethodHook.MethodHookParam.class;
-            if ("de.robv.android.xposed.XC_MethodHook$Unhook".equals(name)) return de.robv.android.xposed.XC_MethodHook.Unhook.class;
-            if ("de.robv.android.xposed.XSharedPreferences".equals(name)) return de.robv.android.xposed.XSharedPreferences.class;
+            if ("de.robv.android.xposed.XposedBridge".equals(name)) return XposedBridge.class;
+            if ("de.robv.android.xposed.XposedHelpers".equals(name)) return XposedHelpers.class;
+            if ("de.robv.android.xposed.XC_MethodHook".equals(name)) return XC_MethodHook.class;
+            if ("de.robv.android.xposed.XC_MethodHook$MethodHookParam".equals(name)) return XC_MethodHook.MethodHookParam.class;
+            if ("de.robv.android.xposed.XC_MethodHook$Unhook".equals(name)) return XC_MethodHook.Unhook.class;
+            if ("de.robv.android.xposed.XSharedPreferences".equals(name)) return XSharedPreferences.class;
             return null;
         }
 
@@ -157,7 +198,7 @@ public class ProHelper {
         String cachedLibPath = null;
         if (companionPluginClassLoader != null
                 && companionPluginPath != null
-                && new java.io.File(companionPluginPath).exists()) {
+                && new File(companionPluginPath).exists()) {
             return companionPluginClassLoader;
         }
 
@@ -166,8 +207,8 @@ public class ProHelper {
         // 1. Try querying the HookProvider ContentProvider first to get the most fresh path from package manager.
         if (context != null) {
             try {
-                android.os.Bundle pluginInfo = context.getContentResolver().call(
-                        android.net.Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider"),
+                Bundle pluginInfo = context.getContentResolver().call(
+                        Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider"),
                         "get_pro_plugin_info",
                         null,
                         null
@@ -176,25 +217,25 @@ public class ProHelper {
                     String providerPath = pluginInfo.getString("sourceDir", null);
                     String providerLibPath = pluginInfo.getString("nativeLibraryDir", null);
                     if (providerPath != null && !providerPath.trim().isEmpty()
-                            && new java.io.File(providerPath).exists()) {
+                            && new File(providerPath).exists()) {
                         cachedPath = providerPath;
                         cachedLibPath = providerLibPath;
                     }
                 }
             } catch (Throwable t) {
-                android.util.Log.e("WaeX-ClassDebug", "Failed to query live Pro plugin path from HookProvider", t);
+                Log.e("WaeX-ClassDebug", "Failed to query live Pro plugin path from HookProvider", t);
             }
         }
 
         // 2. If HookProvider failed or returned null/invalid, try reading package manager directly
-        if (cachedPath == null || cachedPath.trim().isEmpty() || !new java.io.File(cachedPath).exists()) {
+        if (cachedPath == null || cachedPath.trim().isEmpty() || !new File(cachedPath).exists()) {
             if (context == null) {
                 context = App.getInstance();
             }
             if (context != null) {
                 try {
-                    android.content.pm.ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo("com.waex.helper", 0);
-                    if (appInfo.sourceDir != null && new java.io.File(appInfo.sourceDir).exists()) {
+                    ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo("com.waex.helper", 0);
+                    if (appInfo.sourceDir != null && new File(appInfo.sourceDir).exists()) {
                         cachedPath = appInfo.sourceDir;
                         cachedLibPath = appInfo.nativeLibraryDir;
                     }
@@ -205,7 +246,7 @@ public class ProHelper {
         }
 
         // 3. Fallback to cached path from preferences
-        if (cachedPath == null || cachedPath.trim().isEmpty() || !new java.io.File(cachedPath).exists()) {
+        if (cachedPath == null || cachedPath.trim().isEmpty() || !new File(cachedPath).exists()) {
             try {
                 SharedPreferences prefs = getPrefs();
                 cachedPath = prefs != null ? prefs.getString("pro_plugin_path", null) : null;
@@ -215,40 +256,40 @@ public class ProHelper {
             }
         }
 
-        if (cachedPath != null && !cachedPath.trim().isEmpty() && new java.io.File(cachedPath).exists()) {
+        if (cachedPath != null && !cachedPath.trim().isEmpty() && new File(cachedPath).exists()) {
             /* Log removed */
             
             // 1. Try to get nativeLibraryDir from package manager if cachedLibPath is missing
             if (cachedLibPath == null || cachedLibPath.trim().isEmpty()) {
                 if (context != null) {
                     try {
-                        android.content.pm.ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo("com.waex.helper", 0);
+                        ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo("com.waex.helper", 0);
                         cachedLibPath = appInfo.nativeLibraryDir;
                         /* Log removed */
                     } catch (Throwable t) {
-                        android.util.Log.w("WaeX-ClassDebug", "Could not get nativeLibraryDir from package manager: " + t.toString());
+                        Log.w("WaeX-ClassDebug", "Could not get nativeLibraryDir from package manager: " + t.toString());
                     }
                 }
             }
 
             // 2. Fallback/auto-resolve library path checking APK parent directory using device-supported ABIs
             if (cachedLibPath == null || cachedLibPath.trim().isEmpty()) {
-                java.io.File apkFile = new java.io.File(cachedPath);
-                java.io.File parentDir = apkFile.getParentFile();
+                File apkFile = new File(cachedPath);
+                File parentDir = apkFile.getParentFile();
                 if (parentDir != null && parentDir.exists()) {
-                    java.io.File libDir = new java.io.File(parentDir, "lib");
+                    File libDir = new File(parentDir, "lib");
                     if (libDir.exists()) {
                         // Use device-supported ABIs if available, otherwise fallback to standard list
                         String[] abis = null;
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                            abis = android.os.Build.SUPPORTED_ABIS;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            abis = Build.SUPPORTED_ABIS;
                         }
                         if (abis == null || abis.length == 0) {
                             abis = new String[]{"arm64-v8a", "armeabi-v7a", "arm64", "arm", "x86_64", "x86"};
                         }
                         for (String abi : abis) {
-                            java.io.File abiDir = new java.io.File(libDir, abi);
-                            if (new java.io.File(abiDir, "libpro_native.so").exists()) {
+                            File abiDir = new File(libDir, abi);
+                            if (new File(abiDir, "libpro_native.so").exists()) {
                                 cachedLibPath = abiDir.getAbsolutePath();
                                 /* Log removed */
                                 break;
@@ -265,31 +306,31 @@ public class ProHelper {
             }
             
             // Add the APK's directory and the APK path itself as fallbacks
-            java.io.File apkFile = new java.io.File(cachedPath);
+            File apkFile = new File(cachedPath);
             String apkDir = apkFile.getParent();
             if (apkDir != null) {
                 if (libPathBuilder.length() > 0) {
-                    libPathBuilder.append(java.io.File.pathSeparator);
+                    libPathBuilder.append(File.pathSeparator);
                 }
                 libPathBuilder.append(apkDir);
             }
             if (libPathBuilder.length() > 0) {
-                libPathBuilder.append(java.io.File.pathSeparator);
+                libPathBuilder.append(File.pathSeparator);
             }
             libPathBuilder.append(cachedPath);
 
             String finalLibPath = libPathBuilder.toString();
             /* Log removed */
 
-            java.io.File optimizedDir = null;
+            File optimizedDir = null;
             if (context != null) {
-                optimizedDir = new java.io.File(context.getCodeCacheDir(), "waex_pro_dex");
+                optimizedDir = new File(context.getCodeCacheDir(), "waex_pro_dex");
                 if (!optimizedDir.exists() && !optimizedDir.mkdirs()) {
                     optimizedDir = context.getCodeCacheDir();
                 }
             }
             if (optimizedDir == null) {
-                optimizedDir = new java.io.File(System.getProperty("java.io.tmpdir"), "waex_pro_dex");
+                optimizedDir = new File(System.getProperty("java.io.tmpdir"), "waex_pro_dex");
                 if (!optimizedDir.exists()) {
                     optimizedDir.mkdirs();
                 }
@@ -306,14 +347,14 @@ public class ProHelper {
             // Explicitly load the native library using System.load to bypass namespace restrictions
             try {
                 String soName = "libpro_native.so";
-                java.io.File soFile = null;
+                File soFile = null;
                 if (cachedLibPath != null && !cachedLibPath.trim().isEmpty()) {
-                    soFile = new java.io.File(cachedLibPath, soName);
+                    soFile = new File(cachedLibPath, soName);
                 }
                 if (soFile == null || !soFile.exists()) {
                     // Fallback to searching the constructed finalLibPath
-                    for (String path : finalLibPath.split(java.io.File.pathSeparator)) {
-                        java.io.File f = new java.io.File(path, soName);
+                    for (String path : finalLibPath.split(File.pathSeparator)) {
+                        File f = new File(path, soName);
                         if (f.exists()) {
                             soFile = f;
                             break;
@@ -328,14 +369,14 @@ public class ProHelper {
                     /* Log removed */
                 }
             } catch (Throwable t) {
-                android.util.Log.e("WaeX-ClassDebug", "Failed to explicitly load pro native library: " + t.toString(), t);
+                Log.e("WaeX-ClassDebug", "Failed to explicitly load pro native library: " + t.toString(), t);
             }
             
             try {
                 Class.forName("com.waex.helper.ProFeature", true, companionPluginClassLoader);
                 /* Log removed */
             } catch (Throwable t) {
-                android.util.Log.e("WaeX-ClassDebug", "Failed to initialize ProFeature with plugin classloader: " + t.toString(), t);
+                Log.e("WaeX-ClassDebug", "Failed to initialize ProFeature with plugin classloader: " + t.toString(), t);
             }
             return companionPluginClassLoader;
         }
@@ -346,7 +387,7 @@ public class ProHelper {
     private static void appendDexPath(ClassLoader classLoader, String apkPath, String libraryPath) {
         try {
             // 1. Find the pathList field in BaseDexClassLoader
-            java.lang.reflect.Field pathListField = null;
+            Field pathListField = null;
             Class<?> curr = classLoader.getClass();
             while (curr != null) {
                 try {
@@ -370,8 +411,8 @@ public class ProHelper {
             // 2. Try using the public/private addDexPath method on DexPathList
             boolean dexAppended = false;
             try {
-                java.lang.reflect.Method addDexPathMethod = pathList.getClass().getDeclaredMethod(
-                    "addDexPath", String.class, java.io.File.class
+                Method addDexPathMethod = pathList.getClass().getDeclaredMethod(
+                    "addDexPath", String.class, File.class
                 );
                 addDexPathMethod.setAccessible(true);
                 addDexPathMethod.invoke(pathList, apkPath, null);
@@ -382,10 +423,10 @@ public class ProHelper {
             }
 
             // 3. Find makePathElements / makeDexElements method for fallback and for native library elements
-            java.lang.reflect.Method makePathElementsMethod = null;
+            Method makePathElementsMethod = null;
             Class<?> pathListClass = pathList.getClass();
             while (pathListClass != null) {
-                for (java.lang.reflect.Method m : pathListClass.getDeclaredMethods()) {
+                for (Method m : pathListClass.getDeclaredMethods()) {
                     if (m.getName().equals("makePathElements") || m.getName().equals("makeDexElements")) {
                         makePathElementsMethod = m;
                         break;
@@ -400,12 +441,12 @@ public class ProHelper {
             }
             makePathElementsMethod.setAccessible(true);
 
-            java.util.List<java.io.IOException> suppressedExceptions = new java.util.ArrayList<>();
+            List<IOException> suppressedExceptions = new ArrayList<>();
             Class<?>[] paramTypes = makePathElementsMethod.getParameterTypes();
 
             if (!dexAppended) {
-                java.util.List<java.io.File> files = new java.util.ArrayList<>();
-                files.add(new java.io.File(apkPath));
+                List<File> files = new ArrayList<>();
+                files.add(new File(apkPath));
                 Object[] newElements = null;
                 if (makePathElementsMethod.getName().equals("makePathElements")) {
                     if (paramTypes.length == 3) {
@@ -424,11 +465,11 @@ public class ProHelper {
                 }
 
                 if (newElements != null && newElements.length > 0) {
-                    java.lang.reflect.Field dexElementsField = pathList.getClass().getDeclaredField("dexElements");
+                    Field dexElementsField = pathList.getClass().getDeclaredField("dexElements");
                     dexElementsField.setAccessible(true);
                     Object[] originalElements = (Object[]) dexElementsField.get(pathList);
 
-                    Object[] combinedElements = (Object[]) java.lang.reflect.Array.newInstance(
+                    Object[] combinedElements = (Object[]) Array.newInstance(
                         originalElements.getClass().getComponentType(),
                         originalElements.length + newElements.length
                     );
@@ -443,71 +484,71 @@ public class ProHelper {
 
             // 4. Append native library paths
             if (libraryPath != null && !libraryPath.isEmpty()) {
-                String[] paths = libraryPath.split(java.io.File.pathSeparator);
-                java.util.List<java.io.File> newDirsList = new java.util.ArrayList<>();
+                String[] paths = libraryPath.split(File.pathSeparator);
+                List<File> newDirsList = new ArrayList<>();
                 for (String path : paths) {
                     if (!path.trim().isEmpty()) {
-                        newDirsList.add(new java.io.File(path));
+                        newDirsList.add(new File(path));
                     }
                 }
 
                 if (!newDirsList.isEmpty()) {
                     // Update nativeLibraryDirectories (which can be a List<File> or File[])
                     try {
-                        java.lang.reflect.Field nativeLibraryDirectoriesField = pathList.getClass().getDeclaredField("nativeLibraryDirectories");
+                        Field nativeLibraryDirectoriesField = pathList.getClass().getDeclaredField("nativeLibraryDirectories");
                         nativeLibraryDirectoriesField.setAccessible(true);
                         Object origDirsObj = nativeLibraryDirectoriesField.get(pathList);
-                        if (origDirsObj instanceof java.util.List) {
-                            java.util.List<java.io.File> origDirsList = (java.util.List<java.io.File>) origDirsObj;
-                            java.util.List<java.io.File> updatedDirsList = new java.util.ArrayList<>(origDirsList);
-                            for (java.io.File dir : newDirsList) {
+                        if (origDirsObj instanceof List) {
+                            List<File> origDirsList = (List<File>) origDirsObj;
+                            List<File> updatedDirsList = new ArrayList<>(origDirsList);
+                            for (File dir : newDirsList) {
                                 if (!updatedDirsList.contains(dir)) {
                                     updatedDirsList.add(dir);
                                 }
                             }
                             nativeLibraryDirectoriesField.set(pathList, updatedDirsList);
                             /* Log removed */
-                        } else if (origDirsObj instanceof java.io.File[]) {
-                            java.io.File[] origDirsArr = (java.io.File[]) origDirsObj;
-                            java.util.List<java.io.File> updatedDirsList = new java.util.ArrayList<>(java.util.Arrays.asList(origDirsArr));
-                            for (java.io.File dir : newDirsList) {
+                        } else if (origDirsObj instanceof File[]) {
+                            File[] origDirsArr = (File[]) origDirsObj;
+                            List<File> updatedDirsList = new ArrayList<>(Arrays.asList(origDirsArr));
+                            for (File dir : newDirsList) {
                                 if (!updatedDirsList.contains(dir)) {
                                     updatedDirsList.add(dir);
                                 }
                             }
-                            java.io.File[] combinedDirsArr = updatedDirsList.toArray(new java.io.File[0]);
+                            File[] combinedDirsArr = updatedDirsList.toArray(new File[0]);
                             nativeLibraryDirectoriesField.set(pathList, combinedDirsArr);
                             /* Log removed */
                         }
                     } catch (Throwable t) {
-                        android.util.Log.e("WaeX-ClassDebug", "Failed to update nativeLibraryDirectories Field: " + t);
+                        Log.e("WaeX-ClassDebug", "Failed to update nativeLibraryDirectories Field: " + t);
                     }
 
                     // Update nativeLibraryPathElements (array of NativeLibraryElement or Element)
                     try {
-                        java.lang.reflect.Field nativeLibraryPathElementsField = pathList.getClass().getDeclaredField("nativeLibraryPathElements");
+                        Field nativeLibraryPathElementsField = pathList.getClass().getDeclaredField("nativeLibraryPathElements");
                         nativeLibraryPathElementsField.setAccessible(true);
                         Object[] originalLibElements = (Object[]) nativeLibraryPathElementsField.get(pathList);
 
                         Class<?> componentType = originalLibElements.getClass().getComponentType();
-                        java.util.List<Object> newLibElementsList = new java.util.ArrayList<>();
+                        List<Object> newLibElementsList = new ArrayList<>();
 
-                        for (java.io.File dir : newDirsList) {
+                        for (File dir : newDirsList) {
                             Object elementObj = null;
-                            for (java.lang.reflect.Constructor<?> ctor : componentType.getDeclaredConstructors()) {
+                            for (Constructor<?> ctor : componentType.getDeclaredConstructors()) {
                                 ctor.setAccessible(true);
                                 Class<?>[] params = ctor.getParameterTypes();
                                 try {
-                                    if (params.length == 1 && params[0] == java.io.File.class) {
+                                    if (params.length == 1 && params[0] == File.class) {
                                         elementObj = ctor.newInstance(dir);
                                         break;
-                                    } else if (params.length == 2 && params[0] == java.io.File.class && params[1] == boolean.class) {
+                                    } else if (params.length == 2 && params[0] == File.class && params[1] == boolean.class) {
                                         elementObj = ctor.newInstance(dir, true);
                                         break;
-                                    } else if (params.length == 3 && params[0] == java.io.File.class && params[1] == boolean.class && params[2] == java.io.File.class) {
+                                    } else if (params.length == 3 && params[0] == File.class && params[1] == boolean.class && params[2] == File.class) {
                                         elementObj = ctor.newInstance(dir, true, null);
                                         break;
-                                    } else if (params.length == 4 && params[0] == java.io.File.class && params[1] == boolean.class && params[2] == java.io.File.class && params[3] == dalvik.system.DexFile.class) {
+                                    } else if (params.length == 4 && params[0] == File.class && params[1] == boolean.class && params[2] == File.class && params[3] == dalvik.system.DexFile.class) {
                                         elementObj = ctor.newInstance(dir, true, null, null);
                                         break;
                                     }
@@ -521,7 +562,7 @@ public class ProHelper {
                         }
 
                         if (!newLibElementsList.isEmpty()) {
-                            Object[] combinedLibElements = (Object[]) java.lang.reflect.Array.newInstance(
+                            Object[] combinedLibElements = (Object[]) Array.newInstance(
                                 componentType,
                                 originalLibElements.length + newLibElementsList.size()
                             );
@@ -535,12 +576,12 @@ public class ProHelper {
                             /* Log removed */
                         }
                     } catch (Throwable t) {
-                        android.util.Log.e("WaeX-ClassDebug", "Failed to update nativeLibraryPathElements Field: " + t);
+                        Log.e("WaeX-ClassDebug", "Failed to update nativeLibraryPathElements Field: " + t);
                     }
                 }
             }
         } catch (Throwable t) {
-            android.util.Log.e("WaeX-ClassDebug", "Failed to append dex path: " + t);
+            Log.e("WaeX-ClassDebug", "Failed to append dex path: " + t);
         }
     }
 
@@ -605,7 +646,7 @@ public class ProHelper {
                 return decryptedConfigCache;
             }
         } catch (Throwable t) {
-            android.util.Log.e("WaeX-Helper", "Failed to decrypt/parse config", t);
+            Log.e("WaeX-Helper", "Failed to decrypt/parse config", t);
         }
         
         decryptedConfigCache = null;
@@ -636,7 +677,7 @@ public class ProHelper {
                 return limitedFreeConfigCache;
             }
         } catch (Throwable t) {
-            android.util.Log.e("WaeX-Helper", "Failed to decrypt/parse limited free config", t);
+            Log.e("WaeX-Helper", "Failed to decrypt/parse limited free config", t);
         }
 
         limitedFreeConfigCache = null;
@@ -721,7 +762,7 @@ public class ProHelper {
                 }
             }
         } catch (Throwable t) {
-            android.util.Log.e("WaeX-Helper", "Failed to load cached limited free config", t);
+            Log.e("WaeX-Helper", "Failed to load cached limited free config", t);
         }
 
         // Fetch latest configuration in background
@@ -738,7 +779,7 @@ public class ProHelper {
 
             client.newCall(request).enqueue(new okhttp3.Callback() {
                 @Override
-                public void onFailure(@NonNull okhttp3.Call call, @NonNull java.io.IOException e) {}
+                public void onFailure(@NonNull okhttp3.Call call, @NonNull IOException e) {}
 
                 @Override
                 public void onResponse(@NonNull okhttp3.Call call, @NonNull okhttp3.Response response) {
@@ -801,7 +842,7 @@ public class ProHelper {
      * Triggers a silent check/config refresh in the background, invoking the callback upon completion.
      */
     public static void silentCheck(final Context context, final Runnable callback) {
-        com.waenhancer.xposed.utils.LicenseManager.silentCheck(context, new LicenseManager.SilentCheckListener() {
+        LicenseManager.silentCheck(context, new LicenseManager.SilentCheckListener() {
             @Override
             public void onStatusChanged() {
                 if (callback != null) {
@@ -868,7 +909,7 @@ public class ProHelper {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             context.startActivity(intent);
         } catch (Throwable t) {
-            android.widget.Toast.makeText(context, "Failed to open Extended Plugin Pack settings.", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Failed to open Extended Plugin Pack settings.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -957,7 +998,7 @@ public class ProHelper {
                                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                             context.startActivity(intent);
                                         } catch (Throwable t) {
-                                            android.widget.Toast.makeText(context, "Pro features are not available.", android.widget.Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(context, "Pro features are not available.", Toast.LENGTH_SHORT).show();
                                         }
                                         return true;
                                     }
@@ -989,7 +1030,7 @@ public class ProHelper {
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                     context.startActivity(intent);
                                 } catch (Throwable t) {
-                                    android.widget.Toast.makeText(context, "Pro features are not available.", android.widget.Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(context, "Pro features are not available.", Toast.LENGTH_SHORT).show();
                                 }
                                 return true;
                             }
@@ -1085,7 +1126,7 @@ public class ProHelper {
             if (pref instanceof TwoStatePreference) {
                 ((TwoStatePreference) pref).setChecked(false);
             }
-            if (pref instanceof androidx.preference.ListPreference || pref instanceof TwoStatePreference) {
+            if (pref instanceof ListPreference || pref instanceof TwoStatePreference) {
                 CharSequence summary = pref.getSummary();
                 if (summary == null || !summary.toString().contains("Disabled by Server")) {
                     pref.setSummary("Disabled by Server");
@@ -1218,7 +1259,7 @@ public class ProHelper {
         return hooks.optString(hookKey, null);
     }
 
-    public static java.io.File convertAudioToOpus(Context context, android.net.Uri uri) {
+    public static File convertAudioToOpus(Context context, Uri uri) {
         if (context == null || uri == null) return null;
         
         ParcelFileDescriptor inputPfd = null;
@@ -1226,7 +1267,7 @@ public class ProHelper {
             inputPfd = context.getContentResolver().openFileDescriptor(uri, "r");
             if (inputPfd == null) return null;
         } catch (Exception e) {
-            android.util.Log.e("WaeX-Helper", "Failed to open input URI for transcoding: " + e.toString());
+            Log.e("WaeX-Helper", "Failed to open input URI for transcoding: " + e.toString());
             return null;
         }
 
@@ -1234,13 +1275,13 @@ public class ProHelper {
         intent.setComponent(new ComponentName("com.waex.helper", "com.waex.helper.services.ProService"));
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final com.waex.helper.IProService[] serviceHolder = new com.waex.helper.IProService[1];
-        java.util.concurrent.ExecutorService connectionExecutor = null;
+        final IProService[] serviceHolder = new IProService[1];
+        ExecutorService connectionExecutor = null;
 
         ServiceConnection conn = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                serviceHolder[0] = com.waex.helper.IProService.Stub.asInterface(service);
+                serviceHolder[0] = IProService.Stub.asInterface(service);
                 latch.countDown();
             }
 
@@ -1250,11 +1291,11 @@ public class ProHelper {
             }
         };
 
-        java.io.File outFile = null;
+        File outFile = null;
         try {
             boolean bound;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                connectionExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                connectionExecutor = Executors.newSingleThreadExecutor();
                 bound = context.bindService(intent, Context.BIND_AUTO_CREATE, connectionExecutor, conn);
             } else {
                 bound = context.bindService(intent, conn, Context.BIND_AUTO_CREATE);
@@ -1266,13 +1307,13 @@ public class ProHelper {
 
             try {
                 boolean connected = latch.await(4, TimeUnit.SECONDS);
-                com.waex.helper.IProService service = serviceHolder[0];
+                IProService service = serviceHolder[0];
                 if (connected && service != null) {
                     ParcelFileDescriptor outputPfd = service.convertAudioToOpus(inputPfd);
                     if (outputPfd != null) {
-                        outFile = new java.io.File(context.getCacheDir(), "VoiceStatus-" + System.currentTimeMillis() + ".opus");
-                        try (java.io.InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(outputPfd);
-                             java.io.FileOutputStream fos = new java.io.FileOutputStream(outFile)) {
+                        outFile = new File(context.getCacheDir(), "VoiceStatus-" + System.currentTimeMillis() + ".opus");
+                        try (InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(outputPfd);
+                             FileOutputStream fos = new FileOutputStream(outFile)) {
                             byte[] buffer = new byte[8192];
                             int read;
                             while ((read = is.read(buffer)) != -1) {
@@ -1283,7 +1324,7 @@ public class ProHelper {
                     }
                 }
             } catch (Exception e) {
-                android.util.Log.e("WaeX-Helper", "IPC convertAudioToOpus failed: " + e.toString());
+                Log.e("WaeX-Helper", "IPC convertAudioToOpus failed: " + e.toString());
             } finally {
                 context.unbindService(conn);
                 if (connectionExecutor != null) {
@@ -1292,7 +1333,7 @@ public class ProHelper {
                 try { inputPfd.close(); } catch (Exception ignored) {}
             }
         } catch (Exception e) {
-            android.util.Log.e("WaeX-Helper", "Failed to bind for transcoding: " + e.toString());
+            Log.e("WaeX-Helper", "Failed to bind for transcoding: " + e.toString());
             if (connectionExecutor != null) {
                 connectionExecutor.shutdownNow();
             }
@@ -1302,8 +1343,8 @@ public class ProHelper {
         return (outFile != null && outFile.exists()) ? outFile : null;
     }
 
-    public static void showKeyboxVerificationDialog(androidx.preference.PreferenceFragmentCompat fragment) {
-        com.waenhancer.utils.KeyboxVerification.showDialog(fragment);
+    public static void showKeyboxVerificationDialog(PreferenceFragmentCompat fragment) {
+        KeyboxVerification.showDialog(fragment);
     }
 
     public static boolean isPluginPackageInstalled(Context context) {
@@ -1321,8 +1362,8 @@ public class ProHelper {
         
         // Otherwise (we are in WhatsApp/Xposed process), query the HookProvider
         try {
-            android.os.Bundle pluginInfo = context.getContentResolver().call(
-                    android.net.Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider"),
+            Bundle pluginInfo = context.getContentResolver().call(
+                    Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider"),
                     "get_pro_plugin_info",
                     null,
                     null
@@ -1339,8 +1380,8 @@ public class ProHelper {
         boolean isXposed = !BuildConfig.APPLICATION_ID.equals(context.getPackageName());
         if (isXposed) {
             try {
-                android.os.Bundle pluginInfo = context.getContentResolver().call(
-                        android.net.Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider"),
+                Bundle pluginInfo = context.getContentResolver().call(
+                        Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider"),
                         "get_pro_plugin_info",
                         null,
                         null
@@ -1352,8 +1393,8 @@ public class ProHelper {
             return 0;
         }
         try {
-            android.content.pm.ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo(
-                "com.waex.helper", android.content.pm.PackageManager.GET_META_DATA
+            ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo(
+                "com.waex.helper", PackageManager.GET_META_DATA
             );
             if (appInfo != null && appInfo.metaData != null) {
                 return appInfo.metaData.getInt("min_waex_version", 0);
@@ -1385,7 +1426,7 @@ public class ProHelper {
         Context ctx = context != null ? context : getStaticContext();
         if (ctx == null) {
             if (companionPluginPath != null) {
-                return new java.io.File(companionPluginPath).exists();
+                return new File(companionPluginPath).exists();
             }
             return false;
         }
@@ -1396,28 +1437,28 @@ public class ProHelper {
 
         if (isXposed) {
             try {
-                android.os.Bundle pluginInfo = ctx.getContentResolver().call(
-                        android.net.Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider"),
+                Bundle pluginInfo = ctx.getContentResolver().call(
+                        Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider"),
                         "get_pro_plugin_info",
                         null,
                         null
                 );
                 if (pluginInfo != null) {
                     String sourceDir = pluginInfo.getString("sourceDir");
-                    if (sourceDir != null && !sourceDir.trim().isEmpty() && new java.io.File(sourceDir).exists()) {
+                    if (sourceDir != null && !sourceDir.trim().isEmpty() && new File(sourceDir).exists()) {
                         exists = true;
                         minVersion = pluginInfo.getInt("min_waex_version", 0);
                     }
                 }
             } catch (Throwable t) {
-                android.util.Log.e("WaeX-Helper", "Failed to query Pro plugin from HookProvider in isPluginInstalled", t);
+                Log.e("WaeX-Helper", "Failed to query Pro plugin from HookProvider in isPluginInstalled", t);
             }
         } else {
             try {
-                android.content.pm.ApplicationInfo appInfo = ctx.getPackageManager().getApplicationInfo(
-                    "com.waex.helper", android.content.pm.PackageManager.GET_META_DATA
+                ApplicationInfo appInfo = ctx.getPackageManager().getApplicationInfo(
+                    "com.waex.helper", PackageManager.GET_META_DATA
                 );
-                if (appInfo != null && appInfo.sourceDir != null && new java.io.File(appInfo.sourceDir).exists()) {
+                if (appInfo != null && appInfo.sourceDir != null && new File(appInfo.sourceDir).exists()) {
                     exists = true;
                     if (appInfo.metaData != null) {
                         minVersion = appInfo.metaData.getInt("min_waex_version", 0);
@@ -1434,9 +1475,9 @@ public class ProHelper {
 
         if (minVersion > 0) {
             try {
-                android.content.pm.PackageInfo myInfo = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0);
+                PackageInfo myInfo = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0);
                 long myVersionCode;
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     myVersionCode = myInfo.getLongVersionCode();
                 } else {
                     myVersionCode = myInfo.versionCode;
@@ -1453,13 +1494,13 @@ public class ProHelper {
     public static void checkRootAndInstallPlugin(final Activity activity, final Runnable onConsentAgreed) {
         if (activity == null) return;
         
-        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(activity);
+        ProgressDialog progressDialog = new ProgressDialog(activity);
         progressDialog.setMessage("Requesting root permissions...");
         progressDialog.setCancelable(false);
         progressDialog.show();
         
         new Thread(() -> {
-            boolean hasRoot = com.waenhancer.utils.RootUtils.hasRootAccess();
+            boolean hasRoot = RootUtils.hasRootAccess();
             activity.runOnUiThread(() -> {
                 progressDialog.dismiss();
                 if (hasRoot) {
@@ -1469,7 +1510,7 @@ public class ProHelper {
                     Toast.makeText(activity, "Root access granted. Downloading latest plugin...", Toast.LENGTH_SHORT).show();
                     startProDownloadAndInstallSilent(activity);
                 } else {
-                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
+                    new MaterialAlertDialogBuilder(activity)
                         .setTitle("Root Required")
                         .setMessage("Root access is required to download and install the plugin silently. Please grant root permission.")
                         .setPositiveButton(android.R.string.ok, null)
@@ -1482,10 +1523,10 @@ public class ProHelper {
     public static void startProDownloadAndInstallSilent(final Activity activity) {
         if (activity == null) return;
 
-        if (!com.waenhancer.utils.RootUtils.hasRootAccess()) {
+        if (!RootUtils.hasRootAccess()) {
             activity.runOnUiThread(() -> {
                 Toast.makeText(activity, "Root access is needed. Please grant Root/Superuser permission to WAEX Helper in your root manager (e.g. KernelSU/Magisk).", Toast.LENGTH_LONG).show();
-                new androidx.appcompat.app.AlertDialog.Builder(activity)
+                new AlertDialog.Builder(activity)
                     .setTitle("Root Access Required")
                     .setMessage("WAEX Helper requires Root/Superuser permission to install/update the Helper app silently.\n\nPlease open your Root Manager, grant root access to WAEX Helper, and try again.")
                     .setPositiveButton("OK", null)
@@ -1527,7 +1568,7 @@ public class ProHelper {
 
                 try {
                     String jsonStr = response.body().string();
-                    org.json.JSONObject jsonObj = new org.json.JSONObject(jsonStr);
+                    JSONObject jsonObj = new JSONObject(jsonStr);
                     String downloadUrl = jsonObj.getString("download_url");
 
                     okhttp3.Request downloadRequest = new okhttp3.Request.Builder()
@@ -1594,10 +1635,10 @@ public class ProHelper {
     public static void startProDownloadAndInstall(final Activity activity) {
         if (activity == null) return;
 
-        if (!com.waenhancer.utils.RootUtils.hasRootAccess()) {
+        if (!RootUtils.hasRootAccess()) {
             activity.runOnUiThread(() -> {
                 Toast.makeText(activity, "Root access is needed. Please grant Root/Superuser permission to WaEnhancer in your root manager (e.g. KernelSU/Magisk).", Toast.LENGTH_LONG).show();
-                new androidx.appcompat.app.AlertDialog.Builder(activity)
+                new AlertDialog.Builder(activity)
                     .setTitle("Root Access Required")
                     .setMessage("WaEnhancer requires Root/Superuser permission to install/update the Helper app silently.\n\nPlease open your Root Manager, grant root access to WaEnhancer, and try again.")
                     .setPositiveButton("OK", null)
@@ -1620,7 +1661,7 @@ public class ProHelper {
             try {
                 modContext = activity.createPackageContext(BuildConfig.APPLICATION_ID, Context.CONTEXT_IGNORE_SECURITY);
             } catch (Exception e) {
-                android.util.Log.e("WaeX-Helper", "Error creating package context: " + e.getMessage());
+                Log.e("WaeX-Helper", "Error creating package context: " + e.getMessage());
             }
         }
 
@@ -1635,11 +1676,11 @@ public class ProHelper {
             return;
         }
 
-        android.view.View dialogView = android.view.LayoutInflater.from(modContext).inflate(layoutId, null);
-        var bsTitle = (com.google.android.material.textview.MaterialTextView) dialogView.findViewById(bsTitleId);
-        var progressBar = (com.google.android.material.progressindicator.LinearProgressIndicator) dialogView.findViewById(progressBarId);
-        var statusText = (com.google.android.material.textview.MaterialTextView) dialogView.findViewById(statusTextId);
-        var cancelBtn = (com.google.android.material.button.MaterialButton) dialogView.findViewById(cancelBtnId);
+        View dialogView = LayoutInflater.from(modContext).inflate(layoutId, null);
+        var bsTitle = (MaterialTextView) dialogView.findViewById(bsTitleId);
+        var progressBar = (LinearProgressIndicator) dialogView.findViewById(progressBarId);
+        var statusText = (MaterialTextView) dialogView.findViewById(statusTextId);
+        var cancelBtn = (MaterialButton) dialogView.findViewById(cancelBtnId);
 
         if (bsTitle != null) {
             bsTitle.setText(modContext.getString(com.waenhancer.R.string.downloading_plugin));
@@ -1649,7 +1690,7 @@ public class ProHelper {
         }
 
         final okhttp3.Call[] currentCall = {null};
-        final com.google.android.material.bottomsheet.BottomSheetDialog dialog = com.waenhancer.ui.helpers.BottomSheetHelper.createStyledDialog(activity);
+        final BottomSheetDialog dialog = BottomSheetHelper.createStyledDialog(activity);
         dialog.setContentView(dialogView);
         dialog.setCanceledOnTouchOutside(false);
 
@@ -1692,7 +1733,7 @@ public class ProHelper {
 
                 try {
                     String jsonStr = response.body().string();
-                    org.json.JSONObject jsonObj = new org.json.JSONObject(jsonStr);
+                    JSONObject jsonObj = new JSONObject(jsonStr);
                     String downloadUrl = jsonObj.getString("download_url");
 
                     activity.runOnUiThread(() -> {
@@ -1745,7 +1786,7 @@ public class ProHelper {
                                     long finalCurrentBytes = currentBytes;
                                     activity.runOnUiThread(() -> {
                                         if (progressBar != null) progressBar.setProgress(progress);
-                                        String sizeInfo = String.format(java.util.Locale.US, "%.1f MB / %.1f MB", 
+                                        String sizeInfo = String.format(Locale.US, "%.1f MB / %.1f MB", 
                                             finalCurrentBytes / (1024.0 * 1024.0), totalBytes / (1024.0 * 1024.0));
                                         if (statusText != null) statusText.setText(sizeInfo + " (" + progress + "%)");
                                     });
@@ -1783,7 +1824,7 @@ public class ProHelper {
     private static void installProApkWithRoot(final Activity activity, final File apkFile) {
         if (activity == null) return;
         
-        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(activity);
+        ProgressDialog progressDialog = new ProgressDialog(activity);
         progressDialog.setMessage(activity.getString(com.waenhancer.R.string.installing_plugin));
         progressDialog.setCancelable(false);
         progressDialog.show();
@@ -1793,33 +1834,33 @@ public class ProHelper {
             String tmpPath = "/data/local/tmp/helper.apk";
             
             String copyCmd = "cp \"" + apkPath + "\" " + tmpPath + " && chmod 666 " + tmpPath;
-            com.waenhancer.utils.RootUtils.runRootCommand(copyCmd);
+            RootUtils.runRootCommand(copyCmd);
 
             String cmd = "pm install -r -d --user 0 " + tmpPath;
-            String result = com.waenhancer.utils.RootUtils.runRootCommand(cmd);
+            String result = RootUtils.runRootCommand(cmd);
             
-            com.waenhancer.utils.RootUtils.runRootCommand("rm " + tmpPath);
+            RootUtils.runRootCommand("rm " + tmpPath);
 
             boolean success = result != null && (result.toLowerCase().contains("success") || result.toLowerCase().contains("pkg:"));
             
             if (success) {
-                com.waenhancer.utils.RootUtils.runRootCommand("pm grant com.waex.helper android.permission.POST_NOTIFICATIONS");
-                com.waenhancer.utils.RootUtils.runRootCommand("appops set com.waex.helper POST_NOTIFICATION allow");
-                com.waenhancer.utils.RootUtils.runRootCommand("am force-stop com.whatsapp");
-                com.waenhancer.utils.RootUtils.runRootCommand("am force-stop com.whatsapp.w4b");
+                RootUtils.runRootCommand("pm grant com.waex.helper android.permission.POST_NOTIFICATIONS");
+                RootUtils.runRootCommand("appops set com.waex.helper POST_NOTIFICATION allow");
+                RootUtils.runRootCommand("am force-stop com.whatsapp");
+                RootUtils.runRootCommand("am force-stop com.whatsapp.w4b");
             }
 
             activity.runOnUiThread(() -> {
                 progressDialog.dismiss();
                 if (success) {
                     Toast.makeText(activity, com.waenhancer.R.string.install_success_restart, Toast.LENGTH_LONG).show();
-                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
                         Intent intent = activity.getPackageManager().getLaunchIntentForPackage(activity.getPackageName());
                         if (intent != null) {
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             activity.startActivity(intent);
                         }
-                        android.os.Process.killProcess(android.os.Process.myPid());
+                        Process.killProcess(Process.myPid());
                         System.exit(0);
                     }, 2000);
                 } else {

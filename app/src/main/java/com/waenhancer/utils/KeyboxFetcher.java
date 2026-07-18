@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import androidx.preference.PreferenceManager;
 
 public class KeyboxFetcher {
     private static final String TAG = "WAEX-KeyboxFetcher";
@@ -58,7 +59,7 @@ public class KeyboxFetcher {
             String keyboxXml = json.getString("keybox");
             String lastUpdated = json.optString("last_updated", "");
             if (keyboxXml != null && !keyboxXml.trim().isEmpty()) {
-                SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putString("bootloader_spoofer_default_xml", keyboxXml);
                 if (!lastUpdated.isEmpty()) {

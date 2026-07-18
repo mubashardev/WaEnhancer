@@ -39,6 +39,8 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import android.os.Build;
+import java.io.IOException;
 
 public final class NoticeCenter {
 
@@ -79,7 +81,7 @@ public final class NoticeCenter {
 
     private static void showFirstEligible(@NonNull Activity activity, @NonNull ArrayList<Notice> notices) {
         if (activity.isFinishing()) return;
-        if (android.os.Build.VERSION.SDK_INT >= 17 && activity.isDestroyed()) return;
+        if (Build.VERSION.SDK_INT >= 17 && activity.isDestroyed()) return;
         if (!sDialogShowing.compareAndSet(false, true)) return;
 
         try {
@@ -285,7 +287,7 @@ public final class NoticeCenter {
 
         getHttpClient().newCall(req.build()).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull java.io.IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 callback.onResult(cached == null ? null : parsePayload(cached));
             }
 

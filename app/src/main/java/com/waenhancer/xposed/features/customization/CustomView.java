@@ -73,6 +73,9 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.LayoutInflater;
 
 public class CustomView extends Feature {
 
@@ -376,7 +379,7 @@ public class CustomView extends Feature {
             // Calling findViewById() too early during onCreate() forces the AppCompatDelegate to install the decor
             // view/sub-decor, which throws "Window feature must be requested before adding content" if the activity
             // attempts to call requestWindowFeature() later in its onCreate() sequence.
-            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            new Handler(Looper.getMainLooper()).post(() -> {
                 if (activity.isFinishing() || activity.isDestroyed()) {
                     return;
                 }
@@ -403,7 +406,7 @@ public class CustomView extends Feature {
             }
         });
 
-        XposedHelpers.findAndHookMethod(android.view.LayoutInflater.class, "inflate", int.class, ViewGroup.class, boolean.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod(LayoutInflater.class, "inflate", int.class, ViewGroup.class, boolean.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 View result = (View) param.getResult();

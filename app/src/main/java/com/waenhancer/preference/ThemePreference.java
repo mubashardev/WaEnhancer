@@ -42,11 +42,17 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import kotlin.io.FilesKt;
+import android.app.Dialog;
+import android.content.SharedPreferences;
+import android.provider.OpenableColumns;
+import androidx.annotation.NonNull;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
 
 public class ThemePreference extends Preference implements FilePicker.OnUriPickedListener {
 
     public static File rootDirectory = new File(App.getWaEnhancerFolder(), "themes");
-    private android.app.Dialog mainDialog;
+    private Dialog mainDialog;
 
     public ThemePreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -74,12 +80,12 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
         var sharedPreferences = getSafeSharedPreferences();
         var folder_name = sharedPreferences.getString(getKey(), null);
 
-        com.google.android.material.bottomsheet.BottomSheetDialog builder = new com.google.android.material.bottomsheet.BottomSheetDialog(
+        BottomSheetDialog builder = new BottomSheetDialog(
                 context);
         View dialogView = LayoutInflater.from(context).inflate(R.layout.preference_theme, null);
         builder.setContentView(dialogView);
         builder.setOnShowListener(d -> {
-            com.google.android.material.bottomsheet.BottomSheetDialog bsd = (com.google.android.material.bottomsheet.BottomSheetDialog) d;
+            BottomSheetDialog bsd = (BottomSheetDialog) d;
             View bottomSheet = bsd.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {
                 bottomSheet.setBackgroundResource(android.R.color.transparent);
@@ -162,7 +168,7 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
     }
 
     private void showCreateNewThemeDialog() {
-        com.waenhancer.ui.helpers.BottomSheetHelper.showInput(
+        BottomSheetHelper.showInput(
                 getContext(),
                 getContext().getString(R.string.new_theme_name),
                 "Theme Name",
@@ -237,7 +243,7 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
         if (Objects.equals(uri.getScheme(), "content")) {
             try (var cursor = getContext().getContentResolver().query(uri, null, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst()) {
-                    int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                     if (nameIndex >= 0) {
                         fileName = cursor.getString(nameIndex);
                     }
@@ -261,12 +267,12 @@ public class ThemePreference extends Preference implements FilePicker.OnUriPicke
         return fileName;
     }
 
-    @androidx.annotation.NonNull
-    private android.content.SharedPreferences getSafeSharedPreferences() {
-        android.content.SharedPreferences prefs = getSharedPreferences();
+    @NonNull
+    private SharedPreferences getSafeSharedPreferences() {
+        SharedPreferences prefs = getSharedPreferences();
         if (prefs != null) {
             return prefs;
         }
-        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+        return PreferenceManager.getDefaultSharedPreferences(getContext());
     }
 }

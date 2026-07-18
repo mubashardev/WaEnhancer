@@ -4,6 +4,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import com.waenhancer.xposed.core.db.DelMessageStore;
 
 public class ContactHelper {
 
@@ -30,8 +33,8 @@ public class ContactHelper {
 
         String cleanJid = normalizeJid(jid);
 
-        boolean hasContactsPermission = context.checkSelfPermission(android.Manifest.permission.READ_CONTACTS)
-                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        boolean hasContactsPermission = context.checkSelfPermission(Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED;
 
         // 1. If permission is granted, query system contacts
         if (hasContactsPermission) {
@@ -43,7 +46,7 @@ public class ContactHelper {
 
         // 2. Fallback to locally synced WhatsApp contacts database
         try {
-            String waName = com.waenhancer.xposed.core.db.DelMessageStore.getInstance(context)
+            String waName = DelMessageStore.getInstance(context)
                     .getWhatsAppContactName(cleanJid);
             if (waName != null && !waName.trim().isEmpty()) {
                 return waName.trim();

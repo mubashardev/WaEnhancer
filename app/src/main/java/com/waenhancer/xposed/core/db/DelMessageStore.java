@@ -12,6 +12,9 @@ import java.util.HashSet;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.waenhancer.utils.ContactHelper;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DelMessageStore extends SQLiteOpenHelper {
     private static DelMessageStore mInstance;
@@ -163,8 +166,8 @@ public class DelMessageStore extends SQLiteOpenHelper {
         }
     }
 
-    public java.util.ArrayList<DeletedMessage> getDeletedMessagesByChat(String chatJid, String sortOrder) {
-        java.util.ArrayList<DeletedMessage> messages = new java.util.ArrayList<>();
+    public ArrayList<DeletedMessage> getDeletedMessagesByChat(String chatJid, String sortOrder) {
+        ArrayList<DeletedMessage> messages = new ArrayList<>();
         SQLiteDatabase dbReader = this.getReadableDatabase();
         try (Cursor cursor = dbReader.query(TABLE_DELETED_FOR_ME, null, "chat_jid=?", new String[] { chatJid }, null,
                 null, sortOrder)) {
@@ -195,12 +198,12 @@ public class DelMessageStore extends SQLiteOpenHelper {
         return messages;
     }
 
-    public java.util.ArrayList<DeletedMessage> getAllDeletedMessages() {
+    public ArrayList<DeletedMessage> getAllDeletedMessages() {
         return getDeletedMessages(false);
     }
 
-    public java.util.ArrayList<DeletedMessage> getDeletedMessages(boolean isGroup) {
-        java.util.ArrayList<DeletedMessage> messages = new java.util.ArrayList<>();
+    public ArrayList<DeletedMessage> getDeletedMessages(boolean isGroup) {
+        ArrayList<DeletedMessage> messages = new ArrayList<>();
         SQLiteDatabase dbReader = this.getReadableDatabase();
         String selection = isGroup ? "chat_jid LIKE '%@g.us'" : "chat_jid NOT LIKE '%@g.us'";
 
@@ -232,8 +235,8 @@ public class DelMessageStore extends SQLiteOpenHelper {
         return messages;
     }
 
-    public java.util.ArrayList<DeletedMessage> getAllDeletedMessagesInternal() {
-        java.util.ArrayList<DeletedMessage> messages = new java.util.ArrayList<>();
+    public ArrayList<DeletedMessage> getAllDeletedMessagesInternal() {
+        ArrayList<DeletedMessage> messages = new ArrayList<>();
         SQLiteDatabase dbReader = this.getReadableDatabase();
         try (dbReader;
                 Cursor cursor = dbReader.query(TABLE_DELETED_FOR_ME, null, null, null, null, null, "timestamp DESC")) {
@@ -269,7 +272,7 @@ public class DelMessageStore extends SQLiteOpenHelper {
         }
     }
 
-    public void deleteMessages(java.util.List<String> keyIds) {
+    public void deleteMessages(List<String> keyIds) {
         if (keyIds == null || keyIds.isEmpty())
             return;
         try (SQLiteDatabase dbWrite = this.getWritableDatabase()) {
@@ -358,8 +361,8 @@ public class DelMessageStore extends SQLiteOpenHelper {
         public String number;
     }
 
-    public java.util.ArrayList<ContactInfo> getWhatsAppContacts() {
-        java.util.ArrayList<ContactInfo> list = new java.util.ArrayList<>();
+    public ArrayList<ContactInfo> getWhatsAppContacts() {
+        ArrayList<ContactInfo> list = new ArrayList<>();
         SQLiteDatabase dbReader = this.getReadableDatabase();
         try (Cursor cursor = dbReader.query(TABLE_WA_CONTACTS, null, null, null, null, null, "display_name COLLATE NOCASE ASC, jid ASC")) {
             if (cursor != null && cursor.moveToFirst()) {
@@ -382,7 +385,7 @@ public class DelMessageStore extends SQLiteOpenHelper {
 
     public String getWhatsAppContactName(String jid) {
         if (jid == null) return null;
-        String cleanJid = com.waenhancer.utils.ContactHelper.normalizeJid(jid);
+        String cleanJid = ContactHelper.normalizeJid(jid);
         SQLiteDatabase dbReader = this.getReadableDatabase();
         try (Cursor cursor = dbReader.query(TABLE_WA_CONTACTS, new String[]{"display_name", "wa_name"}, "jid=?", new String[]{cleanJid}, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {

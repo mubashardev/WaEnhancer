@@ -31,6 +31,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import com.waenhancer.xposed.core.db.DelMessageStore;
+import java.util.function.Consumer;
 
 public class ContactPickerActivity extends BaseActivity {
 
@@ -74,7 +79,7 @@ public class ContactPickerActivity extends BaseActivity {
 
         int limit = getIntent().getIntExtra("limit", -1);
         if (limit > 0) {
-            selectAllButton.setVisibility(android.view.View.GONE);
+            selectAllButton.setVisibility(View.GONE);
         }
 
         adapter = new ContactPickerAdapter((contact, toSelectedState) -> {
@@ -160,9 +165,9 @@ public class ContactPickerActivity extends BaseActivity {
 
         // 2. Read synced WhatsApp contacts from our local database
         try {
-            java.util.ArrayList<com.waenhancer.xposed.core.db.DelMessageStore.ContactInfo> waContacts =
-                    com.waenhancer.xposed.core.db.DelMessageStore.getInstance(this).getWhatsAppContacts();
-            for (com.waenhancer.xposed.core.db.DelMessageStore.ContactInfo wa : waContacts) {
+            ArrayList<DelMessageStore.ContactInfo> waContacts =
+                    DelMessageStore.getInstance(this).getWhatsAppContacts();
+            for (DelMessageStore.ContactInfo wa : waContacts) {
                 // Skip groups, communities, broadcasts, or other non-individual JIDs
                 if (wa.jid == null || wa.jid.endsWith("@g.us") || wa.jid.contains("broadcast") || wa.jid.contains("call") || wa.jid.contains("temp")) {
                     continue;
@@ -295,10 +300,10 @@ public class ContactPickerActivity extends BaseActivity {
         return normalized != null ? normalized : phone.trim();
     }
 
-    private static class SimpleTextWatcher implements android.text.TextWatcher {
-        private final java.util.function.Consumer<String> onChanged;
+    private static class SimpleTextWatcher implements TextWatcher {
+        private final Consumer<String> onChanged;
 
-        SimpleTextWatcher(java.util.function.Consumer<String> onChanged) {
+        SimpleTextWatcher(Consumer<String> onChanged) {
             this.onChanged = onChanged;
         }
 
@@ -311,7 +316,7 @@ public class ContactPickerActivity extends BaseActivity {
         }
 
         @Override
-        public void afterTextChanged(android.text.Editable s) {
+        public void afterTextChanged(Editable s) {
             onChanged.accept(s != null ? s.toString() : "");
         }
     }

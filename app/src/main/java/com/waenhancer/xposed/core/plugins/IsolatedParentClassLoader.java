@@ -1,5 +1,10 @@
 package com.waenhancer.xposed.core.plugins;
 
+import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XSharedPreferences;
+import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
+
 public class IsolatedParentClassLoader extends ClassLoader {
     private final ClassLoader hostClassLoader;
     private final ClassLoader moduleClassLoader;
@@ -23,22 +28,22 @@ public class IsolatedParentClassLoader extends ClassLoader {
         // 2. Allow de.robv.android.xposed.* (Xposed Framework) to be resolved robustly
         if (name.startsWith("de.robv.android.xposed.")) {
             if (name.equals("de.robv.android.xposed.XposedBridge")) {
-                return de.robv.android.xposed.XposedBridge.class;
+                return XposedBridge.class;
             }
             if (name.equals("de.robv.android.xposed.XC_MethodHook")) {
-                return de.robv.android.xposed.XC_MethodHook.class;
+                return XC_MethodHook.class;
             }
             if (name.equals("de.robv.android.xposed.XposedHelpers")) {
-                return de.robv.android.xposed.XposedHelpers.class;
+                return XposedHelpers.class;
             }
             if (name.equals("de.robv.android.xposed.XC_MethodHook$MethodHookParam")) {
-                return de.robv.android.xposed.XC_MethodHook.MethodHookParam.class;
+                return XC_MethodHook.MethodHookParam.class;
             }
             if (name.equals("de.robv.android.xposed.XC_MethodHook$Unhook")) {
-                return de.robv.android.xposed.XC_MethodHook.Unhook.class;
+                return XC_MethodHook.Unhook.class;
             }
             if (name.equals("de.robv.android.xposed.XSharedPreferences")) {
-                return de.robv.android.xposed.XSharedPreferences.class;
+                return XSharedPreferences.class;
             }
 
             /* Log removed */
@@ -58,7 +63,7 @@ public class IsolatedParentClassLoader extends ClassLoader {
                 } catch (Throwable ignored) {}
             }
             try {
-                ClassLoader xposedLoader = de.robv.android.xposed.XposedBridge.class.getClassLoader();
+                ClassLoader xposedLoader = XposedBridge.class.getClassLoader();
                 if (xposedLoader != null) {
                     return xposedLoader.loadClass(name);
                 }

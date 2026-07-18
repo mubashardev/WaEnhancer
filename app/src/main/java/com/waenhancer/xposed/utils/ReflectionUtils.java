@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.XposedBridge;
+import com.waenhancer.xposed.core.WppCore;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public class ReflectionUtils {
@@ -479,7 +481,7 @@ public class ReflectionUtils {
         return null;
     }
 
-    private static final Map<String, List<String>> F_MESSAGE_PATH_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String, List<String>> F_MESSAGE_PATH_CACHE = new ConcurrentHashMap<>();
 
     public static Object findFMessageInObject(Object object, Class<?> fMessageClass, Class<?> keyClass, ClassLoader classLoader) {
         if (object == null) return null;
@@ -537,7 +539,7 @@ public class ReflectionUtils {
                     
                     if (keyClass != null && keyClass.isInstance(nestedObj)) {
                         try {
-                            Object fmsg = com.waenhancer.xposed.core.WppCore.getFMessageFromKey(nestedObj);
+                            Object fmsg = WppCore.getFMessageFromKey(nestedObj);
                             if (fmsg != null) return fmsg;
                         } catch (Exception ignored) {}
                     }
@@ -555,7 +557,7 @@ public class ReflectionUtils {
         return null;
     }
 
-    private static final java.util.concurrent.ConcurrentHashMap<Class<?>, List<Field>> declaredFieldsCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Class<?>, List<Field>> declaredFieldsCache = new ConcurrentHashMap<>();
 
     private static List<Field> getCachedDeclaredFields(Class<?> clazz) {
         if (clazz == null) return Collections.emptyList();
@@ -568,7 +570,7 @@ public class ReflectionUtils {
         });
     }
 
-    private static final java.util.concurrent.ConcurrentHashMap<Class<?>, List<Method>> declaredMethodsCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Class<?>, List<Method>> declaredMethodsCache = new ConcurrentHashMap<>();
 
     private static List<Method> getCachedDeclaredMethods(Class<?> clazz) {
         if (clazz == null) return Collections.emptyList();
@@ -581,7 +583,7 @@ public class ReflectionUtils {
         });
     }
 
-    private static final java.util.concurrent.ConcurrentHashMap<Class<?>, List<Constructor>> declaredConstructorsCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Class<?>, List<Constructor>> declaredConstructorsCache = new ConcurrentHashMap<>();
 
     private static List<Constructor> getCachedDeclaredConstructors(Class<?> clazz) {
         if (clazz == null) return Collections.emptyList();

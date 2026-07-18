@@ -1,5 +1,6 @@
 package com.waenhancer.xposed.core.devkit;
 
+import java.lang.reflect.Member;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -64,6 +65,14 @@ import java.util.stream.Collectors;
 
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.format.DateFormat;
+import androidx.annotation.NonNull;
+import com.waenhancer.BuildConfig;
+import java.io.File;
+import java.util.HashSet;
 
 public class Unobfuscator {
 
@@ -81,8 +90,8 @@ public class Unobfuscator {
 
     public static void loadLibrary(Context context) {
         try {
-            var libraryPath = context.getPackageManager().getApplicationInfo(com.waenhancer.BuildConfig.APPLICATION_ID, 0).nativeLibraryDir;
-            var file = new java.io.File(libraryPath, "libdexkit.so");
+            var libraryPath = context.getPackageManager().getApplicationInfo(BuildConfig.APPLICATION_ID, 0).nativeLibraryDir;
+            var file = new File(libraryPath, "libdexkit.so");
             if (file.exists()) {
                 System.load(file.getAbsolutePath());
             }
@@ -719,7 +728,7 @@ public class Unobfuscator {
             Method setTimeInMillis = Calendar.class.getDeclaredMethod("setTimeInMillis", long.class);
             Method is24HourFormat = null;
             try {
-                is24HourFormat = android.text.format.DateFormat.class.getDeclaredMethod("is24HourFormat", Context.class);
+                is24HourFormat = DateFormat.class.getDeclaredMethod("is24HourFormat", Context.class);
             } catch (Exception ignored) {}
 
             MethodDataList resultList = null;
@@ -943,7 +952,7 @@ public class Unobfuscator {
             }
 
             Class<?> current = targetClass;
-            java.util.List<Field> mapFields = new java.util.ArrayList<>();
+            List<Field> mapFields = new ArrayList<>();
             while (current != null && current.getName().startsWith("com.whatsapp")) {
                 for (var field : current.getDeclaredFields()) {
                     var type = field.getType();
@@ -972,14 +981,14 @@ public class Unobfuscator {
             Field bestField = null;
             int maxCount = -1;
             
-            java.util.Set<String> classNamesToScan = new java.util.HashSet<>();
+            Set<String> classNamesToScan = new HashSet<>();
             current = targetClass;
             while (current != null && current.getName().startsWith("com.whatsapp")) {
                 classNamesToScan.add(current.getName());
                 current = current.getSuperclass();
             }
 
-            java.util.Map<String, Integer> usageCounts = new java.util.HashMap<>();
+            Map<String, Integer> usageCounts = new HashMap<>();
             for (var className : classNamesToScan) {
                 try {
                     var classData = dexkit.getClassData(className);
@@ -2254,7 +2263,7 @@ public class Unobfuscator {
             var callConfirmationFragment = XposedHelpers
                     .findClass("com.whatsapp.calling.fragment.CallConfirmationFragment", loader);
             var method = ReflectionUtils.findMethodUsingFilter(callConfirmationFragment,
-                    m -> m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(android.os.Bundle.class));
+                    m -> m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(Bundle.class));
             var methodData = dexkit.getMethodData(method);
             var invokes = methodData.getInvokes();
             for (var invoke : invokes) {
@@ -2335,7 +2344,7 @@ public class Unobfuscator {
                             check = check.getSuperclass();
                         }
 
-                        if (hasFMessage && android.view.View.class.isAssignableFrom(cls)) {
+                        if (hasFMessage && View.class.isAssignableFrom(cls)) {
                             targetClass = cls;
                             ;
                             break;
@@ -2546,7 +2555,7 @@ public class Unobfuscator {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
             var filterAdaperClass = Unobfuscator.loadFilterAdaperClass(loader);
             var constructors = filterAdaperClass.getConstructors();
-            var methods = new java.util.ArrayList<org.luckypray.dexkit.result.MethodData>();
+            var methods = new ArrayList<MethodData>();
             for (var constructor : constructors) {
                 methods.addAll(dexkit.findMethod(new FindMethod()
                         .matcher(new MethodMatcher().addInvoke(DexSignUtil.getMethodDescriptor(constructor)))));
@@ -2707,7 +2716,7 @@ public class Unobfuscator {
             if (classMsgReplyAct == null)
                 throw new ClassNotFoundException("Class MessageReplyActivity not found");
             var method = classMsgReplyAct.getMethod("onActivityResult", int.class, int.class,
-                    android.content.Intent.class);
+                    Intent.class);
             var methodData = Objects.requireNonNull(dexkit.getMethodData(method));
             var invokes = methodData.getInvokes();
             for (var invoke : invokes) {
@@ -3722,8 +3731,8 @@ public class Unobfuscator {
                 var clazz = loadWaContactClass(classLoader);
                 for (var f : clazz.getDeclaredFields()) {
                     if (f.getType() == String.class
-                            && !java.lang.reflect.Modifier.isStatic(f.getModifiers())
-                            && java.lang.reflect.Modifier.isPublic(f.getModifiers())) {
+                            && !Modifier.isStatic(f.getModifiers())
+                            && Modifier.isPublic(f.getModifiers())) {
                         return f;
                     }
                 }
@@ -3796,7 +3805,7 @@ public class Unobfuscator {
                 for (var m : waContactClass.getDeclaredMethods()) {
                     if (m.getParameterCount() == 0 
                             && (m.getReturnType() == String.class || m.getReturnType() == CharSequence.class)
-                            && !java.lang.reflect.Modifier.isStatic(m.getModifiers())) {
+                            && !Modifier.isStatic(m.getModifiers())) {
                         return m;
                     }
                 }
@@ -3977,7 +3986,7 @@ public class Unobfuscator {
             for (String identifier : settingsIdentifiers) {
                 try {
                     Class<?> clazz = findFirstClassUsingStrings(loader, StringMatchType.Contains, identifier);
-                    if (clazz != null && android.app.Activity.class.isAssignableFrom(clazz)) {
+                    if (clazz != null && Activity.class.isAssignableFrom(clazz)) {
                         return clazz;
                     }
                 } catch (Exception ignored) {}
@@ -4027,7 +4036,7 @@ public class Unobfuscator {
             for (String identifier : settingsIdentifiers) {
                 try {
                     Class<?> clazz = findFirstClassUsingStrings(loader, StringMatchType.Contains, identifier);
-                    if (clazz != null && !android.app.Activity.class.isAssignableFrom(clazz)) {
+                    if (clazz != null && !Activity.class.isAssignableFrom(clazz)) {
                         // Check if it's a fragment class (standard or androidx)
                         if (isFragmentClass(clazz)) {
                             return clazz;
@@ -4049,43 +4058,43 @@ public class Unobfuscator {
         }
         return false;
     }
-    public static @androidx.annotation.NonNull Class<?> loadFStatusKeyClass(ClassLoader classLoader) throws Exception {
-        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> dexkit.findClass(org.luckypray.dexkit.query.FindClass.create().matcher(
-                        org.luckypray.dexkit.query.matchers.ClassMatcher.create()
+    public static @NonNull Class<?> loadFStatusKeyClass(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> dexkit.findClass(FindClass.create().matcher(
+                        ClassMatcher.create()
                                 .addUsingString("Key(id=").
                                 addUsingString("senderJid")))
                 .first().getInstance(classLoader));
     }
 
-    public static @androidx.annotation.NonNull Class<?> loadFStatusClass(@androidx.annotation.NonNull ClassLoader classLoader) throws Exception {
+    public static @NonNull Class<?> loadFStatusClass(@NonNull ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
-            return findFirstClassUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, "FStatus state");
+            return findFirstClassUsingStrings(classLoader, StringMatchType.Contains, "FStatus state");
         });
     }
 
-    public static Method loadAntiRevokeFStatusMethod(@androidx.annotation.NonNull ClassLoader classLoader) throws Exception {
+    public static Method loadAntiRevokeFStatusMethod(@NonNull ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
             var fStatusKeyClass = loadFStatusKeyClass(classLoader);
-            var clazz = findFirstClassUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, "RevokeStatusManager/failed");
+            var clazz = findFirstClassUsingStrings(classLoader, StringMatchType.Contains, "RevokeStatusManager/failed");
             return ReflectionUtils.findMethodUsingFilter(clazz, method -> method.getParameterCount() > 0 && fStatusKeyClass.isAssignableFrom(method.getParameterTypes()[0]));
         });
     }
 
-    public static @androidx.annotation.NonNull Method loadGetStatusByKey(@androidx.annotation.NonNull ClassLoader classLoader) throws Exception {
-        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> findFirstMethodUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, "StatusStore/GET_STATUS_BY_KEY"));
+    public static @NonNull Method loadGetStatusByKey(@NonNull ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> findFirstMethodUsingStrings(classLoader, StringMatchType.Contains, "StatusStore/GET_STATUS_BY_KEY"));
     }
 
     // Find the WDSActionTileGroup class using DexKit by its simple class name
     public static Class<?> loadWDSActionTileGroupClass(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(classLoader, () ->
                 findFirstClassUsingName(classLoader,
-                        org.luckypray.dexkit.query.enums.StringMatchType.EndsWith,
+                        StringMatchType.EndsWith,
                         "WDSActionTileGroup"));
     }
 
     public static Method loadPausePlaybackMethod(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
                     "playbackPage/pausePlayback page=");
             if (method == null)
                 throw new RuntimeException("pausePlayback method not found");
@@ -4095,7 +4104,7 @@ public class Unobfuscator {
 
     public static Method loadResumePlaybackMethod(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
                     "playbackPage/resumePlayback page=");
             if (method == null)
                 throw new RuntimeException("resumePlayback method not found");
@@ -4106,10 +4115,10 @@ public class Unobfuscator {
     public static Class<?> loadVideoPlayerClass(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(loader, () -> {
             var classes = dexkit.findClass(
-                    org.luckypray.dexkit.query.FindClass.create().matcher(
-                            org.luckypray.dexkit.query.matchers.ClassMatcher.create()
-                                    .addMethod(org.luckypray.dexkit.query.matchers.MethodMatcher.create().name("seekTo").paramTypes(java.util.List.of("int")))
-                                    .addMethod(org.luckypray.dexkit.query.matchers.MethodMatcher.create().name("getDuration").returnType("int"))));
+                    FindClass.create().matcher(
+                            ClassMatcher.create()
+                                    .addMethod(MethodMatcher.create().name("seekTo").paramTypes(List.of("int")))
+                                    .addMethod(MethodMatcher.create().name("getDuration").returnType("int"))));
             if (classes.isEmpty())
                 throw new RuntimeException("Not Found VideoPlayerClass");
             return classes.get(0).getInstance(loader);
@@ -4118,7 +4127,7 @@ public class Unobfuscator {
 
     public static Method loadStatusReplyMethod(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
                     "playbackPage/reply page=");
             if (method == null)
                 throw new RuntimeException("status reply method not found");
@@ -4128,7 +4137,7 @@ public class Unobfuscator {
 
     public static Method loadPageOnViewCreatedMethod(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
                     "StatusPlaybackPage/onViewCreated");
             if (method == null)
                 throw new RuntimeException("pageOnViewCreated method not found");
@@ -4141,7 +4150,7 @@ public class Unobfuscator {
             Class<?> fragmentClass = XposedHelpers.findClass("com.whatsapp.status.playback.fragment.StatusPlaybackContactFragment", loader);
             Class<?> pageControllerBaseClass = loadPausePlaybackMethod(loader).getDeclaringClass();
             for (Method method : fragmentClass.getDeclaredMethods()) {
-                if (java.lang.reflect.Modifier.isStatic(method.getModifiers()) 
+                if (Modifier.isStatic(method.getModifiers()) 
                         && method.getParameterCount() == 1 
                         && method.getParameterTypes()[0] == fragmentClass
                         && method.getReturnType().isAssignableFrom(pageControllerBaseClass)
@@ -4243,7 +4252,7 @@ public class Unobfuscator {
             );
             return callers.stream().map(c -> c.getDescriptor()).collect(Collectors.toList());
         } catch (Throwable t) {
-            return java.util.Collections.singletonList("Error: " + t.getMessage());
+            return Collections.singletonList("Error: " + t.getMessage());
         }
     }
 
@@ -4252,7 +4261,7 @@ public class Unobfuscator {
             var classData = dexkit.getClassData(fragmentClass.getName());
             if (classData != null) {
                 for (var md : classData.getMethods()) {
-                    if (java.lang.reflect.Modifier.isStatic(md.getModifiers())
+                    if (Modifier.isStatic(md.getModifiers())
                             && md.getParamCount() == 1
                             && md.getParamTypeNames().get(0).equals(fragmentClass.getName())
                             && md.getReturnType().equals("void")) {
@@ -4282,7 +4291,7 @@ public class Unobfuscator {
             var classData = dexkit.getClassData(fragmentClass.getName());
             if (classData != null) {
                 for (var md : classData.getMethods()) {
-                    if (!java.lang.reflect.Modifier.isStatic(md.getModifiers())
+                    if (!Modifier.isStatic(md.getModifiers())
                             && md.getParamCount() == 0
                             && md.getReturnType().equals("void")) {
                         boolean usesRecorderField = false;
@@ -4313,7 +4322,7 @@ public class Unobfuscator {
                 for (var uf : methodData.getUsingFields()) {
                     if (uf.getField().getType().getName().equals("long")) {
                         Field f = uf.getField().getFieldInstance(classLoader);
-                        if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                        if (!Modifier.isStatic(f.getModifiers())) {
                             f.setAccessible(true);
                             return f;
                         }
@@ -4335,7 +4344,7 @@ public class Unobfuscator {
                         if (inv.getClassName().equals(delegateClass.getName())) {
                             try {
                                 Method targetMethod = delegateClass.getDeclaredMethod(inv.getName(), delegateClass);
-                                if (java.lang.reflect.Modifier.isStatic(targetMethod.getModifiers())
+                                if (Modifier.isStatic(targetMethod.getModifiers())
                                         && stateSuperClass.isAssignableFrom(targetMethod.getReturnType())) {
                                     targetMethod.setAccessible(true);
                                     return targetMethod;
@@ -4424,4 +4433,3 @@ public class Unobfuscator {
         });
     }
 }
-

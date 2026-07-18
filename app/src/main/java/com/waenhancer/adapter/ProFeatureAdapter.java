@@ -13,6 +13,8 @@ import com.waenhancer.model.SearchableFeature;
 
 import java.util.ArrayList;
 import java.util.List;
+import android.content.Context;
+import com.waenhancer.xposed.utils.ProHelper;
 
 /**
  * Premium adapter designed exclusively for rendering active Pro features
@@ -40,7 +42,7 @@ public class ProFeatureAdapter extends RecyclerView.Adapter<ProFeatureAdapter.Vi
         notifyDataSetChanged();
     }
 
-    private static int getResId(android.content.Context context, String name, String type) {
+    private static int getResId(Context context, String name, String type) {
         return context.getResources().getIdentifier(name, type, context.getPackageName());
     }
 
@@ -70,21 +72,21 @@ public class ProFeatureAdapter extends RecyclerView.Adapter<ProFeatureAdapter.Vi
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            android.content.Context context = itemView.getContext();
+            Context context = itemView.getContext();
             iconView = itemView.findViewById(getResId(context, "pro_feature_icon", "id"));
             titleView = itemView.findViewById(getResId(context, "pro_feature_title", "id"));
             summaryView = itemView.findViewById(getResId(context, "pro_feature_summary", "id"));
         }
 
         public void bind(SearchableFeature feature, OnFeatureClickListener clickListener) {
-            android.content.Context context = itemView.getContext();
+            Context context = itemView.getContext();
             try {
                 String title = feature.getTitle();
                 String summary = feature.getSummary();
                 String key = feature.getKey();
 
-                boolean isPro = "ACTIVE".equalsIgnoreCase(com.waenhancer.xposed.utils.ProHelper.getProStatus());
-                boolean isLimitedFree = com.waenhancer.xposed.utils.ProHelper.isLimitedFreePreferenceEnabled(key);
+                boolean isPro = "ACTIVE".equalsIgnoreCase(ProHelper.getProStatus());
+                boolean isLimitedFree = ProHelper.isLimitedFreePreferenceEnabled(key);
                 if (isLimitedFree && !isPro) {
                     titleView.setText(title + " (Limited Free)");
                 } else {
@@ -126,4 +128,3 @@ public class ProFeatureAdapter extends RecyclerView.Adapter<ProFeatureAdapter.Vi
         }
     }
 }
-

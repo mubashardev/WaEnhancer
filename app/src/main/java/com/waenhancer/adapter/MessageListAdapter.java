@@ -25,10 +25,16 @@ import com.waenhancer.xposed.utils.Utils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import android.graphics.Color;
+import android.util.TypedValue;
+import android.widget.Toast;
+import com.waenhancer.utils.ContactHelper;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.ViewHolder> {
 
-    private java.util.Set<String> selectedItems = new java.util.HashSet<>();
+    private Set<String> selectedItems = new HashSet<>();
     private List<DeletedMessage> messages = new ArrayList<>();
     private final OnRestoreClickListener listener;
 
@@ -75,7 +81,7 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
             boolean showName = !message.isFromMe() && message.getChatJid().contains("@g.us");
 
             if (showName) {
-                String contactName = com.waenhancer.utils.ContactHelper.getContactName(context,
+                String contactName = ContactHelper.getContactName(context,
                         message.getSenderJid());
 
                 if (contactName != null) {
@@ -158,11 +164,11 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
         holder.btnRestore.setOnClickListener(v -> listener.onRestoreClick(message));
 
         if (selectedItems.contains(message.getKeyId())) {
-            android.util.TypedValue typedValue = new android.util.TypedValue();
+            TypedValue typedValue = new TypedValue();
             context.getTheme().resolveAttribute(android.R.attr.colorControlHighlight, typedValue, true);
             holder.itemView.setBackgroundColor(typedValue.data);
         } else {
-            holder.itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
         }
 
         holder.itemView.setOnClickListener(v -> {
@@ -271,7 +277,7 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             context.startActivity(intent);
         } catch (Throwable t) {
-            android.widget.Toast.makeText(context, "Cannot open media file", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Cannot open media file", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -357,7 +363,7 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
         return selectedItems.size();
     }
 
-    public java.util.List<String> getSelectedItems() {
+    public List<String> getSelectedItems() {
         return new ArrayList<>(selectedItems);
     }
 

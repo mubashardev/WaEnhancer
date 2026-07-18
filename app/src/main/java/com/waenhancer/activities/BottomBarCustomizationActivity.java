@@ -22,6 +22,12 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.waenhancer.R;
 import com.waenhancer.activities.base.BaseActivity;
 import com.waenhancer.views.dialog.SimpleColorPickerDialog;
+import android.util.TypedValue;
+import android.view.Menu;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.appcompat.widget.Toolbar;
+import com.waenhancer.xposed.utils.ProHelper;
 
 public class BottomBarCustomizationActivity extends BaseActivity {
 
@@ -44,20 +50,20 @@ public class BottomBarCustomizationActivity extends BaseActivity {
     private Slider sliderPaddingVertical;
     private View layoutGlassOpacity;
     
-    private android.widget.TextView txtRadiusVal;
-    private android.widget.TextView txtMarginVal;
-    private android.widget.TextView txtMarginHorizontalVal;
-    private android.widget.TextView txtFabVal;
-    private android.widget.TextView txtOpacityVal;
-    private android.widget.TextView txtIconSizeVal;
-    private android.widget.TextView txtTextSizeVal;
-    private android.widget.TextView txtPaddingVerticalVal;
+    private TextView txtRadiusVal;
+    private TextView txtMarginVal;
+    private TextView txtMarginHorizontalVal;
+    private TextView txtFabVal;
+    private TextView txtOpacityVal;
+    private TextView txtIconSizeVal;
+    private TextView txtTextSizeVal;
+    private TextView txtPaddingVerticalVal;
 
     // Preview views
     private View previewFab;
     private LinearLayout previewBottomBar;
     private View previewActiveIndicator;
-    private android.widget.ImageView previewChatsIcon;
+    private ImageView previewChatsIcon;
 
     private int selectedColor = 0; // 0 represents default
     private float density;
@@ -67,7 +73,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bottom_bar_customization);
 
-        androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -115,7 +121,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         switchFloating.setChecked(floatingEnabled);
         layoutCustomizationControls.setVisibility(floatingEnabled ? View.VISIBLE : View.GONE);
 
-        boolean isProActive = com.waenhancer.xposed.utils.ProHelper.isProEnabled();
+        boolean isProActive = ProHelper.isProEnabled();
         if (!isProActive) {
             radioDesignPro.setEnabled(false);
             radioDesignRegular.setChecked(true);
@@ -348,13 +354,13 @@ public class BottomBarCustomizationActivity extends BaseActivity {
     private void applyCustomSizesToPreview(ViewGroup viewGroup, int iconSizeDp, int textSizeSp) {
         for (int i = 0; i < viewGroup.getChildCount(); i++) {
             View child = viewGroup.getChildAt(i);
-            if (child instanceof android.widget.ImageView) {
+            if (child instanceof ImageView) {
                 ViewGroup.LayoutParams lp = child.getLayoutParams();
                 lp.width = (int) (iconSizeDp * density);
                 lp.height = (int) (iconSizeDp * density);
                 child.setLayoutParams(lp);
-            } else if (child instanceof android.widget.TextView) {
-                ((android.widget.TextView) child).setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, textSizeSp);
+            } else if (child instanceof TextView) {
+                ((TextView) child).setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp);
             } else if (child instanceof ViewGroup) {
                 applyCustomSizesToPreview((ViewGroup) child, iconSizeDp, textSizeSp);
             }
@@ -394,7 +400,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_pill_customization, menu);
         return true;
     }

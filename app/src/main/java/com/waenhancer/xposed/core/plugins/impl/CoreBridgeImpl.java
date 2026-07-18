@@ -11,6 +11,7 @@ import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
 import com.waenhancer.xposed.utils.Utils;
 import com.waenhancer.xposed.utils.XPrefManager;
+import androidx.core.content.ContextCompat;
 
 public class CoreBridgeImpl implements ICoreBridge {
 
@@ -153,7 +154,7 @@ public class CoreBridgeImpl implements ICoreBridge {
     public Drawable getDrawable(int resId) {
         Context app = Utils.getApplication();
         if (app != null) {
-            return androidx.core.content.ContextCompat.getDrawable(app, resId);
+            return ContextCompat.getDrawable(app, resId);
         }
         return null;
     }

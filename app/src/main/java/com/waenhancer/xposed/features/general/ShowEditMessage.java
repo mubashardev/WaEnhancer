@@ -38,6 +38,13 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.content.res.ColorStateList;
+import android.view.ContextThemeWrapper;
+import android.view.Gravity;
+import android.widget.CompoundButton;
+import android.widget.RelativeLayout;
+import android.widget.Switch;
+import com.waenhancer.xposed.core.FeatureLoader;
 
 public class ShowEditMessage extends Feature {
 
@@ -229,7 +236,7 @@ public class ShowEditMessage extends Feature {
 
         TextView editView = new TextView(dateView.getContext());
         editView.setId(injectId);
-        editView.setText(" " + indicator + " " + com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.message_original, "Edited"));
+        editView.setText(" " + indicator + " " + FeatureLoader.getModuleString(Utils.getApplication(), R.string.message_original, "Edited"));
         editView.setTextSize(11.0f);
         editView.setTextColor(DesignUtils.getUnSeenColor());
         editView.getPaint().setUnderlineText(true);
@@ -328,7 +335,7 @@ public class ShowEditMessage extends Feature {
             var density = ctx.getResources().getDisplayMetrics().density;
             
             // Header Layout (RelativeLayout)
-            var headerLayout = new android.widget.RelativeLayout(ctx);
+            var headerLayout = new RelativeLayout(ctx);
             var headerLp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
@@ -341,29 +348,29 @@ public class ShowEditMessage extends Feature {
 
             // Title TextView
             var titleView = new TextView(ctx);
-            titleView.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.edited_history, "Edit History"));
+            titleView.setText(FeatureLoader.getModuleString(Utils.getApplication(), R.string.edited_history, "Edit History"));
             titleView.setTextSize(20f);
             titleView.setTypeface(Typeface.DEFAULT_BOLD);
             titleView.setTextColor(DesignUtils.getPrimaryTextColor());
-            var titleParams = new android.widget.RelativeLayout.LayoutParams(
-                    android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT
+            var titleParams = new RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT
             );
-            titleParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_LEFT);
-            titleParams.addRule(android.widget.RelativeLayout.CENTER_VERTICAL);
+            titleParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            titleParams.addRule(RelativeLayout.CENTER_VERTICAL);
             titleView.setLayoutParams(titleParams);
             headerLayout.addView(titleView);
 
             // Switch container (LinearLayout horizontal)
             var switchContainer = new LinearLayout(ctx);
             switchContainer.setOrientation(LinearLayout.HORIZONTAL);
-            switchContainer.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            var switchContainerParams = new android.widget.RelativeLayout.LayoutParams(
-                    android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT
+            switchContainer.setGravity(Gravity.CENTER_VERTICAL);
+            var switchContainerParams = new RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT
             );
-            switchContainerParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_RIGHT);
-            switchContainerParams.addRule(android.widget.RelativeLayout.CENTER_VERTICAL);
+            switchContainerParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            switchContainerParams.addRule(RelativeLayout.CENTER_VERTICAL);
             switchContainer.setLayoutParams(switchContainerParams);
 
             // Switch Label (TextView)
@@ -375,14 +382,14 @@ public class ShowEditMessage extends Feature {
             switchContainer.addView(switchLabel);
 
             // Switch (MaterialSwitch by default for M3 style)
-            android.widget.CompoundButton diffSwitch = null;
+            CompoundButton diffSwitch = null;
             try {
-                android.content.Context modContext = ctx.createPackageContext("com.waenhancer", android.content.Context.CONTEXT_IGNORE_SECURITY);
+                Context modContext = ctx.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
                 boolean isDarkMode = DesignUtils.isNightMode();
                 int themeResId = isDarkMode ? 
                         com.google.android.material.R.style.Theme_Material3_Dark : 
                         com.google.android.material.R.style.Theme_Material3_Light;
-                android.view.ContextThemeWrapper themedContext = new android.view.ContextThemeWrapper(modContext, themeResId);
+                ContextThemeWrapper themedContext = new ContextThemeWrapper(modContext, themeResId);
                 
                 Class<?> switchClass;
                 try {
@@ -390,17 +397,17 @@ public class ShowEditMessage extends Feature {
                 } catch (Throwable t) {
                     switchClass = ShowEditMessage.class.getClassLoader().loadClass("com.google.android.material.materialswitch.MaterialSwitch");
                 }
-                diffSwitch = (android.widget.CompoundButton) XposedHelpers.newInstance(switchClass, themedContext);
+                diffSwitch = (CompoundButton) XposedHelpers.newInstance(switchClass, themedContext);
             } catch (Throwable t) {
                 XposedBridge.log("[WaEnhancerX] Failed to create themed MaterialSwitch: " + t.getMessage());
             }
 
             if (diffSwitch == null) {
                 try {
-                    diffSwitch = (android.widget.CompoundButton) XposedHelpers.newInstance(
+                    diffSwitch = (CompoundButton) XposedHelpers.newInstance(
                             XposedHelpers.findClass("androidx.appcompat.widget.SwitchCompat", classLoader), ctx);
                 } catch (Throwable t2) {
-                    diffSwitch = new android.widget.Switch(ctx);
+                    diffSwitch = new Switch(ctx);
                 }
             }
 
@@ -431,8 +438,8 @@ public class ShowEditMessage extends Feature {
                     isDarkMode ? 0xFF57DF85 : 0xFF50D179,
                     isDarkMode ? 0x33FFFFFF : 0x33000000
                 };
-                android.content.res.ColorStateList thumbStateList = new android.content.res.ColorStateList(states, thumbColors);
-                android.content.res.ColorStateList trackStateList = new android.content.res.ColorStateList(states, trackColors);
+                ColorStateList thumbStateList = new ColorStateList(states, thumbColors);
+                ColorStateList trackStateList = new ColorStateList(states, trackColors);
                 XposedHelpers.callMethod(diffSwitch, "setThumbTintList", thumbStateList);
                 XposedHelpers.callMethod(diffSwitch, "setTrackTintList", trackStateList);
             } catch (Throwable ignored) {}

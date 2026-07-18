@@ -18,6 +18,8 @@ import com.waenhancer.utils.FeatureCatalog;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.waenhancer.activities.UpdateSettingsActivity;
+import com.waenhancer.ui.fragments.SupportedVersionsActivity;
 
 /**
  * Activity for searching and navigating to app features.
@@ -121,9 +123,9 @@ public class SearchActivity extends BaseActivity implements SearchAdapter.OnFeat
             if ("deleted_messages_activity".equals(feature.getKey())) {
                 target = DeletedMessagesActivity.class;
             } else if ("SupportedVersionsActivity".equals(parentKey)) {
-                target = com.waenhancer.ui.fragments.SupportedVersionsActivity.class;
+                target = SupportedVersionsActivity.class;
             } else if ("UpdateSettingsActivity".equals(parentKey)) {
-                target = com.waenhancer.activities.UpdateSettingsActivity.class;
+                target = UpdateSettingsActivity.class;
             }
             if (target != null) {
                 startActivity(new Intent(this, target));

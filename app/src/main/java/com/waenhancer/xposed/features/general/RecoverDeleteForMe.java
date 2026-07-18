@@ -18,6 +18,12 @@ import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.ContactsContract;
+import android.widget.Toast;
+import com.waenhancer.BuildConfig;
 
 public class RecoverDeleteForMe extends Feature {
 
@@ -198,7 +204,7 @@ public class RecoverDeleteForMe extends Feature {
         String contactName = null;
         try {
             // Priority 1: Current Chat Room Title (Most Reliable as per User Suggestion)
-            contactName = com.waenhancer.xposed.core.WppCore.getCurrentChatTitle();
+            contactName = WppCore.getCurrentChatTitle();
 
             // Priority 2: WaContactWpp Internal Lookup (New Reliable Fallback)
             if (contactName == null && chatJid != null) {
@@ -288,12 +294,12 @@ public class RecoverDeleteForMe extends Feature {
             phoneNumber = phoneNumber.split("@")[0];
 
         try {
-            android.net.Uri uri = android.net.Uri.withAppendedPath(
-                    android.provider.ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                    android.net.Uri.encode(phoneNumber));
-            String[] projection = new String[] { android.provider.ContactsContract.PhoneLookup.DISPLAY_NAME };
+            Uri uri = Uri.withAppendedPath(
+                    ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                    Uri.encode(phoneNumber));
+            String[] projection = new String[] { ContactsContract.PhoneLookup.DISPLAY_NAME };
 
-            try (android.database.Cursor cursor = context.getContentResolver().query(uri, projection, null, null,
+            try (Cursor cursor = context.getContentResolver().query(uri, projection, null, null,
                     null)) {
                 if (cursor != null && cursor.moveToFirst()) {
                     return cursor.getString(0);
@@ -307,7 +313,7 @@ public class RecoverDeleteForMe extends Feature {
 
     private void saveToDatabase(Context context, DeletedMessage message) {
         try {
-            android.content.ContentValues values = new android.content.ContentValues();
+            ContentValues values = new ContentValues();
             values.put("key_id", message.getKeyId());
             values.put("chat_jid", message.getChatJid());
             values.put("sender_jid", message.getSenderJid());
@@ -327,7 +333,7 @@ public class RecoverDeleteForMe extends Feature {
                     ClassLoader proLoader = (ClassLoader) System.getProperties().get("com.waex.helper.classloader");
                     if (proLoader != null) {
                         Class<?> proClass = proLoader.loadClass("com.waex.helper.RecoverDeletedMediaPro");
-                        java.lang.reflect.Method consumeMethod = proClass.getMethod("consumePendingMediaPath", String.class);
+                        Method consumeMethod = proClass.getMethod("consumePendingMediaPath", String.class);
                         mediaPath = (String) consumeMethod.invoke(null, message.getKeyId());
                     }
                 } catch (ClassNotFoundException e) {
@@ -340,8 +346,8 @@ public class RecoverDeleteForMe extends Feature {
                 values.put("media_path", mediaPath);
             }
 
-            String authority = com.waenhancer.BuildConfig.APPLICATION_ID + ".provider";
-            android.net.Uri uri = android.net.Uri.parse("content://" + authority + "/deleted_messages");
+            String authority = BuildConfig.APPLICATION_ID + ".provider";
+            Uri uri = Uri.parse("content://" + authority + "/deleted_messages");
             context.getContentResolver().insert(uri, values);
             ;
         } catch (Exception e) {
@@ -448,15 +454,15 @@ public class RecoverDeleteForMe extends Feature {
         return "Recover Delete For Me";
     }
 
-    public static void restoreMessage(android.content.Context context, DeletedMessage message) {
+    public static void restoreMessage(Context context, DeletedMessage message) {
         try {
             if (message.getTextContent() != null && !message.getTextContent().isEmpty()) {
-                android.widget.Toast
-                        .makeText(context, "Message: " + message.getTextContent(), android.widget.Toast.LENGTH_LONG)
+                Toast
+                        .makeText(context, "Message: " + message.getTextContent(), Toast.LENGTH_LONG)
                         .show();
             } else {
-                android.widget.Toast
-                        .makeText(context, "Media restore not supported yet", android.widget.Toast.LENGTH_SHORT).show();
+                Toast
+                        .makeText(context, "Media restore not supported yet", Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             XposedBridge.log("[WAEX] Restore failed: " + e.getMessage());

@@ -20,6 +20,9 @@ import com.waenhancer.xposed.utils.ProHelper;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import android.content.res.TypedArray;
+import android.util.Log;
+import android.widget.Toast;
 
 /**
  * A {@link ListPreference} that marks certain entry values as requiring an active Pro license.
@@ -64,7 +67,7 @@ public class ProListPreference extends ListPreference {
 
         // Read the custom app:proEntryValues attribute
         int[] attrsArray = new int[]{ R.attr.proEntryValues };
-        try (android.content.res.TypedArray ta = context.obtainStyledAttributes(attrs, attrsArray)) {
+        try (TypedArray ta = context.obtainStyledAttributes(attrs, attrsArray)) {
             int resId = ta.getResourceId(0, 0);
             if (resId != 0) {
                 String[] proVals = context.getResources().getStringArray(resId);
@@ -195,10 +198,10 @@ public class ProListPreference extends ListPreference {
                 if (isProActive()) {
                     if (callChangeListener(selectedValue)) {
                         setValue(selectedValue);
-                        android.widget.Toast.makeText(
+                        Toast.makeText(
                                 getContext(),
                                 "Pro features refreshed. Selection applied!",
-                                android.widget.Toast.LENGTH_SHORT
+                                Toast.LENGTH_SHORT
                         ).show();
                     }
                 } else {
@@ -228,7 +231,7 @@ public class ProListPreference extends ListPreference {
         try {
             return ProHelper.isPillDesignProEnabled();
         } catch (Throwable t) {
-            android.util.Log.e("WaeX-Pref", "isProActive: exception", t);
+            Log.e("WaeX-Pref", "isProActive: exception", t);
             return false;
         }
     }
@@ -245,10 +248,10 @@ public class ProListPreference extends ListPreference {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             ctx.startActivity(intent);
         } catch (ClassNotFoundException e) {
-            android.widget.Toast.makeText(
+            Toast.makeText(
                     ctx,
                     "Pro features are not available. Activate a Pro license first.",
-                    android.widget.Toast.LENGTH_LONG
+                    Toast.LENGTH_LONG
             ).show();
         }
     }

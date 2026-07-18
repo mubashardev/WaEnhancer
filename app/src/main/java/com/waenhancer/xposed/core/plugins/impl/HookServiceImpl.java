@@ -5,6 +5,7 @@ import java.lang.reflect.Member;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import java.lang.reflect.Field;
 
 public class HookServiceImpl implements IHookService {
 
@@ -48,7 +49,7 @@ public class HookServiceImpl implements IHookService {
         @Override
         public boolean hasResult() {
             try {
-                java.lang.reflect.Field field = param.getClass().getDeclaredField("returnEarly");
+                Field field = param.getClass().getDeclaredField("returnEarly");
                 field.setAccessible(true);
                 return (boolean) field.get(param);
             } catch (Throwable t) {

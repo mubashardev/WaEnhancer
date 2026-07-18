@@ -45,6 +45,35 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.app.ActivityManager;
+import android.app.AlertDialog;
+import android.content.res.ColorStateList;
+import android.content.res.Configuration;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
+import android.os.Process;
+import android.util.AttributeSet;
+import android.util.TypedValue;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.Switch;
+import androidx.appcompat.app.AppCompatActivity;
+import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.features.general.VideoNoteAttachment;
+import com.waenhancer.xposed.utils.DesignUtils;
+import java.io.File;
 
 public class ActivityController extends Feature {
 
@@ -138,7 +167,7 @@ public class ActivityController extends Feature {
                                     method -> method.getParameterCount() == 1
                                             && method.getParameterTypes()[0] == CharSequence.class);
                             ReflectionUtils.callMethod(methods[1], toolbar,
-                                    com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.select_contacts));
+                                    FeatureLoader.getModuleString(activity, R.string.select_contacts));
                         }
                     }
                 });
@@ -166,14 +195,14 @@ public class ActivityController extends Feature {
                         if (!isMyClass)
                             return;
 
-                        if (id == com.waenhancer.xposed.features.general.VideoNoteAttachment.REQUEST_PICK_VIDEO_NOTE
+                        if (id == VideoNoteAttachment.REQUEST_PICK_VIDEO_NOTE
                                 && intent != null) {
                             var uriStr = intent.getDataString();
                             Intent intent2 = new Intent();
                             intent2.putExtra("path", uriStr);
                             activity.setResult(Activity.RESULT_OK, intent2);
                             // VideoNoteAttachment needs to handle it via WppCore / broadcasting
-                            com.waenhancer.xposed.features.general.VideoNoteAttachment
+                            VideoNoteAttachment
                                     .handleVideoPicked(intent.getData());
                         } else if (id == REQUEST_FOLDER && (int) param.args[1] == Activity.RESULT_OK) {
                             var uriStr = processDownloadResult(activity, intent);
@@ -204,7 +233,7 @@ public class ActivityController extends Feature {
                 ContactPickerPreference.updatePreferenceValue(pickingKey, contacts);
             }
         } catch (Exception e) {
-            de.robv.android.xposed.XposedBridge.log("[WaEnhancerX] Error processing embedded contact picker result: " + e.getMessage());
+            XposedBridge.log("[WaEnhancerX] Error processing embedded contact picker result: " + e.getMessage());
         }
     }
 
@@ -268,12 +297,12 @@ public class ActivityController extends Feature {
         isOptimizing = false;
 
         // Keep screen on
-        activity.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Show/style action bar natively
         try {
-            if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
-                var actionBar = ((androidx.appcompat.app.AppCompatActivity) activity).getSupportActionBar();
+            if (activity instanceof AppCompatActivity) {
+                var actionBar = ((AppCompatActivity) activity).getSupportActionBar();
                 if (actionBar != null) {
                     actionBar.show();
                     actionBar.setTitle("Database Optimization");
@@ -287,31 +316,31 @@ public class ActivityController extends Feature {
         } catch (Throwable ignored) {}
 
         // Check if dark theme is active
-        boolean isDarkTheme = (activity.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        boolean isDarkTheme = (activity.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
 
         // Resolve theme colors dynamically
-        android.util.TypedValue bgTv = new android.util.TypedValue();
+        TypedValue bgTv = new TypedValue();
         int colorBgVal = isDarkTheme ? 0xff0b141a : 0xffffffff;
         if (activity.getTheme().resolveAttribute(android.R.attr.windowBackground, bgTv, true)) {
             colorBgVal = bgTv.resourceId != 0 ? activity.getResources().getColor(bgTv.resourceId) : bgTv.data;
         }
         final String bgColor = String.format("#%06X", (0xFFFFFF & colorBgVal));
 
-        android.util.TypedValue primaryTv = new android.util.TypedValue();
+        TypedValue primaryTv = new TypedValue();
         int colorPrimaryVal = isDarkTheme ? 0xffe9edef : 0xff111b21;
         if (activity.getTheme().resolveAttribute(android.R.attr.textColorPrimary, primaryTv, true)) {
             colorPrimaryVal = primaryTv.resourceId != 0 ? activity.getResources().getColor(primaryTv.resourceId) : primaryTv.data;
         }
         final String txtPrimary = String.format("#%06X", (0xFFFFFF & colorPrimaryVal));
 
-        android.util.TypedValue secondaryTv = new android.util.TypedValue();
+        TypedValue secondaryTv = new TypedValue();
         int colorSecondaryVal = isDarkTheme ? 0xff8696a0 : 0xff667781;
         if (activity.getTheme().resolveAttribute(android.R.attr.textColorSecondary, secondaryTv, true)) {
             colorSecondaryVal = secondaryTv.resourceId != 0 ? activity.getResources().getColor(secondaryTv.resourceId) : secondaryTv.data;
         }
         final String txtSecondary = String.format("#%06X", (0xFFFFFF & colorSecondaryVal));
 
-        android.util.TypedValue accentTv = new android.util.TypedValue();
+        TypedValue accentTv = new TypedValue();
         int colorAccentVal = isDarkTheme ? 0xff00a884 : 0xff008069;
         boolean foundAccent = false;
         int colorAccentAttr = activity.getResources().getIdentifier("colorAccent", "attr", activity.getPackageName());
@@ -333,16 +362,16 @@ public class ActivityController extends Feature {
 
         // Match system bars to WhatsApp background
         try {
-            activity.getWindow().setStatusBarColor(android.graphics.Color.parseColor(bgColor));
-            activity.getWindow().setNavigationBarColor(android.graphics.Color.parseColor(bgColor));
+            activity.getWindow().setStatusBarColor(Color.parseColor(bgColor));
+            activity.getWindow().setNavigationBarColor(Color.parseColor(bgColor));
             
             // Set light status/navigation bar icons for light mode
             if (!isDarkTheme) {
                 var decorView = activity.getWindow().getDecorView();
                 int flags = decorView.getSystemUiVisibility();
-                flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
                 }
                 decorView.setSystemUiVisibility(flags);
             }
@@ -352,7 +381,7 @@ public class ActivityController extends Feature {
         boolean filterIndexExists = false;
         boolean separateIndexExists = false;
         try {
-            java.io.File dbFile = activity.getDatabasePath("msgstore.db");
+            File dbFile = activity.getDatabasePath("msgstore.db");
             if (dbFile.exists()) {
                 try (SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null,
                         SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS)) {
@@ -372,7 +401,7 @@ public class ActivityController extends Feature {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.setBackgroundColor(android.graphics.Color.parseColor(bgColor));
+        root.setBackgroundColor(Color.parseColor(bgColor));
         root.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 
@@ -381,32 +410,32 @@ public class ActivityController extends Feature {
         root.setPadding(pad, dpToPx(activity, 48), pad, pad);
 
         // Circular Icon containing WaEnhancerX App Icon
-        android.widget.FrameLayout iconFrame = new android.widget.FrameLayout(activity);
+        FrameLayout iconFrame = new FrameLayout(activity);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
                 dpToPx(activity, 72), dpToPx(activity, 72));
         iconParams.gravity = Gravity.CENTER_HORIZONTAL;
         iconParams.setMargins(0, 0, 0, dpToPx(activity, 24));
         iconFrame.setLayoutParams(iconParams);
 
-        android.graphics.drawable.GradientDrawable circle = new android.graphics.drawable.GradientDrawable();
-        circle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-        circle.setColor(android.graphics.Color.parseColor(cardBgColor));
+        GradientDrawable circle = new GradientDrawable();
+        circle.setShape(GradientDrawable.OVAL);
+        circle.setColor(Color.parseColor(cardBgColor));
         iconFrame.setBackground(circle);
 
-        android.widget.ImageView appIconView = new android.widget.ImageView(activity);
+        ImageView appIconView = new ImageView(activity);
         boolean iconLoaded = false;
         try {
-            android.graphics.drawable.Drawable appIcon = activity.getPackageManager().getApplicationIcon("com.waenhancer");
+            Drawable appIcon = activity.getPackageManager().getApplicationIcon("com.waenhancer");
             appIconView.setImageDrawable(appIcon);
             iconLoaded = true;
         } catch (Throwable ignored) {}
 
         if (iconLoaded) {
-            appIconView.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+            appIconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             int padIcon = dpToPx(activity, 14); // Elegant padding for the launcher icon
             appIconView.setPadding(padIcon, padIcon, padIcon, padIcon);
-            android.widget.FrameLayout.LayoutParams iconViewParams = new android.widget.FrameLayout.LayoutParams(
-                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT, android.widget.FrameLayout.LayoutParams.MATCH_PARENT);
+            FrameLayout.LayoutParams iconViewParams = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
             appIconView.setLayoutParams(iconViewParams);
             iconFrame.addView(appIconView);
         } else {
@@ -414,8 +443,8 @@ public class ActivityController extends Feature {
             fallbackText.setText("⚙️");
             fallbackText.setTextSize(32);
             fallbackText.setGravity(Gravity.CENTER);
-            android.widget.FrameLayout.LayoutParams textParams = new android.widget.FrameLayout.LayoutParams(
-                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT, android.widget.FrameLayout.LayoutParams.MATCH_PARENT);
+            FrameLayout.LayoutParams textParams = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
             fallbackText.setLayoutParams(textParams);
             iconFrame.addView(fallbackText);
         }
@@ -424,23 +453,23 @@ public class ActivityController extends Feature {
         // Title TextView (using WDSTextView)
         TextView title = createWDSTextView(activity);
         title.setText("Database Optimization");
-        title.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+        title.setTextColor(Color.parseColor(txtPrimary));
         title.setTextSize(22);
-        title.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         title.setGravity(Gravity.CENTER_HORIZONTAL);
         root.addView(title);
 
         // Message/Subtitle TextView (using WDSTextView)
         final TextView message = createWDSTextView(activity);
         message.setPadding(0, dpToPx(activity, 8), 0, dpToPx(activity, 32));
-        message.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+        message.setTextColor(Color.parseColor(txtSecondary));
         message.setTextSize(14);
         message.setGravity(Gravity.CENTER_HORIZONTAL);
         root.addView(message);
 
         if (filterIndexExists && separateIndexExists) {
             // Already Optimized State UI: circular green checkmark badge from custom SVG
-            android.widget.ImageView successBadge = new android.widget.ImageView(activity);
+            ImageView successBadge = new ImageView(activity);
             LinearLayout.LayoutParams badgeLp = new LinearLayout.LayoutParams(
                     dpToPx(activity, 80), dpToPx(activity, 80));
             badgeLp.setMargins(0, dpToPx(activity, 32), 0, dpToPx(activity, 24));
@@ -448,10 +477,10 @@ public class ActivityController extends Feature {
             successBadge.setLayoutParams(badgeLp);
 
             try {
-                android.graphics.drawable.Drawable checkIcon = com.waenhancer.xposed.utils.DesignUtils.getDrawable(com.waenhancer.R.drawable.wae_check_circle);
+                Drawable checkIcon = DesignUtils.getDrawable(com.waenhancer.R.drawable.wae_check_circle);
                 if (checkIcon != null) {
                     successBadge.setImageDrawable(checkIcon);
-                    successBadge.setColorFilter(android.graphics.Color.parseColor(accentColor));
+                    successBadge.setColorFilter(Color.parseColor(accentColor));
                 }
             } catch (Throwable t) {
                 XposedBridge.log("[WAEX] Failed to load success badge drawable: " + t.toString());
@@ -462,17 +491,17 @@ public class ActivityController extends Feature {
             message.setPadding(dpToPx(activity, 16), dpToPx(activity, 8), dpToPx(activity, 16), dpToPx(activity, 48));
 
             // Spacer to push the Dismiss button to the bottom of the screen
-            android.view.View spacer = new android.view.View(activity);
+            View spacer = new View(activity);
             LinearLayout.LayoutParams spacerLp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
             spacer.setLayoutParams(spacerLp);
             root.addView(spacer);
 
             // Dismiss Button
-            android.view.View dismissBtn = null;
+            View dismissBtn = null;
             try {
                 Class<?> wdsButtonClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.button.WDSButton");
-                dismissBtn = (android.view.View) wdsButtonClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class)
+                dismissBtn = (View) wdsButtonClass.getConstructor(Context.class, AttributeSet.class)
                         .newInstance(activity, null);
                 try {
                     Class<?> variantEnum = activity.getClassLoader().loadClass("X.0xb");
@@ -482,12 +511,12 @@ public class ActivityController extends Feature {
             } catch (Throwable ignored) {}
 
             if (dismissBtn == null) {
-                dismissBtn = new android.widget.Button(activity);
+                dismissBtn = new Button(activity);
             }
-            final android.view.View btnDismiss = dismissBtn;
-            if (btnDismiss instanceof android.widget.TextView) {
-                ((android.widget.TextView) btnDismiss).setText("Dismiss");
-                ((android.widget.TextView) btnDismiss).setGravity(Gravity.CENTER);
+            final View btnDismiss = dismissBtn;
+            if (btnDismiss instanceof TextView) {
+                ((TextView) btnDismiss).setText("Dismiss");
+                ((TextView) btnDismiss).setGravity(Gravity.CENTER);
             } else {
                 try {
                     XposedHelpers.callMethod(btnDismiss, "setText", "Dismiss");
@@ -519,7 +548,7 @@ public class ActivityController extends Feature {
             wdsSwitchClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.toggle.WDSSwitch");
         } catch (Throwable ignored) {}
 
-        android.util.TypedValue outValue = new android.util.TypedValue();
+        TypedValue outValue = new TypedValue();
         activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
 
         // Item 1: Group Message Filter
@@ -538,31 +567,31 @@ public class ActivityController extends Feature {
 
         TextView label1 = createWDSTextView(activity);
         label1.setText("Group Message Filter");
-        label1.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+        label1.setTextColor(Color.parseColor(txtPrimary));
         label1.setTextSize(16);
-        label1.setTypeface(android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL));
+        label1.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         textLayout1.addView(label1);
 
         TextView desc1 = createWDSTextView(activity);
         desc1.setText("Rebuilds database indexes for lightning-fast group member message counting.");
-        desc1.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+        desc1.setTextColor(Color.parseColor(txtSecondary));
         desc1.setTextSize(13);
         desc1.setPadding(0, dpToPx(activity, 4), 0, 0);
         textLayout1.addView(desc1);
         item1.addView(textLayout1);
 
-        android.view.View switchView1 = null;
+        View switchView1 = null;
         if (wdsSwitchClass != null) {
             try {
-                switchView1 = (android.view.View) wdsSwitchClass.getConstructor(android.content.Context.class).newInstance(activity);
+                switchView1 = (View) wdsSwitchClass.getConstructor(Context.class).newInstance(activity);
             } catch (Throwable ignored) {}
         }
         if (switchView1 == null) {
-            switchView1 = new android.widget.Switch(activity);
+            switchView1 = new Switch(activity);
         }
-        final android.view.View finalSwitch1 = switchView1;
-        if (finalSwitch1 instanceof android.widget.CompoundButton) {
-            ((android.widget.CompoundButton) finalSwitch1).setChecked(true);
+        final View finalSwitch1 = switchView1;
+        if (finalSwitch1 instanceof CompoundButton) {
+            ((CompoundButton) finalSwitch1).setChecked(true);
         }
         LinearLayout.LayoutParams swLp1 = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -571,8 +600,8 @@ public class ActivityController extends Feature {
         item1.addView(finalSwitch1);
         
         item1.setOnClickListener(v -> {
-            if (finalSwitch1 instanceof android.widget.CompoundButton) {
-                ((android.widget.CompoundButton) finalSwitch1).toggle();
+            if (finalSwitch1 instanceof CompoundButton) {
+                ((CompoundButton) finalSwitch1).toggle();
             }
         });
 
@@ -592,31 +621,31 @@ public class ActivityController extends Feature {
 
         TextView label2 = createWDSTextView(activity);
         label2.setText("Separate Groups");
-        label2.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+        label2.setTextColor(Color.parseColor(txtPrimary));
         label2.setTextSize(16);
-        label2.setTypeface(android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL));
+        label2.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         textLayout2.addView(label2);
 
         TextView desc2 = createWDSTextView(activity);
         desc2.setText("Optimizes chat database for fast loading of separate chats and groups tabs.");
-        desc2.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+        desc2.setTextColor(Color.parseColor(txtSecondary));
         desc2.setTextSize(13);
         desc2.setPadding(0, dpToPx(activity, 4), 0, 0);
         textLayout2.addView(desc2);
         item2.addView(textLayout2);
 
-        android.view.View switchView2 = null;
+        View switchView2 = null;
         if (wdsSwitchClass != null) {
             try {
-                switchView2 = (android.view.View) wdsSwitchClass.getConstructor(android.content.Context.class).newInstance(activity);
+                switchView2 = (View) wdsSwitchClass.getConstructor(Context.class).newInstance(activity);
             } catch (Throwable ignored) {}
         }
         if (switchView2 == null) {
-            switchView2 = new android.widget.Switch(activity);
+            switchView2 = new Switch(activity);
         }
-        final android.view.View finalSwitch2 = switchView2;
-        if (finalSwitch2 instanceof android.widget.CompoundButton) {
-            ((android.widget.CompoundButton) finalSwitch2).setChecked(true);
+        final View finalSwitch2 = switchView2;
+        if (finalSwitch2 instanceof CompoundButton) {
+            ((CompoundButton) finalSwitch2).setChecked(true);
         }
         LinearLayout.LayoutParams swLp2 = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -625,8 +654,8 @@ public class ActivityController extends Feature {
         item2.addView(finalSwitch2);
 
         item2.setOnClickListener(v -> {
-            if (finalSwitch2 instanceof android.widget.CompoundButton) {
-                ((android.widget.CompoundButton) finalSwitch2).toggle();
+            if (finalSwitch2 instanceof CompoundButton) {
+                ((CompoundButton) finalSwitch2).toggle();
             }
         });
 
@@ -636,8 +665,8 @@ public class ActivityController extends Feature {
         }
         if (!filterIndexExists && !separateIndexExists) {
             // Divider
-            android.view.View optDivider = new android.view.View(activity);
-            optDivider.setBackgroundColor(android.graphics.Color.parseColor(dividerColor));
+            View optDivider = new View(activity);
+            optDivider.setBackgroundColor(Color.parseColor(dividerColor));
             LinearLayout.LayoutParams optDivParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(activity, 1));
             optDivParams.setMargins(dpToPx(activity, 16), 0, dpToPx(activity, 16), 0);
@@ -649,7 +678,7 @@ public class ActivityController extends Feature {
         }
 
         // Spacer to push the warning text and button to the bottom of the screen
-        android.view.View optSpacer = new android.view.View(activity);
+        View optSpacer = new View(activity);
         LinearLayout.LayoutParams optSpacerParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
         optSpacer.setLayoutParams(optSpacerParams);
@@ -658,7 +687,7 @@ public class ActivityController extends Feature {
         // Warning Text (Normal text above the continue button)
         TextView cardDesc = createWDSTextView(activity);
         cardDesc.setText("Do not close the app or lock your device. Optimization takes up to 15 seconds.");
-        cardDesc.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+        cardDesc.setTextColor(Color.parseColor(txtSecondary));
         cardDesc.setTextSize(13);
         cardDesc.setGravity(Gravity.CENTER_HORIZONTAL);
         LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(
@@ -668,10 +697,10 @@ public class ActivityController extends Feature {
         optionsContainer.addView(cardDesc);
 
         // Continue Button
-        android.view.View continueBtn = null;
+        View continueBtn = null;
         try {
             Class<?> wdsButtonClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.button.WDSButton");
-            continueBtn = (android.view.View) wdsButtonClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class)
+            continueBtn = (View) wdsButtonClass.getConstructor(Context.class, AttributeSet.class)
                     .newInstance(activity, null);
             
             // Set variant to FILLED to style it as a primary green button
@@ -685,11 +714,11 @@ public class ActivityController extends Feature {
         } catch (Throwable ignored) {}
 
         if (continueBtn == null) {
-            continueBtn = new android.widget.Button(activity);
+            continueBtn = new Button(activity);
         }
-        final android.view.View btnContinue = continueBtn;
-        if (btnContinue instanceof android.widget.TextView) {
-            android.widget.TextView tv = (android.widget.TextView) btnContinue;
+        final View btnContinue = continueBtn;
+        if (btnContinue instanceof TextView) {
+            TextView tv = (TextView) btnContinue;
             tv.setText("Continue");
             tv.setGravity(Gravity.CENTER);
         } else {
@@ -719,8 +748,8 @@ public class ActivityController extends Feature {
         progressBar.setProgress(0);
         final String trueWaGreen = accentColor;
         final String pbTrackColor = isDarkTheme ? "#2a3942" : "#e9edef";
-        progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(trueWaGreen)));
-        progressBar.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(pbTrackColor)));
+        progressBar.setProgressTintList(ColorStateList.valueOf(Color.parseColor(trueWaGreen)));
+        progressBar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor(pbTrackColor)));
         LinearLayout.LayoutParams pbParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(activity, 4));
         progressBar.setLayoutParams(pbParams);
@@ -730,9 +759,9 @@ public class ActivityController extends Feature {
         final TextView percentText = createWDSTextView(activity);
         percentText.setPadding(0, dpToPx(activity, 8), 0, dpToPx(activity, 24));
         percentText.setText("0%");
-        percentText.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+        percentText.setTextColor(Color.parseColor(txtPrimary));
         percentText.setTextSize(14);
-        percentText.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+        percentText.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         percentText.setGravity(Gravity.CENTER_HORIZONTAL);
         progressContainer.addView(percentText);
 
@@ -769,9 +798,9 @@ public class ActivityController extends Feature {
         // Enable/Disable Continue button dynamically
         final boolean finalFilterExists = filterIndexExists;
         final boolean finalSeparateExists = separateIndexExists;
-        if (finalSwitch1 instanceof android.widget.CompoundButton && finalSwitch2 instanceof android.widget.CompoundButton) {
-            android.widget.CompoundButton s1 = (android.widget.CompoundButton) finalSwitch1;
-            android.widget.CompoundButton s2 = (android.widget.CompoundButton) finalSwitch2;
+        if (finalSwitch1 instanceof CompoundButton && finalSwitch2 instanceof CompoundButton) {
+            CompoundButton s1 = (CompoundButton) finalSwitch1;
+            CompoundButton s2 = (CompoundButton) finalSwitch2;
             s1.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 boolean enable = (!finalFilterExists && s1.isChecked()) || (!finalSeparateExists && s2.isChecked());
                 btnContinue.setEnabled(enable);
@@ -787,8 +816,8 @@ public class ActivityController extends Feature {
         final Handler mainHandler = new Handler(Looper.getMainLooper());
 
         btnContinue.setOnClickListener(v -> {
-            boolean optFilter = !finalFilterExists && finalSwitch1 instanceof android.widget.CompoundButton && ((android.widget.CompoundButton) finalSwitch1).isChecked();
-            boolean optSeparate = !finalSeparateExists && finalSwitch2 instanceof android.widget.CompoundButton && ((android.widget.CompoundButton) finalSwitch2).isChecked();
+            boolean optFilter = !finalFilterExists && finalSwitch1 instanceof CompoundButton && ((CompoundButton) finalSwitch1).isChecked();
+            boolean optSeparate = !finalSeparateExists && finalSwitch2 instanceof CompoundButton && ((CompoundButton) finalSwitch2).isChecked();
 
             optionsContainer.setVisibility(View.GONE);
             progressContainer.setVisibility(View.VISIBLE);
@@ -825,13 +854,13 @@ public class ActivityController extends Feature {
         CompletableFuture.runAsync(() -> {
             // Kill other WhatsApp helper processes to avoid any database locking
             try {
-                int myPid = android.os.Process.myPid();
-                android.app.ActivityManager am = (android.app.ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE);
-                java.util.List<android.app.ActivityManager.RunningAppProcessInfo> processes = am.getRunningAppProcesses();
+                int myPid = Process.myPid();
+                ActivityManager am = (ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE);
+                List<ActivityManager.RunningAppProcessInfo> processes = am.getRunningAppProcesses();
                 if (processes != null) {
-                    for (android.app.ActivityManager.RunningAppProcessInfo info : processes) {
+                    for (ActivityManager.RunningAppProcessInfo info : processes) {
                         if (info.pid != myPid && info.processName != null && info.processName.startsWith("com.whatsapp:")) {
-                            android.os.Process.killProcess(info.pid);
+                            Process.killProcess(info.pid);
                         }
                     }
                 }
@@ -844,7 +873,7 @@ public class ActivityController extends Feature {
 
             Thread dbThread = new Thread(() -> {
                 try {
-                    java.io.File dbFile = activity.getDatabasePath("msgstore.db");
+                    File dbFile = activity.getDatabasePath("msgstore.db");
                     XposedBridge.log("[WAEX] dbThread started. optFilter=" + optFilter + ", optSeparate=" + optSeparate + ", dbFile=" + dbFile.getAbsolutePath());
                     if (dbFile.exists()) {
                         XposedBridge.log("[WAEX] Opening database for indexing...");
@@ -941,9 +970,9 @@ public class ActivityController extends Feature {
                     }
                 } else {
                     percentText.setText("Failed");
-                    step1.setTextColor(android.graphics.Color.parseColor(failedColor));
-                    step2.setTextColor(android.graphics.Color.parseColor(failedColor));
-                    step3.setTextColor(android.graphics.Color.parseColor(failedColor));
+                    step1.setTextColor(Color.parseColor(failedColor));
+                    step2.setTextColor(Color.parseColor(failedColor));
+                    step3.setTextColor(Color.parseColor(failedColor));
                 }
             });
 
@@ -953,15 +982,15 @@ public class ActivityController extends Feature {
                 if (finalSuccess) {
                     Toast.makeText(activity, "Optimization completed successfully! Restarting WhatsApp...", Toast.LENGTH_LONG).show();
                     mainHandler.postDelayed(() -> {
-                        android.os.Process.killProcess(android.os.Process.myPid());
+                        Process.killProcess(Process.myPid());
                     }, 2000);
                 } else {
                     // Show failure and allow exit via crash-proof standard AlertDialog
-                    new android.app.AlertDialog.Builder(activity)
+                    new AlertDialog.Builder(activity)
                             .setTitle("Optimization Failed")
                             .setMessage("Failed to optimize database. Please try again.")
                             .setPositiveButton("Exit", (d, w) -> {
-                                android.os.Process.killProcess(android.os.Process.myPid());
+                                Process.killProcess(Process.myPid());
                             })
                             .setCancelable(false)
                             .show();
@@ -978,7 +1007,7 @@ public class ActivityController extends Feature {
     private TextView createWDSTextView(Activity activity) {
         try {
             Class<?> wdsTextViewClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.textview.WDSTextView");
-            return (TextView) wdsTextViewClass.getConstructor(android.content.Context.class).newInstance(activity);
+            return (TextView) wdsTextViewClass.getConstructor(Context.class).newInstance(activity);
         } catch (Throwable ignored) {
             return new TextView(activity);
         }
@@ -991,45 +1020,45 @@ public class ActivityController extends Feature {
     private void setStepState(Activity activity, TextView textView, String text, int state, String accentColor, String txtPrimary, String txtSecondary) {
         textView.setText(text);
         int size = dpToPx(activity, 16);
-        android.graphics.drawable.Drawable drawable;
+        Drawable drawable;
         if (state == STATE_COMPLETED) {
-            drawable = new CheckCircleDrawable(android.graphics.Color.parseColor(accentColor));
-            textView.setTextColor(android.graphics.Color.parseColor(accentColor));
+            drawable = new CheckCircleDrawable(Color.parseColor(accentColor));
+            textView.setTextColor(Color.parseColor(accentColor));
         } else if (state == STATE_ACTIVE) {
-            drawable = new BulletCircleDrawable(android.graphics.Color.parseColor(txtPrimary), true);
-            textView.setTextColor(android.graphics.Color.parseColor(txtPrimary));
+            drawable = new BulletCircleDrawable(Color.parseColor(txtPrimary), true);
+            textView.setTextColor(Color.parseColor(txtPrimary));
         } else {
-            drawable = new BulletCircleDrawable(android.graphics.Color.parseColor(txtSecondary), false);
-            textView.setTextColor(android.graphics.Color.parseColor(txtSecondary));
+            drawable = new BulletCircleDrawable(Color.parseColor(txtSecondary), false);
+            textView.setTextColor(Color.parseColor(txtSecondary));
         }
         drawable.setBounds(0, 0, size, size);
         textView.setCompoundDrawables(drawable, null, null, null);
         textView.setCompoundDrawablePadding(dpToPx(activity, 12));
     }
 
-    public static class CheckCircleDrawable extends android.graphics.drawable.Drawable {
-        private final android.graphics.Paint circlePaint;
-        private final android.graphics.Paint checkPaint;
-        private final android.graphics.Path checkPath;
+    public static class CheckCircleDrawable extends Drawable {
+        private final Paint circlePaint;
+        private final Paint checkPaint;
+        private final Path checkPath;
 
         public CheckCircleDrawable(int color) {
-            circlePaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             circlePaint.setColor(color);
-            circlePaint.setStyle(android.graphics.Paint.Style.FILL);
+            circlePaint.setStyle(Paint.Style.FILL);
 
-            checkPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-            checkPaint.setColor(android.graphics.Color.WHITE);
-            checkPaint.setStyle(android.graphics.Paint.Style.STROKE);
+            checkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            checkPaint.setColor(Color.WHITE);
+            checkPaint.setStyle(Paint.Style.STROKE);
             checkPaint.setStrokeWidth(4f);
-            checkPaint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
-            checkPaint.setStrokeJoin(android.graphics.Paint.Join.ROUND);
+            checkPaint.setStrokeCap(Paint.Cap.ROUND);
+            checkPaint.setStrokeJoin(Paint.Join.ROUND);
 
-            checkPath = new android.graphics.Path();
+            checkPath = new Path();
         }
 
         @Override
-        public void draw(@NonNull android.graphics.Canvas canvas) {
-            android.graphics.Rect bounds = getBounds();
+        public void draw(@NonNull Canvas canvas) {
+            Rect bounds = getBounds();
             float cx = bounds.centerX();
             float cy = bounds.centerY();
             float radius = Math.min(bounds.width(), bounds.height()) / 2f;
@@ -1053,35 +1082,35 @@ public class ActivityController extends Feature {
         }
 
         @Override
-        public void setColorFilter(android.graphics.ColorFilter colorFilter) {
+        public void setColorFilter(ColorFilter colorFilter) {
             circlePaint.setColorFilter(colorFilter);
         }
 
         @Override
         public int getOpacity() {
-            return android.graphics.PixelFormat.TRANSLUCENT;
+            return PixelFormat.TRANSLUCENT;
         }
     }
 
-    public static class BulletCircleDrawable extends android.graphics.drawable.Drawable {
-        private final android.graphics.Paint paint;
+    public static class BulletCircleDrawable extends Drawable {
+        private final Paint paint;
         private final boolean isActive;
 
         public BulletCircleDrawable(int color, boolean isActive) {
-            paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            paint = new Paint(Paint.ANTI_ALIAS_FLAG);
             paint.setColor(color);
             this.isActive = isActive;
             if (isActive) {
-                paint.setStyle(android.graphics.Paint.Style.FILL);
+                paint.setStyle(Paint.Style.FILL);
             } else {
-                paint.setStyle(android.graphics.Paint.Style.STROKE);
+                paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(3f);
             }
         }
 
         @Override
-        public void draw(@NonNull android.graphics.Canvas canvas) {
-            android.graphics.Rect bounds = getBounds();
+        public void draw(@NonNull Canvas canvas) {
+            Rect bounds = getBounds();
             float cx = bounds.centerX();
             float cy = bounds.centerY();
             float radius;
@@ -1096,9 +1125,9 @@ public class ActivityController extends Feature {
         @Override
         public void setAlpha(int alpha) { paint.setAlpha(alpha); }
         @Override
-        public void setColorFilter(android.graphics.ColorFilter cf) {}
+        public void setColorFilter(ColorFilter cf) {}
         @Override
-        public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+        public int getOpacity() { return PixelFormat.TRANSLUCENT; }
     }
 
     @NonNull

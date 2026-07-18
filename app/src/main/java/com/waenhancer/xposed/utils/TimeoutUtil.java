@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class TimeoutUtil {
 
@@ -23,7 +24,7 @@ public class TimeoutUtil {
         // Schedules a task to complete the future with an exception after the timeout
         scheduler.schedule(() -> {
             timeoutFuture.completeExceptionally(
-                    new java.util.concurrent.TimeoutException("Operation exceeded the time limit of " + timeout + " " + unit));
+                    new TimeoutException("Operation exceeded the time limit of " + timeout + " " + unit));
         }, timeout, unit);
 
         // Returns the first to complete (either the original or the timeout)

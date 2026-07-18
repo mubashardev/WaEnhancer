@@ -36,6 +36,10 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.os.Handler;
+import android.os.Looper;
+import java.lang.reflect.Modifier;
+import org.luckypray.dexkit.query.enums.StringMatchType;
 
 public class SeparateGroup extends Feature {
 
@@ -56,7 +60,7 @@ public class SeparateGroup extends Feature {
 
         Class<?> bottomNavigationViewCls = Unobfuscator.findFirstClassUsingName(
                 classLoader,
-                org.luckypray.dexkit.query.enums.StringMatchType.EndsWith,
+                StringMatchType.EndsWith,
                 ".BottomNavigationView"
         );
         XposedHelpers.findAndHookMethod(
@@ -89,13 +93,13 @@ public class SeparateGroup extends Feature {
 
     private static Object getEmptyBadge(Class emptyBadgeClass) {
         try {
-            for (java.lang.reflect.Field f : emptyBadgeClass.getDeclaredFields()) {
-                if (java.lang.reflect.Modifier.isStatic(f.getModifiers()) && f.getType() == emptyBadgeClass) {
+            for (Field f : emptyBadgeClass.getDeclaredFields()) {
+                if (Modifier.isStatic(f.getModifiers()) && f.getType() == emptyBadgeClass) {
                     f.setAccessible(true);
                     return f.get(null);
                 }
             }
-            java.lang.reflect.Constructor ctor = emptyBadgeClass.getDeclaredConstructor();
+            Constructor ctor = emptyBadgeClass.getDeclaredConstructor();
             ctor.setAccessible(true);
             return ctor.newInstance();
         } catch (Throwable ignored) {}
@@ -224,7 +228,7 @@ public class SeparateGroup extends Feature {
                             final int finalGroupCount = groupCount;
                             // XposedBridge.log("[WAEX-SG] counts: chat=" + finalChatCount + " group=" + finalGroupCount);
 
-                            android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+                            Handler handler = new Handler(Looper.getMainLooper());
                             handler.post(() -> {
                                 try {
                                     // Set CHATS badge — no tabInstances check; nav view is already set up
@@ -345,7 +349,7 @@ public class SeparateGroup extends Feature {
         try {
             Class<?> cFragClass = Unobfuscator.findFirstClassUsingName(
                     classLoader,
-                    org.luckypray.dexkit.query.enums.StringMatchType.EndsWith,
+                    StringMatchType.EndsWith,
                     ".ConversationsFragment"
             );
 
@@ -408,8 +412,8 @@ public class SeparateGroup extends Feature {
                     if (index < 0 || index >= tabs.size()) return;
                     int tabId = tabs.get(index);
                     if (tabId == GROUPS || tabId == CHATS) {
-                        java.lang.reflect.Constructor<?>[] constructors = cFragClass.getDeclaredConstructors();
-                        for (java.lang.reflect.Constructor<?> ctor : constructors) {
+                        Constructor<?>[] constructors = cFragClass.getDeclaredConstructors();
+                        for (Constructor<?> ctor : constructors) {
                             if (ctor.getParameterCount() == 0) {
                                 ctor.setAccessible(true);
                                 Object convFragment = ctor.newInstance();

@@ -39,6 +39,8 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import com.waenhancer.xposed.core.FeatureLoader;
+import java.util.List;
 
 public class CustomToolbar extends Feature {
 
@@ -72,8 +74,8 @@ public class CustomToolbar extends Feature {
             XposedBridge.hookMethod(tabListMethod, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    if (param.getResult() instanceof java.util.List) {
-                        java.util.List<?> list = (java.util.List<?>) param.getResult();
+                    if (param.getResult() instanceof List) {
+                        List<?> list = (List<?>) param.getResult();
                         int idx = list.indexOf(200); // 200 is menuitem_chats
                         if (idx != -1) {
                             chatsTabIndex = idx;
@@ -154,7 +156,7 @@ public class CustomToolbar extends Feature {
 
                         if (version != null) {
                             try {
-                                var expirationText = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.expiration, "expires %s");
+                                var expirationText = FeatureLoader.getModuleString(activity, R.string.expiration, "expires %s");
                                 String formatted = String.format(expirationText, mDateExpiration);
                                 version.setText(version.getText() + " " + formatted);
                             } catch (Throwable t) {

@@ -62,6 +62,20 @@ import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import android.util.Base64;
+import com.waenhancer.xposed.core.FeatureLoader;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.CertificateFactory;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 public final class HookBL {
     private static KeyPair keyPair_EC;
@@ -72,14 +86,14 @@ public final class HookBL {
 
 
 
-    private static KeyPair parseKeyPair(String key, java.security.PublicKey publicKey) throws Throwable {
+    private static KeyPair parseKeyPair(String key, PublicKey publicKey) throws Throwable {
         String base64Key = key.replaceAll("-----\\s*BEGIN[^-]*-----", "")
                              .replaceAll("-----\\s*END[^-]*-----", "")
                              .replaceAll("\\s", "");
         try {
-            byte[] keyBytes = android.util.Base64.decode(base64Key, android.util.Base64.DEFAULT);
+            byte[] keyBytes = Base64.decode(base64Key, Base64.DEFAULT);
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-            java.security.PrivateKey privateKey;
+            PrivateKey privateKey;
             try {
                 privateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
             } catch (Throwable t) {
@@ -94,8 +108,8 @@ public final class HookBL {
             }
             if (object instanceof PEMKeyPair) {
                 return new JcaPEMKeyConverter().getKeyPair((PEMKeyPair) object);
-            } else if (object instanceof org.bouncycastle.asn1.pkcs.PrivateKeyInfo) {
-                java.security.PrivateKey privateKey = new JcaPEMKeyConverter().getPrivateKey((org.bouncycastle.asn1.pkcs.PrivateKeyInfo) object);
+            } else if (object instanceof PrivateKeyInfo) {
+                PrivateKey privateKey = new JcaPEMKeyConverter().getPrivateKey((PrivateKeyInfo) object);
                 return new KeyPair(publicKey, privateKey);
             }
             throw t;
@@ -125,8 +139,8 @@ public final class HookBL {
 
 
     private static Certificate parseCert(String cert) throws Throwable {
-        java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
-        return cf.generateCertificate(new java.io.ByteArrayInputStream(cert.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        return cf.generateCertificate(new ByteArrayInputStream(cert.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static Extension addHackedExtension(Extension extension) {
@@ -337,26 +351,26 @@ public final class HookBL {
     private static void parseBootloaderSpooferXml(String xmlContent) throws Throwable {
 
         // Create DOM parser
-        javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
-        javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
-        org.w3c.dom.Document doc = builder.parse(new org.xml.sax.InputSource(new java.io.StringReader(xmlContent)));
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(new InputSource(new StringReader(xmlContent)));
 
         // Extract EC key
-        org.w3c.dom.NodeList ecKeys = doc.getElementsByTagName("Key");
+        NodeList ecKeys = doc.getElementsByTagName("Key");
         for (int i = 0; i < ecKeys.getLength(); i++) {
-            org.w3c.dom.Element keyElement = (org.w3c.dom.Element) ecKeys.item(i);
+            Element keyElement = (Element) ecKeys.item(i);
             String algorithm = keyElement.getAttribute("algorithm");
 
             // Get private key
-            org.w3c.dom.NodeList privateKeyNodes = keyElement.getElementsByTagName("PrivateKey");
+            NodeList privateKeyNodes = keyElement.getElementsByTagName("PrivateKey");
             if (privateKeyNodes.getLength() > 0) {
                 String privateKeyContent = privateKeyNodes.item(0).getTextContent().replaceAll("\s{2,}", "");
 
                 // Get certificate chain
-                org.w3c.dom.NodeList certChainNodes = keyElement.getElementsByTagName("CertificateChain");
+                NodeList certChainNodes = keyElement.getElementsByTagName("CertificateChain");
                 if (certChainNodes.getLength() > 0) {
-                    org.w3c.dom.Element certChainElement = (org.w3c.dom.Element) certChainNodes.item(0);
-                    org.w3c.dom.NodeList certificateNodes = certChainElement.getElementsByTagName("Certificate");
+                    Element certChainElement = (Element) certChainNodes.item(0);
+                    NodeList certificateNodes = certChainElement.getElementsByTagName("Certificate");
 
                     if ("ecdsa".equals(algorithm) || "ec".equals(algorithm)) {
                         certs_EC.clear();
@@ -418,7 +432,7 @@ public final class HookBL {
         };
 
         try {
-            Application app = com.waenhancer.xposed.core.FeatureLoader.mApp;
+            Application app = FeatureLoader.mApp;
 
             Class<?> PackageManagerClass, SharedPreferencesClass;
 

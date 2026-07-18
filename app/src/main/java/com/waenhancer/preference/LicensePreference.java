@@ -9,6 +9,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceManager;
+import android.content.SharedPreferences;
+import android.widget.Toast;
+import com.waenhancer.xposed.utils.ProHelper;
 
 
 
@@ -46,7 +49,7 @@ public class LicensePreference extends Preference implements Preference.OnPrefer
      * Dynamically updates the summary text based on the active license state.
      */
     private void updateSummary() {
-        if (!com.waenhancer.xposed.utils.ProHelper.isPluginInstalled(getContext())) {
+        if (!ProHelper.isPluginInstalled(getContext())) {
             setSummary("Plugin Required");
             return;
         }
@@ -61,8 +64,8 @@ public class LicensePreference extends Preference implements Preference.OnPrefer
     @Override
     public boolean onPreferenceClick(@NonNull Preference preference) {
         Context context = getContext();
-        if (!com.waenhancer.xposed.utils.ProHelper.isPluginInstalled(context)) {
-            com.waenhancer.xposed.utils.ProHelper.navigateToPluginPack(context);
+        if (!ProHelper.isPluginInstalled(context)) {
+            ProHelper.navigateToPluginPack(context);
             return true;
         }
         try {
@@ -71,14 +74,14 @@ public class LicensePreference extends Preference implements Preference.OnPrefer
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         } catch (ClassNotFoundException e) {
-            android.widget.Toast.makeText(context, "Pro features are not available.", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Pro features are not available.", Toast.LENGTH_SHORT).show();
         }
         return true;
     }
 
     @NonNull
-    private android.content.SharedPreferences getSafeSharedPreferences() {
-        android.content.SharedPreferences prefs = getSharedPreferences();
+    private SharedPreferences getSafeSharedPreferences() {
+        SharedPreferences prefs = getSharedPreferences();
         if (prefs != null) {
             return prefs;
         }

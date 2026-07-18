@@ -20,6 +20,7 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import com.waenhancer.xposed.core.FeatureLoader;
 
 public class Stickers extends Feature {
     public Stickers(@NonNull ClassLoader classLoader, @NonNull SharedPreferences preferences) {
@@ -48,7 +49,7 @@ public class Stickers extends Feature {
                             param.args[0] = (View.OnClickListener) v -> {
                                 var context = view.getContext();
                                 var dialog = new AlertDialogWpp(view.getContext());
-                                dialog.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.send_sticker));
+                                dialog.setTitle(FeatureLoader.getModuleString(Utils.getApplication(), R.string.send_sticker));
 
                                 var stickerView = (ImageView) view.findViewById(Utils.getID("sticker", "id"));
                                 LinearLayout linearLayout = new LinearLayout(context);
@@ -65,7 +66,7 @@ public class Stickers extends Feature {
                                 linearLayout.addView(image);
 
                                 TextView text = new TextView(context);
-                                text.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.do_you_want_to_send_sticker));
+                                text.setText(FeatureLoader.getModuleString(Utils.getApplication(), R.string.do_you_want_to_send_sticker));
                                 text.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                                 linearLayout.addView(text);
 

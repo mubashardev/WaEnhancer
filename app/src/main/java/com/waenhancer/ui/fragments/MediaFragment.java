@@ -19,6 +19,7 @@ import com.waenhancer.ui.fragments.base.BasePreferenceFragment;
 import com.waenhancer.xposed.features.general.LiteMode;
 
 import androidx.preference.Preference;
+import android.content.SharedPreferences;
 
 public class MediaFragment extends BasePreferenceFragment {
 
@@ -66,7 +67,7 @@ public class MediaFragment extends BasePreferenceFragment {
     }
 
     @Override
-    public void onSharedPreferenceChanged(android.content.SharedPreferences sharedPreferences, @Nullable String key) {
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String key) {
         super.onSharedPreferenceChanged(sharedPreferences, key);
         if (key == null || "call_recording_enable".equals(key) || "call_recording_mode".equals(key)) {
             updateCallRecordingPreferenceState();

@@ -5,6 +5,7 @@ import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import org.luckypray.dexkit.query.enums.StringMatchType;
 
 public class ObfuscationServiceImpl implements IObfuscationService {
 
@@ -53,7 +54,7 @@ public class ObfuscationServiceImpl implements IObfuscationService {
     @Override
     public Class<?> findClassByUniqueStrings(String... strings) {
         try {
-            return Unobfuscator.findFirstClassUsingStrings(hostClassLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, strings);
+            return Unobfuscator.findFirstClassUsingStrings(hostClassLoader, StringMatchType.Contains, strings);
         } catch (Exception e) {
             return null;
         }
@@ -184,7 +185,7 @@ public class ObfuscationServiceImpl implements IObfuscationService {
     @Override
     public Class<?> findFirstClassUsingName(ClassLoader classLoader, String matchType, String name) {
         try {
-            org.luckypray.dexkit.query.enums.StringMatchType match = org.luckypray.dexkit.query.enums.StringMatchType.valueOf(matchType);
+            StringMatchType match = StringMatchType.valueOf(matchType);
             return Unobfuscator.findFirstClassUsingName(classLoader, match, name);
         } catch (Exception e) {
             return null;
@@ -194,7 +195,7 @@ public class ObfuscationServiceImpl implements IObfuscationService {
     @Override
     public Class<?> findFirstClassUsingStrings(ClassLoader classLoader, String[] strings) {
         try {
-            return Unobfuscator.findFirstClassUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, strings);
+            return Unobfuscator.findFirstClassUsingStrings(classLoader, StringMatchType.Contains, strings);
         } catch (Exception e) {
             return null;
         }

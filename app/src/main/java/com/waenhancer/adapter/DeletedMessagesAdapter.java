@@ -19,12 +19,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.util.TypedValue;
+import com.waenhancer.utils.ContactHelper;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 public class DeletedMessagesAdapter extends RecyclerView.Adapter<DeletedMessagesAdapter.ViewHolder> {
 
     private List<DeletedMessage> messages = new ArrayList<>();
-    private java.util.Set<String> selectedItems = new java.util.HashSet<>();
-    private final Map<String, android.graphics.drawable.Drawable> iconCache = new HashMap<>();
+    private Set<String> selectedItems = new HashSet<>();
+    private final Map<String, Drawable> iconCache = new HashMap<>();
     private final OnItemClickListener listener;
 
     public interface OnItemClickListener {
@@ -69,7 +78,7 @@ public class DeletedMessagesAdapter extends RecyclerView.Adapter<DeletedMessages
         }
 
         if ((contactName == null || contactName.isEmpty()) && displayJid != null) {
-            contactName = com.waenhancer.utils.ContactHelper.getContactName(context, displayJid);
+            contactName = ContactHelper.getContactName(context, displayJid);
         }
 
         if (contactName != null
@@ -92,9 +101,9 @@ public class DeletedMessagesAdapter extends RecyclerView.Adapter<DeletedMessages
         }
         holder.contactName.setText(displayText);
 
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy hh:mm a",
-                java.util.Locale.getDefault());
-        holder.timestamp.setText(sdf.format(new java.util.Date(message.getTimestamp())));
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm a",
+                Locale.getDefault());
+        holder.timestamp.setText(sdf.format(new Date(message.getTimestamp())));
 
         // Message Preview Logic... (unchanged)
         String text = message.getTextContent();
@@ -168,8 +177,8 @@ public class DeletedMessagesAdapter extends RecyclerView.Adapter<DeletedMessages
                 holder.avatar.setImageDrawable(iconCache.get(pkg));
             } else {
                 try {
-                    android.content.pm.PackageManager pm = holder.itemView.getContext().getPackageManager();
-                    android.graphics.drawable.Drawable icon = pm.getApplicationIcon(pkg);
+                    PackageManager pm = holder.itemView.getContext().getPackageManager();
+                    Drawable icon = pm.getApplicationIcon(pkg);
                     if (icon != null) {
                         iconCache.put(pkg, icon);
                         holder.avatar.setImageDrawable(icon);
@@ -177,7 +186,7 @@ public class DeletedMessagesAdapter extends RecyclerView.Adapter<DeletedMessages
                         // Fallback
                         holder.avatar.setImageResource(R.drawable.ic_person);
                     }
-                } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+                } catch (PackageManager.NameNotFoundException e) {
                     // App not installed or invalid package name
                     holder.avatar.setImageResource(R.drawable.ic_person);
                 }
@@ -190,12 +199,12 @@ public class DeletedMessagesAdapter extends RecyclerView.Adapter<DeletedMessages
 
         // Selection Logic
         if (selectedItems.contains(message.getChatJid())) {
-            android.util.TypedValue outValue = new android.util.TypedValue();
+            TypedValue outValue = new TypedValue();
             holder.itemView.getContext().getTheme()
                     .resolveAttribute(com.google.android.material.R.attr.colorSurfaceVariant, outValue, true);
             holder.itemView.setBackgroundColor(outValue.data);
         } else {
-            android.util.TypedValue outValue = new android.util.TypedValue();
+            TypedValue outValue = new TypedValue();
             holder.itemView.getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue,
                     true);
             holder.itemView.setBackgroundResource(outValue.resourceId);
@@ -231,7 +240,7 @@ public class DeletedMessagesAdapter extends RecyclerView.Adapter<DeletedMessages
         return selectedItems.size();
     }
 
-    public java.util.List<String> getSelectedItems() {
+    public List<String> getSelectedItems() {
         return new ArrayList<>(selectedItems);
     }
 

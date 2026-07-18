@@ -50,6 +50,8 @@ import android.content.SharedPreferences;
 
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import com.waenhancer.BuildConfig;
+import java.io.FileDescriptor;
 
 public class CallRecording extends Feature {
     private static final int MENU_ID_MANAGE_RECORDINGS = 0x7EAD0011;
@@ -86,7 +88,7 @@ public class CallRecording extends Feature {
     private void openRecordingsManager(@NonNull Activity activity) {
         try {
             Intent intent = new Intent();
-            intent.setClassName(com.waenhancer.BuildConfig.APPLICATION_ID, "com.waenhancer.activities.RecordingsActivity");
+            intent.setClassName(BuildConfig.APPLICATION_ID, "com.waenhancer.activities.RecordingsActivity");
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             activity.startActivity(intent);
         } catch (Throwable t) {
@@ -144,7 +146,7 @@ public class CallRecording extends Feature {
                     StringMatchType.Contains,
                     "VoipActivity"
             );
-            if (voipActivityClass != null && android.app.Activity.class.isAssignableFrom(voipActivityClass)) {
+            if (voipActivityClass != null && Activity.class.isAssignableFrom(voipActivityClass)) {
                 /* Log removed */
 
                 XposedBridge.hookAllMethods(voipActivityClass, "onDestroy", new XC_MethodHook() {
@@ -596,13 +598,13 @@ public class CallRecording extends Feature {
         private final ParcelFileDescriptor parcelFileDescriptor;
         private final FileOutputStream outputStream;
         @NonNull
-        private final java.io.FileDescriptor fd;
+        private final FileDescriptor fd;
 
         private OutputTarget(
                 @NonNull File file,
                 ParcelFileDescriptor parcelFileDescriptor,
                 FileOutputStream outputStream,
-                @NonNull java.io.FileDescriptor fd
+                @NonNull FileDescriptor fd
         ) {
             this.file = file;
             this.parcelFileDescriptor = parcelFileDescriptor;

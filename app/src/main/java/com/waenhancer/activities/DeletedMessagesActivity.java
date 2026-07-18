@@ -16,6 +16,11 @@ import com.waenhancer.activities.base.BaseActivity;
 import com.waenhancer.databinding.ActivityDeletedMessagesBinding;
 import com.waenhancer.ui.fragments.DeletedMessagesFragment;
 import com.waenhancer.xposed.utils.ProHelper;
+import android.content.SharedPreferences;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 public class DeletedMessagesActivity extends BaseActivity {
 
@@ -38,10 +43,10 @@ public class DeletedMessagesActivity extends BaseActivity {
     }
 
     private void setupViewPager() {
-        binding.viewPager.setAdapter(new androidx.viewpager2.adapter.FragmentStateAdapter(this) {
-            @androidx.annotation.NonNull
+        binding.viewPager.setAdapter(new FragmentStateAdapter(this) {
+            @NonNull
             @Override
-            public androidx.fragment.app.Fragment createFragment(int position) {
+            public Fragment createFragment(int position) {
                 return DeletedMessagesFragment.newInstance(position == 1);
             }
 
@@ -51,7 +56,7 @@ public class DeletedMessagesActivity extends BaseActivity {
             }
         });
 
-        new com.google.android.material.tabs.TabLayoutMediator(binding.tabLayout, binding.viewPager, (tab, position) -> {
+        new TabLayoutMediator(binding.tabLayout, binding.viewPager, (tab, position) -> {
             tab.setText(position == 0 ? "Individuals" : "Groups");
         }).attach();
     }
@@ -99,7 +104,7 @@ public class DeletedMessagesActivity extends BaseActivity {
     }
 
     private void showSettingsDialog() {
-        android.content.SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         int padding = (int) (24 * getResources().getDisplayMetrics().density);
         int itemPadding = (int) (16 * getResources().getDisplayMetrics().density);

@@ -8,6 +8,8 @@ import androidx.preference.PreferenceManager;
 import android.net.Uri;
 import com.waenhancer.BuildConfig;
 import com.waenhancer.xposed.utils.LicenseManager;
+import android.widget.Toast;
+import com.waenhancer.xposed.utils.ProHelper;
 
 public abstract class BaseTileService extends TileService {
 
@@ -26,12 +28,12 @@ public abstract class BaseTileService extends TileService {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String key = getPreferenceKey();
         
-        if (com.waenhancer.xposed.utils.ProHelper.isProFeature(key)) {
+        if (ProHelper.isProFeature(key)) {
             boolean isVerified = prefs.getBoolean("is_pro_verified", false);
-            boolean limitedFree = com.waenhancer.xposed.utils.ProHelper.isLimitedFreePreferenceEnabled(key);
+            boolean limitedFree = ProHelper.isLimitedFreePreferenceEnabled(key);
             if (!isVerified && !limitedFree) {
                 if (!isTileActive(prefs)) {
-                    android.widget.Toast.makeText(this, "This is a Pro feature. Please activate Pro to enable it.", android.widget.Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "This is a Pro feature. Please activate Pro to enable it.", Toast.LENGTH_LONG).show();
                     updateTileState();
                     return;
                 }

@@ -82,6 +82,8 @@ import org.json.JSONArray;
 import com.waenhancer.xposed.utils.ProHelper;
 import com.waenhancer.xposed.core.FeatureLoader;
 import com.waenhancer.xposed.features.customization.SeparateGroup;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 
 public class Others extends Feature {
 
@@ -877,7 +879,7 @@ public class Others extends Feature {
         XposedBridge.log("[WAEX] disablePhotoProfileStatus: field=" + (field != null ? field.getName() : "null"));
         if (field == null) {
             XposedBridge.log("[WAEX] disablePhotoProfileStatus: field is null, dumping all fields of convClass:");
-            for (java.lang.reflect.Field f : convClass.getDeclaredFields()) {
+            for (Field f : convClass.getDeclaredFields()) {
                 XposedBridge.log("[WAEX] convClass field: " + f.getName() + " of type " + f.getType().getName());
             }
             XposedBridge.log("[WAEX] disablePhotoProfileStatus: field is null, returning early!");
@@ -1562,14 +1564,14 @@ public class Others extends Feature {
             for (var spanClass : spanClasses) {
                 /* Log removed */
                 try {
-                    if (java.lang.reflect.Modifier.isAbstract(spanClass.getModifiers())) {
+                    if (Modifier.isAbstract(spanClass.getModifiers())) {
                         /* Log removed */
                         continue;
                     }
                     var methods = ReflectionUtils.findAllMethodsUsingFilter(spanClass, method -> 
                         method.getName().equals("draw") && 
                         method.getParameterCount() == 9 &&
-                        !java.lang.reflect.Modifier.isAbstract(method.getModifiers())
+                        !Modifier.isAbstract(method.getModifiers())
                     );
                     /* Log removed */
                     for (var method : methods) {
@@ -1577,7 +1579,7 @@ public class Others extends Feature {
                         XposedBridge.hookMethod(method, new XC_MethodHook() {
                             @Override
                             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                android.graphics.Canvas canvas = (android.graphics.Canvas) param.args[0];
+                                Canvas canvas = (Canvas) param.args[0];
                                 CharSequence text = (CharSequence) param.args[1];
                                 int start = (int) param.args[2];
                                 int end = (int) param.args[3];
@@ -1585,7 +1587,7 @@ public class Others extends Feature {
                                 int top = (int) param.args[5];
                                 int y = (int) param.args[6];
                                 int bottom = (int) param.args[7];
-                                android.graphics.Paint paint = (android.graphics.Paint) param.args[8];
+                                Paint paint = (Paint) param.args[8];
 
                                 if (text != null && start >= 0 && end > start && end <= text.length()) {
                                     CharSequence emoji = text.subSequence(start, end);

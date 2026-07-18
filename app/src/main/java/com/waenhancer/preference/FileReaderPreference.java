@@ -40,6 +40,11 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import android.content.SharedPreferences;
+import android.provider.Settings;
+import android.view.View;
+import androidx.preference.PreferenceViewHolder;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
 
 public class FileReaderPreference extends Preference implements Preference.OnPreferenceClickListener,
         FilePicker.OnFilePickedListener, FilePicker.OnUriPickedListener {
@@ -66,14 +71,14 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void showAlertPermission() {
-        com.waenhancer.ui.helpers.BottomSheetHelper.showConfirmation(
+        BottomSheetHelper.showConfirmation(
                 getContext(),
                 getContext().getString(R.string.storage_permission),
                 getContext().getString(R.string.permission_storage),
                 getContext().getString(R.string.allow),
                 false,
                 () -> {
-                    Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.setData(Uri.fromParts("package", getContext().getPackageName(), null));
                     getContext().startActivity(intent);
@@ -191,9 +196,9 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
     }
 
     @Override
-    public void onBindViewHolder(@NonNull androidx.preference.PreferenceViewHolder holder) {
+    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
         super.onBindViewHolder(holder);
-        android.view.View deleteBtn = holder.findViewById(R.id.delete_button);
+        View deleteBtn = holder.findViewById(R.id.delete_button);
         if (deleteBtn != null) {
             deleteBtn.setOnClickListener(v -> {
                 new MaterialAlertDialogBuilder(getContext())
@@ -218,12 +223,12 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
         }
     }
 
-    @androidx.annotation.NonNull
-    private android.content.SharedPreferences getSafeSharedPreferences() {
-        android.content.SharedPreferences prefs = getSharedPreferences();
+    @NonNull
+    private SharedPreferences getSafeSharedPreferences() {
+        SharedPreferences prefs = getSharedPreferences();
         if (prefs != null) {
             return prefs;
         }
-        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+        return PreferenceManager.getDefaultSharedPreferences(getContext());
     }
 }

@@ -28,6 +28,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import android.widget.Toast;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.waenhancer.BuildConfig;
 
 public class SupportedVersionsActivity extends BaseActivity {
 
@@ -62,7 +65,7 @@ public class SupportedVersionsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_supported_versions);
 
-        com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
 
         wppContainer = findViewById(R.id.wpp_versions_container);
@@ -229,9 +232,9 @@ public class SupportedVersionsActivity extends BaseActivity {
                             ? editText.getText().toString().trim()
                             : "";
                     if (!VERSION_PATTERN.matcher(input).matches()) {
-                        android.widget.Toast.makeText(this,
+                        Toast.makeText(this,
                                 getString(R.string.invalid_version_format),
-                                android.widget.Toast.LENGTH_LONG).show();
+                                Toast.LENGTH_LONG).show();
                         return;
                     }
                     saveCustomVersion(input, prefKey, oldVersion);
@@ -265,9 +268,9 @@ public class SupportedVersionsActivity extends BaseActivity {
 
         for (String sv : system) {
             if (sv.equals(newVersion)) {
-                android.widget.Toast.makeText(this,
+                Toast.makeText(this,
                         getString(R.string.version_exists),
-                        android.widget.Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
         }
@@ -275,9 +278,9 @@ public class SupportedVersionsActivity extends BaseActivity {
         Set<String> versions = new LinkedHashSet<>(getCustomVersions(prefKey));
 
         if (!newVersion.equals(oldVersion) && versions.contains(newVersion)) {
-            android.widget.Toast.makeText(this,
+            Toast.makeText(this,
                     getString(R.string.version_exists),
-                    android.widget.Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -300,7 +303,7 @@ public class SupportedVersionsActivity extends BaseActivity {
     private void notifyXposed() {
         try {
             for (String pkg : new String[]{"com.whatsapp", "com.whatsapp.w4b"}) {
-                Intent intent = new Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
+                Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
                 intent.setPackage(pkg);
                 sendBroadcast(intent);
             }

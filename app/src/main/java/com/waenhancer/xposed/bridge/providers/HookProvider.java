@@ -19,6 +19,16 @@ import java.util.Map;
 import java.util.Set;
 
 import com.waenhancer.xposed.bridge.service.HookBinder;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.os.Binder;
+import android.util.Log;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.waenhancer.BuildConfig;
+import com.waenhancer.utils.AnalyticsManager;
+import com.waenhancer.utils.WhatsAppCrashException;
+import com.waenhancer.xposed.utils.LicenseManager;
+import java.io.File;
 
 public class HookProvider extends ContentProvider {
 
@@ -39,8 +49,8 @@ public class HookProvider extends ContentProvider {
     public Bundle call(@NonNull String method, @Nullable String arg, @Nullable Bundle extras) {
         ;
         
-        int callingUid = android.os.Binder.getCallingUid();
-        long token = android.os.Binder.clearCallingIdentity();
+        int callingUid = Binder.getCallingUid();
+        long token = Binder.clearCallingIdentity();
         try {
             SharedPreferences prefs = getPrefs();
             if (prefs == null) {
@@ -63,12 +73,12 @@ public class HookProvider extends ContentProvider {
                 String eventName = extras.getString("event_name");
                 Bundle params = extras.getBundle("params");
                 if (eventName != null) {
-                    com.waenhancer.utils.AnalyticsManager.logEvent(context, eventName, params);
+                    AnalyticsManager.logEvent(context, eventName, params);
                 }
                 return Bundle.EMPTY;
             }
             if ("record_crash".equals(method) && extras != null) {
-                if (com.waenhancer.BuildConfig.DEBUG || !prefs.getBoolean("enable_crash_analytics", false)) {
+                if (BuildConfig.DEBUG || !prefs.getBoolean("enable_crash_analytics", false)) {
                     return Bundle.EMPTY;
                 }
                 String stacktrace = extras.getString("stacktrace");
@@ -84,10 +94,10 @@ public class HookProvider extends ContentProvider {
                         }
 
                         /* Log removed */
-                        com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(
-                                new com.waenhancer.utils.WhatsAppCrashException("WhatsApp Crash: \n" + stacktrace));
+                        FirebaseCrashlytics.getInstance().recordException(
+                                new WhatsAppCrashException("WhatsApp Crash: \n" + stacktrace));
                     } catch (Throwable t) {
-                        android.util.Log.e("WAEX_Provider", "Failed to record crash to Crashlytics: " + t.getMessage());
+                        Log.e("WAEX_Provider", "Failed to record crash to Crashlytics: " + t.getMessage());
                     }
                 }
                 return Bundle.EMPTY;
@@ -109,9 +119,9 @@ public class HookProvider extends ContentProvider {
             if ("get_pro_plugin_info".equals(method)) {
                 Bundle result = new Bundle();
                 try {
-                    android.content.pm.ApplicationInfo info =
-                            context.getPackageManager().getApplicationInfo("com.waex.helper", android.content.pm.PackageManager.GET_META_DATA);
-                    if (info.sourceDir != null && new java.io.File(info.sourceDir).exists()) {
+                    ApplicationInfo info =
+                            context.getPackageManager().getApplicationInfo("com.waex.helper", PackageManager.GET_META_DATA);
+                    if (info.sourceDir != null && new File(info.sourceDir).exists()) {
                         result.putString("sourceDir", info.sourceDir);
                         result.putString("nativeLibraryDir", info.nativeLibraryDir);
                         int minVersion = info.metaData != null ? info.metaData.getInt("min_waex_version", 0) : 0;
@@ -123,7 +133,7 @@ public class HookProvider extends ContentProvider {
                                 .commit();
                     }
                 } catch (Throwable t) {
-                    android.util.Log.e("WAEX_Provider", "Failed to resolve pro plugin info", t);
+                    Log.e("WAEX_Provider", "Failed to resolve pro plugin info", t);
                 }
                 return result;
             }
@@ -171,7 +181,7 @@ public class HookProvider extends ContentProvider {
                 }
                 editor.commit();
                 fixPermissions();
-                context.getContentResolver().notifyChange(Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
+                context.getContentResolver().notifyChange(Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
                 return Bundle.EMPTY;
             }
             if ("remove_preference".equals(method) && extras != null) {
@@ -179,14 +189,14 @@ public class HookProvider extends ContentProvider {
                 if (key != null) {
                     prefs.edit().remove(key).commit();
                     fixPermissions();
-                    context.getContentResolver().notifyChange(Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
+                    context.getContentResolver().notifyChange(Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
                     return Bundle.EMPTY;
                 }
             }
             if ("clear_preferences".equals(method)) {
                 prefs.edit().clear().commit();
                 fixPermissions();
-                context.getContentResolver().notifyChange(Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
+                context.getContentResolver().notifyChange(Uri.parse("content://" + BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
                 return Bundle.EMPTY;
             }
             if ("verify_license".equals(method) && extras != null) {
@@ -197,7 +207,7 @@ public class HookProvider extends ContentProvider {
                     final Object lock = new Object();
                     final Bundle verificationResult = new Bundle();
                     
-                    com.waenhancer.xposed.utils.LicenseManager.verifyLicense(context, licenseKey, new com.waenhancer.xposed.utils.LicenseManager.LicenseCallback() {
+                    LicenseManager.verifyLicense(context, licenseKey, new LicenseManager.LicenseCallback() {
                         @Override
                         public void onSuccess(String encryptedConfig) {
                             synchronized (lock) {
@@ -234,7 +244,7 @@ public class HookProvider extends ContentProvider {
                 final Object lock = new Object();
                 final Bundle unlinkResult = new Bundle();
                 
-                com.waenhancer.xposed.utils.LicenseManager.unlinkDevice(context, new com.waenhancer.xposed.utils.LicenseManager.UnlinkCallback() {
+                LicenseManager.unlinkDevice(context, new LicenseManager.UnlinkCallback() {
                     @Override
                     public void onSuccess() {
                         synchronized (lock) {
@@ -263,7 +273,7 @@ public class HookProvider extends ContentProvider {
             }
             return null;
         } finally {
-            android.os.Binder.restoreCallingIdentity(token);
+            Binder.restoreCallingIdentity(token);
         }
     }
 
@@ -297,11 +307,11 @@ public class HookProvider extends ContentProvider {
 
     private void fixPermissions() {
         try {
-            android.content.Context context = getContext();
+            Context context = getContext();
             if (context == null) return;
-            java.io.File dataDir = new java.io.File(context.getApplicationInfo().dataDir);
-            java.io.File prefsDir = new java.io.File(dataDir, "shared_prefs");
-            java.io.File prefsFile = new java.io.File(prefsDir, context.getPackageName() + "_preferences.xml");
+            File dataDir = new File(context.getApplicationInfo().dataDir);
+            File prefsDir = new File(dataDir, "shared_prefs");
+            File prefsFile = new File(prefsDir, context.getPackageName() + "_preferences.xml");
             
             dataDir.setExecutable(true, false);
             dataDir.setReadable(true, false);
@@ -311,7 +321,7 @@ public class HookProvider extends ContentProvider {
             
             prefsFile.setReadable(true, false);
         } catch (Throwable t) {
-            android.util.Log.e("WAEX_HookProvider", "Failed to fix permissions", t);
+            Log.e("WAEX_HookProvider", "Failed to fix permissions", t);
         }
     }
 }

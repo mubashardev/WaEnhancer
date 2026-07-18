@@ -30,6 +30,60 @@ import org.json.JSONObject;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.content.res.Resources;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.AttributeSet;
+import android.view.ViewParent;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+import com.waenhancer.App;
+import com.waenhancer.BuildConfig;
+import com.waenhancer.xposed.bridge.client.ProviderSharedPreferences;
+import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.core.components.AlertDialogWpp;
+import com.waenhancer.xposed.utils.ProHelper;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import org.json.JSONArray;
 
 /**
  * Ultimate Settings Injector: Uses multiple strategies to find and inject into WA Settings.
@@ -71,16 +125,16 @@ public class SettingsInjector extends Feature {
                         menu.clear(); // Hides all native menu items (including search!)
                         if ("root".equals(screenId)) {
                             if (menu.findItem(VIEW_ID_WAEX_SEARCH) == null) {
-                                android.view.MenuItem searchItem = menu.add(0, VIEW_ID_WAEX_SEARCH, 0, "Search");
-                                android.graphics.drawable.Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_search);
+                                MenuItem searchItem = menu.add(0, VIEW_ID_WAEX_SEARCH, 0, "Search");
+                                Drawable icon = DesignUtils.getDrawable(R.drawable.ic_search);
                                 if (icon != null) {
-                                    boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
-                                    icon = com.waenhancer.xposed.utils.DesignUtils.coloredDrawable(icon, isNight ? android.graphics.Color.WHITE : android.graphics.Color.BLACK);
+                                    boolean isNight = DesignUtils.isNightMode();
+                                    icon = DesignUtils.coloredDrawable(icon, isNight ? Color.WHITE : Color.BLACK);
                                     searchItem.setIcon(icon);
                                 }
-                                searchItem.setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+                                searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                                 searchItem.setOnMenuItemClickListener(item -> {
-                                    android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                                    Intent intent = new Intent(activity, activity.getClass());
                                     intent.putExtra("waex_screen_id", "search");
                                     activity.startActivity(intent);
                                     return true;
@@ -104,7 +158,7 @@ public class SettingsInjector extends Feature {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
-                android.content.Intent intent = (android.content.Intent) param.args[0];
+                Intent intent = (Intent) param.args[0];
                 activity.setIntent(intent);
             }
         });
@@ -113,7 +167,7 @@ public class SettingsInjector extends Feature {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Activity activity = (Activity) param.thisObject;
-                android.content.Intent intent = activity.getIntent();
+                Intent intent = activity.getIntent();
                 XposedBridge.log("[WAEX] SettingsInjector onResume called, intent: " + intent + ", extras: " + (intent != null ? intent.getExtras() : "null"));
                 String screenId = intent != null ? intent.getStringExtra("waex_screen_id") : null;
                 if (screenId != null) {
@@ -123,9 +177,9 @@ public class SettingsInjector extends Feature {
 
                 // Check for pending restart on main settings screen
                 try {
-                    boolean needRestart = com.waenhancer.xposed.core.WppCore.getPrivBoolean("need_restart", false);
+                    boolean needRestart = WppCore.getPrivBoolean("need_restart", false);
                     if (needRestart) {
-                        com.waenhancer.xposed.core.FeatureLoader.showRestartDialog(activity);
+                        FeatureLoader.showRestartDialog(activity);
                     }
                 } catch (Throwable t) {
                     XposedBridge.log("[WAEX] Error checking pending restart on settings resume: " + t.getMessage());
@@ -302,11 +356,11 @@ public class SettingsInjector extends Feature {
             ViewGroup commonAncestor = null;
 
             // Trace ancestors of Account TextView
-            java.util.List<View> accountAncestors = new java.util.ArrayList<>();
+            List<View> accountAncestors = new ArrayList<>();
             View current = accountTextView;
             while (current != null) {
                 accountAncestors.add(current);
-                android.view.ViewParent parent = current.getParent();
+                ViewParent parent = current.getParent();
                 current = (parent instanceof View) ? (View) parent : null;
             }
 
@@ -321,7 +375,7 @@ public class SettingsInjector extends Feature {
                     }
                     break;
                 }
-                android.view.ViewParent parent = current.getParent();
+                ViewParent parent = current.getParent();
                 current = (parent instanceof View) ? (View) parent : null;
             }
 
@@ -340,7 +394,7 @@ public class SettingsInjector extends Feature {
 
     private String getLocalizedText(Activity activity, String resName, String fallback) {
         try {
-            android.content.res.Resources res = activity.getResources();
+            Resources res = activity.getResources();
             int resId = res.getIdentifier(resName, "string", activity.getPackageName());
             if (resId != 0) {
                 return res.getString(resId);
@@ -350,8 +404,8 @@ public class SettingsInjector extends Feature {
     }
 
     private View findTextViewWithText(View view, String targetText) {
-        if (view instanceof android.widget.TextView) {
-            String text = ((android.widget.TextView) view).getText().toString().trim();
+        if (view instanceof TextView) {
+            String text = ((TextView) view).getText().toString().trim();
             if (text.equalsIgnoreCase(targetText)) {
                 return view;
             }
@@ -366,12 +420,12 @@ public class SettingsInjector extends Feature {
     }
 
     private ViewGroup findVerticalContainer(View view) {
-        android.view.ViewParent parent = view.getParent();
+        ViewParent parent = view.getParent();
         while (parent instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) parent;
-            if (group instanceof android.widget.LinearLayout) {
-                android.widget.LinearLayout layout = (android.widget.LinearLayout) group;
-                if (layout.getOrientation() == android.widget.LinearLayout.VERTICAL) {
+            if (group instanceof LinearLayout) {
+                LinearLayout layout = (LinearLayout) group;
+                if (layout.getOrientation() == LinearLayout.VERTICAL) {
                     return layout;
                 }
             }
@@ -383,7 +437,7 @@ public class SettingsInjector extends Feature {
     private View findDirectChildOfContainer(ViewGroup container, View view) {
         View current = view;
         while (current != null) {
-            android.view.ViewParent parent = current.getParent();
+            ViewParent parent = current.getParent();
             if (parent == container) {
                 return current;
             }
@@ -393,9 +447,9 @@ public class SettingsInjector extends Feature {
     }
 
     private ViewGroup findSettingsListByStructure(View view) {
-        if (view instanceof android.widget.LinearLayout) {
-            android.widget.LinearLayout layout = (android.widget.LinearLayout) view;
-            if (layout.getOrientation() == android.widget.LinearLayout.VERTICAL) {
+        if (view instanceof LinearLayout) {
+            LinearLayout layout = (LinearLayout) view;
+            if (layout.getOrientation() == LinearLayout.VERTICAL) {
                 int clickableRows = 0;
                 for (int i = 0; i < layout.getChildCount(); i++) {
                     View child = layout.getChildAt(i);
@@ -432,13 +486,13 @@ public class SettingsInjector extends Feature {
         return null;
     }
 
-    private android.widget.TextView findTextView(View view) {
-        if (view instanceof android.widget.TextView) {
-            return (android.widget.TextView) view;
+    private TextView findTextView(View view) {
+        if (view instanceof TextView) {
+            return (TextView) view;
         } else if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
-                android.widget.TextView found = findTextView(group.getChildAt(i));
+                TextView found = findTextView(group.getChildAt(i));
                 if (found != null) return found;
             }
         }
@@ -447,8 +501,8 @@ public class SettingsInjector extends Feature {
 
     private View createDynamicSettingRow(Activity activity, View anchorView) {
         try {
-            android.widget.LinearLayout rowLayout = new android.widget.LinearLayout(activity);
-            rowLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            LinearLayout rowLayout = new LinearLayout(activity);
+            rowLayout.setOrientation(LinearLayout.HORIZONTAL);
             rowLayout.setGravity(Gravity.CENTER_VERTICAL);
 
             // Copy anchor layout params so it behaves exactly like a native row in the list
@@ -478,33 +532,33 @@ public class SettingsInjector extends Feature {
 
             // Find adjacent elements to copy styling exactly
             ImageView anchorIcon = findImageView(anchorView);
-            java.util.List<android.widget.TextView> anchorTextViews = new java.util.ArrayList<>();
+            List<TextView> anchorTextViews = new ArrayList<>();
             findTextViews(anchorView, anchorTextViews);
 
-            android.widget.TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
-            android.widget.TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
+            TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
+            TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
 
             // FrameLayout container for the icon to match 40dp width/height native bounds
-            android.widget.FrameLayout container = new android.widget.FrameLayout(activity);
-            android.widget.LinearLayout.LayoutParams containerParams = new android.widget.LinearLayout.LayoutParams(
+            FrameLayout container = new FrameLayout(activity);
+            LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(
                 dp(activity, 40),
                 dp(activity, 40)
             );
-            containerParams.gravity = android.view.Gravity.CENTER_VERTICAL;
+            containerParams.gravity = Gravity.CENTER_VERTICAL;
             containerParams.setMarginStart(0);
             containerParams.setMarginEnd(dp(activity, 16));
             container.setLayoutParams(containerParams);
 
             // Icon ImageView (Styled centered inside container)
             ImageView iconView = new ImageView(activity);
-            android.widget.FrameLayout.LayoutParams iconParams = new android.widget.FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(
                 dp(activity, 24),
                 dp(activity, 24)
             );
-            iconParams.gravity = android.view.Gravity.CENTER;
+            iconParams.gravity = Gravity.CENTER;
             iconView.setLayoutParams(iconParams);
 
-            android.graphics.drawable.Drawable icon = DesignUtils.getDrawableByName("ic_settings");
+            Drawable icon = DesignUtils.getDrawableByName("ic_settings");
             if (icon != null) {
                 iconView.setImageDrawable(icon);
             }
@@ -518,15 +572,15 @@ public class SettingsInjector extends Feature {
                 iconView.setImageTintList(anchorSummary.getTextColors());
                 iconView.setAlpha(anchorSummary.getAlpha());
             } else {
-                iconView.setImageTintList(android.content.res.ColorStateList.valueOf(0xff8696a0));
+                iconView.setImageTintList(ColorStateList.valueOf(0xff8696a0));
             }
             container.addView(iconView);
             rowLayout.addView(container);
 
             // Text vertical container (starts at 72dp keyline, meaning leftMargin = 0 since container handles marginEnd)
-            android.widget.LinearLayout textContainer = new android.widget.LinearLayout(activity);
-            textContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
-            android.widget.LinearLayout.LayoutParams textContainerParams = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout textContainer = new LinearLayout(activity);
+            textContainer.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams textContainerParams = new LinearLayout.LayoutParams(
                 0,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 1.0f
@@ -535,8 +589,8 @@ public class SettingsInjector extends Feature {
             textContainer.setLayoutParams(textContainerParams);
 
             // Title TextView
-            android.widget.TextView titleText = new android.widget.TextView(activity);
-            titleText.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.waenhancer_settings, "WaEnhancerX Settings"));
+            TextView titleText = new TextView(activity);
+            titleText.setText(FeatureLoader.getModuleString(activity, R.string.waenhancer_settings, "WaEnhancerX Settings"));
 
             // Extract title typography from the anchor title TextView if available
             if (anchorTitle != null) {
@@ -547,12 +601,12 @@ public class SettingsInjector extends Feature {
                 titleText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                 titleText.setTextColor(0xffe9edef);
             }
-            titleText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            titleText.setEllipsize(TextUtils.TruncateAt.END);
             titleText.setSingleLine(true);
 
             // Summary TextView (Professional 1-2 line settings guide)
-            android.widget.TextView summaryText = new android.widget.TextView(activity);
-            summaryText.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+            TextView summaryText = new TextView(activity);
+            summaryText.setText(FeatureLoader.getModuleString(
                 activity,
                 R.string.waenhancer_settings_desc, 
                 "Configure WaEnhancerX features, UI customization, and privacy settings."
@@ -572,7 +626,7 @@ public class SettingsInjector extends Feature {
 
             // Limit summary to 2 lines maximum and show ellipsis (...) on overflow
             summaryText.setMaxLines(2);
-            summaryText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            summaryText.setEllipsize(TextUtils.TruncateAt.END);
 
             textContainer.addView(titleText);
             textContainer.addView(summaryText);
@@ -584,7 +638,7 @@ public class SettingsInjector extends Feature {
                 String openMode = getSafeString("open_settings_mode", "1");
                 if ("2".equals(entryPoint) && "1".equals(openMode)) {
                     // Embedded: open within WhatsApp's hijacked SettingsTabActivity
-                    android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                    Intent intent = new Intent(activity, activity.getClass());
                     intent.putExtra("waex_screen_id", "root");
                     activity.startActivity(intent);
                 } else {
@@ -658,29 +712,29 @@ public class SettingsInjector extends Feature {
             JSONObject settingsMap = WdsSettingsTileRenderer.loadSettingsMap(activity);
             if (settingsMap != null) {
                 View contentView = null;
-                String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+                String title = FeatureLoader.getModuleString(
                         activity, R.string.waenhancer_settings, "WaeX");
                 
-                SharedPreferences localPrefs = activity.getSharedPreferences(com.waenhancer.BuildConfig.APPLICATION_ID + "_preferences", android.content.Context.MODE_PRIVATE);
-                SharedPreferences readWritePrefs = new com.waenhancer.xposed.bridge.client.ProviderSharedPreferences(activity, localPrefs, prefs);
+                SharedPreferences localPrefs = activity.getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", Context.MODE_PRIVATE);
+                SharedPreferences readWritePrefs = new ProviderSharedPreferences(activity, localPrefs, prefs);
 
-                boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                boolean isNight = DesignUtils.isNightMode();
                 WdsSettingsTileRenderer.PrefChangeListener listener = (key, newValue) -> {
                     try {
-                        com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
+                        WppCore.setPrivBooleanSync("need_restart", true);
                         String prefTitle = key;
                         try {
-                            org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                            JSONArray categories = settingsMap.getJSONArray("categories");
                             for (int i = 0; i < categories.length(); i++) {
-                                org.json.JSONObject category = categories.getJSONObject(i);
-                                org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                                JSONObject category = categories.getJSONObject(i);
+                                JSONArray subScreens = category.optJSONArray("sub_screens");
                                 if (subScreens != null) {
                                     for (int j = 0; j < subScreens.length(); j++) {
-                                        org.json.JSONObject subScreen = subScreens.getJSONObject(j);
-                                        org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                                        JSONObject subScreen = subScreens.getJSONObject(j);
+                                        JSONArray prefsArray = subScreen.optJSONArray("prefs");
                                         if (prefsArray != null) {
                                             for (int k = 0; k < prefsArray.length(); k++) {
-                                                org.json.JSONObject prefObj = prefsArray.getJSONObject(k);
+                                                JSONObject prefObj = prefsArray.getJSONObject(k);
                                                 if (key.equals(prefObj.optString("key"))) {
                                                     prefTitle = prefObj.optString("title", key);
                                                     break;
@@ -691,20 +745,20 @@ public class SettingsInjector extends Feature {
                                 }
                             }
                         } catch (Exception ignored) {}
-                        String existing = com.waenhancer.xposed.core.WppCore.getPrivString("pending_changes", "");
-                        java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                        String existing = WppCore.getPrivString("pending_changes", "");
+                        Set<String> all = new LinkedHashSet<>();
                         if (!existing.isEmpty()) {
                             for (String t : existing.split("\\|")) {
                                 if (!t.trim().isEmpty()) all.add(t.trim());
                             }
                         }
                         all.add(prefTitle);
-                        com.waenhancer.xposed.core.WppCore.setPrivString("pending_changes", String.join("|", all));
+                        WppCore.setPrivString("pending_changes", String.join("|", all));
                     } catch (Throwable t) {
-                        de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
+                        XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
                     }
 
-                    android.content.Intent changeIntent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                    Intent changeIntent = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
                     changeIntent.putExtra("key", key);
                     changeIntent.setPackage(activity.getPackageName());
                     activity.sendBroadcast(changeIntent);
@@ -713,9 +767,9 @@ public class SettingsInjector extends Feature {
                 if ("search".equals(screenId)) {
                     title = "Search";
                     
-                    android.widget.ScrollView scrollView = new android.widget.ScrollView(activity);
-                    android.widget.LinearLayout containerLayout = new android.widget.LinearLayout(activity);
-                    containerLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    ScrollView scrollView = new ScrollView(activity);
+                    LinearLayout containerLayout = new LinearLayout(activity);
+                    containerLayout.setOrientation(LinearLayout.VERTICAL);
                     float density = activity.getResources().getDisplayMetrics().density;
                     containerLayout.setPadding(0, (int) (16 * density), 0, (int) (16 * density));
                     scrollView.addView(containerLayout);
@@ -736,12 +790,12 @@ public class SettingsInjector extends Feature {
                             
                             // Instantiate com.whatsapp.ui.wds.components.search.WDSSearchView via reflection
                             Class<?> searchViewClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.search.WDSSearchView");
-                            View wdsSearchView = (View) searchViewClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class).newInstance(activity, null);
+                            View wdsSearchView = (View) searchViewClass.getConstructor(Context.class, AttributeSet.class).newInstance(activity, null);
                             
-                            de.robv.android.xposed.XposedHelpers.callMethod(wdsSearchView, "setHint", "Search features...");
+                            XposedHelpers.callMethod(wdsSearchView, "setHint", "Search features...");
                             
                             // Back button close activity
-                            android.widget.ImageButton backBtn = (android.widget.ImageButton) de.robv.android.xposed.XposedHelpers.callMethod(wdsSearchView, "getBackButton");
+                            ImageButton backBtn = (ImageButton) XposedHelpers.callMethod(wdsSearchView, "getBackButton");
                             if (backBtn != null) {
                                 backBtn.setOnClickListener(v -> activity.finish());
                             }
@@ -750,9 +804,9 @@ public class SettingsInjector extends Feature {
                             searchBar.addView(wdsSearchView);
                             
                             // Get input field - try by public field A09 (WDSEditText), then resource id, then tree walk
-                            android.widget.EditText searchInput = null;
+                            EditText searchInput = null;
                             try {
-                                searchInput = (android.widget.EditText) de.robv.android.xposed.XposedHelpers.getObjectField(wdsSearchView, "A09");
+                                searchInput = (EditText) XposedHelpers.getObjectField(wdsSearchView, "A09");
                             } catch (Throwable ignored) {}
                             if (searchInput == null) {
                                 int editId = activity.getResources().getIdentifier("search_src_text", "id", activity.getPackageName());
@@ -765,8 +819,8 @@ public class SettingsInjector extends Feature {
                             }
 
                             if (searchInput != null) {
-                                final android.widget.EditText finalSearchInput = searchInput;
-                                finalSearchInput.addTextChangedListener(new android.text.TextWatcher() {
+                                final EditText finalSearchInput = searchInput;
+                                finalSearchInput.addTextChangedListener(new TextWatcher() {
                                     @Override
                                     public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                                     
@@ -777,43 +831,43 @@ public class SettingsInjector extends Feature {
                                     }
                                     
                                     @Override
-                                    public void afterTextChanged(android.text.Editable s) {}
+                                    public void afterTextChanged(Editable s) {}
                                 });
                                 
                                 // Auto-focus and open keyboard on start
                                 finalSearchInput.requestFocus();
                                 finalSearchInput.post(() -> {
-                                    android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) activity.getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                                    InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
                                     if (imm != null) {
-                                        imm.showSoftInput(finalSearchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                                        imm.showSoftInput(finalSearchInput, InputMethodManager.SHOW_IMPLICIT);
                                     }
                                 });
                             } else {
-                                de.robv.android.xposed.XposedBridge.log("[WAEX] WDSSearchView: could not find EditText field A09");
+                                XposedBridge.log("[WAEX] WDSSearchView: could not find EditText field A09");
                             }
                         }
                     } catch (Throwable t) {
-                        de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to initialize native WDSSearchView, using fallback: " + t.getMessage());
+                        XposedBridge.log("[WAEX] Failed to initialize native WDSSearchView, using fallback: " + t.getMessage());
                     }
                     
                     contentView = scrollView;
                 } else if ("root".equals(screenId)) {
                     contentView = WdsSettingsTileRenderer.buildCategoryList(activity, settingsMap, readWritePrefs, (key, newValue) -> {
                         try {
-                            com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
+                            WppCore.setPrivBooleanSync("need_restart", true);
                             String prefTitle = key;
                             try {
-                                org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                                JSONArray categories = settingsMap.getJSONArray("categories");
                                 for (int i = 0; i < categories.length(); i++) {
-                                    org.json.JSONObject category = categories.getJSONObject(i);
-                                    org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                                    JSONObject category = categories.getJSONObject(i);
+                                    JSONArray subScreens = category.optJSONArray("sub_screens");
                                     if (subScreens != null) {
                                         for (int j = 0; j < subScreens.length(); j++) {
-                                            org.json.JSONObject subScreen = subScreens.getJSONObject(j);
-                                            org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                                            JSONObject subScreen = subScreens.getJSONObject(j);
+                                            JSONArray prefsArray = subScreen.optJSONArray("prefs");
                                             if (prefsArray != null) {
                                                 for (int k = 0; k < prefsArray.length(); k++) {
-                                                    org.json.JSONObject prefObj = prefsArray.getJSONObject(k);
+                                                    JSONObject prefObj = prefsArray.getJSONObject(k);
                                                     if (key.equals(prefObj.optString("key"))) {
                                                         prefTitle = prefObj.optString("title", key);
                                                         break;
@@ -824,20 +878,20 @@ public class SettingsInjector extends Feature {
                                     }
                                 }
                             } catch (Exception ignored) {}
-                            String existing = com.waenhancer.xposed.core.WppCore.getPrivString("pending_changes", "");
-                            java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                            String existing = WppCore.getPrivString("pending_changes", "");
+                            Set<String> all = new LinkedHashSet<>();
                             if (!existing.isEmpty()) {
                                 for (String t : existing.split("\\|")) {
                                     if (!t.trim().isEmpty()) all.add(t.trim());
                                 }
                             }
                             all.add(prefTitle);
-                            com.waenhancer.xposed.core.WppCore.setPrivString("pending_changes", String.join("|", all));
+                            WppCore.setPrivString("pending_changes", String.join("|", all));
                         } catch (Throwable t) {
-                            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
+                            XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
                         }
 
-                        android.content.Intent intent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                        Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
                         intent.putExtra("key", key);
                         intent.setPackage(activity.getPackageName());
                         activity.sendBroadcast(intent);
@@ -853,14 +907,14 @@ public class SettingsInjector extends Feature {
                     int accentG = isNight ? 0xFF21C063 : 0xFF008069;
                     int strokeColor = isNight ? 0xFF2D3B43 : 0xFFE1E3E6;
 
-                    android.widget.ScrollView scrollView = new android.widget.ScrollView(activity);
+                    ScrollView scrollView = new ScrollView(activity);
                     scrollView.setLayoutParams(new ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
                     scrollView.setClipChildren(false);
                     // Keep native window background by not setting custom bg color on ScrollView
                     
-                    android.widget.LinearLayout containerLayout = new android.widget.LinearLayout(activity);
-                    containerLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    LinearLayout containerLayout = new LinearLayout(activity);
+                    containerLayout.setOrientation(LinearLayout.VERTICAL);
                     containerLayout.setClipChildren(false);
                     containerLayout.setClipToPadding(false);
                     float density = activity.getResources().getDisplayMetrics().density;
@@ -878,10 +932,10 @@ public class SettingsInjector extends Feature {
                     try {
                         // Utils.xprefs is the XSharedPreferences pointing at the module app's
                         // DefaultSharedPreferences — this is the authoritative source for license data.
-                        android.content.SharedPreferences xp = com.waenhancer.xposed.utils.Utils.xprefs;
+                        SharedPreferences xp = Utils.xprefs;
                         if (xp == null) {
                             // Fallback: reload via reflection
-                            xp = (android.content.SharedPreferences)
+                            xp = (SharedPreferences)
                                     Class.forName("com.waenhancer.xposed.utils.Utils")
                                          .getField("xprefs").get(null);
                         }
@@ -923,53 +977,53 @@ public class SettingsInjector extends Feature {
                         // ─────────────────────────────────────────────
                         //  ACTIVE / EXPIRED LICENSE CARD
                         // ─────────────────────────────────────────────
-                        android.widget.LinearLayout licCard = new android.widget.LinearLayout(activity);
-                        licCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+                        LinearLayout licCard = new LinearLayout(activity);
+                        licCard.setOrientation(LinearLayout.VERTICAL);
                         licCard.setPadding(pad16, pad16, pad16, pad16);
 
-                        android.graphics.drawable.GradientDrawable licCardGd = new android.graphics.drawable.GradientDrawable();
+                        GradientDrawable licCardGd = new GradientDrawable();
                         licCardGd.setCornerRadius(12 * density);
                         licCardGd.setColor(dialogBg);
                         licCardGd.setStroke((int)(1 * density), strokeColor);
                         licCard.setBackground(licCardGd);
                         licCard.setElevation(5 * density);
 
-                        android.widget.LinearLayout.LayoutParams licCardLp =
-                                new android.widget.LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams licCardLp =
+                                new LinearLayout.LayoutParams(
                                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                         int marginH = (int)(6 * density);
                         licCardLp.setMargins(marginH, (int)(2 * density), marginH, (int)(20 * density));
                         licCard.setLayoutParams(licCardLp);
 
                         // ── Status badge row ──
-                        android.widget.LinearLayout badgeRow = new android.widget.LinearLayout(activity);
-                        badgeRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+                        LinearLayout badgeRow = new LinearLayout(activity);
+                        badgeRow.setOrientation(LinearLayout.HORIZONTAL);
                         badgeRow.setGravity(Gravity.CENTER_VERTICAL);
-                        android.widget.LinearLayout.LayoutParams badgeRowLp =
-                                new android.widget.LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams badgeRowLp =
+                                new LinearLayout.LayoutParams(
                                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                         badgeRowLp.bottomMargin = (int)(10 * density);
                         badgeRow.setLayoutParams(badgeRowLp);
 
                         // Plan name
-                        android.widget.TextView tvPlan = new android.widget.TextView(activity);
+                        TextView tvPlan = new TextView(activity);
                         tvPlan.setText(planName);
                         tvPlan.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                         tvPlan.setTextColor(primaryText);
-                        tvPlan.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
-                        android.widget.LinearLayout.LayoutParams tvPlanLp =
-                                new android.widget.LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                        tvPlan.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+                        LinearLayout.LayoutParams tvPlanLp =
+                                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
                         tvPlan.setLayoutParams(tvPlanLp);
                         badgeRow.addView(tvPlan);
 
                         // Status pill badge
-                        android.widget.TextView tvBadge = new android.widget.TextView(activity);
+                        TextView tvBadge = new TextView(activity);
                         tvBadge.setText(isActive ? "ACTIVE" : "EXPIRED");
                         tvBadge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
                         tvBadge.setTextColor(isNight ? 0xFF111B21 : 0xFFFFFFFF);
-                        tvBadge.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                        tvBadge.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
                         tvBadge.setPadding((int)(8 * density), (int)(3 * density), (int)(8 * density), (int)(3 * density));
-                        android.graphics.drawable.GradientDrawable badgeGd = new android.graphics.drawable.GradientDrawable();
+                        GradientDrawable badgeGd = new GradientDrawable();
                         badgeGd.setCornerRadius(8 * density);
                         badgeGd.setColor(isActive ? accentG : 0xFFC62828);
                         tvBadge.setBackground(badgeGd);
@@ -978,19 +1032,19 @@ public class SettingsInjector extends Feature {
 
                         // ── Divider ──
                         View licDiv = new View(activity);
-                        android.widget.LinearLayout.LayoutParams licDivLp =
-                                new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int)(1 * density));
+                        LinearLayout.LayoutParams licDivLp =
+                                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int)(1 * density));
                         licDivLp.bottomMargin = (int)(10 * density);
                         licDiv.setLayoutParams(licDivLp);
                         licDiv.setBackgroundColor(strokeColor);
                         licCard.addView(licDiv);
 
                         // ── Expiry ──
-                        android.widget.TextView tvExpiry = new android.widget.TextView(activity);
+                        TextView tvExpiry = new TextView(activity);
                         if (expiresAt > 0) {
-                            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault());
+                            SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
                             String label = isActive ? "Valid until: " : "Expired on: ";
-                            tvExpiry.setText(label + sdf.format(new java.util.Date(expiresAt)));
+                            tvExpiry.setText(label + sdf.format(new Date(expiresAt)));
                             if (isExpired) tvExpiry.setTextColor(0xFFC62828);
                             else tvExpiry.setTextColor(secondaryText);
                         } else {
@@ -998,20 +1052,20 @@ public class SettingsInjector extends Feature {
                             tvExpiry.setTextColor(accentG);
                         }
                         tvExpiry.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-                        android.widget.LinearLayout.LayoutParams tvExpiryLp =
-                                new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        LinearLayout.LayoutParams tvExpiryLp =
+                                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                         tvExpiryLp.bottomMargin = (int)(4 * density);
                         tvExpiry.setLayoutParams(tvExpiryLp);
                         licCard.addView(tvExpiry);
 
                         // ── Telegram username ──
                         if (tgUsername != null && !tgUsername.isEmpty()) {
-                            android.widget.TextView tvTg = new android.widget.TextView(activity);
+                            TextView tvTg = new TextView(activity);
                             tvTg.setText("Linked to: @" + tgUsername);
                             tvTg.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
                             tvTg.setTextColor(secondaryText);
-                            android.widget.LinearLayout.LayoutParams tvTgLp =
-                                    new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                            LinearLayout.LayoutParams tvTgLp =
+                                    new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                             tvTgLp.bottomMargin = (int)(4 * density);
                             tvTg.setLayoutParams(tvTgLp);
                             licCard.addView(tvTg);
@@ -1023,12 +1077,12 @@ public class SettingsInjector extends Feature {
                             String masked = licenseKey.length() > 9
                                     ? licenseKey.substring(0, 9) + "****-****"
                                     : licenseKey;
-                            android.widget.TextView tvKey = new android.widget.TextView(activity);
+                            TextView tvKey = new TextView(activity);
                             tvKey.setText("Key: " + masked);
                             tvKey.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
                             tvKey.setTextColor(secondaryText);
-                            android.widget.LinearLayout.LayoutParams tvKeyLp =
-                                    new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                            LinearLayout.LayoutParams tvKeyLp =
+                                    new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                             tvKeyLp.bottomMargin = (int)(12 * density);
                             tvKey.setLayoutParams(tvKeyLp);
                             licCard.addView(tvKey);
@@ -1038,10 +1092,10 @@ public class SettingsInjector extends Feature {
                         View btnUnlink = null;
                         try {
                             Class<?> wdsButtonClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.button.WDSButton");
-                            btnUnlink = (View) wdsButtonClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class).newInstance(activity, null);
-                            ((android.widget.TextView) btnUnlink).setText("Unlink Device");
+                            btnUnlink = (View) wdsButtonClass.getConstructor(Context.class, AttributeSet.class).newInstance(activity, null);
+                            ((TextView) btnUnlink).setText("Unlink Device");
                             Class<?> variantClass = null;
-                            for (java.lang.reflect.Method m : wdsButtonClass.getDeclaredMethods()) {
+                            for (Method m : wdsButtonClass.getDeclaredMethods()) {
                                 if (m.getName().equals("setVariant") && m.getParameterTypes().length == 1) {
                                     variantClass = m.getParameterTypes()[0];
                                     break;
@@ -1051,15 +1105,15 @@ public class SettingsInjector extends Feature {
                                 variantClass = activity.getClassLoader().loadClass("X.0xb");
                             }
                             Object outlineVariant = Enum.valueOf((Class<Enum>) variantClass, "OUTLINE");
-                            de.robv.android.xposed.XposedHelpers.callMethod(btnUnlink, "setVariant", outlineVariant);
+                            XposedHelpers.callMethod(btnUnlink, "setVariant", outlineVariant);
                         } catch (Throwable t) {
                             // Fallback matching AlertDialogWpp negative button fallback style
-                            android.widget.TextView fbUnlink = new android.widget.TextView(activity);
+                            TextView fbUnlink = new TextView(activity);
                             fbUnlink.setText("Unlink Device");
                             fbUnlink.setGravity(Gravity.CENTER);
                             fbUnlink.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                             fbUnlink.setTextColor(accentG);
-                            fbUnlink.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                            fbUnlink.setTypeface(Typeface.DEFAULT_BOLD);
                             fbUnlink.setPadding(0, (int)(14 * density), 0, (int)(14 * density));
                             btnUnlink = fbUnlink;
                         }
@@ -1070,52 +1124,52 @@ public class SettingsInjector extends Feature {
                         final View finalBtnUnlink = btnUnlink;
                         btnUnlink.setOnClickListener(v -> {
                             // AlertDialogWpp — same pattern as showRestartDialog and all other dialogs
-                            new com.waenhancer.xposed.core.components.AlertDialogWpp(activity)
+                            new AlertDialogWpp(activity)
                                 .setTitle("Unlink this device?")
                                 .setMessage("This will remove your license from this device. You will lose access to all Pro features and will need to re-enter your key to reactivate.")
                                 .setPositiveButton("Unlink", (dialog, which) -> {
                                     // Show loading spinner
-                                    final android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(activity);
+                                    final ProgressDialog progressDialog = new ProgressDialog(activity);
                                     progressDialog.setMessage("Unlinking device...");
                                     progressDialog.setCancelable(false);
                                     progressDialog.show();
                                     
                                     if (finalBtnUnlink != null) finalBtnUnlink.setEnabled(false);
 
-                                    com.waenhancer.App.getExecutorService().execute(() -> {
+                                    App.getExecutorService().execute(() -> {
                                         try {
-                                            android.net.Uri providerUri = android.net.Uri.parse("content://com.waenhancer.hookprovider");
-                                            final android.os.Bundle result = activity.getContentResolver().call(providerUri, "unlink_device", null, null);
+                                            Uri providerUri = Uri.parse("content://com.waenhancer.hookprovider");
+                                            final Bundle result = activity.getContentResolver().call(providerUri, "unlink_device", null, null);
                                             
                                             activity.runOnUiThread(() -> {
                                                 if (progressDialog.isShowing()) progressDialog.dismiss();
                                                 if (result != null && result.getBoolean("success", false)) {
-                                                    android.widget.Toast.makeText(activity, "Device unlinked successfully.", android.widget.Toast.LENGTH_SHORT).show();
+                                                    Toast.makeText(activity, "Device unlinked successfully.", Toast.LENGTH_SHORT).show();
                                                     
                                                     // Broadcast restart intent to the module app process
                                                     try {
-                                                        android.content.Intent restartIntent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".WHATSAPP.RESTART");
-                                                        restartIntent.putExtra("PKG", com.waenhancer.BuildConfig.APPLICATION_ID);
+                                                        Intent restartIntent = new Intent(BuildConfig.APPLICATION_ID + ".WHATSAPP.RESTART");
+                                                        restartIntent.putExtra("PKG", BuildConfig.APPLICATION_ID);
                                                         activity.sendBroadcast(restartIntent);
                                                     } catch (Throwable ignored) {}
 
                                                     // Restart WhatsApp itself (host app)
                                                     try {
-                                                        com.waenhancer.xposed.utils.Utils.doRestart(activity);
+                                                        Utils.doRestart(activity);
                                                     } catch (Throwable t) {
                                                         activity.finish();
                                                     }
                                                 } else {
                                                     if (finalBtnUnlink != null) finalBtnUnlink.setEnabled(true);
                                                     String err = result != null ? result.getString("message", "Unlink failed") : "Provider communication failed";
-                                                    android.widget.Toast.makeText(activity, "Unlink failed: " + err, android.widget.Toast.LENGTH_LONG).show();
+                                                    Toast.makeText(activity, "Unlink failed: " + err, Toast.LENGTH_LONG).show();
                                                 }
                                             });
                                         } catch (Throwable t) {
                                             activity.runOnUiThread(() -> {
                                                 if (progressDialog.isShowing()) progressDialog.dismiss();
                                                 if (finalBtnUnlink != null) finalBtnUnlink.setEnabled(true);
-                                                android.widget.Toast.makeText(activity, "Unlink failed: " + t.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+                                                Toast.makeText(activity, "Unlink failed: " + t.getMessage(), Toast.LENGTH_LONG).show();
                                             });
                                         }
                                     });
@@ -1128,18 +1182,18 @@ public class SettingsInjector extends Feature {
                         containerLayout.addView(licCard);
 
                         // ── Show features button ──
-                        android.widget.TextView tvFeaturesLinked = new android.widget.TextView(activity);
+                        TextView tvFeaturesLinked = new TextView(activity);
                         tvFeaturesLinked.setText("View Premium Features");
                         tvFeaturesLinked.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                         tvFeaturesLinked.setTextColor(accentG);
-                        tvFeaturesLinked.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                        tvFeaturesLinked.setTypeface(Typeface.DEFAULT_BOLD);
                         tvFeaturesLinked.setGravity(Gravity.CENTER);
                         tvFeaturesLinked.setPadding(0, pad16, 0, pad16);
                         tvFeaturesLinked.setClickable(true);
                         tvFeaturesLinked.setFocusable(true);
                         tvFeaturesLinked.setOnClickListener(v -> {
                             try {
-                                android.content.Intent subScreenIntent = new android.content.Intent(activity, activity.getClass());
+                                Intent subScreenIntent = new Intent(activity, activity.getClass());
                                 subScreenIntent.putExtra("waex_screen_id", "premium_features");
                                 activity.startActivity(subScreenIntent);
                             } catch (Throwable ignored) {}
@@ -1152,18 +1206,18 @@ public class SettingsInjector extends Feature {
                         // ─────────────────────────────────────────────
 
                     // 1. Description
-                    android.widget.TextView actDesc = new android.widget.TextView(activity);
+                    TextView actDesc = new TextView(activity);
                     actDesc.setText("Enter your license key received from the Telegram Bot to unlock all premium capabilities.");
                     actDesc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
                     actDesc.setTextColor(secondaryText);
-                    android.widget.LinearLayout.LayoutParams descLp = new android.widget.LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams descLp = new LinearLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     descLp.setMargins(0, 0, 0, (int)(16 * density));
                     actDesc.setLayoutParams(descLp);
                     containerLayout.addView(actDesc);
                     
                     // 2. Input field for License Key
-                    android.widget.EditText etLicense = new android.widget.EditText(activity);
+                    EditText etLicense = new EditText(activity);
                     etLicense.setHint("WAEX-XXXX-XXXX-XXXX");
                     etLicense.setSingleLine(true);
                     etLicense.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
@@ -1171,14 +1225,14 @@ public class SettingsInjector extends Feature {
                     etLicense.setTextColor(primaryText);
                     
                     // Style edittext border dynamically
-                    android.graphics.drawable.GradientDrawable editGd = new android.graphics.drawable.GradientDrawable();
+                    GradientDrawable editGd = new GradientDrawable();
                     editGd.setCornerRadius(8 * density);
                     editGd.setColor(cardBg);
                     editGd.setStroke((int) (1 * density), strokeColor);
                     etLicense.setBackground(editGd);
                     etLicense.setPadding(pad16, pad16, pad16, pad16);
                     
-                    android.widget.LinearLayout.LayoutParams inputLp = new android.widget.LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams inputLp = new LinearLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     inputLp.bottomMargin = pad16;
                     etLicense.setLayoutParams(inputLp);
@@ -1188,11 +1242,11 @@ public class SettingsInjector extends Feature {
                     View btnVerify = null;
                     try {
                         Class<?> wdsButtonClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.button.WDSButton");
-                        btnVerify = (View) wdsButtonClass.getConstructor(android.content.Context.class, android.util.AttributeSet.class).newInstance(activity, null);
-                        ((android.widget.TextView) btnVerify).setText("Verify & Activate");
+                        btnVerify = (View) wdsButtonClass.getConstructor(Context.class, AttributeSet.class).newInstance(activity, null);
+                        ((TextView) btnVerify).setText("Verify & Activate");
                         
                         Class<?> variantClass = null;
-                        for (java.lang.reflect.Method m : wdsButtonClass.getDeclaredMethods()) {
+                        for (Method m : wdsButtonClass.getDeclaredMethods()) {
                             if (m.getName().equals("setVariant") && m.getParameterTypes().length == 1) {
                                 variantClass = m.getParameterTypes()[0];
                                 break;
@@ -1202,17 +1256,17 @@ public class SettingsInjector extends Feature {
                             variantClass = activity.getClassLoader().loadClass("X.0xb");
                         }
                         Object variantVal = Enum.valueOf((Class<Enum>) variantClass, "FILLED");
-                        de.robv.android.xposed.XposedHelpers.callMethod(btnVerify, "setVariant", variantVal);
+                        XposedHelpers.callMethod(btnVerify, "setVariant", variantVal);
                     } catch (Throwable t) {
-                        android.widget.TextView fbBtn = new android.widget.TextView(activity);
+                        TextView fbBtn = new TextView(activity);
                         fbBtn.setText("Verify & Activate");
                         fbBtn.setGravity(Gravity.CENTER);
                         fbBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                         fbBtn.setTextColor(0xFFFFFFFF);
-                        fbBtn.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                        fbBtn.setTypeface(Typeface.DEFAULT_BOLD);
                         fbBtn.setPadding(0, (int) (12 * density), 0, (int) (12 * density));
                         
-                        android.graphics.drawable.GradientDrawable btnGd = new android.graphics.drawable.GradientDrawable();
+                        GradientDrawable btnGd = new GradientDrawable();
                         btnGd.setCornerRadius(24 * density);
                         btnGd.setColor(accentG);
                         fbBtn.setBackground(btnGd);
@@ -1226,12 +1280,12 @@ public class SettingsInjector extends Feature {
                     btnVerify.setOnClickListener(v -> {
                         String key = etLicense.getText().toString().trim().toUpperCase();
                         if (key.isEmpty()) {
-                            android.widget.Toast.makeText(activity, "Key cannot be empty", android.widget.Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, "Key cannot be empty", Toast.LENGTH_SHORT).show();
                             return;
                         }
                         
                         // Show loading progress spinner
-                        final android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(activity);
+                        final ProgressDialog progressDialog = new ProgressDialog(activity);
                         progressDialog.setMessage("Verifying license key...");
                         progressDialog.setCancelable(false);
                         progressDialog.show();
@@ -1241,29 +1295,29 @@ public class SettingsInjector extends Feature {
                         etLicense.setEnabled(false);
 
                         // Call the module's HookProvider to execute license verification in the module's process context
-                        com.waenhancer.App.getExecutorService().execute(() -> {
+                        App.getExecutorService().execute(() -> {
                             try {
-                                android.net.Uri providerUri = android.net.Uri.parse("content://com.waenhancer.hookprovider");
-                                android.os.Bundle extras = new android.os.Bundle();
+                                Uri providerUri = Uri.parse("content://com.waenhancer.hookprovider");
+                                Bundle extras = new Bundle();
                                 extras.putString("license_key", key);
                                 
-                                final android.os.Bundle result = activity.getContentResolver().call(providerUri, "verify_license", null, extras);
+                                final Bundle result = activity.getContentResolver().call(providerUri, "verify_license", null, extras);
                                 
                                 activity.runOnUiThread(() -> {
                                     if (progressDialog.isShowing()) progressDialog.dismiss();
                                     if (result != null && result.getBoolean("success", false)) {
-                                        android.widget.Toast.makeText(activity, "Activation Successful! 🎉", android.widget.Toast.LENGTH_LONG).show();
+                                        Toast.makeText(activity, "Activation Successful! 🎉", Toast.LENGTH_LONG).show();
                                         
                                         // Broadcast restart intent to the module app process
                                         try {
-                                            android.content.Intent restartIntent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".WHATSAPP.RESTART");
-                                            restartIntent.putExtra("PKG", com.waenhancer.BuildConfig.APPLICATION_ID);
+                                            Intent restartIntent = new Intent(BuildConfig.APPLICATION_ID + ".WHATSAPP.RESTART");
+                                            restartIntent.putExtra("PKG", BuildConfig.APPLICATION_ID);
                                             activity.sendBroadcast(restartIntent);
                                         } catch (Throwable ignored) {}
 
                                         // Restart WhatsApp itself (host app)
                                         try {
-                                            com.waenhancer.xposed.utils.Utils.doRestart(activity);
+                                            Utils.doRestart(activity);
                                         } catch (Throwable t) {
                                             activity.finish();
                                         }
@@ -1271,7 +1325,7 @@ public class SettingsInjector extends Feature {
                                         if (finalBtnVerify != null) finalBtnVerify.setEnabled(true);
                                         etLicense.setEnabled(true);
                                         String err = result != null ? result.getString("message", "Verification Failed") : "Provider communication failed";
-                                        android.widget.Toast.makeText(activity, "Verification Failed: " + err, android.widget.Toast.LENGTH_LONG).show();
+                                        Toast.makeText(activity, "Verification Failed: " + err, Toast.LENGTH_LONG).show();
                                     }
                                 });
                             } catch (Throwable t) {
@@ -1279,7 +1333,7 @@ public class SettingsInjector extends Feature {
                                     if (progressDialog.isShowing()) progressDialog.dismiss();
                                     if (finalBtnVerify != null) finalBtnVerify.setEnabled(true);
                                     etLicense.setEnabled(true);
-                                    android.widget.Toast.makeText(activity, "Failed to call LicenseManager: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(activity, "Failed to call LicenseManager: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                                 });
                             }
                         });
@@ -1287,11 +1341,11 @@ public class SettingsInjector extends Feature {
                     containerLayout.addView(btnVerify);
                     
                     // 4. "Show Features" button to display Sub Screen
-                    android.widget.TextView tvFeatures = new android.widget.TextView(activity);
+                    TextView tvFeatures = new TextView(activity);
                     tvFeatures.setText("Premium & Limited Free Features");
                     tvFeatures.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                     tvFeatures.setTextColor(accentG);
-                    tvFeatures.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                    tvFeatures.setTypeface(Typeface.DEFAULT_BOLD);
                     tvFeatures.setGravity(Gravity.CENTER);
                     tvFeatures.setPadding(0, pad16, 0, pad16);
                     tvFeatures.setClickable(true);
@@ -1299,18 +1353,18 @@ public class SettingsInjector extends Feature {
                     
                     tvFeatures.setOnClickListener(v -> {
                         try {
-                            android.content.Intent subScreenIntent = new android.content.Intent(activity, activity.getClass());
+                            Intent subScreenIntent = new Intent(activity, activity.getClass());
                             subScreenIntent.putExtra("waex_screen_id", "premium_features");
                             activity.startActivity(subScreenIntent);
                         } catch (Throwable t) {
-                            android.widget.Toast.makeText(activity, "Failed to open Features: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, "Failed to open Features: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
                     containerLayout.addView(tvFeatures);
 
                     // 5. Divider
                     View separator = new View(activity);
-                    android.widget.LinearLayout.LayoutParams sepLp = new android.widget.LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams sepLp = new LinearLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT, (int) (1 * density));
                     sepLp.setMargins(0, pad16, 0, pad16);
                     separator.setLayoutParams(sepLp);
@@ -1318,17 +1372,17 @@ public class SettingsInjector extends Feature {
                     containerLayout.addView(separator);
                     
                     // 6. Plans Section Header
-                    android.widget.TextView plansHeader = new android.widget.TextView(activity);
+                    TextView plansHeader = new TextView(activity);
                     plansHeader.setText("Purchase License Key");
                     plansHeader.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                     plansHeader.setTextColor(primaryText);
-                    plansHeader.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                    plansHeader.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
                     plansHeader.setPadding(0, 0, 0, (int) (8 * density));
                     containerLayout.addView(plansHeader);
 
                     // 7. Dynamic plans container layout
-                    android.widget.LinearLayout plansContainer = new android.widget.LinearLayout(activity);
-                    plansContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    LinearLayout plansContainer = new LinearLayout(activity);
+                    plansContainer.setOrientation(LinearLayout.VERTICAL);
                     plansContainer.setClipChildren(false);
                     plansContainer.setClipToPadding(false);
                     containerLayout.setClipChildren(false);
@@ -1336,17 +1390,17 @@ public class SettingsInjector extends Feature {
                     containerLayout.addView(plansContainer);
                     
                     // Check cache for plans (1 hour TTL)
-                    SharedPreferences cachePrefs = activity.getSharedPreferences("waex_plans_cache", android.content.Context.MODE_PRIVATE);
+                    SharedPreferences cachePrefs = activity.getSharedPreferences("waex_plans_cache", Context.MODE_PRIVATE);
                     long cacheTime = cachePrefs.getLong("plans_cache_time", 0);
                     String cachedData = cachePrefs.getString("plans_cache_data", null);
                     long currentTime = System.currentTimeMillis();
 
                     if (cachedData != null && (currentTime - cacheTime) < 900000) {
                         try {
-                            org.json.JSONArray plansArray = new org.json.JSONArray(cachedData);
+                            JSONArray plansArray = new JSONArray(cachedData);
                             clearPlansContainer(plansContainer);
                             for (int i = 0; i < plansArray.length(); i++) {
-                                org.json.JSONObject planObj = plansArray.getJSONObject(i);
+                                JSONObject planObj = plansArray.getJSONObject(i);
                                 buildPlanCard(plansContainer, activity, density, pad16, dialogBg, strokeColor, primaryText, secondaryText, accentG, planObj);
                             }
                         } catch (Throwable t) {
@@ -1370,13 +1424,13 @@ public class SettingsInjector extends Feature {
                     int accentG = isNight ? 0xFF21C063 : 0xFF008069;
                     int strokeColor = isNight ? 0xFF2D3B43 : 0xFFE1E3E6;
 
-                    android.widget.ScrollView scrollView = new android.widget.ScrollView(activity);
+                    ScrollView scrollView = new ScrollView(activity);
                     scrollView.setLayoutParams(new ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
                     // Keep native window background
 
-                    android.widget.LinearLayout containerLayout = new android.widget.LinearLayout(activity);
-                    containerLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    LinearLayout containerLayout = new LinearLayout(activity);
+                    containerLayout.setOrientation(LinearLayout.VERTICAL);
                     containerLayout.setClipChildren(false);
                     containerLayout.setClipToPadding(false);
                     float density = activity.getResources().getDisplayMetrics().density;
@@ -1386,18 +1440,18 @@ public class SettingsInjector extends Feature {
                     scrollView.addView(containerLayout);
 
                     try {
-                        ClassLoader moduleLoader = com.waenhancer.xposed.utils.ProHelper.getPluginClassLoader(activity);
+                        ClassLoader moduleLoader = ProHelper.getPluginClassLoader(activity);
                         if (moduleLoader == null) {
                             moduleLoader = SettingsInjector.class.getClassLoader();
                         }
                         
-                        android.content.Context moduleContext = activity;
+                        Context moduleContext = activity;
                         try {
-                            moduleContext = activity.createPackageContext("com.waenhancer", android.content.Context.CONTEXT_IGNORE_SECURITY);
+                            moduleContext = activity.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
                         } catch (Throwable ignored) {}
                         
                         Class<?> fcClass = moduleLoader.loadClass("com.waenhancer.utils.FeatureCatalog");
-                        java.util.List<?> allFeatures = (java.util.List<?>) fcClass.getMethod("getAllFeatures", android.content.Context.class).invoke(null, moduleContext);
+                        List<?> allFeatures = (List<?>) fcClass.getMethod("getAllFeatures", Context.class).invoke(null, moduleContext);
                         
                         Class<?> sfClass = moduleLoader.loadClass("com.waenhancer.model.SearchableFeature");
                         Class<?> phClass = moduleLoader.loadClass("com.waenhancer.xposed.utils.ProHelper");
@@ -1432,13 +1486,13 @@ public class SettingsInjector extends Feature {
                             }
 
                             // Interactive premium card layout
-                            android.widget.LinearLayout card = new android.widget.LinearLayout(activity);
-                            card.setOrientation(android.widget.LinearLayout.VERTICAL);
+                            LinearLayout card = new LinearLayout(activity);
+                            card.setOrientation(LinearLayout.VERTICAL);
                             card.setPadding(pad16, pad16, pad16, pad16);
                             card.setClickable(true);
                             card.setFocusable(true);
                             
-                            android.graphics.drawable.GradientDrawable normalGd = new android.graphics.drawable.GradientDrawable();
+                            GradientDrawable normalGd = new GradientDrawable();
                             normalGd.setCornerRadius(12 * density);
                             normalGd.setColor(dialogBg);
                             normalGd.setStroke((int) (1 * density), strokeColor);
@@ -1447,7 +1501,7 @@ public class SettingsInjector extends Feature {
                             // Apply elevation for physical card shadow look
                             card.setElevation(5 * density);
 
-                            android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams pcLp = new LinearLayout.LayoutParams(
                                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                             int marginHoriz = (int) (6 * density);
                             pcLp.setMargins(marginHoriz, (int)(2 * density), marginHoriz, (int)(14 * density));
@@ -1460,14 +1514,14 @@ public class SettingsInjector extends Feature {
                                 card.setForeground(activity.getDrawable(outValue.resourceId));
                             } catch (Throwable ignored) {}
 
-                            android.widget.TextView titleTv = new android.widget.TextView(activity);
+                            TextView titleTv = new TextView(activity);
                             titleTv.setText(fTitle);
                             titleTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                             titleTv.setTextColor(accentG);
-                            titleTv.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                            titleTv.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
                             card.addView(titleTv);
 
-                            android.widget.TextView summaryTv = new android.widget.TextView(activity);
+                            TextView summaryTv = new TextView(activity);
                             summaryTv.setText(fSummary);
                             summaryTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
                             summaryTv.setTextColor(secondaryText);
@@ -1478,12 +1532,12 @@ public class SettingsInjector extends Feature {
                         }
                     } catch (Throwable t) {
                         Throwable actual = t;
-                        if (t instanceof java.lang.reflect.InvocationTargetException && t.getCause() != null) {
+                        if (t instanceof InvocationTargetException && t.getCause() != null) {
                             actual = t.getCause();
                         }
-                        java.io.StringWriter sw = new java.io.StringWriter();
-                        actual.printStackTrace(new java.io.PrintWriter(sw));
-                        android.widget.TextView errTv = new android.widget.TextView(activity);
+                        StringWriter sw = new StringWriter();
+                        actual.printStackTrace(new PrintWriter(sw));
+                        TextView errTv = new TextView(activity);
                         errTv.setText("Failed to load features: " + actual.toString() + "\n\nStack:\n" + sw.toString());
                         errTv.setTextColor(primaryText);
                         containerLayout.addView(errTv);
@@ -1493,20 +1547,20 @@ public class SettingsInjector extends Feature {
                 } else {
                     contentView = WdsSettingsTileRenderer.buildSubScreenById(activity, settingsMap, screenId, readWritePrefs, (key, newValue) -> {
                         try {
-                            com.waenhancer.xposed.core.WppCore.setPrivBooleanSync("need_restart", true);
+                            WppCore.setPrivBooleanSync("need_restart", true);
                             String prefTitle = key;
                             try {
-                                org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                                JSONArray categories = settingsMap.getJSONArray("categories");
                                 for (int i = 0; i < categories.length(); i++) {
-                                    org.json.JSONObject category = categories.getJSONObject(i);
-                                    org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                                    JSONObject category = categories.getJSONObject(i);
+                                    JSONArray subScreens = category.optJSONArray("sub_screens");
                                     if (subScreens != null) {
                                         for (int j = 0; j < subScreens.length(); j++) {
-                                            org.json.JSONObject subScreen = subScreens.getJSONObject(j);
-                                            org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                                            JSONObject subScreen = subScreens.getJSONObject(j);
+                                            JSONArray prefsArray = subScreen.optJSONArray("prefs");
                                             if (prefsArray != null) {
                                                 for (int k = 0; k < prefsArray.length(); k++) {
-                                                    org.json.JSONObject prefObj = prefsArray.getJSONObject(k);
+                                                    JSONObject prefObj = prefsArray.getJSONObject(k);
                                                     if (key.equals(prefObj.optString("key"))) {
                                                         prefTitle = prefObj.optString("title", key);
                                                         break;
@@ -1517,39 +1571,39 @@ public class SettingsInjector extends Feature {
                                     }
                                 }
                             } catch (Exception ignored) {}
-                            String existing = com.waenhancer.xposed.core.WppCore.getPrivString("pending_changes", "");
-                            java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                            String existing = WppCore.getPrivString("pending_changes", "");
+                            Set<String> all = new LinkedHashSet<>();
                             if (!existing.isEmpty()) {
                                 for (String t : existing.split("\\|")) {
                                     if (!t.trim().isEmpty()) all.add(t.trim());
                                 }
                             }
                             all.add(prefTitle);
-                            com.waenhancer.xposed.core.WppCore.setPrivString("pending_changes", String.join("|", all));
+                            WppCore.setPrivString("pending_changes", String.join("|", all));
                         } catch (Throwable t) {
-                            de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
+                            XposedBridge.log("[WAEX] Failed to record pending restart: " + t.getMessage());
                         }
 
-                        android.content.Intent intent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                        Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
                         intent.putExtra("key", key);
                         intent.setPackage(activity.getPackageName());
                         activity.sendBroadcast(intent);
                     });
                     // Resolve title from JSON categories or sub-screens
                     try {
-                        org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+                        JSONArray categories = settingsMap.getJSONArray("categories");
                         boolean titleFound = false;
                         for (int i = 0; i < categories.length(); i++) {
-                            org.json.JSONObject cat = categories.getJSONObject(i);
+                            JSONObject cat = categories.getJSONObject(i);
                             if (cat.getString("id").equals(screenId)) {
                                 title = cat.getString("title");
                                 titleFound = true;
                                 break;
                             }
-                            org.json.JSONArray subScreens = cat.optJSONArray("sub_screens");
+                            JSONArray subScreens = cat.optJSONArray("sub_screens");
                             if (subScreens != null) {
                                 for (int j = 0; j < subScreens.length(); j++) {
-                                    org.json.JSONObject sub = subScreens.getJSONObject(j);
+                                    JSONObject sub = subScreens.getJSONObject(j);
                                     if (sub.getString("id").equals(screenId)) {
                                         title = sub.getString("title");
                                         titleFound = true;
@@ -1581,19 +1635,19 @@ public class SettingsInjector extends Feature {
                             try {
                                 Object menuObj = XposedHelpers.callMethod(rootToolbar, "getMenu");
                                 XposedBridge.log("[WAEX] hijackWholeScreen getMenu: " + (menuObj != null ? menuObj.getClass().getName() : "null"));
-                                if (menuObj instanceof android.view.Menu) {
-                                    android.view.Menu menu = (android.view.Menu) menuObj;
+                                if (menuObj instanceof Menu) {
+                                    Menu menu = (Menu) menuObj;
                                     XposedBridge.log("[WAEX] hijackWholeScreen menu size: " + menu.size());
                                     if (menu.findItem(VIEW_ID_WAEX_SEARCH) == null) {
-                                        android.view.MenuItem searchItem = menu.add(0, VIEW_ID_WAEX_SEARCH, 0, "Search");
-                                        android.graphics.drawable.Drawable icon = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.ic_search);
+                                        MenuItem searchItem = menu.add(0, VIEW_ID_WAEX_SEARCH, 0, "Search");
+                                        Drawable icon = DesignUtils.getDrawable(R.drawable.ic_search);
                                         if (icon != null) {
-                                            icon = com.waenhancer.xposed.utils.DesignUtils.coloredDrawable(icon, isNight ? android.graphics.Color.WHITE : android.graphics.Color.BLACK);
+                                            icon = DesignUtils.coloredDrawable(icon, isNight ? Color.WHITE : Color.BLACK);
                                             searchItem.setIcon(icon);
                                         }
-                                        searchItem.setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+                                        searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                                         searchItem.setOnMenuItemClickListener(item -> {
-                                            android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                                            Intent intent = new Intent(activity, activity.getClass());
                                             intent.putExtra("waex_screen_id", "search");
                                             activity.startActivity(intent);
                                             return true;
@@ -1615,25 +1669,25 @@ public class SettingsInjector extends Feature {
     private void performSearch(Activity activity, String query, ViewGroup containerLayout, JSONObject settingsMap, SharedPreferences readWritePrefs, WdsSettingsTileRenderer.PrefChangeListener listener, boolean isNight, float density) {
         containerLayout.removeAllViews();
         try {
-            org.json.JSONArray matchingPrefs = new org.json.JSONArray();
-            final java.util.Map<String, String> prefToSubScreenMap = new java.util.HashMap<>();
-            org.json.JSONArray categories = settingsMap.getJSONArray("categories");
+            JSONArray matchingPrefs = new JSONArray();
+            final Map<String, String> prefToSubScreenMap = new HashMap<>();
+            JSONArray categories = settingsMap.getJSONArray("categories");
             for (int i = 0; i < categories.length(); i++) {
-                org.json.JSONObject category = categories.getJSONObject(i);
-                org.json.JSONArray subScreens = category.optJSONArray("sub_screens");
+                JSONObject category = categories.getJSONObject(i);
+                JSONArray subScreens = category.optJSONArray("sub_screens");
                 if (subScreens != null) {
                     for (int j = 0; j < subScreens.length(); j++) {
-                        org.json.JSONObject subScreen = subScreens.getJSONObject(j);
+                        JSONObject subScreen = subScreens.getJSONObject(j);
                         String subScreenId = subScreen.optString("id", "");
-                        org.json.JSONArray prefsArray = subScreen.optJSONArray("prefs");
+                        JSONArray prefsArray = subScreen.optJSONArray("prefs");
                         if (prefsArray != null) {
                             for (int k = 0; k < prefsArray.length(); k++) {
-                                org.json.JSONObject pref = prefsArray.getJSONObject(k);
+                                JSONObject pref = prefsArray.getJSONObject(k);
                                 String key = pref.optString("key", "");
                                 String t = pref.optString("title", "").toLowerCase();
                                 String sum = pref.optString("summary", "").toLowerCase();
                                 if (query.isEmpty() || t.contains(query) || sum.contains(query)) {
-                                    org.json.JSONObject copyPref = new org.json.JSONObject(pref.toString());
+                                    JSONObject copyPref = new JSONObject(pref.toString());
                                     String catTitle = category.optString("title", "");
                                     String subTitle = subScreen.optString("title", "");
                                     String breadcrumb = catTitle + " > " + subTitle;
@@ -1647,40 +1701,40 @@ public class SettingsInjector extends Feature {
                 }
             }
             if (matchingPrefs.length() > 0) {
-                java.util.function.BiConsumer<String, String> navigateCallback = (prefKey, ignored) -> {
+                BiConsumer<String, String> navigateCallback = (prefKey, ignored) -> {
                     String targetScreenId = prefToSubScreenMap.get(prefKey);
                     if (targetScreenId != null) {
-                        android.content.Intent intent = new android.content.Intent(activity, activity.getClass());
+                        Intent intent = new Intent(activity, activity.getClass());
                         intent.putExtra("waex_screen_id", targetScreenId);
                         intent.putExtra("scroll_to_pref", prefKey);
                         activity.startActivity(intent);
                     }
                 };
-                WdsSettingsTileRenderer.renderPrefsArray(activity, (android.widget.LinearLayout) containerLayout, matchingPrefs, readWritePrefs, listener, true, navigateCallback);
+                WdsSettingsTileRenderer.renderPrefsArray(activity, (LinearLayout) containerLayout, matchingPrefs, readWritePrefs, listener, true, navigateCallback);
             } else {
-                android.widget.TextView noResults = new android.widget.TextView(activity);
+                TextView noResults = new TextView(activity);
                 noResults.setText("No features found matching \"" + query + "\"");
-                noResults.setGravity(android.view.Gravity.CENTER);
+                noResults.setGravity(Gravity.CENTER);
                 noResults.setTextColor(isNight ? 0x88FFFFFF : 0x88111B21);
                 noResults.setTextSize(16);
-                android.widget.LinearLayout.LayoutParams noResultsParams = new android.widget.LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams noResultsParams = new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 noResultsParams.topMargin = (int) (40 * density);
                 noResults.setLayoutParams(noResultsParams);
                 containerLayout.addView(noResults);
             }
         } catch (Exception ex) {
-            de.robv.android.xposed.XposedBridge.log("[WAEX] Search filtering error: " + ex.getMessage());
+            XposedBridge.log("[WAEX] Search filtering error: " + ex.getMessage());
         }
     }
 
-    private android.widget.EditText findFirstEditText(ViewGroup group) {
+    private EditText findFirstEditText(ViewGroup group) {
         for (int i = 0; i < group.getChildCount(); i++) {
             View child = group.getChildAt(i);
-            if (child instanceof android.widget.EditText) {
-                return (android.widget.EditText) child;
+            if (child instanceof EditText) {
+                return (EditText) child;
             } else if (child instanceof ViewGroup) {
-                android.widget.EditText found = findFirstEditText((ViewGroup) child);
+                EditText found = findFirstEditText((ViewGroup) child);
                 if (found != null) return found;
             }
         }
@@ -1710,7 +1764,7 @@ public class SettingsInjector extends Feature {
             startView.postDelayed(() -> {
                 // Walk up parent hierarchy to find first scrollable ancestor
                 View scrollingParent = null;
-                android.view.ViewParent pWalk = finalTarget.getParent();
+                ViewParent pWalk = finalTarget.getParent();
                 while (pWalk instanceof View) {
                     View v = (View) pWalk;
                     if (v.getClass().getName().contains("ScrollView")) {
@@ -1721,15 +1775,15 @@ public class SettingsInjector extends Feature {
 
                 if (scrollingParent != null) {
                     int offset = 0;
-                    android.view.View curr = finalTarget;
+                    View curr = finalTarget;
                     while (curr != null && curr != scrollingParent) {
                         offset += curr.getTop();
-                        android.view.ViewParent p = curr.getParent();
-                        curr = (p instanceof android.view.View) ? (android.view.View) p : null;
+                        ViewParent p = curr.getParent();
+                        curr = (p instanceof View) ? (View) p : null;
                     }
                     int scrollY = Math.max(0, offset - (int)(16 * scrollingParent.getResources().getDisplayMetrics().density));
                     try {
-                        de.robv.android.xposed.XposedHelpers.callMethod(scrollingParent, "smoothScrollTo", 0, scrollY);
+                        XposedHelpers.callMethod(scrollingParent, "smoothScrollTo", 0, scrollY);
                     } catch (Throwable t) {
                         scrollingParent.scrollTo(0, scrollY);
                     }
@@ -1764,11 +1818,11 @@ public class SettingsInjector extends Feature {
                     boolean titleSet = false;
                     for (int i = 0; i < toolbar.getChildCount(); i++) {
                         View child = toolbar.getChildAt(i);
-                        if (child instanceof android.widget.TextView) {
-                            ((android.widget.TextView) child).setText(title);
+                        if (child instanceof TextView) {
+                            ((TextView) child).setText(title);
                             titleSet = true;
                         } else if (child instanceof ViewGroup) {
-                            android.widget.TextView tv = findTextView(child);
+                            TextView tv = findTextView(child);
                             if (tv != null) {
                                 tv.setText(title);
                                 titleSet = true;
@@ -1776,12 +1830,12 @@ public class SettingsInjector extends Feature {
                         }
                     }
                     if (!titleSet) {
-                        android.widget.TextView titleView = new android.widget.TextView(activity);
+                        TextView titleView = new TextView(activity);
                         titleView.setText(title);
-                        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 18);
-                        boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                        boolean isNight = DesignUtils.isNightMode();
                         titleView.setTextColor(isNight ? 0xFFFFFFFF : 0xFF111B21);
-                        titleView.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                        titleView.setTypeface(Typeface.DEFAULT_BOLD);
                         ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
                                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                         params.setMarginStart(dp(activity, 16));
@@ -1793,9 +1847,9 @@ public class SettingsInjector extends Feature {
         } catch (Throwable ignored) {}
     }
 
-    private void findTextViews(View view, java.util.List<android.widget.TextView> list) {
-        if (view instanceof android.widget.TextView) {
-            list.add((android.widget.TextView) view);
+    private void findTextViews(View view, List<TextView> list) {
+        if (view instanceof TextView) {
+            list.add((TextView) view);
         } else if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
@@ -1880,7 +1934,7 @@ public class SettingsInjector extends Feature {
     private ViewGroup findToolbar(View view) {
         if (view == null) return null;
         try {
-            android.content.Context context = view.getContext();
+            Context context = view.getContext();
             int toolbarId = context.getResources().getIdentifier("toolbar", "id", context.getPackageName());
             if (toolbarId != 0) {
                 View toolbar = view.findViewById(toolbarId);
@@ -1921,7 +1975,7 @@ public class SettingsInjector extends Feature {
             if (menu != null && menu.findItem(MENU_ID_WAEX_SETTINGS) == null) {
                 String title = "WaEnhancerX Settings";
                 try {
-                    String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.waenhancer_settings, "WaEnhancerX Settings");
+                    String moduleTitle = FeatureLoader.getModuleString(activity, R.string.waenhancer_settings, "WaEnhancerX Settings");
                     if (moduleTitle != null && !moduleTitle.isEmpty()) {
                         title = moduleTitle;
                     }
@@ -1953,25 +2007,25 @@ public class SettingsInjector extends Feature {
             XposedBridge.log("[WAEX] needDatabaseOptimization check: needFilterIndex=" + needFilterIndex + ", needSeparateIndex=" + needSeparateIndex);
             if (!needFilterIndex && !needSeparateIndex) return false;
 
-            java.io.File dbFile = activity.getDatabasePath("msgstore.db");
+            File dbFile = activity.getDatabasePath("msgstore.db");
             XposedBridge.log("[WAEX] msgstore.db file path: " + dbFile.getAbsolutePath() + ", exists: " + dbFile.exists());
             if (!dbFile.exists()) return false;
 
             boolean filterIndexed = !needFilterIndex;
             boolean separateIndexed = !needSeparateIndex;
             
-            android.database.sqlite.SQLiteDatabase db = android.database.sqlite.SQLiteDatabase.openDatabase(
+            SQLiteDatabase db = SQLiteDatabase.openDatabase(
                     dbFile.getAbsolutePath(), null,
-                    android.database.sqlite.SQLiteDatabase.OPEN_READONLY | android.database.sqlite.SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+                    SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
             try {
                 if (needFilterIndex) {
-                    try (android.database.Cursor c = db.rawQuery(
+                    try (Cursor c = db.rawQuery(
                             "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
                         filterIndexed = c != null && c.moveToFirst();
                     }
                 }
                 if (needSeparateIndex) {
-                    try (android.database.Cursor c = db.rawQuery(
+                    try (Cursor c = db.rawQuery(
                             "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_chat_unseen_idx'", null)) {
                         separateIndexed = c != null && c.moveToFirst();
                     }
@@ -2051,8 +2105,8 @@ public class SettingsInjector extends Feature {
 
     private View createOptimizationSettingRow(Activity activity, View anchorView) {
         try {
-            android.widget.LinearLayout rowLayout = new android.widget.LinearLayout(activity);
-            rowLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            LinearLayout rowLayout = new LinearLayout(activity);
+            rowLayout.setOrientation(LinearLayout.HORIZONTAL);
             rowLayout.setGravity(Gravity.CENTER_VERTICAL);
 
             if (anchorView.getLayoutParams() != null) {
@@ -2078,17 +2132,17 @@ public class SettingsInjector extends Feature {
             rowLayout.setFocusable(true);
 
             ImageView anchorIcon = findImageView(anchorView);
-            java.util.List<android.widget.TextView> anchorTextViews = new java.util.ArrayList<>();
+            List<TextView> anchorTextViews = new ArrayList<>();
             findTextViews(anchorView, anchorTextViews);
 
-            android.widget.TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
-            android.widget.TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
+            TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
+            TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
 
             ImageView iconView = new ImageView(activity);
-            android.widget.LinearLayout.LayoutParams iconParams = new android.widget.LinearLayout.LayoutParams(dp(activity, 24), dp(activity, 24));
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(activity, 24), dp(activity, 24));
             iconView.setLayoutParams(iconParams);
 
-            android.graphics.drawable.Drawable icon = DesignUtils.getDrawableByName("ic_settings");
+            Drawable icon = DesignUtils.getDrawableByName("ic_settings");
             if (icon != null) {
                 iconView.setImageDrawable(icon);
             }
@@ -2101,13 +2155,13 @@ public class SettingsInjector extends Feature {
                 iconView.setImageTintList(anchorSummary.getTextColors());
                 iconView.setAlpha(anchorSummary.getAlpha());
             } else {
-                iconView.setImageTintList(android.content.res.ColorStateList.valueOf(0xff8696a0));
+                iconView.setImageTintList(ColorStateList.valueOf(0xff8696a0));
             }
             rowLayout.addView(iconView);
 
-            android.widget.LinearLayout textContainer = new android.widget.LinearLayout(activity);
-            textContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
-            android.widget.LinearLayout.LayoutParams textContainerParams = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout textContainer = new LinearLayout(activity);
+            textContainer.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams textContainerParams = new LinearLayout.LayoutParams(
                 0,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 1.0f
@@ -2115,8 +2169,8 @@ public class SettingsInjector extends Feature {
             textContainerParams.setMarginStart(dp(activity, 24));
             textContainer.setLayoutParams(textContainerParams);
 
-            android.widget.TextView titleText = new android.widget.TextView(activity);
-            titleText.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+            TextView titleText = new TextView(activity);
+            titleText.setText(FeatureLoader.getModuleString(
                 activity,
                 R.string.waenhancer_db_optimization,
                 "WaEnhancerX db Optimization"
@@ -2130,11 +2184,11 @@ public class SettingsInjector extends Feature {
                 titleText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                 titleText.setTextColor(0xffe9edef);
             }
-            titleText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            titleText.setEllipsize(TextUtils.TruncateAt.END);
             titleText.setSingleLine(true);
 
-            android.widget.TextView summaryText = new android.widget.TextView(activity);
-            summaryText.setText(com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+            TextView summaryText = new TextView(activity);
+            summaryText.setText(FeatureLoader.getModuleString(
                 activity,
                 R.string.waenhancer_db_optimization_desc,
                 "Optimize database performance by creating speed-boosting query indexes."
@@ -2151,7 +2205,7 @@ public class SettingsInjector extends Feature {
             }
             summaryText.setPadding(0, dp(activity, 2), 0, 0);
             summaryText.setMaxLines(2);
-            summaryText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            summaryText.setEllipsize(TextUtils.TruncateAt.END);
 
             textContainer.addView(titleText);
             textContainer.addView(summaryText);
@@ -2161,7 +2215,7 @@ public class SettingsInjector extends Feature {
                 try {
                     Class<?> aboutClass = WppCore.getAboutActivityClass(activity.getClassLoader());
                     if (aboutClass != null) {
-                        android.content.Intent intent = new android.content.Intent(activity, aboutClass);
+                        Intent intent = new Intent(activity, aboutClass);
                         intent.putExtra("wae_optimize_db", true);
                         activity.startActivity(intent);
                     }
@@ -2200,8 +2254,8 @@ public class SettingsInjector extends Feature {
 
     private View createTestSwitchRow(Activity activity, View anchorView) {
         try {
-            android.widget.LinearLayout rowLayout = new android.widget.LinearLayout(activity);
-            rowLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            LinearLayout rowLayout = new LinearLayout(activity);
+            rowLayout.setOrientation(LinearLayout.HORIZONTAL);
             rowLayout.setGravity(Gravity.CENTER_VERTICAL);
 
             if (anchorView.getLayoutParams() != null) {
@@ -2227,15 +2281,15 @@ public class SettingsInjector extends Feature {
             rowLayout.setFocusable(true);
 
             // Find typography from anchorView
-            java.util.List<android.widget.TextView> anchorTextViews = new java.util.ArrayList<>();
+            List<TextView> anchorTextViews = new ArrayList<>();
             findTextViews(anchorView, anchorTextViews);
-            android.widget.TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
-            android.widget.TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
+            TextView anchorTitle = anchorTextViews.size() > 0 ? anchorTextViews.get(0) : null;
+            TextView anchorSummary = anchorTextViews.size() > 1 ? anchorTextViews.get(1) : null;
 
             // Left side text container (Vertical)
-            android.widget.LinearLayout textContainer = new android.widget.LinearLayout(activity);
-            textContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
-            android.widget.LinearLayout.LayoutParams textContainerParams = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout textContainer = new LinearLayout(activity);
+            textContainer.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams textContainerParams = new LinearLayout.LayoutParams(
                 0,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 1.0f
@@ -2243,7 +2297,7 @@ public class SettingsInjector extends Feature {
             textContainer.setLayoutParams(textContainerParams);
 
             // Title TextView
-            android.widget.TextView titleText = new android.widget.TextView(activity);
+            TextView titleText = new TextView(activity);
             titleText.setText("WAEX Test Option");
             if (anchorTitle != null) {
                 titleText.setTextSize(TypedValue.COMPLEX_UNIT_PX, anchorTitle.getTextSize());
@@ -2253,11 +2307,11 @@ public class SettingsInjector extends Feature {
                 titleText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                 titleText.setTextColor(0xffe9edef);
             }
-            titleText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            titleText.setEllipsize(TextUtils.TruncateAt.END);
             titleText.setSingleLine(true);
 
             // Summary TextView
-            android.widget.TextView summaryText = new android.widget.TextView(activity);
+            TextView summaryText = new TextView(activity);
             summaryText.setText("Toggle to print true/false state to system log.");
             if (anchorSummary != null) {
                 summaryText.setTextSize(TypedValue.COMPLEX_UNIT_PX, anchorSummary.getTextSize());
@@ -2270,7 +2324,7 @@ public class SettingsInjector extends Feature {
             }
             summaryText.setPadding(0, dp(activity, 2), 0, 0);
             summaryText.setMaxLines(2);
-            summaryText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            summaryText.setEllipsize(TextUtils.TruncateAt.END);
 
             textContainer.addView(titleText);
             textContainer.addView(summaryText);
@@ -2278,20 +2332,20 @@ public class SettingsInjector extends Feature {
 
             // Right side: WDSSwitch
             Class<?> wdsSwitchClass = activity.getClassLoader().loadClass("com.whatsapp.ui.wds.components.toggle.WDSSwitch");
-            android.view.View switchView = (android.view.View) wdsSwitchClass.getConstructor(android.content.Context.class).newInstance(activity);
+            View switchView = (View) wdsSwitchClass.getConstructor(Context.class).newInstance(activity);
 
             // Standard layout parameters for the switch
-            android.widget.LinearLayout.LayoutParams switchParams = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams switchParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             );
             switchView.setLayoutParams(switchParams);
 
-            if (switchView instanceof android.widget.CompoundButton) {
-                android.widget.CompoundButton compoundButton = (android.widget.CompoundButton) switchView;
+            if (switchView instanceof CompoundButton) {
+                CompoundButton compoundButton = (CompoundButton) switchView;
                 compoundButton.setChecked(true); // Default to checked
                 compoundButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    android.widget.Toast.makeText(activity, "WAEX Test: " + isChecked, android.widget.Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "WAEX Test: " + isChecked, Toast.LENGTH_SHORT).show();
                     XposedBridge.log("[WAEX] WAEX Test switch toggled: " + isChecked);
                 });
             }
@@ -2300,8 +2354,8 @@ public class SettingsInjector extends Feature {
 
             // Clicking the row toggles the switch
             rowLayout.setOnClickListener(v -> {
-                if (switchView instanceof android.widget.CompoundButton) {
-                    android.widget.CompoundButton cb = (android.widget.CompoundButton) switchView;
+                if (switchView instanceof CompoundButton) {
+                    CompoundButton cb = (CompoundButton) switchView;
                     cb.toggle();
                 }
             });
@@ -2314,7 +2368,7 @@ public class SettingsInjector extends Feature {
     }
 
     private void fetchPlansFromNetwork(
-            android.widget.LinearLayout plansContainer,
+            LinearLayout plansContainer,
             Activity activity,
             float density,
             int pad16,
@@ -2334,8 +2388,8 @@ public class SettingsInjector extends Feature {
                 urlConnection.setConnectTimeout(5000);
                 urlConnection.setReadTimeout(5000);
                 
-                java.io.InputStream in = new java.io.BufferedInputStream(urlConnection.getInputStream());
-                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(in, "UTF-8"));
+                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -2344,7 +2398,7 @@ public class SettingsInjector extends Feature {
                 
                 String responseStr = sb.toString();
                 // Test parsing
-                org.json.JSONArray plansArray = new org.json.JSONArray(responseStr);
+                JSONArray plansArray = new JSONArray(responseStr);
                 
                 // Cache successfully fetched plans
                 cachePrefs.edit()
@@ -2356,11 +2410,11 @@ public class SettingsInjector extends Feature {
                     clearPlansContainer(plansContainer);
                     try {
                         for (int i = 0; i < plansArray.length(); i++) {
-                            org.json.JSONObject planObj = plansArray.getJSONObject(i);
+                            JSONObject planObj = plansArray.getJSONObject(i);
                             buildPlanCard(plansContainer, activity, density, pad16, dialogBg, strokeColor, primaryText, secondaryText, accentG, planObj);
                         }
                     } catch (Throwable t) {
-                        android.widget.Toast.makeText(activity, "Error rendering plans: " + t.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "Error rendering plans: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
             } catch (Throwable t) {
@@ -2368,15 +2422,15 @@ public class SettingsInjector extends Feature {
                     clearPlansContainer(plansContainer);
                     // Fallback static plans in case API endpoint is unreachable
                     try {
-                        org.json.JSONObject monthlyFallback = new org.json.JSONObject();
+                        JSONObject monthlyFallback = new JSONObject();
                         monthlyFallback.put("id", 2);
                         monthlyFallback.put("name", "Pro Monthly");
                         monthlyFallback.put("type", "offer");
                         monthlyFallback.put("original_price", "3.50");
                         monthlyFallback.put("offer_price", "2.30");
-                        monthlyFallback.put("badge", org.json.JSONObject.NULL);
+                        monthlyFallback.put("badge", JSONObject.NULL);
 
-                        org.json.JSONObject yearlyFallback = new org.json.JSONObject();
+                        JSONObject yearlyFallback = new JSONObject();
                         yearlyFallback.put("id", 3);
                         yearlyFallback.put("name", "Pro Yearly");
                         yearlyFallback.put("type", "offer");
@@ -2397,7 +2451,7 @@ public class SettingsInjector extends Feature {
     }
 
     private void buildPlanCard(
-            android.widget.LinearLayout plansContainer,
+            LinearLayout plansContainer,
             Activity activity,
             float density,
             int pad16,
@@ -2406,7 +2460,7 @@ public class SettingsInjector extends Feature {
             int primaryText,
             int secondaryText,
             int accentG,
-            org.json.JSONObject planObj
+            JSONObject planObj
     ) {
         try {
             final String name = planObj.getString("name");
@@ -2415,11 +2469,11 @@ public class SettingsInjector extends Feature {
             final String badge = planObj.isNull("badge") ? null : planObj.getString("badge");
             
             // Build elegant card style dialog item
-            android.widget.LinearLayout planCard = new android.widget.LinearLayout(activity);
-            planCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+            LinearLayout planCard = new LinearLayout(activity);
+            planCard.setOrientation(LinearLayout.VERTICAL);
             planCard.setPadding(pad16, pad16, pad16, pad16);
             
-            android.graphics.drawable.GradientDrawable pcGd = new android.graphics.drawable.GradientDrawable();
+            GradientDrawable pcGd = new GradientDrawable();
             pcGd.setCornerRadius(12 * density);
             pcGd.setColor(cardBg);
             pcGd.setStroke((int) (1 * density), strokeColor);
@@ -2428,7 +2482,7 @@ public class SettingsInjector extends Feature {
             // Apply elevation for physical card shadow look
             planCard.setElevation(5 * density);
             
-            android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams pcLp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             int marginHoriz = (int) (6 * density);
             pcLp.setMargins(marginHoriz, (int)(2 * density), marginHoriz, (int)(14 * density));
@@ -2442,39 +2496,39 @@ public class SettingsInjector extends Feature {
             } catch (Throwable ignored) {}
 
             // Top Row (Name + Badge)
-            android.widget.LinearLayout topRow = new android.widget.LinearLayout(activity);
-            topRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            LinearLayout topRow = new LinearLayout(activity);
+            topRow.setOrientation(LinearLayout.HORIZONTAL);
             topRow.setGravity(Gravity.CENTER_VERTICAL);
-            android.widget.LinearLayout.LayoutParams topLp = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams topLp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             topLp.bottomMargin = (int) (8 * density);
             topRow.setLayoutParams(topLp);
 
-            android.widget.TextView pct = new android.widget.TextView(activity);
+            TextView pct = new TextView(activity);
             pct.setText(name);
             pct.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
             pct.setTextColor(primaryText);
-            pct.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
-            android.widget.LinearLayout.LayoutParams nameLp = new android.widget.LinearLayout.LayoutParams(
+            pct.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+            LinearLayout.LayoutParams nameLp = new LinearLayout.LayoutParams(
                     0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
             pct.setLayoutParams(nameLp);
             topRow.addView(pct);
 
             if (badge != null && !badge.trim().isEmpty()) {
-                android.widget.TextView pcb = new android.widget.TextView(activity);
+                TextView pcb = new TextView(activity);
                 pcb.setText(badge.toUpperCase());
                 pcb.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
-                boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                boolean isNight = DesignUtils.isNightMode();
                 pcb.setTextColor(isNight ? 0xFF111B21 : 0xFFFFFFFF);
-                pcb.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                pcb.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
                 pcb.setPadding((int) (8 * density), (int) (3 * density), (int) (8 * density), (int) (3 * density));
                 
-                android.graphics.drawable.GradientDrawable badgeGd = new android.graphics.drawable.GradientDrawable();
+                GradientDrawable badgeGd = new GradientDrawable();
                 badgeGd.setCornerRadius(8 * density);
                 badgeGd.setColor(accentG);
                 pcb.setBackground(badgeGd);
 
-                android.widget.LinearLayout.LayoutParams badgeLp = new android.widget.LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams badgeLp = new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 pcb.setLayoutParams(badgeLp);
                 topRow.addView(pcb);
@@ -2482,32 +2536,32 @@ public class SettingsInjector extends Feature {
             planCard.addView(topRow);
 
             // Bottom Row (Prices + Duration)
-            android.widget.LinearLayout priceRow = new android.widget.LinearLayout(activity);
-            priceRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            LinearLayout priceRow = new LinearLayout(activity);
+            priceRow.setOrientation(LinearLayout.HORIZONTAL);
             priceRow.setGravity(Gravity.BOTTOM);
-            android.widget.LinearLayout.LayoutParams priceRowLp = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams priceRowLp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             priceRow.setLayoutParams(priceRowLp);
 
             boolean hasOffer = !originalPrice.equals(offerPrice);
             if (hasOffer) {
-                android.widget.TextView originalPriceTv = new android.widget.TextView(activity);
+                TextView originalPriceTv = new TextView(activity);
                 originalPriceTv.setText("$" + originalPrice);
                 originalPriceTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                 originalPriceTv.setTextColor(secondaryText);
-                originalPriceTv.setPaintFlags(originalPriceTv.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
-                android.widget.LinearLayout.LayoutParams origLp = new android.widget.LinearLayout.LayoutParams(
+                originalPriceTv.setPaintFlags(originalPriceTv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                LinearLayout.LayoutParams origLp = new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 origLp.rightMargin = (int) (8 * density);
                 originalPriceTv.setLayoutParams(origLp);
                 priceRow.addView(originalPriceTv);
             }
 
-            android.widget.TextView offerPriceTv = new android.widget.TextView(activity);
+            TextView offerPriceTv = new TextView(activity);
             offerPriceTv.setText("$" + offerPrice);
             offerPriceTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
             offerPriceTv.setTextColor(accentG);
-            offerPriceTv.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+            offerPriceTv.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
             priceRow.addView(offerPriceTv);
 
             String billingPeriod = "";
@@ -2517,7 +2571,7 @@ public class SettingsInjector extends Feature {
                 billingPeriod = " / Year";
             }
             if (!billingPeriod.isEmpty()) {
-                android.widget.TextView periodTv = new android.widget.TextView(activity);
+                TextView periodTv = new TextView(activity);
                 periodTv.setText(billingPeriod);
                 periodTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                 periodTv.setTextColor(secondaryText);
@@ -2534,11 +2588,11 @@ public class SettingsInjector extends Feature {
             } else {
                 featureText = "Unlock all premium Pro capabilities";
             }
-            android.widget.TextView descTv = new android.widget.TextView(activity);
+            TextView descTv = new TextView(activity);
             descTv.setText(featureText);
             descTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
             descTv.setTextColor(secondaryText);
-            android.widget.LinearLayout.LayoutParams descLp = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams descLp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             descLp.topMargin = (int) (6 * density);
             descTv.setLayoutParams(descLp);
@@ -2548,13 +2602,13 @@ public class SettingsInjector extends Feature {
             planCard.setFocusable(true);
             planCard.setOnClickListener(v -> {
                 try {
-                    android.content.Intent browserIntent = new android.content.Intent(
-                            android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse("https://t.me/waenhancerx_bot?start=subscribe"));
-                    browserIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    Intent browserIntent = new Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://t.me/waenhancerx_bot?start=subscribe"));
+                    browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     activity.startActivity(browserIntent);
                 } catch (Throwable t) {
-                    android.widget.Toast.makeText(activity, "Could not open Telegram", android.widget.Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "Could not open Telegram", Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -2564,11 +2618,11 @@ public class SettingsInjector extends Feature {
         }
      }
 
-    private void clearPlansContainer(android.widget.LinearLayout container) {
+    private void clearPlansContainer(LinearLayout container) {
         if (container == null) return;
         int childCount = container.getChildCount();
         for (int i = 0; i < childCount; i++) {
-            android.view.View child = container.getChildAt(i);
+            View child = container.getChildAt(i);
             if (child != null) {
                 child.clearAnimation();
             }
@@ -2578,45 +2632,45 @@ public class SettingsInjector extends Feature {
         container.requestLayout();
     }
 
-    private void showShimmer(android.widget.LinearLayout container, Activity activity, float density, int cardBg, int strokeColor) {
+    private void showShimmer(LinearLayout container, Activity activity, float density, int cardBg, int strokeColor) {
         clearPlansContainer(container);
         for (int i = 0; i < 2; i++) {
-            android.widget.LinearLayout shimmerCard = new android.widget.LinearLayout(activity);
-            shimmerCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+            LinearLayout shimmerCard = new LinearLayout(activity);
+            shimmerCard.setOrientation(LinearLayout.VERTICAL);
             shimmerCard.setPadding((int)(16 * density), (int)(16 * density), (int)(16 * density), (int)(16 * density));
             
-            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+            GradientDrawable gd = new GradientDrawable();
             gd.setCornerRadius(12 * density);
             gd.setColor(cardBg);
             gd.setStroke((int) (1 * density), strokeColor);
             shimmerCard.setBackground(gd);
             shimmerCard.setElevation(5 * density);
             
-            android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, (int) (96 * density));
             int marginHoriz = (int) (6 * density);
             lp.setMargins(marginHoriz, (int)(2 * density), marginHoriz, (int)(14 * density));
             shimmerCard.setLayoutParams(lp);
 
             View titlePlaceholder = new View(activity);
-            android.widget.LinearLayout.LayoutParams titleLp = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
                     (int) (120 * density), (int) (16 * density));
             titleLp.bottomMargin = (int) (12 * density);
             titlePlaceholder.setLayoutParams(titleLp);
             
-            android.graphics.drawable.GradientDrawable titleGd = new android.graphics.drawable.GradientDrawable();
+            GradientDrawable titleGd = new GradientDrawable();
             titleGd.setCornerRadius(4 * density);
             titleGd.setColor(strokeColor);
             titlePlaceholder.setBackground(titleGd);
             shimmerCard.addView(titlePlaceholder);
 
             View pricePlaceholder = new View(activity);
-            android.widget.LinearLayout.LayoutParams priceLp = new android.widget.LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams priceLp = new LinearLayout.LayoutParams(
                     (int) (80 * density), (int) (24 * density));
             priceLp.bottomMargin = (int) (8 * density);
             pricePlaceholder.setLayoutParams(priceLp);
             
-            android.graphics.drawable.GradientDrawable priceGd = new android.graphics.drawable.GradientDrawable();
+            GradientDrawable priceGd = new GradientDrawable();
             priceGd.setCornerRadius(4 * density);
             priceGd.setColor(strokeColor);
             pricePlaceholder.setBackground(priceGd);
@@ -2624,10 +2678,10 @@ public class SettingsInjector extends Feature {
             
             container.addView(shimmerCard);
 
-            android.view.animation.AlphaAnimation pulse = new android.view.animation.AlphaAnimation(0.4f, 0.9f);
+            AlphaAnimation pulse = new AlphaAnimation(0.4f, 0.9f);
             pulse.setDuration(800);
-            pulse.setRepeatMode(android.view.animation.Animation.REVERSE);
-            pulse.setRepeatCount(android.view.animation.Animation.INFINITE);
+            pulse.setRepeatMode(Animation.REVERSE);
+            pulse.setRepeatCount(Animation.INFINITE);
             shimmerCard.startAnimation(pulse);
         }
     }

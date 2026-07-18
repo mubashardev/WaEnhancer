@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
+import java.lang.reflect.Modifier;
 
 public record WaContactWpp(Object mInstance) {
 
@@ -64,7 +65,7 @@ public record WaContactWpp(Object mInstance) {
 
             // Try to find existing instance via static method (getInstance pattern)
             for (Method m : contactManagerClass.getDeclaredMethods()) {
-                if (java.lang.reflect.Modifier.isStatic(m.getModifiers())
+                if (Modifier.isStatic(m.getModifiers())
                         && m.getReturnType() == contactManagerClass
                         && m.getParameterCount() == 0) {
                     try {

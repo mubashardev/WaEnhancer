@@ -25,6 +25,7 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import com.waenhancer.xposed.core.FeatureLoader;
 
 public class DownloadViewOnce extends Feature {
     private static final int MENU_ID_DOWNLOAD = 0x7EAD0003;
@@ -39,9 +40,9 @@ public class DownloadViewOnce extends Feature {
         var name = Utils.generateName(userJid, fileExtension);
         var error = Utils.copyFile(file, dest, name);
         if (TextUtils.isEmpty(error)) {
-            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.saved_to) + dest, Toast.LENGTH_LONG);
+            Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.saved_to) + dest, Toast.LENGTH_LONG);
         } else {
-            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.error_when_saving_try_again) + ":" + error, Toast.LENGTH_LONG);
+            Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.error_when_saving_try_again) + ":" + error, Toast.LENGTH_LONG);
         }
     }
 
@@ -94,13 +95,13 @@ public class DownloadViewOnce extends Feature {
                     // Guard against duplicate entries
                     if (menu.findItem(MENU_ID_DOWNLOAD) != null) return;
                     
-                    MenuItem item = menu.add(0, MENU_ID_DOWNLOAD, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), com.waenhancer.R.string.download, "Download")).setIcon(DesignUtils.getDrawable(R.drawable.download));
+                    MenuItem item = menu.add(0, MENU_ID_DOWNLOAD, 0, FeatureLoader.getModuleString(Utils.getApplication(), com.waenhancer.R.string.download, "Download")).setIcon(DesignUtils.getDrawable(R.drawable.download));
                     item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                     item.setOnMenuItemClickListener(item1 -> {
                         try {
                             var file = fMessage.getMediaFile();
                             if (file == null) {
-                                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.download_not_available), 1);
+                                Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.download_not_available), 1);
                                 return true;
                             }
                             downloadFile(fMessage.getKey().remoteJid, file);
@@ -125,7 +126,7 @@ public class DownloadViewOnce extends Feature {
                             // Guard against duplicate entries
                             if (menu.findItem(MENU_ID_DOWNLOAD) != null) return;
                             
-                            MenuItem item = menu.add(0, MENU_ID_DOWNLOAD, 0, com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), com.waenhancer.R.string.download, "Download")).setIcon(DesignUtils.getDrawable(R.drawable.download));
+                            MenuItem item = menu.add(0, MENU_ID_DOWNLOAD, 0, FeatureLoader.getModuleString(Utils.getApplication(), com.waenhancer.R.string.download, "Download")).setIcon(DesignUtils.getDrawable(R.drawable.download));
                             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                             item.setOnMenuItemClickListener(item1 -> {
                                 CompletableFuture.runAsync(() -> {
@@ -144,7 +145,7 @@ public class DownloadViewOnce extends Feature {
                                         }
                                         var file = fmessage.getMediaFile();
                                         if (file == null) {
-                                            Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.download_not_available), 1);
+                                            Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.download_not_available), 1);
                                             return;
                                         }
                                         var userJid = fmessage.getKey().remoteJid;

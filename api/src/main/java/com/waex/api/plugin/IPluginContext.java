@@ -5,10 +5,11 @@ import com.waex.api.services.IObfuscationService;
 import com.waex.api.services.IStateService;
 import com.waex.api.services.ICoreBridge;
 import com.waex.api.services.IStatusMenuListener;
+import android.content.Context;
 
 public interface IPluginContext {
     ClassLoader getHostClassLoader();
-    android.content.Context getModuleContext();
+    Context getModuleContext();
     ICoreBridge getCoreBridge();
     IStateService getStateService();
     IObfuscationService getObfuscationService();

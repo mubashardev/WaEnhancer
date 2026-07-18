@@ -132,6 +132,11 @@
             android:parentActivityName=".activities.MainActivity" />
 
         <activity
+            android:name=".activities.BottomBarCustomizationActivity"
+            android:theme="@style/AppTheme"
+            android:parentActivityName=".activities.MainActivity" />
+
+        <activity
             android:name=".activities.RecordingsActivity"
             android:theme="@style/AppTheme"
             android:exported="true"
@@ -218,6 +223,12 @@
             android:theme="@style/AppTheme"
             android:exported="true"
             android:parentActivityName=".activities.MainActivity" />
+
+        <activity
+            android:name=".activities.ProFeaturesActivity"
+            android:theme="@style/AppTheme"
+            android:exported="false"
+            android:parentActivityName=".activities.LicenseActivity" />
 
         <activity
             android:name=".activities.ForceStartActivity"

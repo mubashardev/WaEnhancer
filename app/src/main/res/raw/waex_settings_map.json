@@ -1740,6 +1740,14 @@
                   "value": "hyperspace_out"
                 }
               ]
+            },
+            {
+              "key": "unlock_premium_customization",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Unlock Premium Customization",
+              "summary": "Unlocks exclusive visual themes, native app icons, premium sticker packs, and custom ringtones"
             }
           ]
         }

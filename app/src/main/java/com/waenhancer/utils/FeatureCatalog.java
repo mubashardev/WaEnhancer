@@ -1146,6 +1146,14 @@ public class FeatureCatalog {
                                 null,
                                 Arrays.asList("colors", "customization", "theme")));
 
+                catalog.add(new SearchableFeature("unlock_premium_customization",
+                                context.getString(R.string.unlock_premium_customization),
+                                context.getString(R.string.unlock_premium_customization_sum),
+                                SearchableFeature.Category.CUSTOMIZATION,
+                                SearchableFeature.FragmentType.CUSTOMIZATION,
+                                null,
+                                Arrays.asList("premium", "customization", "theme", "icons", "stickers", "ringtones")));
+
                 catalog.add(new SearchableFeature("primary_color",
                                 context.getString(R.string.primary_color),
                                 null,

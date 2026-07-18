@@ -26,6 +26,15 @@ public class CustomizationFragment extends BasePreferenceFragment {
                 return true;
             });
         }
+
+        Preference pillCustomizerPref = findPreference("floating_bottom_bar_customizer");
+        if (pillCustomizerPref != null) {
+            pillCustomizerPref.setOnPreferenceClickListener(preference -> {
+                Intent intent = new Intent(requireContext(), com.waenhancer.activities.BottomBarCustomizationActivity.class);
+                startActivity(intent);
+                return true;
+            });
+        }
     }
 
     @Override

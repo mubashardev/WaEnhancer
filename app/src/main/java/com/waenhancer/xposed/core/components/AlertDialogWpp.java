@@ -58,6 +58,7 @@ public class AlertDialogWpp {
     private boolean mIsUsingSystem = false;
     private CharSequence mTitleText;
     private CharSequence mMessageText;
+    private DialogInterface.OnDismissListener mOnDismissListener;
     private CharSequence mPositiveButtonText;
     private DialogInterface.OnClickListener mPositiveListener;
     private CharSequence mNegativeButtonText;
@@ -248,18 +249,19 @@ public class AlertDialogWpp {
         }
         mMessageText = message;
         mAlertDialog.setMessage(message);
-        if (!shouldUseSystem()) {
+        if (!shouldUseSystem() && setMessageMethod != null) {
             try {
-                if (setMessageMethod != null) {
-                    setMessageMethod.invoke(mAlertDialogWpp, message);
-                } else {
-                    XposedHelpers.callMethod(mAlertDialogWpp, "setMessage", message);
-                }
-            } catch (Throwable e) {
-                XposedBridge.log("[WAEX] AlertDialogWpp setMessage failed, falling back to system: " + e.getMessage());
-                mIsUsingSystem = true;
+                setMessageMethod.invoke(mAlertDialogWpp, message);
+            } catch (Throwable t) {
+                XposedBridge.log("[WAEX] AlertDialogWpp setMessage failed on Wpp builder: " + t.getMessage());
             }
         }
+        return this;
+    }
+
+    public AlertDialogWpp setOnDismissListener(DialogInterface.OnDismissListener listener) {
+        mOnDismissListener = listener;
+        mAlertDialog.setOnDismissListener(listener);
         return this;
     }
 
@@ -954,6 +956,9 @@ public class AlertDialogWpp {
                 }
                 
                 mCreate = dialog;
+                if (mOnDismissListener != null) {
+                    mCreate.setOnDismissListener(mOnDismissListener);
+                }
                 return mCreate;
             } catch (Throwable t) {
                 XposedBridge.log("[WAEX] BottomSheetDialog instantiation failed: " + t.getMessage());
@@ -969,6 +974,9 @@ public class AlertDialogWpp {
                 // XposedBridge.log("[WAEX] AlertDialogWpp.create() failed, using system fallback");
                 mCreate = mAlertDialog.create();
             }
+        }
+        if (mCreate != null && mOnDismissListener != null) {
+            mCreate.setOnDismissListener(mOnDismissListener);
         }
         return mCreate;
     }

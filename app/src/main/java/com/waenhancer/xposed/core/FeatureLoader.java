@@ -659,6 +659,9 @@ public class FeatureLoader {
                     triggerBetaCheckInHost(activity);
                 }
                 activity.getWindow().getDecorView().post(() -> {
+                    showRestartDialog(activity);
+                });
+                activity.getWindow().getDecorView().post(() -> {
                     long perfStart = PerfLogger.start();
                     try {
                         long now = System.currentTimeMillis();
@@ -1278,11 +1281,11 @@ public class FeatureLoader {
     public static void showRestartDialog(Activity activity) {
         if (activity == null || activity.isFinishing()) return;
         try {
-            Class<?> settingsClass = WppCore.getSettingsActivityClass(activity.getClassLoader());
-            if (settingsClass == null || !settingsClass.isAssignableFrom(activity.getClass())) {
+            // Do not show on WaeX activities or hijacked WaeX sub-screens
+            if (activity.getIntent() != null && activity.getIntent().getStringExtra("waex_screen_id") != null) {
                 return;
             }
-            if (activity.getIntent() != null && activity.getIntent().getStringExtra("waex_screen_id") != null) {
+            if (activity.getClass().getName().startsWith("com.waenhancer.")) {
                 return;
             }
             boolean needRestart = WppCore.getPrivBoolean("need_restart", false);
@@ -1313,6 +1316,7 @@ public class FeatureLoader {
                 if (btnCancel.isEmpty()) btnCancel = "Cancel";
 
                 new AlertDialogWpp(activity)
+                        .asBottomSheet()
                         .setTitle("Restart Required")
                         .setMessage(msg)
                         .setPositiveButton(btnRestart, (dialog, which) -> {
@@ -1323,6 +1327,14 @@ public class FeatureLoader {
                         })
                         .setNegativeButton(btnCancel, (dialog, which) -> {
                             isRestartDialogShowing = false;
+                            WppCore.setPrivBooleanSync("need_restart", false);
+                            WppCore.setPrivString("pending_changes", "");
+                        })
+                        .setOnDismissListener(dialog -> {
+                            isRestartDialogShowing = false;
+                            // Do not clear need_restart here, because if they just swiped it away without clicking "Cancel", we might want to prompt them again later?
+                            // Wait, if we want it to behave like "Cancel", we should clear it. The old dialog allowed "Cancel" and it cleared it.
+                            // BUT if we clear it, they never restart. Let's match the NegativeButton behavior so they don't get trapped.
                             WppCore.setPrivBooleanSync("need_restart", false);
                             WppCore.setPrivString("pending_changes", "");
                         })

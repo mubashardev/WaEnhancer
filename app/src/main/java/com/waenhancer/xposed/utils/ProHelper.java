@@ -1144,6 +1144,7 @@ public class ProHelper {
                 || key.equals("send_audio_as_voice_status")
                 || key.equals("file_size_spoofer")
                 || key.equals("filter_group_members_messages")
+                || key.equals("unlock_premium_customization")
                 || key.equals("recover_deleted_media");
     }
 

@@ -395,15 +395,18 @@ public class ProviderSharedPreferences implements SharedPreferences {
         String[] authorities = new String[] { BuildConfig.APPLICATION_ID + AUTHORITY_SUFFIX, AUTHORITY_LEGACY, "com.waenhancer.provider" };
         for (String authority : authorities) {
             try {
+                de.robv.android.xposed.XposedBridge.log("[WAEX] callProvider: Calling authority: " + authority + ", method: " + method + ", appId: " + BuildConfig.APPLICATION_ID);
                 Bundle result = context.getContentResolver().call(
                         Uri.parse("content://" + authority),
                         method,
                         null,
                         extras);
+                de.robv.android.xposed.XposedBridge.log("[WAEX] callProvider: Result for " + authority + " is " + (result == null ? "null" : "not null"));
                 if (result != null) {
                     return result;
                 }
             } catch (Throwable e) {
+                de.robv.android.xposed.XposedBridge.log("[WAEX] callProvider: Error (" + authority + "): " + e.getMessage());
                 android.util.Log.e("WAEX_ProviderSharedPrefs", "Call error (" + authority + "): " + e.getMessage(), e);
             }
         }

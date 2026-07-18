@@ -170,6 +170,7 @@ public class HookProvider extends ContentProvider {
                         return null;
                 }
                 editor.commit();
+                fixPermissions();
                 context.getContentResolver().notifyChange(Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
                 return Bundle.EMPTY;
             }
@@ -177,12 +178,14 @@ public class HookProvider extends ContentProvider {
                 String key = extras.getString("key");
                 if (key != null) {
                     prefs.edit().remove(key).commit();
+                    fixPermissions();
                     context.getContentResolver().notifyChange(Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
                     return Bundle.EMPTY;
                 }
             }
             if ("clear_preferences".equals(method)) {
                 prefs.edit().clear().commit();
+                fixPermissions();
                 context.getContentResolver().notifyChange(Uri.parse("content://" + com.waenhancer.BuildConfig.APPLICATION_ID + ".hookprovider/preferences"), null);
                 return Bundle.EMPTY;
             }
@@ -290,5 +293,25 @@ public class HookProvider extends ContentProvider {
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
         return 0;
+    }
+
+    private void fixPermissions() {
+        try {
+            android.content.Context context = getContext();
+            if (context == null) return;
+            java.io.File dataDir = new java.io.File(context.getApplicationInfo().dataDir);
+            java.io.File prefsDir = new java.io.File(dataDir, "shared_prefs");
+            java.io.File prefsFile = new java.io.File(prefsDir, context.getPackageName() + "_preferences.xml");
+            
+            dataDir.setExecutable(true, false);
+            dataDir.setReadable(true, false);
+            
+            prefsDir.setExecutable(true, false);
+            prefsDir.setReadable(true, false);
+            
+            prefsFile.setReadable(true, false);
+        } catch (Throwable t) {
+            android.util.Log.e("WAEX_HookProvider", "Failed to fix permissions", t);
+        }
     }
 }

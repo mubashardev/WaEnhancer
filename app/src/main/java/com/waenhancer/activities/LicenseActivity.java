@@ -59,17 +59,8 @@ public class LicenseActivity extends BaseActivity {
 
     private android.content.BroadcastReceiver proStatusReceiver;
 
-    // Pro Features section
-    private LinearLayout proFeaturesSection;
-    private RecyclerView proFeaturesRecycler;
-    private ProFeatureAdapter proFeaturesAdapter;
-    private MaterialTextView tvProFeaturesTitle;
-
-    // Limited Free Features section
-    private LinearLayout limitedFreeFeaturesSection;
-    private RecyclerView limitedFreeFeaturesRecycler;
-    private ProFeatureAdapter limitedFreeFeaturesAdapter;
-    private MaterialTextView tvLimitedFreeFeaturesTitle;
+    private LinearLayout plansContainer;
+    private View btnShowFeatures;
 
     private View loadingOverlay;
     private MaterialTextView tvLoadingStatus;
@@ -167,32 +158,21 @@ public class LicenseActivity extends BaseActivity {
         progressBar = findViewById(getResId("progress_bar", "id"));
         btnOpenTelegram = findViewById(getResId("btn_open_telegram", "id"));
 
-        // Bind Pro Features layout components
-        proFeaturesSection = findViewById(getResId("pro_features_section", "id"));
-        proFeaturesRecycler = findViewById(getResId("pro_features_recycler", "id"));
-        tvProFeaturesTitle = findViewById(getResId("tv_pro_features_title", "id"));
+        plansContainer = findViewById(getResId("plans_container", "id"));
+        btnShowFeatures = findViewById(getResId("btn_show_features", "id"));
         
-        // Bind Limited Free Features layout components
-        limitedFreeFeaturesSection = findViewById(getResId("limited_free_features_section", "id"));
-        limitedFreeFeaturesRecycler = findViewById(getResId("limited_free_features_recycler", "id"));
-        tvLimitedFreeFeaturesTitle = findViewById(getResId("tv_limited_free_features_title", "id"));
-
-        loadingOverlay = findViewById(getResId("loading_overlay", "id"));
-        if (loadingOverlay != null) {
-            tvLoadingStatus = loadingOverlay.findViewById(getResId("tv_loading_status", "id"));
+        if (btnShowFeatures != null) {
+            btnShowFeatures.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(LicenseActivity.this, ProFeaturesActivity.class);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(LicenseActivity.this, "Failed to launch features screen", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
-
-        if (proFeaturesRecycler != null) {
-            proFeaturesRecycler.setLayoutManager(new LinearLayoutManager(this));
-            proFeaturesAdapter = new ProFeatureAdapter(this::navigateAndHighlightFeature);
-            proFeaturesRecycler.setAdapter(proFeaturesAdapter);
-        }
-
-        if (limitedFreeFeaturesRecycler != null) {
-            limitedFreeFeaturesRecycler.setLayoutManager(new LinearLayoutManager(this));
-            limitedFreeFeaturesAdapter = new ProFeatureAdapter(this::navigateAndHighlightFeature);
-            limitedFreeFeaturesRecycler.setAdapter(limitedFreeFeaturesAdapter);
-        }
+        
+        loadPlans();
 
         // Setup listeners
         if (btnVerify != null) {
@@ -268,66 +248,7 @@ public class LicenseActivity extends BaseActivity {
 
         boolean isPro = "ACTIVE".equalsIgnoreCase(proStatus);
 
-        java.util.List<SearchableFeature> proFeatures = new java.util.ArrayList<>();
-        java.util.List<SearchableFeature> limitedFreeFeatures = new java.util.ArrayList<>();
-        try {
-            java.util.List<SearchableFeature> allFeatures = FeatureCatalog.getAllFeatures(this);
-            if (allFeatures != null) {
-                for (SearchableFeature feature : allFeatures) {
-                    String key = feature.getKey();
-                    if ("file_size_spoofer".equals(key)
-                            || "filter_group_members_messages".equals(key)
-                            || "message_bomber".equals(key) 
-                            || "delete_message_file".equals(key) 
-                            || "pro_status_splitter".equals(key)
-                            || "customize_status_view_category".equals(key)
-                            || "always_typing_global".equals(key)
-                            || "floating_bottom_bar_pill_design".equals(key)
-                            || "filter_items".equals(key)
-                            || "send_audio_as_voice_status".equals(key)) {
-                        
-                        if (ProHelper.isLimitedFreePreferenceEnabled(key)) {
-                            limitedFreeFeatures.add(feature);
-                        } else {
-                            proFeatures.add(feature);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        if (proFeaturesAdapter != null) {
-            proFeaturesAdapter.setFeatures(proFeatures);
-        }
-        if (limitedFreeFeaturesAdapter != null) {
-            limitedFreeFeaturesAdapter.setFeatures(limitedFreeFeatures);
-        }
-
-        // Handle sections visibility dynamically
-        if (proFeaturesSection != null) {
-            proFeaturesSection.setVisibility(proFeatures.isEmpty() ? View.GONE : View.VISIBLE);
-        }
-        if (limitedFreeFeaturesSection != null) {
-            limitedFreeFeaturesSection.setVisibility(limitedFreeFeatures.isEmpty() ? View.GONE : View.VISIBLE);
-        }
-
-        if (tvProFeaturesTitle != null) {
-            if (isPro) {
-                tvProFeaturesTitle.setText("Exclusive Pro Features");
-            } else {
-                tvProFeaturesTitle.setText("Pro Features you're missing");
-            }
-        }
-
-        if (tvLimitedFreeFeaturesTitle != null) {
-            if (isPro) {
-                tvLimitedFreeFeaturesTitle.setText("Active Promo Features");
-            } else {
-                tvLimitedFreeFeaturesTitle.setText("Limited Free Features (Pro Recommended)");
-            }
-        }
+        // Features lists and adapters removed (moved to ProFeaturesActivity)
 
         boolean packageInstalled = ProHelper.isPluginPackageInstalled(this);
         boolean pluginInstalled = ProHelper.isPluginInstalled(this);
@@ -781,33 +702,289 @@ public class LicenseActivity extends BaseActivity {
      * Navigates back to MainActivity and highlights the target preference screen/item,
      * matching the SearchActivity's click behavior exactly.
      */
-    private void navigateAndHighlightFeature(SearchableFeature feature) {
+    private int resolveColorAttrByName(String attrName, int fallbackColor) {
         try {
-            String key = feature.getKey();
-            SearchableFeature.FragmentType fragmentType = feature.getFragmentType();
-            String typeName = fragmentType.name();
-            int position = fragmentType.getPosition();
-
-            if ("ACTIVITY".equals(typeName)) {
-                if ("deleted_messages_activity".equals(key)) {
-                    Intent intent = new Intent();
-                    intent.setClassName(this, "com.waenhancer.activities.DeletedMessagesActivity");
-                    startActivity(intent);
+            int attrId = getResources().getIdentifier(attrName, "attr", getPackageName());
+            if (attrId != 0) {
+                android.util.TypedValue typedValue = new android.util.TypedValue();
+                if (getTheme().resolveAttribute(attrId, typedValue, true)) {
+                    return typedValue.data;
                 }
-                return;
+            }
+        } catch (Exception ignored) {}
+        return fallbackColor;
+    }
+
+    private void loadPlans() {
+        if (plansContainer == null) return;
+        
+        float density = getResources().getDisplayMetrics().density;
+        int pad16 = (int) (16 * density);
+        
+        int cardBg = resolveColorAttrByName("colorSurfaceVariant", 0xFFF0F2F5);
+        int strokeColor = resolveColorAttrByName("colorOutline", 0xFFE1E3E6);
+        int primaryText = resolveColorAttrByName("colorOnSurface", 0xFF111B21);
+        int secondaryText = resolveColorAttrByName("colorOnSurfaceVariant", 0xFF667781);
+        int accentG = resolveColorAttrByName("colorPrimary", 0xFF008069);
+
+        android.content.SharedPreferences cachePrefs = getSharedPreferences("waex_plans_cache", android.content.Context.MODE_PRIVATE);
+        long cacheTime = cachePrefs.getLong("plans_cache_time", 0);
+        String cachedData = cachePrefs.getString("plans_cache_data", null);
+        long currentTime = System.currentTimeMillis();
+
+        if (cachedData != null && (currentTime - cacheTime) < 3600000) {
+            try {
+                org.json.JSONArray plansArray = new org.json.JSONArray(cachedData);
+                plansContainer.removeAllViews();
+                for (int i = 0; i < plansArray.length(); i++) {
+                    org.json.JSONObject planObj = plansArray.getJSONObject(i);
+                    buildPlanCard(plansContainer, density, pad16, cardBg, strokeColor, primaryText, secondaryText, accentG, planObj);
+                }
+            } catch (Throwable t) {
+                fetchPlansFromNetwork(plansContainer, density, pad16, cardBg, strokeColor, primaryText, secondaryText, accentG, cachePrefs);
+            }
+        } else {
+            fetchPlansFromNetwork(plansContainer, density, pad16, cardBg, strokeColor, primaryText, secondaryText, accentG, cachePrefs);
+        }
+    }
+
+    private void fetchPlansFromNetwork(
+            android.widget.LinearLayout plansContainer,
+            float density,
+            int pad16,
+            int cardBg,
+            int strokeColor,
+            int primaryText,
+            int secondaryText,
+            int accentG,
+            android.content.SharedPreferences cachePrefs
+    ) {
+        new Thread(() -> {
+            java.net.HttpURLConnection urlConnection = null;
+            try {
+                java.net.URL url = new java.net.URL("https://waex.mubashar.dev/api/v1/plans");
+                urlConnection = (java.net.HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.setConnectTimeout(5000);
+                urlConnection.setReadTimeout(5000);
+                
+                java.io.InputStream in = new java.io.BufferedInputStream(urlConnection.getInputStream());
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(in, "UTF-8"));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+                
+                String responseStr = sb.toString();
+                org.json.JSONArray plansArray = new org.json.JSONArray(responseStr);
+                
+                cachePrefs.edit()
+                        .putString("plans_cache_data", responseStr)
+                        .putLong("plans_cache_time", System.currentTimeMillis())
+                        .apply();
+                
+                runOnUiThread(() -> {
+                    plansContainer.removeAllViews();
+                    try {
+                        for (int i = 0; i < plansArray.length(); i++) {
+                            org.json.JSONObject planObj = plansArray.getJSONObject(i);
+                            buildPlanCard(plansContainer, density, pad16, cardBg, strokeColor, primaryText, secondaryText, accentG, planObj);
+                        }
+                    } catch (Throwable t) {
+                        Toast.makeText(LicenseActivity.this, "Error rendering plans: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } catch (Throwable t) {
+                runOnUiThread(() -> {
+                    plansContainer.removeAllViews();
+                    try {
+                        org.json.JSONObject monthlyFallback = new org.json.JSONObject();
+                        monthlyFallback.put("id", 2);
+                        monthlyFallback.put("name", "Pro Monthly");
+                        monthlyFallback.put("type", "offer");
+                        monthlyFallback.put("original_price", "3.50");
+                        monthlyFallback.put("offer_price", "2.30");
+                        monthlyFallback.put("badge", org.json.JSONObject.NULL);
+
+                        org.json.JSONObject yearlyFallback = new org.json.JSONObject();
+                        yearlyFallback.put("id", 3);
+                        yearlyFallback.put("name", "Pro Yearly");
+                        yearlyFallback.put("type", "offer");
+                        yearlyFallback.put("original_price", "28.50");
+                        yearlyFallback.put("offer_price", "18.99");
+                        yearlyFallback.put("badge", "Best Value");
+
+                        buildPlanCard(plansContainer, density, pad16, cardBg, strokeColor, primaryText, secondaryText, accentG, monthlyFallback);
+                        buildPlanCard(plansContainer, density, pad16, cardBg, strokeColor, primaryText, secondaryText, accentG, yearlyFallback);
+                    } catch (Throwable ignored) {}
+                });
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+            }
+        }).start();
+    }
+
+    private void buildPlanCard(
+            android.widget.LinearLayout plansContainer,
+            float density,
+            int pad16,
+            int cardBg,
+            int strokeColor,
+            int primaryText,
+            int secondaryText,
+            int accentG,
+            org.json.JSONObject planObj
+    ) {
+        try {
+            final String name = planObj.getString("name");
+            final String originalPrice = planObj.getString("original_price");
+            final String offerPrice = planObj.getString("offer_price");
+            final String badge = planObj.isNull("badge") ? null : planObj.getString("badge");
+            
+            android.widget.LinearLayout planCard = new android.widget.LinearLayout(this);
+            planCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+            planCard.setPadding(pad16, pad16, pad16, pad16);
+            
+            android.graphics.drawable.GradientDrawable pcGd = new android.graphics.drawable.GradientDrawable();
+            pcGd.setCornerRadius(12 * density);
+            pcGd.setColor(cardBg);
+            pcGd.setStroke((int) (1 * density), strokeColor);
+            planCard.setBackground(pcGd);
+            
+            planCard.setElevation(5 * density);
+            
+            android.widget.LinearLayout.LayoutParams pcLp = new android.widget.LinearLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            int marginHoriz = (int) (6 * density);
+            pcLp.setMargins(marginHoriz, (int)(2 * density), marginHoriz, (int)(14 * density));
+            planCard.setLayoutParams(pcLp);
+
+            try {
+                android.util.TypedValue outValue = new android.util.TypedValue();
+                getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+                planCard.setForeground(getDrawable(outValue.resourceId));
+            } catch (Throwable ignored) {}
+
+            android.widget.LinearLayout topRow = new android.widget.LinearLayout(this);
+            topRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            topRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            android.widget.LinearLayout.LayoutParams topLp = new android.widget.LinearLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            topLp.bottomMargin = (int) (8 * density);
+            topRow.setLayoutParams(topLp);
+
+            android.widget.TextView pct = new android.widget.TextView(this);
+            pct.setText(name);
+            pct.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);
+            pct.setTextColor(primaryText);
+            pct.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+            android.widget.LinearLayout.LayoutParams nameLp = new android.widget.LinearLayout.LayoutParams(
+                    0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+            pct.setLayoutParams(nameLp);
+            topRow.addView(pct);
+
+            if (badge != null && !badge.trim().isEmpty()) {
+                android.widget.TextView pcb = new android.widget.TextView(this);
+                pcb.setText(badge.toUpperCase());
+                pcb.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 10);
+                boolean isNight = com.waenhancer.xposed.utils.DesignUtils.isNightMode();
+                pcb.setTextColor(isNight ? 0xFF111B21 : 0xFFFFFFFF);
+                pcb.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+                pcb.setPadding((int) (8 * density), (int) (3 * density), (int) (8 * density), (int) (3 * density));
+                
+                android.graphics.drawable.GradientDrawable badgeGd = new android.graphics.drawable.GradientDrawable();
+                badgeGd.setCornerRadius(8 * density);
+                badgeGd.setColor(accentG);
+                pcb.setBackground(badgeGd);
+
+                android.widget.LinearLayout.LayoutParams badgeLp = new android.widget.LinearLayout.LayoutParams(
+                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+                pcb.setLayoutParams(badgeLp);
+                topRow.addView(pcb);
+            }
+            planCard.addView(topRow);
+
+            android.widget.LinearLayout priceRow = new android.widget.LinearLayout(this);
+            priceRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            priceRow.setGravity(android.view.Gravity.BOTTOM);
+            android.widget.LinearLayout.LayoutParams priceRowLp = new android.widget.LinearLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            priceRow.setLayoutParams(priceRowLp);
+
+            boolean hasOffer = !originalPrice.equals(offerPrice);
+            if (hasOffer) {
+                android.widget.TextView originalPriceTv = new android.widget.TextView(this);
+                originalPriceTv.setText("$" + originalPrice);
+                originalPriceTv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
+                originalPriceTv.setTextColor(secondaryText);
+                originalPriceTv.setPaintFlags(originalPriceTv.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+                android.widget.LinearLayout.LayoutParams origLp = new android.widget.LinearLayout.LayoutParams(
+                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+                origLp.rightMargin = (int) (8 * density);
+                originalPriceTv.setLayoutParams(origLp);
+                priceRow.addView(originalPriceTv);
             }
 
-            String parentKey = feature.getParentKey();
+            android.widget.TextView offerPriceTv = new android.widget.TextView(this);
+            offerPriceTv.setText("$" + offerPrice);
+            offerPriceTv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 20);
+            offerPriceTv.setTextColor(accentG);
+            offerPriceTv.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+            priceRow.addView(offerPriceTv);
 
-            Intent intent = new Intent();
-            intent.setClassName(this, "com.waenhancer.activities.MainActivity");
-            intent.putExtra("navigate_to_fragment", position);
-            intent.putExtra("scroll_to_preference", key);
-            intent.putExtra("parent_preference", parentKey);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-        } catch (Exception e) {
-            e.printStackTrace();
+            String billingPeriod = "";
+            if (name.toLowerCase().contains("monthly")) {
+                billingPeriod = " / Month";
+            } else if (name.toLowerCase().contains("yearly")) {
+                billingPeriod = " / Year";
+            }
+            if (!billingPeriod.isEmpty()) {
+                android.widget.TextView periodTv = new android.widget.TextView(this);
+                periodTv.setText(billingPeriod);
+                periodTv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
+                periodTv.setTextColor(secondaryText);
+                priceRow.addView(periodTv);
+            }
+            planCard.addView(priceRow);
+
+            String featureText = "";
+            if (name.toLowerCase().contains("monthly")) {
+                featureText = "Full access to all Pro features for 30 days";
+            } else if (name.toLowerCase().contains("yearly")) {
+                featureText = "Save more with full Pro access for 365 days";
+            } else {
+                featureText = "Unlock all premium Pro capabilities";
+            }
+            android.widget.TextView descTv = new android.widget.TextView(this);
+            descTv.setText(featureText);
+            descTv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12);
+            descTv.setTextColor(secondaryText);
+            android.widget.LinearLayout.LayoutParams descLp = new android.widget.LinearLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            descLp.topMargin = (int) (6 * density);
+            descTv.setLayoutParams(descLp);
+            planCard.addView(descTv);
+
+            planCard.setClickable(true);
+            planCard.setFocusable(true);
+            planCard.setOnClickListener(v -> {
+                try {
+                    Intent browserIntent = new Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://t.me/waenhancerx_bot?start=subscribe"));
+                    browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(browserIntent);
+                } catch (Throwable t) {
+                    Toast.makeText(LicenseActivity.this, "Could not open Telegram", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            plansContainer.addView(planCard);
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
 

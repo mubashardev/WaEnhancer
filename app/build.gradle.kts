@@ -83,6 +83,8 @@ android {
                     ?: keystoreProperties.getProperty("androidKeyAlias")
                 keyPassword = project.findProperty("androidKeyPassword") as String?
                     ?: keystoreProperties.getProperty("androidKeyPassword")
+                enableV1Signing = true
+                enableV2Signing = true
             }
         }
 

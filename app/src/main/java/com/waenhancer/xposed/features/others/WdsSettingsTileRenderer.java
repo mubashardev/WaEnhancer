@@ -254,8 +254,14 @@ public class WdsSettingsTileRenderer {
                 String type = pref.getString("type");
                 String key = pref.getString("key");
                 String title = pref.getString("title");
+                
+                boolean isProKey = com.waenhancer.xposed.utils.ProHelper.isProFeature(key);
+                boolean isProEnabled = com.waenhancer.xposed.utils.ProHelper.isProEnabled();
+                boolean limitedFree = com.waenhancer.xposed.utils.ProHelper.isLimitedFreePreferenceEnabled(key);
+                boolean isProLocked = isProKey && !isProEnabled && !limitedFree;
+
                 boolean isEnabled = pref.optBoolean("enabled", true);
-                if (!isEnabled) {
+                if (isProLocked || !isEnabled) {
                     title = title + " [Pro]";
                 }
                 String summary = pref.optString("summary", "");
@@ -265,11 +271,11 @@ public class WdsSettingsTileRenderer {
                 if (isSearch) {
                     // In search mode: switch tiles get switch-only toggle + row navigates
                     // All other tiles: row click navigates, no dialogs/inputs shown
-                    if ("switch".equals(type) && isEnabled) {
+                    if ("switch".equals(type) && isEnabled && !isProLocked) {
                         tile = createSearchSwitchTile(context, key, title, summary, pref.optBoolean("default", false), prefs, listener, navigateCallback);
                     } else {
                         // Simple navigation row for list/multi/text/action
-                        String activeValue = isEnabled ? getActiveValueText(context, pref, prefs) : "";
+                        String activeValue = (isEnabled && !isProLocked) ? getActiveValueText(context, pref, prefs) : "";
                         String displaySummary = summary;
                         if (!android.text.TextUtils.isEmpty(activeValue) && !android.text.TextUtils.isEmpty(displaySummary)) {
                             displaySummary = displaySummary;  // keep breadcrumb
@@ -292,7 +298,31 @@ public class WdsSettingsTileRenderer {
                         }
                     }
                 } else {
-                    if (!isEnabled) {
+                    if (isProLocked) {
+                        final String displayTitle = title;
+                        tile = createWdsRow(context, title, summary, null, v -> {
+                            try {
+                                AlertDialogWpp builder = new AlertDialogWpp(context);
+                                builder.asBottomSheet();
+                                builder.setTitle(displayTitle);
+                                builder.setMessage("This is a Premium feature. Please install and activate the Helper Plugin to unlock it.");
+                                builder.setPositiveButton("Activate Pro", (dialog, which) -> {
+                                    try {
+                                        Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");
+                                        android.content.Intent intent = new android.content.Intent(context, clazz);
+                                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        context.startActivity(intent);
+                                    } catch (Throwable t) {
+                                        android.widget.Toast.makeText(context, "Pro license screen not available.", android.widget.Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                                builder.setNegativeButton("Cancel", null);
+                                builder.show();
+                            } catch (Throwable t) {
+                                de.robv.android.xposed.XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
+                            }
+                        });
+                    } else if (!isEnabled) {
                         final String displayTitle = title;
                         tile = createWdsRow(context, title, summary, null, v -> {
                             try {
@@ -713,6 +743,8 @@ public class WdsSettingsTileRenderer {
                 if (listener != null) listener.onPrefChanged(key, newVal);
             });
         } else {
+            wdsSwitch.setClickable(false);
+            wdsSwitch.setFocusable(false);
             row.setOnClickListener(v -> {
                 boolean newVal = !getSwitchChecked(finalSwitch);
                 setSwitchChecked(finalSwitch, newVal);

@@ -1415,6 +1415,7 @@ public class SettingsInjector extends Feature {
                                     || "always_typing_global".equals(key)
                                     || "floating_bottom_bar_pill_design".equals(key)
                                     || "filter_items".equals(key)
+                                    || "unlock_premium_customization".equals(key)
                                     || "send_audio_as_voice_status".equals(key)) {
                                 
                                 boolean isLimited = (Boolean) phClass.getMethod("isLimitedFreePreferenceEnabled", String.class).invoke(null, key);

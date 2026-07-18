@@ -286,7 +286,7 @@ public class FloatingBottomBar extends Feature {
                                         int systemInsetBottom = getSystemInsetBottomSafely(v);
                                         int marginBottom = dp(density, userBottomMarginDp) + systemInsetBottom;
                                         
-                                        int targetHeight = (int) (64 * density);
+                                        int targetHeight = (int) ((pillDesignPro ? 50 : 64) * density);
                                         if (mlp.leftMargin != marginSide || mlp.rightMargin != marginSide || mlp.bottomMargin != marginBottom || mlp.height != targetHeight) {
                                             mlp.leftMargin = marginSide;
                                             mlp.rightMargin = marginSide;
@@ -314,7 +314,7 @@ public class FloatingBottomBar extends Feature {
                             int marginSide = dp(density, userSideMarginDp);
                             int systemInsetBottom = getSystemInsetBottomSafely(view);
                             int marginBottom = dp(density, userBottomMarginDp) + systemInsetBottom;
-                            int targetHeight = (int) (64 * density);
+                            int targetHeight = (int) ((pillDesignPro ? 50 : 64) * density);
                             mlp.leftMargin = marginSide;
                             mlp.rightMargin = marginSide;
                             mlp.bottomMargin = marginBottom;
@@ -704,7 +704,7 @@ public class FloatingBottomBar extends Feature {
 
                         if (newLp instanceof ViewGroup.MarginLayoutParams) {
                             ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) newLp;
-                            int targetHeight = (int) (64 * density);
+                            int targetHeight = (int) ((pillDesignPro ? 50 : 64) * density);
                             mlp.leftMargin = marginSide;
                             mlp.rightMargin = marginSide;
                             mlp.bottomMargin = marginBottom;
@@ -1283,7 +1283,7 @@ public class FloatingBottomBar extends Feature {
 
             FrameLayout.LayoutParams navLp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    (int) (64 * density),
+                    (int) ((pillDesignPro ? 50 : 64) * density),
                     Gravity.BOTTOM
             );
             glassHosts.put(bottomNav, host);
@@ -1633,9 +1633,17 @@ public class FloatingBottomBar extends Feature {
             View child = group.getChildAt(i);
             
             if (iconContainerId != 0 && child.getId() == iconContainerId) {
-                child.setTranslationY(-8f * density);
+                if (pillDesignPro) {
+                    child.setTranslationY(-7.5f * density);
+                } else {
+                    child.setTranslationY(-8f * density);
+                }
             } else if (labelsGroupId != 0 && child.getId() == labelsGroupId) {
-                child.setTranslationY(8f * density);
+                if (pillDesignPro) {
+                    child.setTranslationY(-1.5f * density);
+                } else {
+                    child.setTranslationY(8f * density);
+                }
             }
 
             if (child instanceof ImageView) {

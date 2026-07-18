@@ -28,6 +28,21 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.widget.Toolbar;
 import com.waenhancer.xposed.utils.ProHelper;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Shader;
+import android.graphics.LinearGradient;
+import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.graphics.drawable.Drawable;
+import android.graphics.ColorFilter;
+import android.content.Context;
+import android.content.res.Configuration;
+import androidx.annotation.Nullable;
+import android.graphics.Canvas;
+import android.os.Build;
+import android.view.ViewParent;
 
 public class BottomBarCustomizationActivity extends BaseActivity {
 
@@ -270,7 +285,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                     mlp.leftMargin = (int) (marginHorizontal * density);
                     mlp.rightMargin = (int) (marginHorizontal * density);
                     mlp.bottomMargin = (int) (marginBottom * density);
-                    lp.height = (int) (64 * density);
+                    lp.height = (int) ((isPro ? 50 : 64) * density);
                 } else {
                     mlp.leftMargin = 0;
                     mlp.rightMargin = 0;
@@ -283,6 +298,22 @@ public class BottomBarCustomizationActivity extends BaseActivity {
             // 2. Update Preview Pill Background & Corners
             GradientDrawable shape = new GradientDrawable();
             shape.setShape(GradientDrawable.RECTANGLE);
+
+            // Disable clipping so the glow/oval can render outside the pill boundaries
+            previewBottomBar.setClipChildren(false);
+            previewBottomBar.setClipToPadding(false);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                previewBottomBar.setClipToOutline(false);
+            }
+            ViewParent previewParent = previewBottomBar.getParent();
+            if (previewParent instanceof ViewGroup) {
+                ViewGroup vgParent = (ViewGroup) previewParent;
+                vgParent.setClipChildren(false);
+                vgParent.setClipToPadding(false);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    vgParent.setClipToOutline(false);
+                }
+            }
 
             if (isFloating) {
                 shape.setCornerRadius(radius * density);
@@ -297,12 +328,27 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                     shape.setStroke((int) (0.6f * density), 0x18FFFFFF);
                 }
                 
-                // Show the active indicator capsule matching WhatsApp's actual dark teal indicator
-                previewActiveIndicator.setBackgroundResource(R.drawable.wa_active_indicator);
-                previewChatsIcon.setImageTintList(ColorStateList.valueOf(0xFF00A884));
+                if (isPro) {
+                    previewActiveIndicator.setBackground(null);
+                    
+                    View chatsTab = previewBottomBar.getChildAt(0);
+                    if (chatsTab != null) {
+                        chatsTab.setBackground(new LiquidOvalDrawable(this, density));
+                        chatsTab.setPadding(0, 0, 0, 0);
+                    }
+                    previewChatsIcon.setImageTintList(ColorStateList.valueOf(0xFFFFFFFF));
+                } else {
+                    previewActiveIndicator.setBackgroundResource(R.drawable.wa_active_indicator);
+                    previewChatsIcon.setImageTintList(ColorStateList.valueOf(0xFF00A884));
+                    View chatsTab = previewBottomBar.getChildAt(0);
+                    if (chatsTab != null) {
+                        chatsTab.setBackground(null);
+                        chatsTab.setPadding(0, 0, 0, 0);
+                    }
+                }
                 
                 // Adjust horizontal/vertical padding inside the pill according to vertical padding slider
-                int verticalPadding = (int) (sliderPaddingVertical.getValue() * density);
+                int verticalPadding = isPro ? 0 : (int) (sliderPaddingVertical.getValue() * density);
                 previewBottomBar.setPadding(
                         previewBottomBar.getPaddingLeft(),
                         verticalPadding,
@@ -328,6 +374,37 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                 );
             }
             previewBottomBar.setBackground(shape);
+
+            // Translate mock tab views to match the Pro floating bar layout structure
+            for (int i = 0; i < previewBottomBar.getChildCount(); i++) {
+                View tab = previewBottomBar.getChildAt(i);
+                if (tab instanceof ViewGroup) {
+                    ViewGroup tabGroup = (ViewGroup) tab;
+                    
+                    tabGroup.setClipChildren(false);
+                    tabGroup.setClipToPadding(false);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        tabGroup.setClipToOutline(false);
+                    }
+                    
+                    if (!isPro || !isFloating || i != 0) {
+                        tabGroup.setBackground(null);
+                        tabGroup.setPadding(0, 0, 0, 0);
+                    }
+                    
+                    if (tabGroup.getChildCount() >= 2) {
+                        View iconContainer = tabGroup.getChildAt(0);
+                        View labelView = tabGroup.getChildAt(1);
+                        if (isPro && isFloating) {
+                            if (iconContainer != null) iconContainer.setTranslationY(-7.5f * density);
+                            if (labelView != null) labelView.setTranslationY(-1.5f * density);
+                        } else {
+                            if (iconContainer != null) iconContainer.setTranslationY(0);
+                            if (labelView != null) labelView.setTranslationY(0);
+                        }
+                    }
+                }
+            }
 
             // 3. Update Preview FAB margins
             ViewGroup.LayoutParams fabLp = previewFab.getLayoutParams();
@@ -454,5 +531,154 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         
         updateLivePreview();
         Toast.makeText(this, "Reset to default values", Toast.LENGTH_SHORT).show();
+    }
+
+    private static class LiquidOvalDrawable extends Drawable {
+        private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint topRainbow = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint bottomRainbow = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final boolean isNight;
+        private final int accentColor;
+        private final float density;
+
+        public LiquidOvalDrawable(Context ctx, float density) {
+            this.density = density;
+            this.isNight = isNightMode(ctx);
+            this.accentColor = getThemeAccentColor(ctx);
+            
+            fillPaint.setStyle(Paint.Style.FILL);
+            
+            strokePaint.setStyle(Paint.Style.STROKE);
+            strokePaint.setStrokeWidth(1.0f * density);
+            strokePaint.setColor(isNight ? 0x45FFFFFF : 0x25000000);
+            
+            glowPaint.setStyle(Paint.Style.STROKE);
+            glowPaint.setStrokeWidth(1.2f * density);
+            
+            topRainbow.setStyle(Paint.Style.STROKE);
+            topRainbow.setStrokeWidth(0.8f * density);
+            
+            bottomRainbow.setStyle(Paint.Style.STROKE);
+            bottomRainbow.setStrokeWidth(0.8f * density);
+
+            shadowPaint.setStyle(Paint.Style.FILL);
+            shadowPaint.setColor(isNight ? 0x66000000 : 0x2C000000);
+        }
+
+        @Override
+        public void draw(@NonNull Canvas canvas) {
+            Rect bounds = getBounds();
+            if (bounds.isEmpty()) return;
+
+            float cx = bounds.exactCenterX();
+            float cy = bounds.exactCenterY();
+
+            float ovalWidth = bounds.width() * 0.78f;
+            float ovalHeight = bounds.height() + 16 * density;
+
+            float left = cx - ovalWidth / 2f;
+            float right = cx + ovalWidth / 2f;
+            float top = cy - ovalHeight / 2f;
+            float bottom = cy + ovalHeight / 2f;
+
+            RectF rectF = new RectF(left, top, right, bottom);
+            float cornerRadius = ovalWidth / 2f;
+
+            canvas.drawRoundRect(new RectF(left, top + 1.5f * density, right, bottom + 1.5f * density), cornerRadius, cornerRadius, shadowPaint);
+
+            int startColor = isNight ? 0x2DFFFFFF : 0x70FFFFFF;
+            int midColor = isNight ? 0x15FFFFFF : 0x40FFFFFF;
+            int endColor = isNight ? 0x22FFFFFF : 0x55FFFFFF;
+            
+            LinearGradient fillGradient = new LinearGradient(
+                    cx, top, cx, bottom,
+                    new int[]{startColor, midColor, endColor},
+                    new float[]{0f, 0.5f, 1f},
+                    Shader.TileMode.CLAMP
+            );
+            fillPaint.setShader(fillGradient);
+            canvas.drawRoundRect(rectF, cornerRadius, cornerRadius, fillPaint);
+
+            canvas.save();
+            Path clipPath = new Path();
+            clipPath.addRoundRect(rectF, cornerRadius, cornerRadius, Path.Direction.CW);
+            canvas.clipPath(clipPath);
+
+            LinearGradient glowGradient = new LinearGradient(
+                    left, top, right, top + 10 * density,
+                    new int[]{0x00FFFFFF, isNight ? 0x77FFFFFF : 0x55FFFFFF, 0x00FFFFFF},
+                    new float[]{0f, 0.5f, 1f},
+                    Shader.TileMode.CLAMP
+            );
+            glowPaint.setShader(glowGradient);
+            canvas.drawArc(new RectF(left + 1f, top + 1f, right - 1f, top + 15 * density), 200, 140, false, glowPaint);
+
+            LinearGradient topGrad = new LinearGradient(
+                    left + 8 * density, top, right - 8 * density, top,
+                    new int[]{0x00FFFFFF, 0xB8FFFFFF, 0xEEFFFFFF, 0xB8FFFFFF, 0x00FFFFFF},
+                    new float[]{0f, 0.25f, 0.5f, 0.75f, 1f},
+                    Shader.TileMode.CLAMP
+            );
+            topRainbow.setShader(topGrad);
+            canvas.drawArc(new RectF(left, top, right, top + 16 * density), 210, 120, false, topRainbow);
+
+            LinearGradient bottomGrad = new LinearGradient(
+                    left + 8 * density, bottom, right - 8 * density, bottom,
+                    new int[]{0x00FFFFFF, 0x68FFFFFF, 0x9EFFFFFF, 0x68FFFFFF, 0x00FFFFFF},
+                    new float[]{0f, 0.25f, 0.5f, 0.75f, 1f},
+                    Shader.TileMode.CLAMP
+            );
+            bottomRainbow.setShader(bottomGrad);
+            canvas.drawArc(new RectF(left, bottom - 16 * density, right, bottom), 30, 120, false, bottomRainbow);
+
+            canvas.restore();
+
+            canvas.drawRoundRect(rectF, cornerRadius, cornerRadius, strokePaint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            fillPaint.setAlpha(alpha);
+            strokePaint.setAlpha(alpha);
+            glowPaint.setAlpha(alpha);
+            topRainbow.setAlpha(alpha);
+            bottomRainbow.setAlpha(alpha);
+            shadowPaint.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(@Nullable ColorFilter colorFilter) {}
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
+
+        private static boolean isNightMode(Context context) {
+            try {
+                if (context == null) return false;
+                int uiMode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+                return uiMode == Configuration.UI_MODE_NIGHT_YES;
+            } catch (Throwable ignored) {
+                return false;
+            }
+        }
+
+        private static int getThemeAccentColor(Context context) {
+            try {
+                TypedValue outValue = new TypedValue();
+                if (context.getTheme().resolveAttribute(android.R.attr.colorAccent, outValue, true)) {
+                    if (outValue.type >= TypedValue.TYPE_FIRST_COLOR_INT && outValue.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+                        return outValue.data;
+                    } else {
+                        return context.getResources().getColor(outValue.resourceId);
+                    }
+                }
+            } catch (Throwable ignored) {}
+            return 0xff25d366; // WhatsApp Green
+        }
     }
 }

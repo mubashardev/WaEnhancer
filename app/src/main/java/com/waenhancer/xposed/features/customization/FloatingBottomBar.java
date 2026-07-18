@@ -86,6 +86,7 @@ public class FloatingBottomBar extends Feature {
     private static float glassOpacity = 35f;
     private static int glassFillColor = 0;
     private static boolean pillDesignPro = true;
+    private static boolean pillDesignIos = false;
     private static int userBottomMarginDp = 22;
     private static int userSideMarginDp = 16;
     private static int userFabOffsetDp = 80;
@@ -106,9 +107,11 @@ public class FloatingBottomBar extends Feature {
         glassOpacity = getPrefFloat(prefs, "floating_bottom_bar_glass_opacity", 35f);
         glassFillColor = getPrefColor(prefs, "floating_bottom_bar_fill_color", 0);
         // Read pref — default to "regular" so new installs/free users get Classic
-        boolean prefWantsPro = "pro".equals(prefs.getString("floating_bottom_bar_pill_design", "regular"));
-        // Runtime Pro gate: override to false if the license is not active regardless of saved pref
+        String designPref = prefs.getString("floating_bottom_bar_pill_design", "regular");
+        boolean prefWantsPro = "pro".equals(designPref);
+        boolean prefWantsIos = "ios_glass".equals(designPref);
         pillDesignPro = prefWantsPro && ProHelper.isPillDesignProEnabled();
+        pillDesignIos = prefWantsIos && ProHelper.isPillDesignProEnabled();
         userBottomMarginDp = prefs.getInt("floating_bottom_bar_margin_bottom", 22);
         userSideMarginDp = prefs.getInt("floating_bottom_bar_margin_horizontal", 16);
         userFabOffsetDp = prefs.getInt("floating_bottom_bar_fab_offset", 80);
@@ -244,12 +247,13 @@ public class FloatingBottomBar extends Feature {
                         // Clear backgrounds of immediate children to prevent solid white rectangular overlays
                         makeChildrenTransparent(view);
 
-                        if (pillDesignPro) {
+                        if (pillDesignPro || pillDesignIos) {
                             try {
                                 ClassLoader pluginLoader = (ClassLoader) System.getProperties().get("com.waex.helper.classloader");
                                 if (pluginLoader != null) {
                                     Class<?> pillProClass = Class.forName("com.waex.helper.PillDesignPro", true, pluginLoader);
-                                    pillProClass.getMethod("applyProDesign", View.class, float.class).invoke(null, view, density);
+                                    String style = pillDesignIos ? "ios_glass" : "pro";
+                                    pillProClass.getMethod("applyProDesign", View.class, float.class, String.class).invoke(null, view, density, style);
                                 }
                             } catch (Throwable t) {
                                 XposedBridge.log("Failed to load PillDesignPro: " + t.getMessage());
@@ -270,7 +274,7 @@ public class FloatingBottomBar extends Feature {
                                 if (isUpdating) return;
                                 isUpdating = true;
                                 try {
-                                    if (pillDesignPro && v.getMinimumHeight() != 0) {
+                                    if ((pillDesignPro || pillDesignIos) && v.getMinimumHeight() != 0) {
                                         v.setMinimumHeight(0);
                                     }
                                     View targetLayoutView = v;
@@ -286,7 +290,7 @@ public class FloatingBottomBar extends Feature {
                                         int systemInsetBottom = getSystemInsetBottomSafely(v);
                                         int marginBottom = dp(density, userBottomMarginDp) + systemInsetBottom;
                                         
-                                        int targetHeight = (int) ((pillDesignPro ? 50 : 64) * density);
+                                        int targetHeight = (int) (((pillDesignPro || pillDesignIos) ? 50 : 64) * density);
                                         if (mlp.leftMargin != marginSide || mlp.rightMargin != marginSide || mlp.bottomMargin != marginBottom || mlp.height != targetHeight) {
                                             mlp.leftMargin = marginSide;
                                             mlp.rightMargin = marginSide;
@@ -314,7 +318,7 @@ public class FloatingBottomBar extends Feature {
                             int marginSide = dp(density, userSideMarginDp);
                             int systemInsetBottom = getSystemInsetBottomSafely(view);
                             int marginBottom = dp(density, userBottomMarginDp) + systemInsetBottom;
-                            int targetHeight = (int) ((pillDesignPro ? 50 : 64) * density);
+                            int targetHeight = (int) (((pillDesignPro || pillDesignIos) ? 50 : 64) * density);
                             mlp.leftMargin = marginSide;
                             mlp.rightMargin = marginSide;
                             mlp.bottomMargin = marginBottom;
@@ -704,7 +708,7 @@ public class FloatingBottomBar extends Feature {
 
                         if (newLp instanceof ViewGroup.MarginLayoutParams) {
                             ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) newLp;
-                            int targetHeight = (int) ((pillDesignPro ? 50 : 64) * density);
+                            int targetHeight = (int) (((pillDesignPro || pillDesignIos) ? 50 : 64) * density);
                             mlp.leftMargin = marginSide;
                             mlp.rightMargin = marginSide;
                             mlp.bottomMargin = marginBottom;
@@ -1283,7 +1287,7 @@ public class FloatingBottomBar extends Feature {
 
             FrameLayout.LayoutParams navLp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    (int) ((pillDesignPro ? 50 : 64) * density),
+                    (int) (((pillDesignPro || pillDesignIos) ? 50 : 64) * density),
                     Gravity.BOTTOM
             );
             glassHosts.put(bottomNav, host);
@@ -1633,13 +1637,13 @@ public class FloatingBottomBar extends Feature {
             View child = group.getChildAt(i);
             
             if (iconContainerId != 0 && child.getId() == iconContainerId) {
-                if (pillDesignPro) {
+                if (pillDesignPro || pillDesignIos) {
                     child.setTranslationY(-7.5f * density);
                 } else {
                     child.setTranslationY(-8f * density);
                 }
             } else if (labelsGroupId != 0 && child.getId() == labelsGroupId) {
-                if (pillDesignPro) {
+                if (pillDesignPro || pillDesignIos) {
                     child.setTranslationY(-1.5f * density);
                 } else {
                     child.setTranslationY(8f * density);

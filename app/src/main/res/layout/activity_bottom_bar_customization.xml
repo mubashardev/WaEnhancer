@@ -144,6 +144,13 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:text="Refined (Pro)" />
+
+                                <RadioButton
+                                    android:id="@+id/radio_design_ios_glass"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1.2"
+                                    android:text="iOS Glass (Pro)" />
                             </RadioGroup>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>

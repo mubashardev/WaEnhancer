@@ -52,6 +52,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
     private RadioGroup pillDesignGroup;
     private RadioButton radioDesignRegular;
     private RadioButton radioDesignPro;
+    private RadioButton radioDesignIosGlass;
     private MaterialSwitch switchGlass;
     private LinearLayout btnSelectColor;
     private View colorPreviewCircle;
@@ -104,6 +105,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         pillDesignGroup = findViewById(R.id.pill_design_group);
         radioDesignRegular = findViewById(R.id.radio_design_regular);
         radioDesignPro = findViewById(R.id.radio_design_pro);
+        radioDesignIosGlass = findViewById(R.id.radio_design_ios_glass);
         switchGlass = findViewById(R.id.switch_glass);
         btnSelectColor = findViewById(R.id.btn_select_color);
         colorPreviewCircle = findViewById(R.id.color_preview_circle);
@@ -139,11 +141,14 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         boolean isProActive = ProHelper.isProEnabled();
         if (!isProActive) {
             radioDesignPro.setEnabled(false);
+            radioDesignIosGlass.setEnabled(false);
             radioDesignRegular.setChecked(true);
         } else {
             String pillDesign = prefs.getString("floating_bottom_bar_pill_design", "regular");
             if ("pro".equals(pillDesign)) {
                 radioDesignPro.setChecked(true);
+            } else if ("ios_glass".equals(pillDesign)) {
+                radioDesignIosGlass.setChecked(true);
             } else {
                 radioDesignRegular.setChecked(true);
             }
@@ -270,6 +275,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         try {
             boolean isFloating = switchFloating.isChecked();
             boolean isPro = radioDesignPro.isChecked();
+            boolean isIosGlass = radioDesignIosGlass.isChecked();
             boolean isGlass = switchGlass.isChecked();
             int radius = (int) sliderRadius.getValue();
             int marginBottom = (int) sliderMargin.getValue();
@@ -318,22 +324,29 @@ public class BottomBarCustomizationActivity extends BaseActivity {
             if (isFloating) {
                 shape.setCornerRadius(radius * density);
                 int baseBgColor = selectedColor != 0 ? selectedColor : 0xFF1F2C34;
-                if (isGlass) {
+                if (isGlass || isIosGlass) {
                     int alpha = Math.round((opacity / 100f) * 255f);
+                    if (isIosGlass) {
+                        alpha = Math.round(0.18f * 255f); // Beautiful frosted translucency for iOS Glass
+                    }
                     int rgb = baseBgColor & 0x00FFFFFF;
                     shape.setColor((alpha << 24) | rgb);
-                    shape.setStroke((int) (0.6f * density), 0x18FFFFFF);
+                    shape.setStroke((int) (0.8f * density), isIosGlass ? 0x48FFFFFF : 0x18FFFFFF);
                 } else {
                     shape.setColor(baseBgColor);
                     shape.setStroke((int) (0.6f * density), 0x18FFFFFF);
                 }
                 
-                if (isPro) {
+                if (isPro || isIosGlass) {
                     previewActiveIndicator.setBackground(null);
                     
                     View chatsTab = previewBottomBar.getChildAt(0);
                     if (chatsTab != null) {
-                        chatsTab.setBackground(new LiquidOvalDrawable(this, density));
+                        if (isIosGlass) {
+                            chatsTab.setBackground(new IosLiquidGlassDrawable(this, density));
+                        } else {
+                            chatsTab.setBackground(new LiquidOvalDrawable(this, density));
+                        }
                         chatsTab.setPadding(0, 0, 0, 0);
                     }
                     previewChatsIcon.setImageTintList(ColorStateList.valueOf(0xFFFFFFFF));
@@ -348,7 +361,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                 }
                 
                 // Adjust horizontal/vertical padding inside the pill according to vertical padding slider
-                int verticalPadding = isPro ? 0 : (int) (sliderPaddingVertical.getValue() * density);
+                int verticalPadding = (isPro || isIosGlass) ? 0 : (int) (sliderPaddingVertical.getValue() * density);
                 previewBottomBar.setPadding(
                         previewBottomBar.getPaddingLeft(),
                         verticalPadding,
@@ -395,7 +408,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                     if (tabGroup.getChildCount() >= 2) {
                         View iconContainer = tabGroup.getChildAt(0);
                         View labelView = tabGroup.getChildAt(1);
-                        if (isPro && isFloating) {
+                        if ((isPro || isIosGlass) && isFloating) {
                             if (iconContainer != null) iconContainer.setTranslationY(-7.5f * density);
                             if (labelView != null) labelView.setTranslationY(-1.5f * density);
                         } else {
@@ -446,7 +459,12 @@ public class BottomBarCustomizationActivity extends BaseActivity {
 
     private void savePreferencesAndExit() {
         boolean floatingEnabled = switchFloating.isChecked();
-        String pillDesign = radioDesignPro.isChecked() ? "pro" : "regular";
+        String pillDesign = "regular";
+        if (radioDesignPro.isChecked()) {
+            pillDesign = "pro";
+        } else if (radioDesignIosGlass.isChecked()) {
+            pillDesign = "ios_glass";
+        }
         boolean glassEnabled = switchGlass.isChecked();
         int radius = (int) sliderRadius.getValue();
         int marginBottom = (int) sliderMargin.getValue();
@@ -679,6 +697,96 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                 }
             } catch (Throwable ignored) {}
             return 0xff25d366; // WhatsApp Green
+        }
+    }
+
+    private static class IosLiquidGlassDrawable extends Drawable {
+        private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint specularPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final boolean isNight;
+        private final float density;
+
+        public IosLiquidGlassDrawable(Context ctx, float density) {
+            this.density = density;
+            this.isNight = isNightMode(ctx);
+
+            fillPaint.setStyle(Paint.Style.FILL);
+
+            strokePaint.setStyle(Paint.Style.STROKE);
+            strokePaint.setStrokeWidth(1.0f * density);
+            strokePaint.setColor(isNight ? 0x55FFFFFF : 0x28000000);
+
+            specularPaint.setStyle(Paint.Style.FILL);
+
+            shadowPaint.setStyle(Paint.Style.FILL);
+            shadowPaint.setColor(isNight ? 0x33000000 : 0x14000000);
+        }
+
+        @Override
+        public void draw(@NonNull Canvas canvas) {
+            Rect bounds = getBounds();
+            if (bounds.isEmpty()) return;
+
+            float cx = bounds.exactCenterX();
+            float cy = bounds.exactCenterY();
+
+            float w = bounds.width() * 0.82f;
+            float h = bounds.height() - 8 * density;
+
+            float left = cx - w / 2f;
+            float right = cx + w / 2f;
+            float top = cy - h / 2f;
+            float bottom = cy + h / 2f;
+
+            RectF rectF = new RectF(left, top, right, bottom);
+            float rx = h / 2f;
+
+            // Subtle drop shadow
+            canvas.drawRoundRect(new RectF(left, top + 1.5f * density, right, bottom + 1.5f * density), rx, rx, shadowPaint);
+
+            // Frosted glass fill gradient
+            int startColor = isNight ? 0x22FFFFFF : 0x80FFFFFF;
+            int endColor = isNight ? 0x06FFFFFF : 0x2AFFFFFF;
+            LinearGradient fillGrad = new LinearGradient(cx, top, cx, bottom, startColor, endColor, Shader.TileMode.CLAMP);
+            fillPaint.setShader(fillGrad);
+            canvas.drawRoundRect(rectF, rx, rx, fillPaint);
+
+            // Specular reflection at the top
+            RectF specRect = new RectF(left + 2 * density, top + 1 * density, right - 2 * density, top + h * 0.38f);
+            LinearGradient specGrad = new LinearGradient(cx, top, cx, top + h * 0.38f, 0x65FFFFFF, 0x00FFFFFF, Shader.TileMode.CLAMP);
+            specularPaint.setShader(specGrad);
+            canvas.drawRoundRect(specRect, rx * 0.8f, rx * 0.8f, specularPaint);
+
+            // Stroke border
+            canvas.drawRoundRect(rectF, rx, rx, strokePaint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            fillPaint.setAlpha(alpha);
+            strokePaint.setAlpha(alpha);
+            specularPaint.setAlpha(alpha);
+            shadowPaint.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(@Nullable ColorFilter colorFilter) {}
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
+
+        private static boolean isNightMode(Context context) {
+            try {
+                if (context == null) return false;
+                int uiMode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+                return uiMode == Configuration.UI_MODE_NIGHT_YES;
+            } catch (Throwable ignored) {
+                return false;
+            }
         }
     }
 }

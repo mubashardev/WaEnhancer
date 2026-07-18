@@ -263,20 +263,7 @@
                     android:layout_marginBottom="8dp"
                     android:visibility="gone" />
 
-                <!-- "Show Premium & Free Features" text button -->
-                <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/btn_show_features"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Premium &amp; Limited Free Features"
-                    android:textColor="?attr/colorPrimary"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:padding="16dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:textAppearance="?attr/textAppearanceLabelLarge" />
+
 
                 <View
                     android:layout_width="match_parent"
@@ -320,6 +307,21 @@
                     android:textStyle="bold" />
 
             </LinearLayout>
+
+            <!-- "Show Premium & Free Features" text button -->
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/btn_show_features"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Premium &amp; Limited Free Features"
+                android:textColor="?attr/colorPrimary"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:textAppearance="?attr/textAppearanceLabelLarge" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

@@ -37,42 +37,44 @@ public class ProSwitchPreference extends MaterialSwitchPreference {
         init(context);
     }
 
+    private CharSequence originalSummary;
+    private CharSequence originalTitle;
+
     private void init(Context context) {
-        // Format the title to display the Pro badge
-        CharSequence originalTitle = getTitle();
+        // Save the original summary and title defined in XML
+        originalSummary = getSummary();
+        originalTitle = getTitle();
         if (originalTitle == null) {
             originalTitle = "Pro Feature";
-        }
-
-        boolean pluginInstalled = ProHelper.isPluginInstalled(context);
-        if (pluginInstalled) {
-            String newTitle = originalTitle + " <font color='#8B5CF6'><b>[Pro]</b></font>";
-            setTitle(Html.fromHtml(newTitle, Html.FROM_HTML_MODE_LEGACY));
-        } else {
-            String newTitle = originalTitle + " <font color='#EF4444'><b>[missing helper plugin]</b></font>";
-            setTitle(Html.fromHtml(newTitle, Html.FROM_HTML_MODE_LEGACY));
-            setEnabled(false);
         }
 
         updateSummary();
     }
 
     /**
-     * Updates the summary text dynamically based on the verified status.
+     * Updates the summary and title dynamically based on the verified status.
      */
     private void updateSummary() {
         if (!ProHelper.isPluginInstalled(getContext())) {
             setSummary("Helper Plugin Required");
+            String newTitle = originalTitle + " <font color='#EF4444'><b>[missing helper plugin]</b></font>";
+            setTitle(Html.fromHtml(newTitle, Html.FROM_HTML_MODE_LEGACY));
+            setEnabled(false);
             return;
         }
 
         boolean isVerified = getSafeSharedPreferences().getBoolean("is_pro_verified", false);
         boolean limitedFree = ProHelper.isLimitedFreePreferenceEnabled(getKey());
 
+        // Pro badge color: Green (#22C55E) if active/verified/limited-free, Red (#EF4444) if inactive
+        String tagColor = (isVerified || limitedFree) ? "#22C55E" : "#EF4444";
+        String newTitle = originalTitle + " <font color='" + tagColor + "'><b>[Pro]</b></font>";
+        setTitle(Html.fromHtml(newTitle, Html.FROM_HTML_MODE_LEGACY));
+
         if (isVerified) {
-            setSummary("Status: Pro Active");
+            setSummary(originalSummary);
         } else if (limitedFree) {
-            setSummary("Status: Limited Free Active");
+            setSummary(originalSummary != null ? originalSummary + " (Limited Free)" : "Status: Limited Free Active");
         } else {
             setSummary("Activate Pro First");
         }

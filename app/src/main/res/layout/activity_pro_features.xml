@@ -18,7 +18,7 @@
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_back"
             app:navigationIconTint="?attr/colorOnSurface"
-            app:title="Premium &amp; Free Features"
+            app:title="Premium &amp; Limited Free Features"
             app:titleCentered="true"
             app:titleTextAppearance="?attr/textAppearanceTitleLarge"
             app:titleTextColor="?attr/colorOnSurface" />
@@ -52,7 +52,7 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="12dp"
                     android:layout_marginStart="8dp"
-                    android:text="Limited Free Features (Pro Recommended)"
+                    android:text="Limited Free Features (Pro Soon)"
                     android:textAppearance="?attr/textAppearanceTitleMedium"
                     android:textColor="?attr/colorOnSurface"
                     android:textStyle="bold" />

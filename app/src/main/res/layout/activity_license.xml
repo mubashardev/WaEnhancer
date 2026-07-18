@@ -268,7 +268,7 @@
                     android:id="@+id/btn_show_features"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Show Premium &amp; Free Features"
+                    android:text="Premium &amp; Limited Free Features"
                     android:textColor="?attr/colorPrimary"
                     android:textStyle="bold"
                     android:gravity="center"

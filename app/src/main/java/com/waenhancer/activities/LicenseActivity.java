@@ -715,6 +715,74 @@ public class LicenseActivity extends BaseActivity {
         return fallbackColor;
     }
 
+    private void clearPlansContainer(android.widget.LinearLayout container) {
+        if (container == null) return;
+        int childCount = container.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            android.view.View child = container.getChildAt(i);
+            if (child != null) {
+                child.clearAnimation();
+            }
+        }
+        container.removeAllViews();
+        container.invalidate();
+        container.requestLayout();
+    }
+
+    private void showShimmer(android.widget.LinearLayout container, float density, int cardBg, int strokeColor) {
+        clearPlansContainer(container);
+        for (int i = 0; i < 2; i++) {
+            android.widget.LinearLayout shimmerCard = new android.widget.LinearLayout(this);
+            shimmerCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+            shimmerCard.setPadding((int)(16 * density), (int)(16 * density), (int)(16 * density), (int)(16 * density));
+            
+            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+            gd.setCornerRadius(12 * density);
+            gd.setColor(cardBg);
+            gd.setStroke((int) (1 * density), strokeColor);
+            shimmerCard.setBackground(gd);
+            shimmerCard.setElevation(5 * density);
+            
+            android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, (int) (96 * density));
+            int marginHoriz = (int) (6 * density);
+            lp.setMargins(marginHoriz, (int)(2 * density), marginHoriz, (int)(14 * density));
+            shimmerCard.setLayoutParams(lp);
+
+            View titlePlaceholder = new View(this);
+            android.widget.LinearLayout.LayoutParams titleLp = new android.widget.LinearLayout.LayoutParams(
+                    (int) (120 * density), (int) (16 * density));
+            titleLp.bottomMargin = (int) (12 * density);
+            titlePlaceholder.setLayoutParams(titleLp);
+            
+            android.graphics.drawable.GradientDrawable titleGd = new android.graphics.drawable.GradientDrawable();
+            titleGd.setCornerRadius(4 * density);
+            titleGd.setColor(strokeColor);
+            titlePlaceholder.setBackground(titleGd);
+            shimmerCard.addView(titlePlaceholder);
+
+            View pricePlaceholder = new View(this);
+            android.widget.LinearLayout.LayoutParams priceLp = new android.widget.LinearLayout.LayoutParams(
+                    (int) (80 * density), (int) (24 * density));
+            priceLp.bottomMargin = (int) (8 * density);
+            pricePlaceholder.setLayoutParams(priceLp);
+            
+            android.graphics.drawable.GradientDrawable priceGd = new android.graphics.drawable.GradientDrawable();
+            priceGd.setCornerRadius(4 * density);
+            priceGd.setColor(strokeColor);
+            pricePlaceholder.setBackground(priceGd);
+            shimmerCard.addView(pricePlaceholder);
+            
+            container.addView(shimmerCard);
+
+            android.view.animation.AlphaAnimation pulse = new android.view.animation.AlphaAnimation(0.4f, 0.9f);
+            pulse.setDuration(800);
+            pulse.setRepeatMode(android.view.animation.Animation.REVERSE);
+            pulse.setRepeatCount(android.view.animation.Animation.INFINITE);
+            shimmerCard.startAnimation(pulse);
+        }
+    }
+
     private void loadPlans() {
         if (plansContainer == null) return;
         
@@ -732,18 +800,20 @@ public class LicenseActivity extends BaseActivity {
         String cachedData = cachePrefs.getString("plans_cache_data", null);
         long currentTime = System.currentTimeMillis();
 
-        if (cachedData != null && (currentTime - cacheTime) < 3600000) {
+        if (cachedData != null && (currentTime - cacheTime) < 900000) {
             try {
                 org.json.JSONArray plansArray = new org.json.JSONArray(cachedData);
-                plansContainer.removeAllViews();
+                clearPlansContainer(plansContainer);
                 for (int i = 0; i < plansArray.length(); i++) {
                     org.json.JSONObject planObj = plansArray.getJSONObject(i);
                     buildPlanCard(plansContainer, density, pad16, cardBg, strokeColor, primaryText, secondaryText, accentG, planObj);
                 }
             } catch (Throwable t) {
+                showShimmer(plansContainer, density, cardBg, strokeColor);
                 fetchPlansFromNetwork(plansContainer, density, pad16, cardBg, strokeColor, primaryText, secondaryText, accentG, cachePrefs);
             }
         } else {
+            showShimmer(plansContainer, density, cardBg, strokeColor);
             fetchPlansFromNetwork(plansContainer, density, pad16, cardBg, strokeColor, primaryText, secondaryText, accentG, cachePrefs);
         }
     }
@@ -785,7 +855,7 @@ public class LicenseActivity extends BaseActivity {
                         .apply();
                 
                 runOnUiThread(() -> {
-                    plansContainer.removeAllViews();
+                    clearPlansContainer(plansContainer);
                     try {
                         for (int i = 0; i < plansArray.length(); i++) {
                             org.json.JSONObject planObj = plansArray.getJSONObject(i);
@@ -797,7 +867,7 @@ public class LicenseActivity extends BaseActivity {
                 });
             } catch (Throwable t) {
                 runOnUiThread(() -> {
-                    plansContainer.removeAllViews();
+                    clearPlansContainer(plansContainer);
                     try {
                         org.json.JSONObject monthlyFallback = new org.json.JSONObject();
                         monthlyFallback.put("id", 2);

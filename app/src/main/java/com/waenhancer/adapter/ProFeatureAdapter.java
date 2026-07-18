@@ -105,7 +105,7 @@ public class ProFeatureAdapter extends RecyclerView.Adapter<ProFeatureAdapter.Vi
                     iconRes = getResId(context, "eye_enabled", "drawable");
                 } else if ("always_typing_global".equals(key)) {
                     iconRes = getResId(context, "edit2", "drawable");
-                } else if ("floating_bottom_bar_pill_design".equals(key)) {
+                } else if ("floating_bottom_bar_pill_design".equals(key) || "unlock_premium_customization".equals(key)) {
                     iconRes = getResId(context, "ic_palette", "drawable");
                 } else if ("file_size_spoofer".equals(key)) {
                     iconRes = getResId(context, "ic_media", "drawable");

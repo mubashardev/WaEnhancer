@@ -94,9 +94,17 @@ public class ProFeaturesActivity extends BaseActivity {
                             || "send_audio_as_voice_status".equals(key)) {
 
                         if (ProHelper.isLimitedFreePreferenceEnabled(key)) {
-                            limitedFreeFeatures.add(feature);
+                            if ("unlock_premium_customization".equals(key)) {
+                                limitedFreeFeatures.add(0, feature);
+                            } else {
+                                limitedFreeFeatures.add(feature);
+                            }
                         } else {
-                            proFeatures.add(feature);
+                            if ("unlock_premium_customization".equals(key)) {
+                                proFeatures.add(0, feature);
+                            } else {
+                                proFeatures.add(feature);
+                            }
                         }
                     }
                 }
@@ -124,7 +132,7 @@ public class ProFeaturesActivity extends BaseActivity {
         }
 
         if (tvLimitedFreeFeaturesTitle != null) {
-            tvLimitedFreeFeaturesTitle.setText(isPro ? "Active Promo Features" : "Limited Free Features (Pro Recommended)");
+            tvLimitedFreeFeaturesTitle.setText(isPro ? "Active Promo Features" : "Limited Free Features (Pro Soon)");
         }
     }
 

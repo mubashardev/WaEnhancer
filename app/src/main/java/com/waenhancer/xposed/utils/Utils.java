@@ -452,7 +452,7 @@ public class Utils {
         var channel = new NotificationChannel("waex", "Wa Enhancer X", NotificationManager.IMPORTANCE_HIGH);
         notificationManager.createNotificationChannel(channel);
         var notification = new NotificationCompat.Builder(context, "waex")
-                .setSmallIcon(com.waenhancer.R.drawable.ic_notifications_black_24dp)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle(title)
                 .setContentText(content)
                 .setAutoCancel(true)

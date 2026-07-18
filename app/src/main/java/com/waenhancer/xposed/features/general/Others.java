@@ -945,8 +945,8 @@ public class Others extends Feature {
                     CompletableFuture.runAsync(() -> {
                         try {
                             showCallInformation(param.args[0], userJid);
-                        } catch (Exception e) {
-                            logDebug(e);
+                        } catch (Throwable t) {
+                            logDebug(t);
                         }
                     });
                 }
@@ -954,7 +954,15 @@ public class Others extends Feature {
         });
     }
 
-    private void showCallInformation(Object wamCall, FMessageWpp.UserJid userJid) throws Exception {
+    private static Object getObjectFieldSafe(Object obj, String fieldName) {
+        try {
+            return XposedHelpers.getObjectField(obj, fieldName);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private void showCallInformation(Object wamCall, FMessageWpp.UserJid userJid) throws Throwable {
         if (userJid.isGroup()) {
             return;
         }
@@ -965,38 +973,47 @@ public class Others extends Feature {
             sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.contact_s, "Contact: %s"), contact)).append("\n");
         }
         sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.phone_number_s, "Number: +%s"), number)).append("\n");
-        var ip = (String) XposedHelpers.getObjectField(wamCall, "callPeerIpStr");
+        
+        var ip = (String) getObjectFieldSafe(wamCall, "callPeerIpStr");
         if (ip != null) {
-            var client = new OkHttpClient.Builder().build();
-            var url = "http://ip-api.com/json/" + ip;
-            var request = new Request.Builder().url(url).build();
-            var content = client.newCall(request).execute().body().string();
-            var json = new JSONObject(content);
-            var country = json.getString("country");
-            var city = json.getString("city");
-            var isp = json.getString("isp");
-            var region = json.getString("regionName");
-            var timeZone = json.getString("timezone");
-            if (isp != "null") {
-                sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.isp_s, "ISP: %s"), isp)).append("\n");
+            try {
+                var client = new OkHttpClient.Builder().build();
+                var url = "http://ip-api.com/json/" + ip;
+                var request = new Request.Builder().url(url).build();
+                var content = client.newCall(request).execute().body().string();
+                var json = new JSONObject(content);
+                var country = json.optString("country", "Unknown");
+                var city = json.optString("city", "Unknown");
+                var isp = json.optString("isp", "null");
+                var region = json.optString("regionName", "null");
+                var timeZone = json.optString("timezone", "null");
+                if (!"null".equals(isp)) {
+                    sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.isp_s, "ISP: %s"), isp)).append("\n");
+                }
+                if (!"null".equals(region)) {
+                    sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.region_s, "Region: %s"), region)).append("\n");
+                }
+                if (!"null".equals(timeZone)) {
+                    sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.timezone_s, "Timezone: %s"), timeZone)).append("\n");
+                }
+                sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.country_s, "Country: %s"), country)).append("\n")
+                  .append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.city_s, "City: %s"), city)).append("\n")
+                  .append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.ip_s, "IP: %s"), ip)).append("\n");
+            } catch (Throwable e) {
+                sb.append("IP: ").append(ip).append("\n");
             }
-            if (region != "null") {
-                sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.region_s, "Region: %s"), region)).append("\n");
-            }
-            if (timeZone != "null") {
-                sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.timezone_s, "Timezone: %s"), timeZone)).append("\n");
-            }
-
-            sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.country_s, "Country: %s"), country)).append("\n").append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.city_s, "City: %s"), city)).append("\n").append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.ip_s, "IP: %s"), ip)).append("\n");
         }
-        var platform = (String) XposedHelpers.getObjectField(wamCall, "callPeerPlatform");
+        
+        var platform = (String) getObjectFieldSafe(wamCall, "callPeerPlatform");
         if (platform != null) {
             sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.platform_s, "Platform: %s"), platform)).append("\n");
         }
-        var wppVersion = (String) XposedHelpers.getObjectField(wamCall, "callPeerAppVersion");
+        var wppVersion = (String) getObjectFieldSafe(wamCall, "callPeerAppVersion");
         if (wppVersion != null) {
             sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.wpp_version_s, "WhatsApp Version: %s"), wppVersion)).append("\n");
         }
+        
+        XposedBridge.log("[WAEX] Call Info: " + sb.toString().replace("\n", ", "));
         Utils.showNotification(FeatureLoader.getModuleString(Utils.getApplication(), R.string.call_information, "Call Information"), sb.toString());
     }
 

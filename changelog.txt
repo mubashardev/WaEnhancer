@@ -10,5 +10,7 @@
 - Improved Delete for me messages ui
 
 [Fixes]
+- Fixed additional call information not showing
+- Fixed status bugs
 - Fixed the preview icon not showing/working on image messages
 - Improved the reliability of the long-press feature on messages

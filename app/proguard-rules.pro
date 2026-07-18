@@ -83,6 +83,17 @@
 # Keep the plugin API interfaces and support classes intact for helper/pro plugins
 -keep class com.waex.api.** { *; }
 
+# Keep the plugin context implementation classes — the pro helper calls back into these
+# through the IPlugin/IPluginContext/ICoreBridge/IHookService API at runtime.
+# R8's -repackageclasses would move these to package 'Z' and rename their members,
+# causing NoSuchMethodError / AbstractMethodError when the helper plugin calls back.
+-keep class com.waenhancer.xposed.core.plugins.PluginContextImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.IsolatedParentClassLoader { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.CoreBridgeImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.HookServiceImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.ObfuscationServiceImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.StateServiceImpl { *; }
+
 # =============================================================================
 # 3. LICENSING LAYER REFLECTION SAFETY (GAP CLOSED)
 # =============================================================================

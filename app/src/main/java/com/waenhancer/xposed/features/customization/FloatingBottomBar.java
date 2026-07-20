@@ -93,6 +93,7 @@ public class FloatingBottomBar extends Feature {
     private static int userIconSizeDp = 24;
     private static int userTextSizeSp = 12;
     private static int userVerticalPaddingDp = 6;
+    private static int userIconLabelSpacingDp = 2;
 
     public FloatingBottomBar(@NonNull ClassLoader loader, @NonNull SharedPreferences preferences) {
         super(loader, preferences);
@@ -118,6 +119,7 @@ public class FloatingBottomBar extends Feature {
         userIconSizeDp = prefs.getInt("floating_bottom_bar_icon_size", 24);
         userTextSizeSp = prefs.getInt("floating_bottom_bar_text_size", 12);
         userVerticalPaddingDp = prefs.getInt("floating_bottom_bar_padding_vertical", 6);
+        userIconLabelSpacingDp = prefs.getInt("floating_bottom_bar_icon_label_spacing", 2);
 
 
         // Hook the tab frame container
@@ -274,9 +276,13 @@ public class FloatingBottomBar extends Feature {
                                 if (isUpdating) return;
                                 isUpdating = true;
                                 try {
-                                    if ((pillDesignPro || pillDesignIos) && v.getMinimumHeight() != 0) {
+                                    // Material BottomNavigationView has a hardcoded minHeight (56dp/80dp).
+                                    // If we don't strip it, the pill stays artificially tall, adding
+                                    // massive empty padding below the labels when spacing is set to 0.
+                                    if (v.getMinimumHeight() != 0) {
                                         v.setMinimumHeight(0);
                                     }
+                                    
                                     View targetLayoutView = v;
                                     FrameLayout host = glassHosts.get(v);
                                     if (host != null) {
@@ -290,7 +296,10 @@ public class FloatingBottomBar extends Feature {
                                         int systemInsetBottom = getSystemInsetBottomSafely(v);
                                         int marginBottom = dp(density, userBottomMarginDp) + systemInsetBottom;
                                         
-                                        int targetHeight = (int) (((pillDesignPro || pillDesignIos) ? 50 : 64) * density);
+                                        float textHeightDp = userTextSizeSp * 1.35f;
+                                        int calculatedHeightDp = (int) (userIconSizeDp + textHeightDp + userIconLabelSpacingDp + (2 * userVerticalPaddingDp));
+                                        int targetHeight = (int) (calculatedHeightDp * density);
+
                                         if (mlp.leftMargin != marginSide || mlp.rightMargin != marginSide || mlp.bottomMargin != marginBottom || mlp.height != targetHeight) {
                                             mlp.leftMargin = marginSide;
                                             mlp.rightMargin = marginSide;
@@ -318,7 +327,11 @@ public class FloatingBottomBar extends Feature {
                             int marginSide = dp(density, userSideMarginDp);
                             int systemInsetBottom = getSystemInsetBottomSafely(view);
                             int marginBottom = dp(density, userBottomMarginDp) + systemInsetBottom;
-                            int targetHeight = (int) (((pillDesignPro || pillDesignIos) ? 50 : 64) * density);
+                            
+                            float textHeightDp = userTextSizeSp * 1.35f;
+                            int calculatedHeightDp = (int) (userIconSizeDp + textHeightDp + userIconLabelSpacingDp + (2 * userVerticalPaddingDp));
+                            int targetHeight = (int) (calculatedHeightDp * density);
+                            
                             mlp.leftMargin = marginSide;
                             mlp.rightMargin = marginSide;
                             mlp.bottomMargin = marginBottom;
@@ -665,7 +678,7 @@ public class FloatingBottomBar extends Feature {
                     ViewGroup.LayoutParams newLp = null;
 
                         if (targetRoot instanceof FrameLayout) {
-                            FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(
                                 ViewGroup.LayoutParams.MATCH_PARENT,
                                 ViewGroup.LayoutParams.WRAP_CONTENT
                             );
@@ -708,7 +721,13 @@ public class FloatingBottomBar extends Feature {
 
                         if (newLp instanceof ViewGroup.MarginLayoutParams) {
                             ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) newLp;
-                            int targetHeight = (int) (((pillDesignPro || pillDesignIos) ? 50 : 64) * density);
+                            
+                            // Dynamically calculate the exact required pill height to tightly wrap contents
+                            // icon size + text size + spacing + (2 * vertical padding)
+                            float textHeightDp = userTextSizeSp * 1.35f; // Approx height of text in dp
+                            int calculatedHeightDp = (int) (userIconSizeDp + textHeightDp + userIconLabelSpacingDp + (2 * userVerticalPaddingDp));
+                            int targetHeight = (int) (calculatedHeightDp * density);
+                            
                             mlp.leftMargin = marginSide;
                             mlp.rightMargin = marginSide;
                             mlp.bottomMargin = marginBottom;
@@ -1285,9 +1304,13 @@ public class FloatingBottomBar extends Feature {
                 bottomNav.setOutlineProvider(ViewOutlineProvider.BACKGROUND);
             }
 
+            float textHeightDp = userTextSizeSp * 1.35f;
+            int calculatedHeightDp = (int) (userIconSizeDp + textHeightDp + userIconLabelSpacingDp + (2 * userVerticalPaddingDp));
+            int targetHeight = (int) (calculatedHeightDp * density);
+
             FrameLayout.LayoutParams navLp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    (int) (((pillDesignPro || pillDesignIos) ? 50 : 64) * density),
+                    targetHeight,
                     Gravity.BOTTOM
             );
             glassHosts.put(bottomNav, host);
@@ -1620,10 +1643,42 @@ public class FloatingBottomBar extends Feature {
     private static void applyCustomSizesAndPaddings(ViewGroup menuView, float density) {
         if (menuView == null) return;
         try {
+            // Strip any padding injected by Material's WindowInsets on the menuView itself
+            menuView.setPadding(0, 0, 0, 0);
+            menuView.setMinimumHeight(0);
+
+            int maxExactHeight = 0;
             for (int i = 0; i < menuView.getChildCount(); i++) {
                 View itemView = menuView.getChildAt(i);
+                itemView.setMinimumHeight(0);
                 if (itemView instanceof ViewGroup) {
-                    adjustIconAndText((ViewGroup) itemView, density);
+                    int exactH = adjustIconAndText((ViewGroup) itemView, density);
+                    if (exactH > maxExactHeight) {
+                        maxExactHeight = exactH;
+                    }
+                }
+            }
+
+            if (maxExactHeight > 0) {
+                View bottomNav = (View) menuView.getParent();
+                if (bottomNav != null) {
+                    int verticalPadding = (int) (userVerticalPaddingDp * density);
+                    int targetPillHeight = maxExactHeight + (2 * verticalPadding);
+
+                    ViewGroup.LayoutParams navLp = bottomNav.getLayoutParams();
+                    if (navLp != null && navLp.height != targetPillHeight) {
+                        navLp.height = targetPillHeight;
+                        bottomNav.setLayoutParams(navLp);
+                    }
+
+                    FrameLayout host = glassHosts.get(bottomNav);
+                    if (host != null) {
+                        ViewGroup.LayoutParams hostLp = host.getLayoutParams();
+                        if (hostLp != null && hostLp.height != targetPillHeight) {
+                            hostLp.height = targetPillHeight;
+                            host.setLayoutParams(hostLp);
+                        }
+                    }
                 }
             }
         } catch (Throwable t) {
@@ -1631,26 +1686,42 @@ public class FloatingBottomBar extends Feature {
         }
     }
 
-    private static void adjustIconAndText(ViewGroup group, float density) {
+    private static int adjustIconAndText(ViewGroup group, float density) {
         fetchIds(group.getContext());
+
+        group.setPadding(0, 0, 0, 0);
+
+        View iconContainer = null;
+        View labelsGroup = null;
+
         for (int i = 0; i < group.getChildCount(); i++) {
             View child = group.getChildAt(i);
-            
+
             if (iconContainerId != 0 && child.getId() == iconContainerId) {
-                if (pillDesignPro || pillDesignIos) {
-                    child.setTranslationY(-7.5f * density);
-                } else {
-                    child.setTranslationY(-8f * density);
+                iconContainer = child;
+                child.setPadding(0, 0, 0, 0);
+                ViewGroup.LayoutParams lp = child.getLayoutParams();
+                if (lp instanceof ViewGroup.MarginLayoutParams) {
+                    ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
+                    mlp.topMargin = 0;
+                    mlp.bottomMargin = 0;
+                    mlp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    child.setLayoutParams(mlp);
                 }
             } else if (labelsGroupId != 0 && child.getId() == labelsGroupId) {
-                if (pillDesignPro || pillDesignIos) {
-                    child.setTranslationY(-1.5f * density);
-                } else {
-                    child.setTranslationY(8f * density);
+                labelsGroup = child;
+                child.setPadding(0, 0, 0, 0);
+                ViewGroup.LayoutParams lp = child.getLayoutParams();
+                if (lp instanceof ViewGroup.MarginLayoutParams) {
+                    ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
+                    mlp.topMargin = 0;
+                    mlp.bottomMargin = 0;
+                    child.setLayoutParams(mlp);
                 }
             }
 
             if (child instanceof ImageView) {
+                child.setPadding(0, 0, 0, 0);
                 if (userIconSizeDp != 24 && iconViewId != 0 && child.getId() == iconViewId) {
                     ImageView iv = (ImageView) child;
                     ViewGroup.LayoutParams lp = iv.getLayoutParams();
@@ -1662,14 +1733,47 @@ public class FloatingBottomBar extends Feature {
                     }
                 }
             } else if (child instanceof TextView) {
+                TextView tv = (TextView) child;
+                tv.setIncludeFontPadding(false);
+                tv.setPadding(0, 0, 0, 0);
+                ViewGroup.LayoutParams lp = tv.getLayoutParams();
+                if (lp instanceof ViewGroup.MarginLayoutParams) {
+                    ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
+                    mlp.topMargin = 0;
+                    mlp.bottomMargin = 0;
+                    tv.setLayoutParams(mlp);
+                }
                 if (userTextSizeSp != 12) {
-                    TextView tv = (TextView) child;
                     tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, userTextSizeSp);
                 }
             } else if (child instanceof ViewGroup) {
                 adjustIconAndText((ViewGroup) child, density);
             }
         }
+
+        // Override NavigationBarItemView's hardcoded onLayout calculations
+        if (iconContainer != null && labelsGroup != null) {
+            int spacing = (int) (userIconLabelSpacingDp * density);
+            
+            // Calculate exactly where the text should sit (right below the container)
+            int targetLabelTop = iconContainer.getBottom() + spacing;
+            int offset = targetLabelTop - labelsGroup.getTop();
+            
+            // Move it visually
+            labelsGroup.setTranslationY(offset);
+
+            int exactHeight = labelsGroup.getBottom() + offset;
+            
+            if (iconContainer.getBottom() > 0 && exactHeight > 0) {
+                ViewGroup.LayoutParams groupLp = group.getLayoutParams();
+                if (groupLp != null && groupLp.height != exactHeight) {
+                    groupLp.height = exactHeight;
+                    group.setLayoutParams(groupLp);
+                }
+                return exactHeight;
+            }
+        }
+        return 0;
     }
 
     private static int getSystemInsetBottomSafely(View view) {

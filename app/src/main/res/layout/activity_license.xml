@@ -291,7 +291,7 @@
                     android:layout_marginBottom="16dp" />
 
                 <!-- Get License Key Telegram Button -->
-                <com.google.android.material.button.MaterialButton
+                <!-- <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_open_telegram"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -304,7 +304,7 @@
                     app:cornerRadius="24dp"
                     android:paddingVertical="12dp"
                     android:textAppearance="?attr/textAppearanceLabelLarge"
-                    android:textStyle="bold" />
+                    android:textStyle="bold" /> -->
 
             </LinearLayout>
 

@@ -537,6 +537,39 @@
                                 android:textAppearance="?attr/textAppearanceBodyMedium"
                                 android:textStyle="bold" />
                         </LinearLayout>
+
+                        <!-- Icon-Label Spacing Slider -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/floating_bottom_bar_icon_label_spacing"
+                            android:textAppearance="?attr/textAppearanceTitleSmall"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.slider.Slider
+                                android:id="@+id/slider_icon_label_spacing"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:valueFrom="0"
+                                android:valueTo="12"
+                                android:stepSize="1" />
+
+                            <TextView
+                                android:id="@+id/txt_icon_label_spacing_val"
+                                android:layout_width="48dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="end"
+                                android:textAppearance="?attr/textAppearanceBodyMedium"
+                                android:textStyle="bold" />
+                        </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
@@ -686,12 +719,13 @@
                             <LinearLayout
                                 android:id="@+id/preview_bottom_bar"
                                 android:layout_width="match_parent"
-                                android:layout_height="64dp"
+                                android:layout_height="wrap_content"
                                 android:layout_marginHorizontal="16dp"
                                 android:layout_marginBottom="22dp"
                                 android:elevation="6dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
+                                android:gravity="center"
+                                android:orientation="horizontal"
+                                android:paddingVertical="6dp">
 
                                 <!-- Mock Tab Items inside Pill -->
                                 <LinearLayout
@@ -706,7 +740,6 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:paddingHorizontal="20dp"
-                                        android:paddingVertical="4dp"
                                         android:background="@drawable/wa_active_indicator">
 
                                         <ImageView
@@ -720,7 +753,7 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginTop="2dp"
+                                        android:layout_marginTop="0dp"
                                         android:text="Chats"
                                         android:textColor="#e9edef"
                                         android:textSize="10sp"
@@ -743,7 +776,7 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginTop="2dp"
+                                        android:layout_marginTop="0dp"
                                         android:text="Updates"
                                         android:textColor="#8696a0"
                                         android:textSize="10sp" />
@@ -765,7 +798,7 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginTop="2dp"
+                                        android:layout_marginTop="0dp"
                                         android:text="Communities"
                                         android:textColor="#8696a0"
                                         android:textSize="10sp" />
@@ -787,7 +820,7 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginTop="2dp"
+                                        android:layout_marginTop="0dp"
                                         android:text="Calls"
                                         android:textColor="#8696a0"
                                         android:textSize="10sp" />

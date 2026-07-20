@@ -541,6 +541,7 @@
     <string name="floating_bottom_bar_icon_size">Menu Icon Size</string>
     <string name="floating_bottom_bar_text_size">Menu Label Text Size</string>
     <string name="floating_bottom_bar_padding_vertical">Pill Vertical Padding</string>
+    <string name="floating_bottom_bar_icon_label_spacing">Icon-Label Spacing</string>
     <string name="pill_customization_desc">Customize colors, margins, opacity, radius and preview changes in real time</string>
     <string name="unlock_premium_customization">Unlock Premium Customization</string>
     <string name="unlock_premium_customization_sum">Unlocks exclusive visual themes, native app icons, premium sticker packs, and custom ringtones</string>

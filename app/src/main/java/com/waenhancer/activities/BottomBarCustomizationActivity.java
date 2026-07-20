@@ -64,6 +64,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
     private Slider sliderIconSize;
     private Slider sliderTextSize;
     private Slider sliderPaddingVertical;
+    private Slider sliderIconLabelSpacing;
     private View layoutGlassOpacity;
     
     private TextView txtRadiusVal;
@@ -74,6 +75,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
     private TextView txtIconSizeVal;
     private TextView txtTextSizeVal;
     private TextView txtPaddingVerticalVal;
+    private TextView txtIconLabelSpacingVal;
 
     // Preview views
     private View previewFab;
@@ -117,6 +119,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         sliderIconSize = findViewById(R.id.slider_icon_size);
         sliderTextSize = findViewById(R.id.slider_text_size);
         sliderPaddingVertical = findViewById(R.id.slider_padding_vertical);
+        sliderIconLabelSpacing = findViewById(R.id.slider_icon_label_spacing);
         layoutGlassOpacity = findViewById(R.id.layout_glass_opacity);
 
         txtRadiusVal = findViewById(R.id.txt_radius_val);
@@ -127,6 +130,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         txtIconSizeVal = findViewById(R.id.txt_icon_size_val);
         txtTextSizeVal = findViewById(R.id.txt_text_size_val);
         txtPaddingVerticalVal = findViewById(R.id.txt_padding_vertical_val);
+        txtIconLabelSpacingVal = findViewById(R.id.txt_icon_label_spacing_val);
 
         previewFab = findViewById(R.id.preview_fab);
         previewBottomBar = findViewById(R.id.preview_bottom_bar);
@@ -193,6 +197,10 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         sliderPaddingVertical.setValue(paddingVertical);
         txtPaddingVerticalVal.setText(paddingVertical + "dp");
 
+        int iconLabelSpacing = prefs.getInt("floating_bottom_bar_icon_label_spacing", 2);
+        sliderIconLabelSpacing.setValue(iconLabelSpacing);
+        txtIconLabelSpacingVal.setText(iconLabelSpacing + "dp");
+
         // Set Listeners & Bind to Preview Real-Time Updates
         switchFloating.setOnCheckedChangeListener((buttonView, isChecked) -> {
             layoutCustomizationControls.setVisibility(isChecked ? View.VISIBLE : View.GONE);
@@ -255,6 +263,11 @@ public class BottomBarCustomizationActivity extends BaseActivity {
             updateLivePreview();
         });
 
+        sliderIconLabelSpacing.addOnChangeListener((slider, value, fromUser) -> {
+            txtIconLabelSpacingVal.setText((int) value + "dp");
+            updateLivePreview();
+        });
+
         // Perform initial preview layout
         updateLivePreview();
     }
@@ -282,6 +295,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
             int marginHorizontal = (int) sliderMarginHorizontal.getValue();
             int fabOffset = (int) sliderFab.getValue();
             int opacity = (int) sliderOpacity.getValue();
+            int iconLabelSpacing = (int) sliderIconLabelSpacing.getValue();
 
             // 1. Update Preview Pill Layout Params & Margins
             ViewGroup.LayoutParams lp = previewBottomBar.getLayoutParams();
@@ -291,12 +305,12 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                     mlp.leftMargin = (int) (marginHorizontal * density);
                     mlp.rightMargin = (int) (marginHorizontal * density);
                     mlp.bottomMargin = (int) (marginBottom * density);
-                    lp.height = (int) ((isPro ? 50 : 64) * density);
+                    mlp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
                 } else {
                     mlp.leftMargin = 0;
                     mlp.rightMargin = 0;
                     mlp.bottomMargin = 0;
-                    lp.height = (int) (80 * density); // Standard height of classic WhatsApp bottom nav
+                    mlp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
                 }
                 previewBottomBar.setLayoutParams(mlp);
             }
@@ -360,8 +374,8 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                     }
                 }
                 
-                // Adjust horizontal/vertical padding inside the pill according to vertical padding slider
-                int verticalPadding = (isPro || isIosGlass) ? 0 : (int) (sliderPaddingVertical.getValue() * density);
+                // Adjust vertical padding inside the pill
+                int verticalPadding = (int) (sliderPaddingVertical.getValue() * density);
                 previewBottomBar.setPadding(
                         previewBottomBar.getPaddingLeft(),
                         verticalPadding,
@@ -408,12 +422,17 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                     if (tabGroup.getChildCount() >= 2) {
                         View iconContainer = tabGroup.getChildAt(0);
                         View labelView = tabGroup.getChildAt(1);
-                        if ((isPro || isIosGlass) && isFloating) {
-                            if (iconContainer != null) iconContainer.setTranslationY(-7.5f * density);
-                            if (labelView != null) labelView.setTranslationY(-1.5f * density);
-                        } else {
-                            if (iconContainer != null) iconContainer.setTranslationY(0);
-                            if (labelView != null) labelView.setTranslationY(0);
+                        // Reset translationY — we use padding/margins now, not translation hacks
+                        if (iconContainer != null) iconContainer.setTranslationY(0);
+                        if (labelView != null) {
+                            labelView.setTranslationY(0);
+                            // Apply icon-label spacing as marginTop on the label
+                            ViewGroup.LayoutParams labelLp = labelView.getLayoutParams();
+                            if (labelLp instanceof ViewGroup.MarginLayoutParams) {
+                                ViewGroup.MarginLayoutParams labelMlp = (ViewGroup.MarginLayoutParams) labelLp;
+                                labelMlp.topMargin = (int) (iconLabelSpacing * density);
+                                labelView.setLayoutParams(labelMlp);
+                            }
                         }
                     }
                 }
@@ -474,6 +493,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         int iconSize = (int) sliderIconSize.getValue();
         int textSize = (int) sliderTextSize.getValue();
         int paddingVertical = (int) sliderPaddingVertical.getValue();
+        int iconLabelSpacing = (int) sliderIconLabelSpacing.getValue();
 
         prefs.edit()
                 .putBoolean("floating_bottom_bar", floatingEnabled)
@@ -488,6 +508,7 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                 .putInt("floating_bottom_bar_icon_size", iconSize)
                 .putInt("floating_bottom_bar_text_size", textSize)
                 .putInt("floating_bottom_bar_padding_vertical", paddingVertical)
+                .putInt("floating_bottom_bar_icon_label_spacing", iconLabelSpacing)
                 .apply();
 
         Toast.makeText(this, R.string.configs_saved, Toast.LENGTH_SHORT).show();
@@ -546,6 +567,9 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         
         sliderPaddingVertical.setValue(6);
         txtPaddingVerticalVal.setText("6dp");
+        
+        sliderIconLabelSpacing.setValue(2);
+        txtIconLabelSpacingVal.setText("2dp");
         
         updateLivePreview();
         Toast.makeText(this, "Reset to default values", Toast.LENGTH_SHORT).show();

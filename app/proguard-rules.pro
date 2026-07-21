@@ -159,8 +159,11 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.slf4j.**
 
-# Firebase reflection safety
--dontwarn com.google.firebase.**
+# Firebase keep rules — required because App.java and HomeFragment.java access Firebase
+# via reflection (Class.forName / getMethod). Without these, R8 renames or removes
+# the classes and the reflection fails silently with ClassNotFoundException.
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
 
 # Markwon and Commonmark warning suppression
 -dontwarn org.commonmark.**

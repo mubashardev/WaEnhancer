@@ -86,10 +86,15 @@
             android:authorities="${applicationId}.provider"
             android:exported="true" />
 
+        <!-- Firebase auto-initialises its App object via this provider.
+             Collection stays OFF by default (see firebase_analytics_collection_enabled
+             and firebase_crashlytics_collection_enabled above) until the user consents. -->
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"
             android:authorities="${applicationId}.firebaseinitprovider"
-            tools:node="remove" />
+            android:exported="false"
+            android:initOrder="100" />
+
 
         <activity
             android:name=".activities.MainActivity"

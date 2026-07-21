@@ -8,8 +8,16 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.materialthemebuilder)
     alias(libs.plugins.kotlinAndroid)
-    alias(libs.plugins.google.services)
-    alias(libs.plugins.firebase.crashlytics)
+    // google-services and firebase-crashlytics are applied conditionally below
+    // so the build succeeds when google-services.json is absent (forks, local dev)
+}
+
+// Apply Firebase plugins only when google-services.json is present.
+// This keeps the build fork-friendly: contributors without the secret can build normally.
+val hasGoogleServices = file("google-services.json").exists()
+if (hasGoogleServices) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
+    apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)
 }
 
 kotlin {
@@ -62,6 +70,9 @@ android {
         buildConfigField("String", "NOTICES_URL", "\"$noticesUrl\"")
         multiDexEnabled = true
         resourceConfigurations += listOf("en", "ar", "de", "es", "fr", "id", "in", "it", "iw", "pt", "ru", "tr", "zh")
+
+        // Expose whether Firebase is compiled in so runtime code can guard reflection calls
+        buildConfigField("boolean", "FIREBASE_ENABLED", hasGoogleServices.toString())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -243,10 +254,12 @@ dependencies {
     implementation(libs.markwon.core)
     implementation(libs.markwon.html)
 
-    // Firebase
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.crashlytics)
+    // Firebase — only compiled in when google-services.json is present
+    if (hasGoogleServices) {
+        implementation(platform(libs.firebase.bom))
+        implementation(libs.firebase.analytics)
+        implementation(libs.firebase.crashlytics)
+    }
 }
 
 configurations.all {

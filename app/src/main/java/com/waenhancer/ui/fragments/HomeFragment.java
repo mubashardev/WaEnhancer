@@ -413,27 +413,22 @@ public class HomeFragment extends BaseFragment {
             dialog.setCancelable(false);
 
             ((MaterialTextView) view.findViewById(R.id.bs_title)).setText("Share Anonymous Crash Logs");
-            ((MaterialTextView) view.findViewById(R.id.bs_message)).setText("Help us fix bugs by sharing anonymous crash logs.\n\nYou can always change this preference later in Settings.");
+            ((MaterialTextView) view.findViewById(R.id.bs_message)).setText(
+                    "Help us fix bugs by sharing anonymous crash logs.\n\n" +
+                    "No personally identifiable information is collected. " +
+                    "You can always change this preference later in Settings → General.");
 
             MaterialButton acceptBtn = view.findViewById(R.id.bs_confirm_btn);
             acceptBtn.setText("Accept");
             acceptBtn.setOnClickListener(v -> {
-                prefs.edit().putBoolean("consent_crashlytics_asked", true)
-                        .putBoolean("enable_crash_analytics", true).apply();
-                if (!BuildConfig.DEBUG) {
-                    try {
-                        Class<?> firebaseAppClass = Class.forName("com.google.firebase.FirebaseApp");
-                        firebaseAppClass.getMethod("initializeApp", Context.class).invoke(null, requireContext().getApplicationContext());
-
-                        Class<?> firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
-                        Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", Context.class).invoke(null, requireContext());
-                        firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled", boolean.class).invoke(analyticsInstance, true);
-
-                        Class<?> firebaseCrashlyticsClass = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics");
-                        Object crashlyticsInstance = firebaseCrashlyticsClass.getMethod("getInstance").invoke(null);
-                        firebaseCrashlyticsClass.getMethod("setCrashlyticsCollectionEnabled", boolean.class).invoke(crashlyticsInstance, true);
-                    } catch (Throwable ignored) {
-                    }
+                prefs.edit()
+                        .putBoolean("consent_crashlytics_asked", true)
+                        .putBoolean("enable_crash_analytics", true)
+                        .apply();
+                // FirebaseInitProvider has already initialised the Firebase App object.
+                // We just need to enable collection — no initializeApp call needed.
+                if (BuildConfig.FIREBASE_ENABLED && !BuildConfig.DEBUG) {
+                    App.applyFirebaseConsent(requireContext(), true);
                 }
                 dialog.dismiss();
             });
@@ -441,8 +436,14 @@ public class HomeFragment extends BaseFragment {
             MaterialButton declineBtn = view.findViewById(R.id.bs_cancel_btn);
             declineBtn.setText("Decline");
             declineBtn.setOnClickListener(v -> {
-                prefs.edit().putBoolean("consent_crashlytics_asked", true)
-                        .putBoolean("enable_crash_analytics", false).apply();
+                prefs.edit()
+                        .putBoolean("consent_crashlytics_asked", true)
+                        .putBoolean("enable_crash_analytics", false)
+                        .apply();
+                // Explicitly disable in the current process (not just on next launch).
+                if (BuildConfig.FIREBASE_ENABLED && !BuildConfig.DEBUG) {
+                    App.applyFirebaseConsent(requireContext(), false);
+                }
                 dialog.dismiss();
             });
 
@@ -454,6 +455,7 @@ public class HomeFragment extends BaseFragment {
             dialog.show();
         }
     }
+
 
     private void openUrl(Context context, String url) {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));

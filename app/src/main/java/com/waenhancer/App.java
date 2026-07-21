@@ -67,24 +67,20 @@ public class App extends Application {
         instance = this;
         
         if (Application.getProcessName().equals(BuildConfig.APPLICATION_ID)) {
-            if (!BuildConfig.DEBUG) {
+            // Re-apply Firebase consent state from the saved preference.
+            // FirebaseInitProvider (restored in the manifest) auto-inits the Firebase App object,
+            // but collection stays OFF (manifest default = false) until we explicitly enable it.
+            // This block re-enables collection on subsequent launches for users who already consented.
+            if (BuildConfig.FIREBASE_ENABLED && !BuildConfig.DEBUG) {
                 try {
-                    boolean enableCrashAnalytics = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("enable_crash_analytics", false);
-                    if (enableCrashAnalytics) {
-                        Class<?> firebaseAppClass = Class.forName("com.google.firebase.FirebaseApp");
-                        firebaseAppClass.getMethod("initializeApp", Context.class).invoke(null, App.this);
-                        
-                        Class<?> firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
-                        Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", Context.class).invoke(null, App.this);
-                        firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled", boolean.class).invoke(analyticsInstance, true);
-                        
-                        Class<?> firebaseCrashlyticsClass = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics");
-                        Object crashlyticsInstance = firebaseCrashlyticsClass.getMethod("getInstance").invoke(null);
-                        firebaseCrashlyticsClass.getMethod("setCrashlyticsCollectionEnabled", boolean.class).invoke(crashlyticsInstance, true);
-                    }
-                } catch (Throwable ignored) {
+                    boolean consented = PreferenceManager.getDefaultSharedPreferences(this)
+                            .getBoolean("enable_crash_analytics", false);
+                    applyFirebaseConsent(this, consented);
+                } catch (Throwable e) {
+                    if (BuildConfig.DEBUG) Log.e("WaeX-Firebase", "Failed to apply Firebase consent state", e);
                 }
             }
+
 
             // Local expiration check (offline fail-safe)
             try {
@@ -242,6 +238,40 @@ public class App extends Application {
         Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".WHATSAPP.RESTART");
         intent.putExtra("PKG", packageWpp);
         sendBroadcast(intent);
+    }
+
+    /**
+     * Enables or disables Firebase Analytics and Crashlytics collection at runtime.
+     * Should only be called when {@link BuildConfig#FIREBASE_ENABLED} is {@code true}.
+     * Uses reflection so the code compiles even when Firebase is not on the classpath
+     * (i.e. when building without google-services.json).
+     *
+     * @param context  any valid Context
+     * @param enabled  {@code true} = user has consented; {@code false} = user has declined or revoked
+     */
+    public static void applyFirebaseConsent(Context context, boolean enabled) {
+        try {
+            Class<?> analyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
+            Object analyticsInstance = analyticsClass
+                    .getMethod("getInstance", Context.class)
+                    .invoke(null, context.getApplicationContext());
+            analyticsClass
+                    .getMethod("setAnalyticsCollectionEnabled", boolean.class)
+                    .invoke(analyticsInstance, enabled);
+        } catch (Throwable e) {
+            if (BuildConfig.DEBUG) Log.e("WaeX-Firebase", "Analytics consent apply failed", e);
+        }
+        try {
+            Class<?> crashlyticsClass = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics");
+            Object crashlyticsInstance = crashlyticsClass
+                    .getMethod("getInstance")
+                    .invoke(null);
+            crashlyticsClass
+                    .getMethod("setCrashlyticsCollectionEnabled", boolean.class)
+                    .invoke(crashlyticsInstance, enabled);
+        } catch (Throwable e) {
+            if (BuildConfig.DEBUG) Log.e("WaeX-Firebase", "Crashlytics consent apply failed", e);
+        }
     }
 
     public static void changeLanguage(Context context) {

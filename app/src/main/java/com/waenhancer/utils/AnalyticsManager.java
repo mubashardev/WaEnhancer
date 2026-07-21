@@ -20,10 +20,11 @@ public class AnalyticsManager {
 
     /**
      * Log an event to Firebase Analytics.
-     * Can be called from any process.
+     * Can be called from any process. No-op when {@link BuildConfig#FIREBASE_ENABLED} is false
+     * (i.e. built without google-services.json) or when the user has not consented.
      */
     public static void logEvent(Context context, String eventName, Bundle params) {
-        if (context == null || BuildConfig.DEBUG) return;
+        if (context == null || BuildConfig.DEBUG || !BuildConfig.FIREBASE_ENABLED) return;
         
         // If in main process, log directly
         if (context.getPackageName().equals(BuildConfig.APPLICATION_ID)) {
@@ -38,6 +39,7 @@ public class AnalyticsManager {
             logViaProvider(context, eventName, params);
         }
     }
+
 
     private static void logDirectly(Context context, String eventName, Bundle params) {
         try {

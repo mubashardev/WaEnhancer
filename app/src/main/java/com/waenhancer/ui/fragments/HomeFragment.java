@@ -914,82 +914,72 @@ public class HomeFragment extends BaseFragment {
             var installedVersion = packageInfo.versionName;
             versionView.setText(installedVersion);
 
-            var supportedList = Arrays.asList(activity.getResources().getStringArray(supportedArrayResId));
+            var supportedList = new ArrayList<>(Arrays.asList(activity.getResources().getStringArray(supportedArrayResId)));
+            var prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+            boolean isCustomizeEnabled = prefs.getBoolean("customize_supported_versions", false);
+            if (isCustomizeEnabled) {
+                String customKey = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "custom_versions_wpp" : "custom_versions_business";
+                java.util.Set<String> customSet = prefs.getStringSet(customKey, null);
+                if (customSet != null) {
+                    supportedList.addAll(customSet);
+                }
+            }
+
             boolean isSupported = false;
+            boolean isCustomSupported = false;
             if (installedVersion != null) {
-                isSupported = supportedList.stream().anyMatch(s -> installedVersion.startsWith(s.replace(".xx", "")));
+                isSupported = supportedList.stream().anyMatch(s -> {
+                    String target = s.endsWith(".xx") ? s.replace(".xx", "") : s;
+                    return installedVersion.startsWith(target);
+                });
+
+                if (isSupported && isCustomizeEnabled) {
+                    // Check if it's not supported by standard/system array
+                    var systemList = Arrays.asList(activity.getResources().getStringArray(supportedArrayResId));
+                    boolean systemSupported = systemList.stream().anyMatch(s -> installedVersion.startsWith(s.replace(".xx", "")));
+                    if (!systemSupported) {
+                        isCustomSupported = true;
+                    }
+                }
             }
 
             unsupportedBtnView.setVisibility(isSupported ? View.GONE : View.VISIBLE);
             if (!isSupported) {
                 unsupportedBtnView.setOnClickListener(v -> {
-                    BottomSheetHelper.showInfo(
-                            activity,
-                            "Unsupported Version",
-                            "The installed WaEnhancer X has no support for your installed version of WhatsApp. It may not work as expected. Please either update WaEnhancer X, install a supported version of WhatsApp, or open an issue on GitHub.");
+                    showUnsupportedVersionDialog(activity, packageName);
                 });
             }
 
             if (isSupported) {
                 boolean isBetaModule = BuildConfig.VERSION_NAME.toLowerCase().contains("beta");
-                if (!isBetaModule) {
+                if (!isBetaModule && ApkMirrorFeedHelper.isBetaVersion(activity, packageName, installedVersion)) {
+                    statusView.setText("Beta Unsupported");
+                    statusView.setTextColor(colorError);
+                    iconView.setImageResource(R.drawable.ic_round_error_outline_24);
+                    iconView.setColorFilter(colorError);
 
-                    if (ApkMirrorFeedHelper.isBetaVersion(activity, packageName, installedVersion)) {
-                        statusView.setText("Beta Unsupported");
-                        statusView.setTextColor(colorError);
-                        iconView.setImageResource(R.drawable.ic_round_error_outline_24);
-                        iconView.setColorFilter(colorError);
+                    unsupportedBtnView.setVisibility(View.VISIBLE);
+                    unsupportedBtnView.setOnClickListener(v -> {
+                        showBetaIssueDialog(activity, packageName);
+                    });
 
-                        String appName = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "WhatsApp" : "WhatsApp Business";
-                        rowView.setOnClickListener(v -> {
-                            try {
-                                BottomSheetDialog dialog = new BottomSheetDialog(activity);
-                                View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_action, null);
-                                dialog.setContentView(view);
-
-                                ((MaterialTextView) view.findViewById(R.id.bs_title)).setText("WhatsApp Beta Detected");
-                                ((MaterialTextView) view.findViewById(R.id.bs_message)).setText(
-                                        "You are using a beta version of " + appName + " while WaEnhancerX is currently set to the Stable update channel.\n\nTo ensure full compatibility and stay up-to-date with every new WhatsApp beta update, we highly recommend switching WaEnhancerX to the Beta update channel.");
-
-                                MaterialButton okBtn = view.findViewById(R.id.bs_confirm_btn);
-                                okBtn.setText("Leave WhatsApp Beta");
-                                okBtn.setOnClickListener(v2 -> {
-                                    try {
-                                        String url = FeatureLoader.PACKAGE_WPP.equals(packageName)
-                                                ? "https://play.google.com/apps/testing/com.whatsapp"
-                                                : "https://play.google.com/apps/testing/com.whatsapp.w4b";
-                                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        activity.startActivity(intent);
-                                    } catch (Exception e) {
-                                        Log.e("WAE_BETA", "Failed to open beta URL: " + e.getMessage());
-                                    }
-                                    dialog.dismiss();
-                                });
-
-                                MaterialButton cancelBtn = view.findViewById(R.id.bs_cancel_btn);
-                                cancelBtn.setText("Switch to WAEX Beta");
-                                cancelBtn.setOnClickListener(v2 -> {
-                                    try {
-                                        Intent intent = new Intent(activity, ChangelogActivity.class);
-                                        activity.startActivity(intent);
-                                    } catch (Exception e) {
-                                        Log.e("WAE_BETA", "Failed to open ChangelogActivity: " + e.getMessage());
-                                    }
-                                    dialog.dismiss();
-                                });
-
-                                dialog.show();
-                            } catch (Exception e) {
-                                Log.e("WAE_BETA", "Error showing bottom sheet: " + e.getMessage());
-                            }
-                        });
-                    }
+                    rowView.setOnClickListener(v -> {
+                        showBetaIssueDialog(activity, packageName);
+                    });
                 } else {
-                    statusView.setText("Supported");
-                    statusView.setTextColor(colorSuccess);
-                    iconView.setImageResource(R.drawable.ic_round_check_circle_24);
-                    iconView.setColorFilter(colorSuccess);
+                    if (isCustomSupported) {
+                        statusView.setText("Custom Supported");
+                        TypedValue typedValue = new TypedValue();
+                        activity.getTheme().resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
+                        statusView.setTextColor(typedValue.data);
+                        iconView.setImageResource(R.drawable.ic_round_check_circle_24);
+                        iconView.setColorFilter(typedValue.data);
+                    } else {
+                        statusView.setText("Supported");
+                        statusView.setTextColor(colorSuccess);
+                        iconView.setImageResource(R.drawable.ic_round_check_circle_24);
+                        iconView.setColorFilter(colorSuccess);
+                    }
                     rowView.setOnClickListener(null);
                     rowView.setClickable(false);
                 }
@@ -998,8 +988,9 @@ public class HomeFragment extends BaseFragment {
                 statusView.setTextColor(colorError);
                 iconView.setImageResource(R.drawable.ic_round_error_outline_24);
                 iconView.setColorFilter(colorError);
-                rowView.setOnClickListener(null);
-                rowView.setClickable(false);
+                rowView.setOnClickListener(v -> {
+                    showUnsupportedVersionDialog(activity, packageName);
+                });
             }
         } catch (Exception e) {
             versionView.setText("Not Installed");
@@ -1010,6 +1001,146 @@ public class HomeFragment extends BaseFragment {
             rowView.setOnClickListener(null);
             rowView.setClickable(false);
         }
+    }
+
+    private void showBetaIssueDialog(FragmentActivity activity, String packageName) {
+        String appName = FeatureLoader.PACKAGE_WPP.equals(packageName) ? "WhatsApp" : "WhatsApp Business";
+        try {
+            BottomSheetDialog dialog = new BottomSheetDialog(activity);
+            View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_action, null);
+            dialog.setContentView(view);
+
+            ((MaterialTextView) view.findViewById(R.id.bs_title)).setText("WhatsApp Beta Detected");
+            ((MaterialTextView) view.findViewById(R.id.bs_message)).setText(
+                    "You are using a beta version of " + appName + " while WaEnhancerX is currently set to the Stable update channel.\n\n" +
+                    "To ensure full compatibility and stay up-to-date with every new WhatsApp beta update, we highly recommend switching WaEnhancerX to the Beta update channel.");
+
+            MaterialButton okBtn = view.findViewById(R.id.bs_confirm_btn);
+            okBtn.setText("Leave WhatsApp Beta");
+            okBtn.setOnClickListener(v2 -> {
+                try {
+                    String url = FeatureLoader.PACKAGE_WPP.equals(packageName)
+                            ? "https://play.google.com/apps/testing/com.whatsapp"
+                            : "https://play.google.com/apps/testing/com.whatsapp.w4b";
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    activity.startActivity(intent);
+                } catch (Exception e) {
+                    Log.e("WAE_BETA", "Failed to open beta URL: " + e.getMessage());
+                }
+                dialog.dismiss();
+            });
+
+            MaterialButton cancelBtn = view.findViewById(R.id.bs_cancel_btn);
+            cancelBtn.setText("Switch to WAEX Beta");
+            cancelBtn.setOnClickListener(v2 -> {
+                try {
+                    Intent intent = new Intent(activity, ChangelogActivity.class);
+                    activity.startActivity(intent);
+                } catch (Exception e) {
+                    Log.e("WAE_BETA", "Failed to open ChangelogActivity: " + e.getMessage());
+                }
+                dialog.dismiss();
+            });
+
+            dialog.show();
+        } catch (Exception e) {
+            Log.e("WAE_BETA", "Error showing bottom sheet: " + e.getMessage());
+        }
+    }
+
+    private void showUnsupportedVersionDialog(FragmentActivity activity, String packageName) {
+        try {
+            BottomSheetDialog dialog = new BottomSheetDialog(activity);
+            View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_action, null);
+            dialog.setContentView(view);
+
+            ((MaterialTextView) view.findViewById(R.id.bs_title)).setText("Unsupported Version");
+            ((MaterialTextView) view.findViewById(R.id.bs_message)).setText(
+                    "Your installed version of WhatsApp/Business is not officially supported by your current version of WaEnhancerX.\n\n" +
+                    "To resolve this, you can check if a newer update of WaEnhancerX is available, or directly enable customize version support to bypass the check.");
+
+            MaterialButton checkUpdateBtn = view.findViewById(R.id.bs_confirm_btn);
+            checkUpdateBtn.setText("Check for Update");
+            checkUpdateBtn.setOnClickListener(v2 -> {
+                dialog.dismiss();
+                runSolveUpdateCheck(activity);
+            });
+
+            MaterialButton customizeBtn = view.findViewById(R.id.bs_cancel_btn);
+            customizeBtn.setText("Customize Support");
+            customizeBtn.setOnClickListener(v2 -> {
+                dialog.dismiss();
+                enableCustomizeSupportAndRedirect(activity);
+            });
+
+            dialog.show();
+        } catch (Exception e) {
+            Log.e("WAE_UNSUPPORTED", "Error showing unsupported version dialog: " + e.getMessage());
+        }
+    }
+
+    private void runSolveUpdateCheck(FragmentActivity activity) {
+        Toast.makeText(activity, "Checking for latest version...", Toast.LENGTH_SHORT).show();
+        var updateChecker = new UpdateChecker(activity);
+        updateChecker.setSilent(true);
+        updateChecker.setOnUpdateFoundListener((version, tagName, changelog, publishedAt, downloadUrl) -> {
+            activity.runOnUiThread(() -> {
+                updateChecker.showUpdateDialog(version, tagName, changelog, publishedAt, downloadUrl);
+            });
+        });
+        
+        updateChecker.setOnNoUpdateFoundListener(() -> {
+            boolean customizeEnabled = PreferenceManager.getDefaultSharedPreferences(activity)
+                    .getBoolean("customize_supported_versions", false);
+            activity.runOnUiThread(() -> {
+                if (customizeEnabled) {
+                    Toast.makeText(activity, "You have the latest version. Redirecting to customize supported versions...", Toast.LENGTH_LONG).show();
+                    activity.startActivity(new Intent(activity, SupportedVersionsActivity.class));
+                } else {
+                    showEnableCustomizePrompt(activity);
+                }
+            });
+        });
+        
+        CompletableFuture.runAsync(updateChecker);
+    }
+
+    private void showEnableCustomizePrompt(FragmentActivity activity) {
+        try {
+            BottomSheetDialog dialog = new BottomSheetDialog(activity);
+            View view = LayoutInflater.from(activity).inflate(R.layout.bottom_sheet_action, null);
+            dialog.setContentView(view);
+
+            ((MaterialTextView) view.findViewById(R.id.bs_title)).setText("Latest Version Installed");
+            ((MaterialTextView) view.findViewById(R.id.bs_message)).setText(
+                    "You are already running the latest version of WaEnhancerX.\n\n" +
+                    "To proceed, you can enable Customize Version Support to allow your current WhatsApp version.");
+
+            MaterialButton confirmBtn = view.findViewById(R.id.bs_confirm_btn);
+            confirmBtn.setText("Enable Customize Support");
+            confirmBtn.setOnClickListener(v -> {
+                dialog.dismiss();
+                enableCustomizeSupportAndRedirect(activity);
+            });
+
+            MaterialButton cancelBtn = view.findViewById(R.id.bs_cancel_btn);
+            cancelBtn.setText("Cancel");
+            cancelBtn.setOnClickListener(v -> dialog.dismiss());
+
+            dialog.show();
+        } catch (Exception e) {
+            Log.e("WAE_UNSUPPORTED", "Error showing enable customize prompt: " + e.getMessage());
+        }
+    }
+
+    private void enableCustomizeSupportAndRedirect(FragmentActivity activity) {
+        PreferenceManager.getDefaultSharedPreferences(activity)
+                .edit()
+                .putBoolean("customize_supported_versions", true)
+                .apply();
+        Toast.makeText(activity, "Customized version support enabled!", Toast.LENGTH_SHORT).show();
+        activity.startActivity(new Intent(activity, SupportedVersionsActivity.class));
     }
 
     private void showBetaWarningDialog(FragmentActivity activity, String packageName, boolean forceShow) {

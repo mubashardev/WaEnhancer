@@ -735,7 +735,7 @@
                                     android:minWidth="0dp"
                                     android:paddingHorizontal="8dp"
                                     android:paddingVertical="4dp"
-                                    android:text="Why?"
+                                    android:text="Solve"
                                     android:textColor="?attr/colorError"
                                     android:textSize="12sp"
                                     android:visibility="gone" />
@@ -816,7 +816,7 @@
                                     android:minWidth="0dp"
                                     android:paddingHorizontal="8dp"
                                     android:paddingVertical="4dp"
-                                    android:text="Why?"
+                                    android:text="Solve"
                                     android:textColor="?attr/colorError"
                                     android:textSize="12sp"
                                     android:visibility="gone" />

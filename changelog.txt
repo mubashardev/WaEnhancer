@@ -1,4 +1,6 @@
-
+[Added]
+- Added version support for 2.26.29.xx WA/WB
 
 [Fixed]
 - Floating Pill Customization was not working as expected for some devices
+- Improved custom version support

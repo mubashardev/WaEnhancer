@@ -54,8 +54,18 @@ public class UpdateChecker implements Runnable {
         void onUpdateFound(String version, String tagName, String changelog, String publishedAt, String downloadUrl);
     }
 
+    public interface OnNoUpdateFoundListener {
+        void onNoUpdateFound();
+    }
+
+    private OnNoUpdateFoundListener mNoUpdateListener;
+
     public void setOnUpdateFoundListener(OnUpdateFoundListener listener) {
         this.mListener = listener;
+    }
+
+    public void setOnNoUpdateFoundListener(OnNoUpdateFoundListener listener) {
+        this.mNoUpdateListener = listener;
     }
 
     public void setSilent(boolean silent) {
@@ -245,8 +255,13 @@ public class UpdateChecker implements Runnable {
                 if (!mSilent) {
                     mActivity.runOnUiThread(() -> showUpdateDialog(finalVersion, finalTagName, finalChangelog, finalPublishedAt, finalDownloadUrl));
                 }
-            } else if (isManualCheck) {
-                mActivity.runOnUiThread(this::showAlreadyLatestDialog);
+            } else {
+                if (mNoUpdateListener != null) {
+                    mActivity.runOnUiThread(() -> mNoUpdateListener.onNoUpdateFound());
+                }
+                if (isManualCheck) {
+                    mActivity.runOnUiThread(this::showAlreadyLatestDialog);
+                }
             }
         } catch (Exception e) {
             String errMsg = "[UpdateChecker] Exception: " + e.getMessage();
@@ -282,7 +297,7 @@ public class UpdateChecker implements Runnable {
         }
     }
 
-    private void showUpdateDialog(String version, String tagName, String changelog, String publishedAt, String downloadUrl) {
+    public void showUpdateDialog(String version, String tagName, String changelog, String publishedAt, String downloadUrl) {
         try {
             var markwon = Markwon.create(mActivity);
             String releaseTypeBadge = getReleaseTypeBadge(tagName);

@@ -143,10 +143,15 @@ public class ProFeaturesActivity extends BaseActivity {
             String typeName = fragmentType.name();
             int position = fragmentType.getPosition();
 
-            if ("ACTIVITY".equals(typeName)) {
+            if ("ACTIVITY".equals(typeName) || "floating_bottom_bar_pill_design".equals(key) || "floating_bottom_bar_customizer".equals(key) || "filter_items".equals(key)) {
                 if ("deleted_messages_activity".equals(key)) {
-                    Intent intent = new Intent();
-                    intent.setClassName(this, "com.waenhancer.activities.DeletedMessagesActivity");
+                    Intent intent = new Intent(this, DeletedMessagesActivity.class);
+                    startActivity(intent);
+                } else if ("filter_items".equals(key)) {
+                    Intent intent = new Intent(this, FilterItemsActivity.class);
+                    startActivity(intent);
+                } else if ("floating_bottom_bar_pill_design".equals(key) || "floating_bottom_bar_customizer".equals(key)) {
+                    Intent intent = new Intent(this, BottomBarCustomizationActivity.class);
                     startActivity(intent);
                 }
                 return;

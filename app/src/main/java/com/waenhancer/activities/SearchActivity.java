@@ -117,11 +117,16 @@ public class SearchActivity extends BaseActivity implements SearchAdapter.OnFeat
 
     @Override
     public void onFeatureClick(SearchableFeature feature) {
-        if (feature.getFragmentType() == SearchableFeature.FragmentType.ACTIVITY) {
+        String key = feature.getKey();
+        if (feature.getFragmentType() == SearchableFeature.FragmentType.ACTIVITY || "floating_bottom_bar_pill_design".equals(key) || "floating_bottom_bar_customizer".equals(key) || "filter_items".equals(key)) {
             String parentKey = feature.getParentKey();
             Class<?> target = null;
-            if ("deleted_messages_activity".equals(feature.getKey())) {
+            if ("deleted_messages_activity".equals(key)) {
                 target = DeletedMessagesActivity.class;
+            } else if ("filter_items".equals(key)) {
+                target = FilterItemsActivity.class;
+            } else if ("floating_bottom_bar_pill_design".equals(key) || "floating_bottom_bar_customizer".equals(key)) {
+                target = BottomBarCustomizationActivity.class;
             } else if ("SupportedVersionsActivity".equals(parentKey)) {
                 target = SupportedVersionsActivity.class;
             } else if ("UpdateSettingsActivity".equals(parentKey)) {
@@ -129,8 +134,8 @@ public class SearchActivity extends BaseActivity implements SearchAdapter.OnFeat
             }
             if (target != null) {
                 startActivity(new Intent(this, target));
+                return;
             }
-            return;
         }
 
         // Navigate back to MainActivity with feature information

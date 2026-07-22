@@ -1,7 +1,10 @@
 package com.waenhancer.activities;
 
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.SharedPreferences;
+import com.waenhancer.BuildConfig;
+import java.util.ArrayList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -541,6 +544,23 @@ public class BottomBarCustomizationActivity extends BaseActivity {
                 .putInt("floating_bottom_bar_padding_vertical", paddingVertical)
                 .putInt("floating_bottom_bar_icon_label_spacing", iconLabelSpacing)
                 .apply();
+
+        // Broadcast preference change & manual restart prompt
+        try {
+            ArrayList<String> titles = new ArrayList<>();
+            titles.add(getString(R.string.pill_customization_title));
+
+            for (String pkg : new String[]{"com.whatsapp", "com.whatsapp.w4b"}) {
+                Intent prefsIntent = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+                prefsIntent.setPackage(pkg);
+                sendBroadcast(prefsIntent);
+
+                Intent restartIntent = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
+                restartIntent.setPackage(pkg);
+                restartIntent.putStringArrayListExtra("changed_titles", titles);
+                sendBroadcast(restartIntent);
+            }
+        } catch (Exception ignored) {}
 
         Toast.makeText(this, R.string.configs_saved, Toast.LENGTH_SHORT).show();
         finish();

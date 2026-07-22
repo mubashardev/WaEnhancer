@@ -739,18 +739,41 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             return;
         }
 
+        final String resolvedKey;
+        if ("floating_bottom_bar_pill_design".equals(preferenceKey)
+                || "floating_bottom_bar_scroll_hide".equals(preferenceKey)
+                || "floating_bottom_bar_scroll_hide_mode".equals(preferenceKey)
+                || "floating_bottom_bar_glass".equals(preferenceKey)
+                || "floating_bottom_bar_fill_color".equals(preferenceKey)
+                || "floating_bottom_bar_glass_opacity".equals(preferenceKey)) {
+            resolvedKey = "floating_bottom_bar_customizer";
+        } else {
+            resolvedKey = preferenceKey;
+        }
+
         // Small delay to ensure preference screen is fully loaded
         if (rootView != null) {
             rootView.postDelayed(() -> {
                 if (!isAdded()) {
                     return; // Fragment not attached
-
                 }
-                var preference = findPreference(preferenceKey);
+                var preference = findPreference(resolvedKey);
+                if (preference == null) {
+                    preference = findPreference(preferenceKey);
+                }
                 if (preference != null) {
                     scrollToPreference(preference);
                     // Highlight the preference for visibility
                     highlightPreference(preference);
+
+                    if ("floating_bottom_bar_pill_design".equals(preferenceKey) || "floating_bottom_bar_customizer".equals(preferenceKey)) {
+                        if (getContext() != null) {
+                            try {
+                                Intent intent = new Intent(getContext(), com.waenhancer.activities.BottomBarCustomizationActivity.class);
+                                startActivity(intent);
+                            } catch (Exception ignored) {}
+                        }
+                    }
                 }
             }, 100);
         }

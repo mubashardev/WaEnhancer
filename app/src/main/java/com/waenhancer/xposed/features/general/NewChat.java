@@ -34,6 +34,7 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.telephony.TelephonyManager;
 import android.text.InputFilter;
+import android.text.Spanned;
 import android.util.Log;
 import android.widget.Toast;
 import com.waenhancer.xposed.utils.ProHelper;
@@ -61,6 +62,7 @@ public class NewChat extends Feature {
     private static WeakReference<EditText> activeCcEditRef;
     private static WeakReference<EditText> activePhoneEditRef;
     private static String activeIso = "US";
+    private static int activePhoneMaxLength = -1;
     private static boolean isSelfUpdating = false;
 
     public NewChat(@NonNull ClassLoader loader, @NonNull SharedPreferences preferences) {
@@ -324,6 +326,42 @@ public class NewChat extends Feature {
             }
         });
 
+        edtPhone.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (isSelfUpdating) return;
+                String text = s.toString();
+                if (text.isEmpty()) return;
+
+                // 1. Remove hyphens and formatting characters
+                String cleaned = text.replaceAll("[+\\-()/\\s]", "");
+
+                // 2. Remove leading zeroes
+                cleaned = cleaned.replaceFirst("^0+", "");
+
+                // 3. Limit to max length if defined
+                if (activePhoneMaxLength > 0 && cleaned.length() > activePhoneMaxLength) {
+                    cleaned = cleaned.substring(0, activePhoneMaxLength);
+                }
+
+                if (!cleaned.equals(text)) {
+                    isSelfUpdating = true;
+                    try {
+                        edtPhone.setText(cleaned);
+                        edtPhone.setSelection(edtPhone.getText().length());
+                    } finally {
+                        isSelfUpdating = false;
+                    }
+                }
+            }
+        });
+
         // 3. Create and show AlertDialogWpp bottom sheet
         AlertDialogWpp alert = new AlertDialogWpp(activity);
         alert.setTitle("New Chat");
@@ -559,17 +597,11 @@ public class NewChat extends Feature {
     }
 
     private static void updatePhoneHintAndLength(Activity activity, EditText edtPhone, String cc, String activeIso) {
-        /* Log removed */
         if (edtPhone == null) return;
         String hint = getCountryHint(activity, cc, activeIso);
         edtPhone.setHint(hint);
-        int length = getCountryPhoneLength(activity, cc);
-        /* Log removed */
-        if (length > 0) {
-            edtPhone.setFilters(new InputFilter[]{new InputFilter.LengthFilter(length)});
-        } else {
-            edtPhone.setFilters(new InputFilter[0]);
-        }
+        activePhoneMaxLength = getCountryPhoneLength(activity, cc);
+        edtPhone.setFilters(new InputFilter[0]);
     }
 
     /**

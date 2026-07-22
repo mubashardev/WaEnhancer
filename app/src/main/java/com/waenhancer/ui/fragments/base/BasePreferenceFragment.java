@@ -76,7 +76,6 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
-    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
     protected SharedPreferences mPrefs;
     // Default keybox verify results are persisted in SharedPreferences via KeyboxVerificationImpl (pro module).
     private boolean suppressRestartBroadcast;
@@ -1025,7 +1024,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         boolean isBeta = "beta".equals(selectedChannel);
         String title = getString(isBeta ? R.string.release_channel_beta_install_title : R.string.release_channel_stable_install_title);
         String message = getString(isBeta ? R.string.release_channel_beta_install_message : R.string.release_channel_stable_install_message);
-        String url = isBeta ? RELEASES_URL : LATEST_STABLE_URL;
+        String url = RELEASES_URL;
 
         new AlertDialog.Builder(requireContext())
                 .setTitle(title)

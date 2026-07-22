@@ -84,7 +84,6 @@ import java.util.concurrent.TimeUnit;
 public class HomeFragment extends BaseFragment {
 
     private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
-    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
 
     /**
      * In-memory flag — reset to false every time the app process starts.
@@ -1239,7 +1238,7 @@ public class HomeFragment extends BaseFragment {
         boolean isBeta = "beta".equals(selectedChannel);
         String title = getString(isBeta ? R.string.release_channel_beta_install_title : R.string.release_channel_stable_install_title);
         String message = getString(isBeta ? R.string.release_channel_beta_install_message : R.string.release_channel_stable_install_message);
-        String url = isBeta ? RELEASES_URL : LATEST_STABLE_URL;
+        String url = RELEASES_URL;
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(title)
                 .setMessage(message)

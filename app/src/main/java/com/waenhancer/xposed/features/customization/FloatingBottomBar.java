@@ -82,6 +82,8 @@ public class FloatingBottomBar extends Feature {
     private static final WeakHashMap<View, FrameLayout> glassHosts = new WeakHashMap<>();
     private static final WeakHashMap<View, BlurView> glassBlurViews = new WeakHashMap<>();
     private static boolean scrollHideEnabled = true;
+    private static String scrollHideMode = "downward";
+    private static final WeakHashMap<View, Boolean> targetHideStates = new WeakHashMap<>();
     private static boolean glassEnabled = false;
     private static float glassOpacity = 35f;
     private static int glassFillColor = 0;
@@ -104,6 +106,7 @@ public class FloatingBottomBar extends Feature {
         if (!prefs.getBoolean("floating_bottom_bar", false)) return;
 
         scrollHideEnabled = prefs.getBoolean("floating_bottom_bar_scroll_hide", true);
+        scrollHideMode = prefs.getString("floating_bottom_bar_scroll_hide_mode", "downward");
         glassEnabled = prefs.getBoolean("floating_bottom_bar_glass", true);
         glassOpacity = getPrefFloat(prefs, "floating_bottom_bar_glass_opacity", 35f);
         glassFillColor = getPrefColor(prefs, "floating_bottom_bar_fill_color", 0);
@@ -910,16 +913,17 @@ public class FloatingBottomBar extends Feature {
         if (isMetaAiTabActive(bottomNav)) return;
         
         View barTarget = getBarAnimationTarget(bottomNav);
-        if (!barTarget.isShown()) return; // Do not animate if bottom bar is hidden on screen
-        
         float density = bottomNav.getContext().getResources().getDisplayMetrics().density;
         
         // Use cached preference to prevent disk I/O in hot scroll path
         if (!scrollHideEnabled) {
+            Boolean lastHide = targetHideStates.get(barTarget);
             Float lastTarget = targetTranslations.get(barTarget);
-            if (lastTarget == null || lastTarget != 0f) {
+            if ((lastHide != null && lastHide) || (lastTarget != null && lastTarget != 0f) || barTarget.getVisibility() != View.VISIBLE) {
+                targetHideStates.put(barTarget, false);
                 targetTranslations.put(barTarget, 0f);
-                barTarget.animate().translationY(0).setDuration(200).start();
+                barTarget.setVisibility(View.VISIBLE);
+                barTarget.animate().translationY(0f).alpha(1f).scaleX(1f).scaleY(1f).setDuration(200).start();
                 animateFabs(bottomNav, false, density);
             }
             return;
@@ -927,35 +931,78 @@ public class FloatingBottomBar extends Feature {
 
         if (Math.abs(dy) < 5) return; // Skip minor/jitter scroll actions
 
-        float targetTranslationY;
-        int height = barTarget.getHeight();
-        if (height <= 0) {
-            height = bottomNav.getHeight();
-        }
-        if (height <= 0) {
-            height = (int) (80 * density);
-        }
+        boolean hide = dy > 0;
 
-        if (dy > 0) {
-            targetTranslationY = height + (24 * density);
+        if ("invisible".equalsIgnoreCase(scrollHideMode)) {
+            Boolean lastHide = targetHideStates.get(barTarget);
+            if (lastHide != null && lastHide == hide) {
+                return;
+            }
+            targetHideStates.put(barTarget, hide);
+
+            if (hide) {
+                barTarget.animate()
+                    .alpha(0f)
+                    .scaleX(0.95f)
+                    .scaleY(0.95f)
+                    .setDuration(200)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .withEndAction(() -> {
+                        Boolean currentHide = targetHideStates.get(barTarget);
+                        if (currentHide != null && currentHide) {
+                            barTarget.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
+            } else {
+                barTarget.setVisibility(View.VISIBLE);
+                barTarget.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(200)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .withEndAction(null)
+                    .start();
+            }
+            animateFabs(bottomNav, hide, density);
         } else {
-            targetTranslationY = 0;
-        }
+            float targetTranslationY;
+            int height = barTarget.getHeight();
+            if (height <= 0) {
+                height = bottomNav.getHeight();
+            }
+            if (height <= 0) {
+                height = (int) (80 * density);
+            }
 
-        Float lastTarget = targetTranslations.get(barTarget);
-        if (lastTarget != null && lastTarget == targetTranslationY) {
-            // Already animating to this target, avoid thrashing
-            return;
-        }
-        targetTranslations.put(barTarget, targetTranslationY);
+            if (hide) {
+                targetTranslationY = height + (userBottomMarginDp * density) + (24 * density);
+            } else {
+                targetTranslationY = 0;
+            }
 
-        barTarget.animate()
-            .translationY(targetTranslationY)
-            .setDuration(250)
-            .setInterpolator(new AccelerateDecelerateInterpolator())
-            .start();
-        // Animate FABs in sync
-        animateFabs(bottomNav, dy > 0, density);
+            Float lastTarget = targetTranslations.get(barTarget);
+            if (lastTarget != null && lastTarget == targetTranslationY && barTarget.getVisibility() == View.VISIBLE) {
+                return;
+            }
+            targetTranslations.put(barTarget, targetTranslationY);
+            targetHideStates.put(barTarget, hide);
+
+            if (barTarget.getVisibility() != View.VISIBLE) {
+                barTarget.setVisibility(View.VISIBLE);
+                barTarget.setAlpha(1f);
+                barTarget.setScaleX(1f);
+                barTarget.setScaleY(1f);
+            }
+
+            barTarget.animate()
+                .translationY(targetTranslationY)
+                .setDuration(250)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .start();
+            animateFabs(bottomNav, hide, density);
+        }
     }
 
     private static void animateFabs(View bottomNav, boolean hide, float density) {

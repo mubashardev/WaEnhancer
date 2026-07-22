@@ -66,6 +66,11 @@ public class BottomBarCustomizationActivity extends BaseActivity {
     private Slider sliderPaddingVertical;
     private Slider sliderIconLabelSpacing;
     private View layoutGlassOpacity;
+    private MaterialSwitch switchScrollHide;
+    private View layoutScrollHideMode;
+    private RadioGroup scrollHideModeGroup;
+    private RadioButton radioHideDownward;
+    private RadioButton radioHideInvisible;
     
     private TextView txtRadiusVal;
     private TextView txtMarginVal;
@@ -201,10 +206,31 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         sliderIconLabelSpacing.setValue(iconLabelSpacing);
         txtIconLabelSpacingVal.setText(iconLabelSpacing + "dp");
 
+        switchScrollHide = findViewById(R.id.switch_scroll_hide);
+        layoutScrollHideMode = findViewById(R.id.layout_scroll_hide_mode);
+        scrollHideModeGroup = findViewById(R.id.scroll_hide_mode_group);
+        radioHideDownward = findViewById(R.id.radio_hide_downward);
+        radioHideInvisible = findViewById(R.id.radio_hide_invisible);
+
+        boolean scrollHideEnabled = prefs.getBoolean("floating_bottom_bar_scroll_hide", true);
+        switchScrollHide.setChecked(scrollHideEnabled);
+        layoutScrollHideMode.setVisibility(scrollHideEnabled ? View.VISIBLE : View.GONE);
+
+        String scrollHideMode = prefs.getString("floating_bottom_bar_scroll_hide_mode", "downward");
+        if ("invisible".equals(scrollHideMode)) {
+            radioHideInvisible.setChecked(true);
+        } else {
+            radioHideDownward.setChecked(true);
+        }
+
         // Set Listeners & Bind to Preview Real-Time Updates
         switchFloating.setOnCheckedChangeListener((buttonView, isChecked) -> {
             layoutCustomizationControls.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             updateLivePreview();
+        });
+
+        switchScrollHide.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            layoutScrollHideMode.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
 
         pillDesignGroup.setOnCheckedChangeListener((group, checkedId) -> updateLivePreview());
@@ -495,9 +521,14 @@ public class BottomBarCustomizationActivity extends BaseActivity {
         int paddingVertical = (int) sliderPaddingVertical.getValue();
         int iconLabelSpacing = (int) sliderIconLabelSpacing.getValue();
 
+        boolean scrollHideEnabled = switchScrollHide.isChecked();
+        String scrollHideMode = radioHideInvisible.isChecked() ? "invisible" : "downward";
+
         prefs.edit()
                 .putBoolean("floating_bottom_bar", floatingEnabled)
                 .putString("floating_bottom_bar_pill_design", pillDesign)
+                .putBoolean("floating_bottom_bar_scroll_hide", scrollHideEnabled)
+                .putString("floating_bottom_bar_scroll_hide_mode", scrollHideMode)
                 .putBoolean("floating_bottom_bar_glass", glassEnabled)
                 .putInt("floating_bottom_bar_radius", radius)
                 .putInt("floating_bottom_bar_margin_bottom", marginBottom)
@@ -539,6 +570,9 @@ public class BottomBarCustomizationActivity extends BaseActivity {
 
     private void resetToDefaultValues() {
         switchFloating.setChecked(false);
+        switchScrollHide.setChecked(true);
+        radioHideDownward.setChecked(true);
+        layoutScrollHideMode.setVisibility(View.VISIBLE);
         radioDesignRegular.setChecked(true);
         switchGlass.setChecked(true);
         selectedColor = 0;

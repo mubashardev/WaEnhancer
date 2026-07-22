@@ -523,7 +523,11 @@
     <string name="floating_bottom_bar">Floating Bottom Navigation</string>
     <string name="floating_bottom_bar_sum">Style bottom navigation menu to a modern floating pill bar</string>
     <string name="floating_bottom_bar_scroll_hide">Hide bottom navigation on scroll</string>
-    <string name="floating_bottom_bar_scroll_hide_sum">Animate bottom pill bar downward to hide when scrolling down, and show it again when scrolling up</string>
+    <string name="floating_bottom_bar_scroll_hide_sum">Animate bottom pill bar to hide when scrolling down, and show it again when scrolling up</string>
+    <string name="floating_bottom_bar_scroll_hide_mode">Scroll Hide Style</string>
+    <string name="floating_bottom_bar_scroll_hide_mode_sum">Choose how the pill hides when scrolling</string>
+    <string name="scroll_hide_downward">Downward</string>
+    <string name="scroll_hide_invisible">Invisible</string>
     <string name="floating_bottom_bar_glass">Glassmorphism Effect</string>
     <string name="floating_bottom_bar_glass_sum">Apply a translucent blurred glass effect to the bottom pill bar</string>
     <string name="floating_bottom_bar_fill_color">Pill Fill Color</string>

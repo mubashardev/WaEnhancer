@@ -25,6 +25,7 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import com.waenhancer.xposed.core.FeatureLoader;
 
 public class AudioTranscript extends Feature {
 
@@ -62,7 +63,7 @@ public class AudioTranscript extends Feature {
                 var fmessage = new FMessageWpp(fmessageObj);
                 File file = fmessage.getMediaFile();
                 if (file == null) {
-                    Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.download_not_available), 1);
+                    Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.download_not_available), 1);
                     return;
                 }
                 var callback = param.args[1];

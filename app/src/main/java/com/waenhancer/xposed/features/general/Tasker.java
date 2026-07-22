@@ -28,6 +28,17 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.app.Activity;
+import android.os.Bundle;
+import android.os.Looper;
+import android.util.Pair;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.TextView;
+import java.lang.reflect.Method;
+import java.util.List;
 
 public class Tasker extends Feature {
     private static FMessageWpp fMessage;
@@ -86,8 +97,8 @@ public class Tasker extends Feature {
                     if (userJidObject == null) return;
 
                     // 2. Safely find the String types in arguments (positions of message id, receipt type)
-                    java.util.List<android.util.Pair<Integer, Class<? extends String>>> strings = 
-                            ReflectionUtils.findClassesOfType(((java.lang.reflect.Method) param.method).getParameterTypes(), String.class);
+                    List<Pair<Integer, Class<? extends String>>> strings = 
+                            ReflectionUtils.findClassesOfType(((Method) param.method).getParameterTypes(), String.class);
                     if (strings.isEmpty()) return;
 
                     // 3. Skip "sender" (receipt confirmation sent by us)
@@ -227,7 +238,7 @@ public class Tasker extends Feature {
     private static void logEventViaProvider(Context context, String type, String targetNumber, String messagePreview) {
         try {
             Uri uri = Uri.parse("content://com.waenhancer.provider");
-            android.os.Bundle extras = new android.os.Bundle();
+            Bundle extras = new Bundle();
             extras.putString("type", type);
             extras.putString("targetNumber", targetNumber);
             extras.putString("messagePreview", messagePreview);
@@ -239,18 +250,18 @@ public class Tasker extends Feature {
 
     private void hookConversationActivity() {
         try {
-            XposedHelpers.findAndHookMethod("com.whatsapp.Conversation", classLoader, "onCreate", android.os.Bundle.class, new XC_MethodHook() {
+            XposedHelpers.findAndHookMethod("com.whatsapp.Conversation", classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    final android.app.Activity activity = (android.app.Activity) param.thisObject;
-                    android.content.Intent intent = activity.getIntent();
+                    final Activity activity = (Activity) param.thisObject;
+                    Intent intent = activity.getIntent();
                     if (intent != null && intent.hasExtra("wae_auto_send_message")) {
                         final String msgToSend = intent.getStringExtra("wae_auto_send_message");
                         ;
                         
                         // Make the activity invisible
                         activity.overridePendingTransition(0, 0);
-                        activity.getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+                        activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                         activity.getWindow().setDimAmount(0f);
                         
                         // Proceed with auto-type-and-send
@@ -263,7 +274,7 @@ public class Tasker extends Feature {
         }
     }
 
-    private static void finishActivitySilently(android.app.Activity activity) {
+    private static void finishActivitySilently(Activity activity) {
         if (activity.isFinishing()) return;
         try {
             activity.moveTaskToBack(true);
@@ -272,7 +283,7 @@ public class Tasker extends Feature {
         activity.overridePendingTransition(0, 0);
     }
 
-    private static void autoSendTextAndFinish(final android.app.Activity activity, final String message, final int attemptsLeft) {
+    private static void autoSendTextAndFinish(final Activity activity, final String message, final int attemptsLeft) {
         if (attemptsLeft <= 0) {
             ;
             try {
@@ -282,19 +293,19 @@ public class Tasker extends Feature {
             return;
         }
 
-        new Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
                 try {
                     if (activity.isFinishing()) return;
-                    android.view.View decorView = activity.getWindow().getDecorView();
+                    View decorView = activity.getWindow().getDecorView();
                     
                     // 1. Check for blocking dialogs (common for new numbers)
                     // If there's an "OK" or "Block" or "Add" button, try to bypass it if possible
                     // For now, we'll just log it and try to find the input anyway
                     
                     // 2. Find message entry EditText
-                    final android.widget.EditText inputField = findMessageInput(decorView);
+                    final EditText inputField = findMessageInput(decorView);
                     if (inputField == null) {
                         ;
                         autoSendTextAndFinish(activity, message, attemptsLeft - 1);
@@ -306,17 +317,17 @@ public class Tasker extends Feature {
                     inputField.setSelection(message.length());
 
                     // 3. Find and click send button
-                    new Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             try {
                                 if (activity.isFinishing()) return;
-                                android.view.View sendBtn = findSendButton(activity, decorView);
-                                if (sendBtn != null && sendBtn.isEnabled() && sendBtn.getVisibility() == android.view.View.VISIBLE) {
+                                View sendBtn = findSendButton(activity, decorView);
+                                if (sendBtn != null && sendBtn.isEnabled() && sendBtn.getVisibility() == View.VISIBLE) {
                                     sendBtn.performClick();
                                     ;
                                     
-                                    new Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                         @Override
                                         public void run() {
                                             finishActivitySilently(activity);
@@ -341,10 +352,10 @@ public class Tasker extends Feature {
         }, 400); // Increased initial delay
     }
 
-    private static android.widget.EditText findMessageInput(android.view.View root) {
+    private static EditText findMessageInput(View root) {
         if (root == null) return null;
-        if (root instanceof android.widget.EditText) {
-            android.widget.EditText et = (android.widget.EditText) root;
+        if (root instanceof EditText) {
+            EditText et = (EditText) root;
             // Check for hint or content description to ensure it's the message field
             CharSequence hint = et.getHint();
             if (hint != null && (hint.toString().toLowerCase().contains("message") || hint.toString().toLowerCase().contains("type"))) {
@@ -353,24 +364,24 @@ public class Tasker extends Feature {
             // Fallback: if it's the only EditText, it's likely the one
             return et;
         }
-        if (root instanceof android.view.ViewGroup) {
-            android.view.ViewGroup group = (android.view.ViewGroup) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
             for (int i = 0; i < group.getChildCount(); i++) {
-                android.widget.EditText found = findMessageInput(group.getChildAt(i));
+                EditText found = findMessageInput(group.getChildAt(i));
                 if (found != null) return found;
             }
         }
         return null;
     }
 
-    private static android.view.View findSendButton(android.app.Activity activity, android.view.View root) {
+    private static View findSendButton(Activity activity, View root) {
         if (root == null) return null;
         try {
             // Try standard ID first
             int sendId = activity.getResources().getIdentifier("send", "id", activity.getPackageName());
             if (sendId != 0) {
-                android.view.View v = activity.findViewById(sendId);
-                if (v != null && v.getVisibility() == android.view.View.VISIBLE) {
+                View v = activity.findViewById(sendId);
+                if (v != null && v.getVisibility() == View.VISIBLE) {
                     return v;
                 }
             }
@@ -380,7 +391,7 @@ public class Tasker extends Feature {
         return findSendButtonRecursive(root);
     }
 
-    private static android.view.View findSendButtonRecursive(android.view.View root) {
+    private static View findSendButtonRecursive(View root) {
         if (root == null) return null;
         try {
             CharSequence desc = root.getContentDescription();
@@ -388,16 +399,16 @@ public class Tasker extends Feature {
                 String d = desc.toString().toLowerCase();
                 if (d.contains("send") || d.contains("submit")) return root;
             }
-            if (root.getId() != android.view.View.NO_ID) {
+            if (root.getId() != View.NO_ID) {
                 String idName = root.getResources().getResourceEntryName(root.getId());
                 if (idName != null && idName.toLowerCase().contains("send")) return root;
             }
         } catch (Exception ignored) {}
         
-        if (root instanceof android.view.ViewGroup) {
-            android.view.ViewGroup group = (android.view.ViewGroup) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
             for (int i = 0; i < group.getChildCount(); i++) {
-                android.view.View found = findSendButtonRecursive(group.getChildAt(i));
+                View found = findSendButtonRecursive(group.getChildAt(i));
                 if (found != null) return found;
             }
         }
@@ -405,12 +416,12 @@ public class Tasker extends Feature {
     }
 
     // Helper to log the entire view hierarchy if we can't find elements
-    private static void dumpViewHierarchy(android.view.View root, int depth) {
+    private static void dumpViewHierarchy(View root, int depth) {
         if (root == null || depth > 20) return;
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < depth; i++) sb.append("  ");
         sb.append(root.getClass().getSimpleName());
-        if (root.getId() != android.view.View.NO_ID) {
+        if (root.getId() != View.NO_ID) {
             try {
                 sb.append(" id=").append(root.getResources().getResourceEntryName(root.getId()));
             } catch (Exception ignored) {}
@@ -418,13 +429,13 @@ public class Tasker extends Feature {
         if (root.getContentDescription() != null) {
             sb.append(" desc=").append(root.getContentDescription());
         }
-        if (root instanceof android.widget.TextView) {
-            sb.append(" text=").append(((android.widget.TextView) root).getText());
+        if (root instanceof TextView) {
+            sb.append(" text=").append(((TextView) root).getText());
         }
         ;
 
-        if (root instanceof android.view.ViewGroup) {
-            android.view.ViewGroup group = (android.view.ViewGroup) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
             for (int i = 0; i < group.getChildCount(); i++) {
                 dumpViewHierarchy(group.getChildAt(i), depth + 1);
             }
@@ -432,5 +443,4 @@ public class Tasker extends Feature {
     }
 
 }
-
 

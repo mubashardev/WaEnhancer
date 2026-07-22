@@ -1152,6 +1152,14 @@
               "summary": "Receive a notification with additional information after the call ends"
             },
             {
+              "key": "call_blocked_notification",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Call blocked notification",
+              "summary": "Show a notification when an incoming call is automatically blocked"
+            },
+            {
               "key": "call_privacy",
               "type": "list",
               "value_type": "string",
@@ -1740,6 +1748,14 @@
                   "value": "hyperspace_out"
                 }
               ]
+            },
+            {
+              "key": "unlock_premium_customization",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Unlock Premium Customization",
+              "summary": "Unlocks exclusive visual themes, native app icons, premium sticker packs, and custom ringtones"
             }
           ]
         }

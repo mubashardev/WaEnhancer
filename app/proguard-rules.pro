@@ -83,6 +83,17 @@
 # Keep the plugin API interfaces and support classes intact for helper/pro plugins
 -keep class com.waex.api.** { *; }
 
+# Keep the plugin context implementation classes — the pro helper calls back into these
+# through the IPlugin/IPluginContext/ICoreBridge/IHookService API at runtime.
+# R8's -repackageclasses would move these to package 'Z' and rename their members,
+# causing NoSuchMethodError / AbstractMethodError when the helper plugin calls back.
+-keep class com.waenhancer.xposed.core.plugins.PluginContextImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.IsolatedParentClassLoader { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.CoreBridgeImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.HookServiceImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.ObfuscationServiceImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.StateServiceImpl { *; }
+
 # =============================================================================
 # 3. LICENSING LAYER REFLECTION SAFETY (GAP CLOSED)
 # =============================================================================
@@ -121,7 +132,9 @@
 }
 
 
-# Suppress warnings for jStyleParser and CSS
+# Keep the CSS parser library (jStyleParser) intact to prevent NoSuchFieldException during reflective enum/field lookups
+-keep class cz.vutbr.web.** { *; }
+-keep class org.w3c.css.sac.** { *; }
 -dontwarn cz.vutbr.web.**
 -dontwarn org.w3c.css.sac.**
 
@@ -146,8 +159,11 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.slf4j.**
 
-# Firebase reflection safety
--dontwarn com.google.firebase.**
+# Firebase keep rules — required because App.java and HomeFragment.java access Firebase
+# via reflection (Class.forName / getMethod). Without these, R8 renames or removes
+# the classes and the reflection fails silently with ClassNotFoundException.
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
 
 # Markwon and Commonmark warning suppression
 -dontwarn org.commonmark.**

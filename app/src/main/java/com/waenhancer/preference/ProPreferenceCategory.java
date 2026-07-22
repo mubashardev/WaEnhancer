@@ -10,6 +10,7 @@ import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceManager;
 
 import com.waenhancer.BuildConfig;
+import com.waenhancer.xposed.utils.ProHelper;
 
 /**
  * Custom PreferenceCategory that adds a Pro badge and handles active/missing Pro module states.
@@ -37,7 +38,7 @@ public class ProPreferenceCategory extends PreferenceCategory {
             originalTitle = "Pro Category";
         }
 
-        boolean pluginInstalled = com.waenhancer.xposed.utils.ProHelper.isPluginInstalled(context);
+        boolean pluginInstalled = ProHelper.isPluginInstalled(context);
         if (pluginInstalled) {
             String newTitle = originalTitle + " <font color='#8B5CF6'><b>[Pro]</b></font>";
             setTitle(Html.fromHtml(newTitle, Html.FROM_HTML_MODE_LEGACY));

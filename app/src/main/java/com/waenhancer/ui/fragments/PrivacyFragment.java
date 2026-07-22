@@ -42,6 +42,25 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import android.graphics.Typeface;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.TwoStatePreference;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.waenhancer.BuildConfig;
+import com.waenhancer.activities.DeletedMessagesActivity;
+import com.waenhancer.utils.RootUtils;
+import com.waenhancer.xposed.utils.DesignUtils;
+import com.waenhancer.xposed.utils.Utils;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 
 public class PrivacyFragment extends BasePreferenceFragment {
 
@@ -59,14 +78,14 @@ public class PrivacyFragment extends BasePreferenceFragment {
         setPreferencesFromResource(R.xml.fragment_privacy, rootKey);
 
         findPreference("open_deleted_messages").setOnPreferenceClickListener(preference -> {
-            startActivity(new Intent(requireContext(), com.waenhancer.activities.DeletedMessagesActivity.class));
+            startActivity(new Intent(requireContext(), DeletedMessagesActivity.class));
             return true;
         });
 
-        var alwaysTypingGlobal = (androidx.preference.TwoStatePreference) findPreference("always_typing_global");
-        var targetPref = (androidx.preference.ListPreference) findPreference("always_typing_global_target");
-        var modePref = (androidx.preference.ListPreference) findPreference("always_typing_global_mode");
-        var contactPicker = (com.waenhancer.preference.ContactPickerPreference) findPreference("always_typing_contacts");
+        var alwaysTypingGlobal = (TwoStatePreference) findPreference("always_typing_global");
+        var targetPref = (ListPreference) findPreference("always_typing_global_target");
+        var modePref = (ListPreference) findPreference("always_typing_global_mode");
+        var contactPicker = (ContactPickerPreference) findPreference("always_typing_contacts");
 
         if (alwaysTypingGlobal != null) {
             // Only check for conflicts if the feature is currently enabled
@@ -86,7 +105,7 @@ public class PrivacyFragment extends BasePreferenceFragment {
                     boolean ghostmode_r = mPrefs.getBoolean("ghostmode_r", false);
                     
                     if (ghostmode_t || ghostmode_r) {
-                        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        new MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Feature Conflict")
                             .setMessage("Always Typing Simulation cannot be enabled while Hide Typing or Hide Recording is enabled globally. Please disable them first.")
                             .setPositiveButton(android.R.string.ok, null)
@@ -95,7 +114,7 @@ public class PrivacyFragment extends BasePreferenceFragment {
                     }
                     
                     if (contactPicker != null && contactPicker.isVisible()) {
-                        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                        new Handler(Looper.getMainLooper()).post(() -> {
                             contactPicker.onPreferenceClick(contactPicker);
                         });
                     }
@@ -111,14 +130,14 @@ public class PrivacyFragment extends BasePreferenceFragment {
             targetPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 String newTarget = (String) newValue;
                 updateAlwaysTypingPrefs(newTarget, modePref.getValue(), targetPref, modePref, contactPicker);
-                new android.os.Handler(android.os.Looper.getMainLooper()).post(this::updateAlwaysTypingConflicts);
+                new Handler(Looper.getMainLooper()).post(this::updateAlwaysTypingConflicts);
                 return true;
             });
 
             modePref.setOnPreferenceChangeListener((preference, newValue) -> {
                 String newMode = (String) newValue;
                 updateAlwaysTypingPrefs(targetPref.getValue(), newMode, targetPref, modePref, contactPicker);
-                new android.os.Handler(android.os.Looper.getMainLooper()).post(this::updateAlwaysTypingConflicts);
+                new Handler(Looper.getMainLooper()).post(this::updateAlwaysTypingConflicts);
                 return true;
             });
         }
@@ -127,13 +146,13 @@ public class PrivacyFragment extends BasePreferenceFragment {
         var ghostmodeTPref = findPreference("ghostmode_t");
         var ghostmodeRPref = findPreference("ghostmode_r");
         
-        androidx.preference.Preference.OnPreferenceChangeListener hideTypingChangeListener = (preference, newValue) -> {
+        Preference.OnPreferenceChangeListener hideTypingChangeListener = (preference, newValue) -> {
             if (newValue instanceof Boolean && (Boolean) newValue) {
                 if (alwaysTypingGlobal != null && alwaysTypingGlobal.isChecked()) {
                     alwaysTypingGlobal.setChecked(false);
-                    android.widget.Toast.makeText(requireContext(), 
+                    Toast.makeText(requireContext(), 
                         "Smart Always Typing disabled due to Hide Typing / Ghost Mode activation.", 
-                        android.widget.Toast.LENGTH_LONG).show();
+                        Toast.LENGTH_LONG).show();
                 }
             }
             return true;
@@ -155,10 +174,10 @@ public class PrivacyFragment extends BasePreferenceFragment {
     }
 
     private void updateAlwaysTypingPrefs(String target, String mode,
-                                         androidx.preference.ListPreference targetPref,
-                                         androidx.preference.ListPreference modePref,
-                                         com.waenhancer.preference.ContactPickerPreference contactPicker) {
-        androidx.preference.Preference delayNotePref = findPreference("always_typing_delay_note");
+                                         ListPreference targetPref,
+                                         ListPreference modePref,
+                                         ContactPickerPreference contactPicker) {
+        Preference delayNotePref = findPreference("always_typing_delay_note");
         if ("0".equals(target)) {
             // All Contacts -> Only conversation mode is allowed
             modePref.setValue("1");
@@ -219,10 +238,10 @@ public class PrivacyFragment extends BasePreferenceFragment {
         try {
             var bridge = WppCore.getClientBridge();
             if (bridge != null) {
-                try (android.os.ParcelFileDescriptor pfd = bridge.openFile(path, false)) {
+                try (ParcelFileDescriptor pfd = bridge.openFile(path, false)) {
                     if (pfd != null) {
-                        try (java.io.FileInputStream fis = new java.io.FileInputStream(pfd.getFileDescriptor());
-                             java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream()) {
+                        try (FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
+                             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
                             byte[] buffer = new byte[8192];
                             int read;
                             while ((read = fis.read(buffer)) != -1) {
@@ -234,9 +253,9 @@ public class PrivacyFragment extends BasePreferenceFragment {
                 }
             }
         } catch (Throwable t) {
-            android.util.Log.d("PrivacyFragment", "Failed to read via bridge: " + t.getMessage());
+            Log.d("PrivacyFragment", "Failed to read via bridge: " + t.getMessage());
         }
-        return com.waenhancer.utils.RootUtils.runRootCommand("cat " + path);
+        return RootUtils.runRootCommand("cat " + path);
     }
 
     private List<ContactPrivacyInfo> getCustomPrivacyContacts() {
@@ -248,8 +267,8 @@ public class PrivacyFragment extends BasePreferenceFragment {
         for (String path : paths) {
             String content = readPrefsFile(path);
             if (content != null && !content.isEmpty()) {
-                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("<string name=\"([^\"]+)_privacy\">([^<]+)</string>");
-                java.util.regex.Matcher matcher = pattern.matcher(content);
+                Pattern pattern = Pattern.compile("<string name=\"([^\"]+)_privacy\">([^<]+)</string>");
+                Matcher matcher = pattern.matcher(content);
                 while (matcher.find()) {
                     String number = matcher.group(1);
                     String jsonStr = matcher.group(2);
@@ -291,18 +310,18 @@ public class PrivacyFragment extends BasePreferenceFragment {
         if (cleanNumbers.isEmpty()) return resolved;
         
         String[] projection = {
-                android.provider.ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
         };
-        try (android.database.Cursor cursor = context.getContentResolver().query(
-                android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+        try (Cursor cursor = context.getContentResolver().query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 projection,
                 null,
                 null,
                 null)) {
             if (cursor != null) {
-                int nameIndex = cursor.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
-                int numberIndex = cursor.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER);
+                int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                int numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
                 while (cursor.moveToNext()) {
                     String name = nameIndex >= 0 ? cursor.getString(nameIndex) : null;
                     String number = numberIndex >= 0 ? cursor.getString(numberIndex) : null;
@@ -315,7 +334,7 @@ public class PrivacyFragment extends BasePreferenceFragment {
                 }
             }
         } catch (Exception e) {
-            android.util.Log.e("PrivacyFragment", "Error querying contacts: " + e.getMessage());
+            Log.e("PrivacyFragment", "Error querying contacts: " + e.getMessage());
         }
         return resolved;
     }
@@ -323,7 +342,7 @@ public class PrivacyFragment extends BasePreferenceFragment {
     private List<ContactPrivacyInfo> getConflictingContacts() {
         List<ContactPrivacyInfo> conflicts = new ArrayList<>();
         
-        var globalPref = (androidx.preference.TwoStatePreference) findPreference("always_typing_global");
+        var globalPref = (TwoStatePreference) findPreference("always_typing_global");
         if (globalPref == null || !globalPref.isChecked()) {
             return conflicts;
         }
@@ -331,7 +350,7 @@ public class PrivacyFragment extends BasePreferenceFragment {
         // Only call root-based scan AFTER confirming the feature is enabled
         List<ContactPrivacyInfo> allCustom = getCustomPrivacyContacts();
         
-        var targetPref = (androidx.preference.ListPreference) findPreference("always_typing_global_target");
+        var targetPref = (ListPreference) findPreference("always_typing_global_target");
         String target = targetPref != null ? targetPref.getValue() : "1";
         
         if ("0".equals(target)) {
@@ -365,7 +384,7 @@ public class PrivacyFragment extends BasePreferenceFragment {
         var checkContactsPref = findPreference("always_typing_check_contacts");
         if (warningPref == null || checkContactsPref == null) return;
 
-        var globalPref = (androidx.preference.TwoStatePreference) findPreference("always_typing_global");
+        var globalPref = (TwoStatePreference) findPreference("always_typing_global");
         boolean isEnabled = globalPref != null && globalPref.isChecked();
 
         // We no longer scan in the background to avoid repeated root prompts.
@@ -378,53 +397,53 @@ public class PrivacyFragment extends BasePreferenceFragment {
     private void showCheckContactsBottomSheet() {
         List<ContactPrivacyInfo> conflicts = getConflictingContacts();
         if (conflicts.isEmpty()) {
-            android.widget.Toast.makeText(requireContext(), "No custom privacy conflicts detected.", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "No custom privacy conflicts detected.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        com.google.android.material.bottomsheet.BottomSheetDialog dialog = 
-                new com.google.android.material.bottomsheet.BottomSheetDialog(requireContext());
+        BottomSheetDialog dialog = 
+                new BottomSheetDialog(requireContext());
         
         LinearLayout layout = new LinearLayout(requireContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(
-                com.waenhancer.xposed.utils.Utils.dipToPixels(20),
-                com.waenhancer.xposed.utils.Utils.dipToPixels(20),
-                com.waenhancer.xposed.utils.Utils.dipToPixels(20),
-                com.waenhancer.xposed.utils.Utils.dipToPixels(20)
+                Utils.dipToPixels(20),
+                Utils.dipToPixels(20),
+                Utils.dipToPixels(20),
+                Utils.dipToPixels(20)
         );
 
         TextView titleView = new TextView(requireContext());
         titleView.setText("Per-Contact Custom Privacy Conflicts");
-        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 18);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        titleView.setTextColor(com.waenhancer.xposed.utils.DesignUtils.getPrimaryTextColor());
-        titleView.setPadding(0, 0, 0, com.waenhancer.xposed.utils.Utils.dipToPixels(15));
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        titleView.setTypeface(null, Typeface.BOLD);
+        titleView.setTextColor(DesignUtils.getPrimaryTextColor());
+        titleView.setPadding(0, 0, 0, Utils.dipToPixels(15));
         layout.addView(titleView);
 
         ListView listView = new ListView(requireContext());
         LinearLayout.LayoutParams listParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                com.waenhancer.xposed.utils.Utils.dipToPixels(300) // limit height
+                Utils.dipToPixels(300) // limit height
         );
         listView.setLayoutParams(listParams);
         layout.addView(listView);
 
-        com.google.android.material.button.MaterialButton closeBtn = 
-                new com.google.android.material.button.MaterialButton(requireContext());
+        MaterialButton closeBtn = 
+                new MaterialButton(requireContext());
         closeBtn.setText("Dismiss");
         LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        btnParams.setMargins(0, com.waenhancer.xposed.utils.Utils.dipToPixels(15), 0, 0);
+        btnParams.setMargins(0, Utils.dipToPixels(15), 0, 0);
         closeBtn.setLayoutParams(btnParams);
         closeBtn.setOnClickListener(v -> dialog.dismiss());
         layout.addView(closeBtn);
 
         dialog.setContentView(layout);
         
-        class ConflictAdapter extends android.widget.BaseAdapter {
+        class ConflictAdapter extends BaseAdapter {
             private final List<ContactPrivacyInfo> mList;
             ConflictAdapter(List<ContactPrivacyInfo> list) {
                 mList = list;
@@ -444,21 +463,21 @@ public class PrivacyFragment extends BasePreferenceFragment {
                 if (convertView == null) {
                     itemLayout = new LinearLayout(requireContext());
                     itemLayout.setOrientation(LinearLayout.HORIZONTAL);
-                    itemLayout.setPadding(0, com.waenhancer.xposed.utils.Utils.dipToPixels(10), 0, com.waenhancer.xposed.utils.Utils.dipToPixels(10));
-                    itemLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+                    itemLayout.setPadding(0, Utils.dipToPixels(10), 0, Utils.dipToPixels(10));
+                    itemLayout.setGravity(Gravity.CENTER_VERTICAL);
 
                     nameTextView = new TextView(requireContext());
                     LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
                     nameTextView.setLayoutParams(textParams);
-                    nameTextView.setTextColor(com.waenhancer.xposed.utils.DesignUtils.getPrimaryTextColor());
-                    nameTextView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
+                    nameTextView.setTextColor(DesignUtils.getPrimaryTextColor());
+                    nameTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
                     itemLayout.addView(nameTextView);
 
                     clearBtn = new Button(requireContext());
-                    LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(com.waenhancer.xposed.utils.Utils.dipToPixels(64), com.waenhancer.xposed.utils.Utils.dipToPixels(36));
+                    LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(Utils.dipToPixels(64), Utils.dipToPixels(36));
                     clearBtn.setLayoutParams(btnParams);
                     clearBtn.setText("Clear");
-                    clearBtn.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 11);
+                    clearBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
                     clearBtn.setTextColor(Color.WHITE);
                     clearBtn.setBackgroundColor(0xFFD32F2F); // Red
                     itemLayout.addView(clearBtn);
@@ -492,39 +511,39 @@ public class PrivacyFragment extends BasePreferenceFragment {
             String content = readPrefsFile(info.path);
             if (content == null || content.isEmpty()) return;
 
-            String regex = "\\s*<string name=\"" + java.util.regex.Pattern.quote(info.number + "_privacy") + "\">.*?</string>";
+            String regex = "\\s*<string name=\"" + Pattern.quote(info.number + "_privacy") + "\">.*?</string>";
             String newContent = content.replaceAll(regex, "");
 
             File tempFile = new File(requireContext().getCacheDir(), "temp_waglobal.xml");
-            try (java.io.FileWriter writer = new java.io.FileWriter(tempFile)) {
+            try (FileWriter writer = new FileWriter(tempFile)) {
                 writer.write(newContent);
             }
 
             String cmd = "cat " + tempFile.getAbsolutePath() + " > " + info.path;
-            com.waenhancer.utils.RootUtils.runRootCommand(cmd);
+            RootUtils.runRootCommand(cmd);
 
             tempFile.delete();
 
-            android.content.Intent intent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+            Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
             intent.setPackage("com.whatsapp");
             requireContext().sendBroadcast(intent);
 
-            android.content.Intent intent2 = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
+            Intent intent2 = new Intent(BuildConfig.APPLICATION_ID + ".PREFS_CHANGED");
             intent2.setPackage("com.whatsapp.w4b");
             requireContext().sendBroadcast(intent2);
 
-            android.content.Intent restartIntent = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
+            Intent restartIntent = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
             restartIntent.setPackage("com.whatsapp");
             requireContext().sendBroadcast(restartIntent);
 
-            android.content.Intent restartIntent2 = new android.content.Intent(com.waenhancer.BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
+            Intent restartIntent2 = new Intent(BuildConfig.APPLICATION_ID + ".MANUAL_RESTART");
             restartIntent2.setPackage("com.whatsapp.w4b");
             requireContext().sendBroadcast(restartIntent2);
 
-            android.widget.Toast.makeText(requireContext(), "Cleared custom privacy for " + info.name, android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Cleared custom privacy for " + info.name, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            android.util.Log.e("PrivacyFragment", "Error clearing custom privacy: " + e.getMessage());
-            android.widget.Toast.makeText(requireContext(), "Error: " + e.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+            Log.e("PrivacyFragment", "Error clearing custom privacy: " + e.getMessage());
+            Toast.makeText(requireContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

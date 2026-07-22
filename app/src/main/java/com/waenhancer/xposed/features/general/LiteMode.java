@@ -26,6 +26,9 @@ import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
+import android.os.Process;
+import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.utils.DesignUtils;
 
 public class LiteMode extends Feature {
 
@@ -45,13 +48,13 @@ public class LiteMode extends Feature {
     }
 
     private static void showDialogUriPermission(Activity activity) {
-        new AlertDialogWpp(activity).setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.download_folder_permission))
-                .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.ask_download_folder))
-                .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.allow), (dialog, which) -> {
+        new AlertDialogWpp(activity).setTitle(FeatureLoader.getModuleString(activity, R.string.download_folder_permission))
+                .setMessage(FeatureLoader.getModuleString(activity, R.string.ask_download_folder))
+                .setPositiveButton(FeatureLoader.getModuleString(activity, R.string.allow), (dialog, which) -> {
                     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                     intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, getDownloadsUri());
                     activity.startActivityForResult(intent, REQUEST_FOLDER);
-                }).setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.cancel), (dialog, which) -> dialog.dismiss()).show();
+                }).setNegativeButton(FeatureLoader.getModuleString(activity, R.string.cancel), (dialog, which) -> dialog.dismiss()).show();
     }
 
     @Override
@@ -100,7 +103,7 @@ public class LiteMode extends Feature {
         int MENU_ID_DOWNLOAD_FOLDER = 0x7EAE0006;
         if (menu.findItem(MENU_ID_DOWNLOAD_FOLDER) != null) return;
         var itemMenu = menu.add(0, MENU_ID_DOWNLOAD_FOLDER, 9999, "Download Folder");
-        var iconDraw = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.download);
+        var iconDraw = DesignUtils.getDrawable(R.drawable.download);
         iconDraw.setTint(0xff8696a0);
         itemMenu.setIcon(iconDraw);
         itemMenu.setOnMenuItemClickListener(item -> {
@@ -125,7 +128,7 @@ public class LiteMode extends Feature {
 
     private boolean isUriPermissionGranted(Context context, Uri uri) {
         int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
-        int permissionCheck = context.checkUriPermission(uri, android.os.Process.myPid(), android.os.Process.myUid(), takeFlags);
+        int permissionCheck = context.checkUriPermission(uri, Process.myPid(), Process.myUid(), takeFlags);
         return permissionCheck == PackageManager.PERMISSION_GRANTED;
     }
 

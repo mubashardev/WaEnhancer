@@ -65,7 +65,7 @@ public class FilterGroups extends Feature {
 
         var filterView = Unobfuscator.getFilterView(classLoader);
 
-        XposedHelpers.findAndHookConstructor(filterView, android.content.Context.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookConstructor(filterView, Context.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 setSetupSeparate((ViewGroup) param.thisObject);

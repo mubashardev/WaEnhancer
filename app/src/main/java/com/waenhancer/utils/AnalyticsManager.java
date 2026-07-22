@@ -5,6 +5,9 @@ import android.os.Bundle;
 import androidx.preference.PreferenceManager;
 import com.waenhancer.App;
 import com.waenhancer.BuildConfig;
+import android.net.Uri;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class AnalyticsManager {
 
@@ -17,10 +20,11 @@ public class AnalyticsManager {
 
     /**
      * Log an event to Firebase Analytics.
-     * Can be called from any process.
+     * Can be called from any process. No-op when {@link BuildConfig#FIREBASE_ENABLED} is false
+     * (i.e. built without google-services.json) or when the user has not consented.
      */
     public static void logEvent(Context context, String eventName, Bundle params) {
-        if (context == null || BuildConfig.DEBUG) return;
+        if (context == null || BuildConfig.DEBUG || !BuildConfig.FIREBASE_ENABLED) return;
         
         // If in main process, log directly
         if (context.getPackageName().equals(BuildConfig.APPLICATION_ID)) {
@@ -36,6 +40,7 @@ public class AnalyticsManager {
         }
     }
 
+
     private static void logDirectly(Context context, String eventName, Bundle params) {
         try {
             Class<?> firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
@@ -46,7 +51,7 @@ public class AnalyticsManager {
         }
     }
 
-    private static final java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private static void logViaProvider(Context context, String eventName, Bundle params) {
         // Capture context and params for the background task
@@ -67,7 +72,7 @@ public class AnalyticsManager {
         for (String authority : ANALYTICS_PROVIDER_AUTHORITIES) {
             try {
                 context.getContentResolver().call(
-                        android.net.Uri.parse("content://" + authority), method, null, extras);
+                        Uri.parse("content://" + authority), method, null, extras);
                 return;
             } catch (Exception ignored) {}
         }

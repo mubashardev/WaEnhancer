@@ -34,6 +34,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import android.util.Log;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.slider.Slider;
+import com.waenhancer.xposed.utils.ProHelper;
 
 public class FilterItemsActivity extends BaseActivity implements FilterItemsAdapter.OnFilterActionListener {
 
@@ -87,7 +91,7 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
                         }
                     }
                 } catch (Exception e) {
-                    android.util.Log.e("WAEX", "Failed to parse JSON filter_items", e);
+                    Log.e("WAEX", "Failed to parse JSON filter_items", e);
                 }
             } else {
                 // Fallback to old newline-separated format
@@ -160,8 +164,8 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
     }
 
     private void showFilterEditDialog(FilterItem item, boolean isEdit, int position) {
-        com.google.android.material.bottomsheet.BottomSheetDialog dialog = 
-                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        BottomSheetDialog dialog = 
+                new BottomSheetDialog(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_filter_edit, null);
         dialog.setContentView(dialogView);
 
@@ -175,7 +179,7 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
         TextInputEditText opacityInput = dialogView.findViewById(R.id.dialog_opacity_input);
         View layoutResize = dialogView.findViewById(R.id.layout_resize);
         TextView resizeScaleText = dialogView.findViewById(R.id.resize_scale_text);
-        com.google.android.material.slider.Slider resizeSlider = dialogView.findViewById(R.id.dialog_resize_slider);
+        Slider resizeSlider = dialogView.findViewById(R.id.dialog_resize_slider);
 
         // Prepopulate values
         if (isEdit && item != null) {
@@ -195,7 +199,7 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
         ArrayAdapter<String> behaviorAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, behaviors);
         behaviorDropdown.setAdapter(behaviorAdapter);
         behaviorDropdown.setOnItemClickListener((parent, view, pos, id) -> {
-            if (pos > 0 && !com.waenhancer.xposed.utils.ProHelper.isFilterItemsProEnabled()) {
+            if (pos > 0 && !ProHelper.isFilterItemsProEnabled()) {
                 Toast.makeText(FilterItemsActivity.this, "This behavior is for Pro users only. Please activate your license.", Toast.LENGTH_LONG).show();
                 try {
                     Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");
@@ -253,7 +257,7 @@ public class FilterItemsActivity extends BaseActivity implements FilterItemsAdap
             }
 
             int behaviorPos = getIndexFromBehaviorName(behaviorDropdown.getText().toString());
-            if (behaviorPos > 0 && !com.waenhancer.xposed.utils.ProHelper.isFilterItemsProEnabled()) {
+            if (behaviorPos > 0 && !ProHelper.isFilterItemsProEnabled()) {
                 Toast.makeText(FilterItemsActivity.this, "This behavior is for Pro users only. Please activate your license.", Toast.LENGTH_LONG).show();
                 try {
                     Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");

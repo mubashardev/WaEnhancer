@@ -41,6 +41,9 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import android.content.SharedPreferences;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
+import java.io.IOException;
 
 public class AboutActivity extends BaseActivity {
 
@@ -85,7 +88,7 @@ public class AboutActivity extends BaseActivity {
     }
 
     private void fetchContributors() {
-        android.content.SharedPreferences prefs = getSharedPreferences("github_api_cache", MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("github_api_cache", MODE_PRIVATE);
         long lastFetch = prefs.getLong("last_fetch", 0);
         String cachedJson = prefs.getString("contributors_json", null);
 
@@ -109,7 +112,7 @@ public class AboutActivity extends BaseActivity {
 
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull java.io.IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 runOnUiThread(() -> {
                     // Fallback to cache if failed
                     if (cachedJson != null) {
@@ -124,7 +127,7 @@ public class AboutActivity extends BaseActivity {
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws java.io.IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (!response.isSuccessful() || response.body() == null) {
                     runOnUiThread(() -> {
                         if (cachedJson != null) {
@@ -223,7 +226,7 @@ public class AboutActivity extends BaseActivity {
                     .placeholder(R.drawable.ic_github)
                     .into(holder.ivAvatar);
 
-            holder.ivAvatar.setOnClickListener(v -> com.waenhancer.ui.helpers.BottomSheetHelper
+            holder.ivAvatar.setOnClickListener(v -> BottomSheetHelper
                     .showUserProfile(AboutActivity.this, c.login, c.avatarUrl, c.htmlUrl, c.contributions));
         }
 

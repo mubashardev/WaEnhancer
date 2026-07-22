@@ -210,208 +210,118 @@
                 android:orientation="vertical"
                 android:visibility="visible">
 
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="?attr/colorOutlineVariant"
-                    app:strokeWidth="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="WAEX Helper"
-                            android:textAppearance="?attr/textAppearanceTitleLarge"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="8dp" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Activate Pro features by entering your license key below. This key will be locked to this device's hardware."
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:lineSpacingMultiplier="1.2"
-                            android:layout_marginBottom="16dp" />
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/til_license_key"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="License Key"
-                            app:placeholderText="WAEX-XXXX-XXXX-XXXX"
-                            app:boxCornerRadiusTopStart="12dp"
-                            app:boxCornerRadiusTopEnd="12dp"
-                            app:boxCornerRadiusBottomStart="12dp"
-                            app:boxCornerRadiusBottomEnd="12dp"
-                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                            android:layout_marginBottom="16dp">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/et_license_key"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="text"
-                                android:textColor="?attr/colorOnSurface" />
-                        </com.google.android.material.textfield.TextInputLayout>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_verify"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Activate"
-                            app:cornerRadius="24dp"
-                            android:paddingVertical="12dp"
-                            android:textAppearance="?attr/textAppearanceLabelLarge"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="8dp" />
-
-                        <ProgressBar
-                            android:id="@+id/progress_bar"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_marginTop="8dp"
-                            android:layout_marginBottom="8dp"
-                            android:visibility="gone" />
-
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Get License Key Container -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="?attr/colorOutlineVariant"
-                    app:strokeWidth="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp"
-                        android:gravity="center_horizontal">
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Don't have a key?"
-                            android:gravity="center"
-                            android:textAppearance="?attr/textAppearanceTitleMedium"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="6dp" />
-
-                        <com.google.android.material.textview.MaterialTextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="You can obtain a license key by interacting with our Telegram bot. Get instant activation details."
-                            android:gravity="center"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:layout_marginBottom="16dp" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_open_telegram"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Get Your Key"
-                            app:icon="@drawable/ic_telegram"
-                            app:iconGravity="textStart"
-                            app:iconTint="@android:color/white"
-                            android:backgroundTint="#0088CC"
-                            android:textColor="@android:color/white"
-                            app:cornerRadius="24dp"
-                            android:paddingVertical="12dp"
-                            android:textAppearance="?attr/textAppearanceLabelLarge"
-                            android:textStyle="bold" />
-
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-            </LinearLayout>
-
-            <!-- Limited Free Features Section -->
-            <LinearLayout
-                android:id="@+id/limited_free_features_section"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="16dp"
-                android:visibility="gone"
-                tools:visibility="visible">
-
-                <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/tv_limited_free_features_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="12dp"
-                    android:layout_marginStart="8dp"
-                    android:text="Limited Free Features (Pro Recommended)"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textStyle="bold" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/limited_free_features_recycler"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"
-                    android:clipToPadding="false"
-                    android:scrollbars="none" />
-            </LinearLayout>
-
-            <!-- Pro Features / Features you're missing Section (displayed at the end) -->
-            <LinearLayout
-                android:id="@+id/pro_features_section"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="16dp"
-                android:visibility="gone"
-                tools:visibility="visible">
-
-                <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/tv_pro_features_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="12dp"
-                    android:layout_marginStart="8dp"
-                    android:text="Exclusive Pro Features"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textStyle="bold" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/pro_features_recycler"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"
-                    android:clipToPadding="false"
-                    android:scrollbars="none" />
-
+                <!-- Description -->
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:gravity="center"
-                    android:text="More features coming soon..."
+                    android:text="Enter your license key received from the Telegram Bot to unlock all premium capabilities."
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textStyle="italic" />
+                    android:lineSpacingMultiplier="1.2"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Input field for License Key -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_license_key"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="License Key"
+                    app:placeholderText="WAEX-XXXX-XXXX-XXXX"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_marginBottom="16dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_license_key"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="?attr/colorOnSurface" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Verification Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_verify"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Verify &amp; Activate"
+                    app:cornerRadius="24dp"
+                    android:paddingVertical="12dp"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <ProgressBar
+                    android:id="@+id/progress_bar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:visibility="gone" />
+
+
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorOutlineVariant"
+                    android:layout_marginVertical="16dp" />
+
+                <!-- Plans Header -->
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Purchase License Key"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Dynamic plans container -->
+                <LinearLayout
+                    android:id="@+id/plans_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Get License Key Telegram Button -->
+                <!-- <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_open_telegram"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Get Key via Telegram"
+                    app:icon="@drawable/ic_telegram"
+                    app:iconGravity="textStart"
+                    app:iconTint="@android:color/white"
+                    android:backgroundTint="#0088CC"
+                    android:textColor="@android:color/white"
+                    app:cornerRadius="24dp"
+                    android:paddingVertical="12dp"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textStyle="bold" /> -->
+
             </LinearLayout>
+
+            <!-- "Show Premium & Free Features" text button -->
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/btn_show_features"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Premium &amp; Limited Free Features"
+                android:textColor="?attr/colorPrimary"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:textAppearance="?attr/textAppearanceLabelLarge" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

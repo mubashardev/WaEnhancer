@@ -3,6 +3,7 @@ package com.waex.api.services;
 import com.waex.api.model.CustomPrivacyDTO;
 import com.waex.api.model.MessageDTO;
 import com.waex.api.model.UserJidDTO;
+import java.io.File;
 
 public interface IStateService {
     void addListenerActivity(Object listener);
@@ -24,5 +25,5 @@ public interface IStateService {
     boolean isJidNull(UserJidDTO userJid);
     boolean isActivityResumed(String simpleName);
     long getMessageRowId(Object messageObj);
-    java.io.File getMessageMediaFile(Object messageObj);
+    File getMessageMediaFile(Object messageObj);
 }

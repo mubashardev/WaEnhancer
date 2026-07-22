@@ -11,6 +11,8 @@ import androidx.preference.PreferenceManager;
 import com.waenhancer.R;
 import com.waenhancer.activities.FilterItemsActivity;
 import com.waenhancer.ui.fragments.base.BasePreferenceFragment;
+import com.waenhancer.activities.BottomBarCustomizationActivity;
+import org.json.JSONArray;
 
 public class CustomizationFragment extends BasePreferenceFragment {
     @Override
@@ -22,6 +24,15 @@ public class CustomizationFragment extends BasePreferenceFragment {
         if (filterItemsPref != null) {
             filterItemsPref.setOnPreferenceClickListener(preference -> {
                 Intent intent = new Intent(requireContext(), FilterItemsActivity.class);
+                startActivity(intent);
+                return true;
+            });
+        }
+
+        Preference pillCustomizerPref = findPreference("floating_bottom_bar_customizer");
+        if (pillCustomizerPref != null) {
+            pillCustomizerPref.setOnPreferenceClickListener(preference -> {
+                Intent intent = new Intent(requireContext(), BottomBarCustomizationActivity.class);
                 startActivity(intent);
                 return true;
             });
@@ -46,7 +57,7 @@ public class CustomizationFragment extends BasePreferenceFragment {
                 int count = 0;
                 if (rawFilters.trim().startsWith("[")) {
                     try {
-                        count = new org.json.JSONArray(rawFilters).length();
+                        count = new JSONArray(rawFilters).length();
                     } catch (Exception ignored) {}
                 } else {
                     String[] items = rawFilters.split("\n");

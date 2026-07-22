@@ -6,6 +6,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.content.res.XResources;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Manages bidirectional resource ID mapping between the module and host process.
@@ -17,7 +21,7 @@ public class XResManager {
 
     public static final Map<Integer, Integer> moduleToHostIdMap = new ConcurrentHashMap<>();
     public static final Map<Integer, Integer> hostToModuleIdMap = new ConcurrentHashMap<>();
-    public static final java.util.Set<Integer> validModuleIds = java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+    public static final Set<Integer> validModuleIds = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * Translates a module resource ID (0x7f...) to a host process resource ID (0x80...).
@@ -44,7 +48,7 @@ public class XResManager {
         // On-demand mapping
         if (hostResources != null && moduleResources != null) {
             try {
-                if (!(hostResources instanceof android.content.res.XResources)) {
+                if (!(hostResources instanceof XResources)) {
                     return moduleId;
                 }
                 // Check if module resource exists before attempting to add

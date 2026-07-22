@@ -30,6 +30,17 @@ import com.waenhancer.ui.fragments.base.BasePreferenceFragment;
 import com.waenhancer.utils.RootUtils;
 
 import java.io.File;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.text.TextUtils;
+import android.text.method.DigitsKeyListener;
+import androidx.preference.EditTextPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
+import androidx.preference.PreferenceManager;
+import com.waenhancer.xposed.utils.ProHelper;
 
 public class GeneralFragment extends BaseFragment {
 
@@ -93,9 +104,9 @@ public class GeneralFragment extends BaseFragment {
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable android.content.Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        for (androidx.fragment.app.Fragment fragment : getChildFragmentManager().getFragments()) {
+        for (Fragment fragment : getChildFragmentManager().getFragments()) {
             fragment.onActivityResult(requestCode, resultCode, data);
         }
     }
@@ -117,10 +128,10 @@ public class GeneralFragment extends BaseFragment {
         }
 
         private void setupManageVersionsPref() {
-            androidx.preference.Preference pref = findPreference("manage_supported_versions");
+            Preference pref = findPreference("manage_supported_versions");
             if (pref != null) {
                 pref.setOnPreferenceClickListener(preference -> {
-                    android.content.Intent intent = new android.content.Intent(requireContext(),
+                    Intent intent = new Intent(requireContext(),
                             SupportedVersionsActivity.class);
                     startActivity(intent);
                     return true;
@@ -129,14 +140,14 @@ public class GeneralFragment extends BaseFragment {
         }
 
         private void updatePluginPreference() {
-            android.content.Context context = getContext();
+            Context context = getContext();
             if (context == null) return;
-            androidx.preference.Preference pref = findPreference("unlock_limited_free");
-            androidx.preference.Preference updatesPref = findPreference("pro_plugin_updates");
-            androidx.preference.PreferenceCategory category = findPreference("plugin_pack_category");
+            Preference pref = findPreference("unlock_limited_free");
+            Preference updatesPref = findPreference("pro_plugin_updates");
+            PreferenceCategory category = findPreference("plugin_pack_category");
             if (category == null) return;
 
-            boolean isInstalled = com.waenhancer.xposed.utils.ProHelper.isPluginInstalled(context);
+            boolean isInstalled = ProHelper.isPluginInstalled(context);
             if (isInstalled) {
                 category.setVisible(true);
                 if (pref != null) pref.setVisible(false);
@@ -144,14 +155,14 @@ public class GeneralFragment extends BaseFragment {
                     updatesPref.setVisible(true);
                     updatesPref.setOnPreferenceClickListener(preference -> {
                         try {
-                            android.content.Intent intent = new android.content.Intent();
+                            Intent intent = new Intent();
                             intent.setClassName("com.waex.helper", "com.waex.helper.activities.ProUpdateActivity");
-                            var prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+                            var prefs = PreferenceManager.getDefaultSharedPreferences(context);
                             var colorPreset = prefs.getString("wae_color_preset", "green");
                             intent.putExtra("wae_color_preset", colorPreset);
                             startActivity(intent);
                         } catch (Exception e) {
-                            android.widget.Toast.makeText(context, "Failed to launch update activity: " + e.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, "Failed to launch update activity: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                         return true;
                     });
@@ -161,7 +172,7 @@ public class GeneralFragment extends BaseFragment {
                 if (pref != null) {
                     pref.setVisible(true);
                     pref.setOnPreferenceClickListener(preference -> {
-                        com.waenhancer.xposed.utils.ProHelper.checkRootAndInstallPlugin(getActivity(), null);
+                        ProHelper.checkRootAndInstallPlugin(getActivity(), null);
                         return true;
                     });
                 }
@@ -192,24 +203,24 @@ public class GeneralFragment extends BaseFragment {
             setPreferencesFromResource(R.xml.preference_general_conversation, rootKey);
             setDisplayHomeAsUpEnabled(false);
 
-            androidx.preference.EditTextPreference customLimitPref = findPreference("customforwardlimit");
+            EditTextPreference customLimitPref = findPreference("customforwardlimit");
             if (customLimitPref != null) {
                 customLimitPref.setSummaryProvider(preference -> {
                     String val = customLimitPref.getText();
                     boolean hasKey = customLimitPref.getSharedPreferences() != null && customLimitPref.getSharedPreferences().contains("customforwardlimit");
-                    if (!hasKey || android.text.TextUtils.isEmpty(val)) {
+                    if (!hasKey || TextUtils.isEmpty(val)) {
                         return getString(R.string.customforwardlimit_sum);
                     }
                     return val;
                 });
                 customLimitPref.setOnBindEditTextListener(editText -> {
-                    editText.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-                    editText.setKeyListener(android.text.method.DigitsKeyListener.getInstance("0123456789"));
-                    editText.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(5)});
+                    editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    editText.setKeyListener(DigitsKeyListener.getInstance("0123456789"));
+                    editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(5)});
                 });
             }
 
-            androidx.preference.Preference filterPref = findPreference("filter_group_members_messages");
+            Preference filterPref = findPreference("filter_group_members_messages");
             if (filterPref != null) {
                 filterPref.setOnPreferenceChangeListener((preference, newValue) -> {
                     return true;
@@ -389,7 +400,7 @@ public class GeneralFragment extends BaseFragment {
             try {
                 context.getPackageManager().getPackageInfo(pkgName, 0);
                 return true;
-            } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            } catch (PackageManager.NameNotFoundException e) {
                 return false;
             }
         }

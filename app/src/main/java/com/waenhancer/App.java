@@ -23,6 +23,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import rikka.material.app.LocaleDelegate;
+import android.Manifest;
+import android.provider.Settings;
+import android.util.Log;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
+import com.waenhancer.xposed.utils.LicenseManager;
+import com.waenhancer.xposed.utils.ProHelper;
+import com.waenhancer.xposed.utils.Utils;
 
 public class App extends Application {
 
@@ -31,7 +38,7 @@ public class App extends Application {
     private static final Handler MainHandler = new Handler(Looper.getMainLooper());
 
     public static void showRequestStoragePermission(Activity activity) {
-        com.waenhancer.ui.helpers.BottomSheetHelper.showConfirmation(
+        BottomSheetHelper.showConfirmation(
                 activity,
                 activity.getString(R.string.storage_permission),
                 activity.getString(R.string.permission_storage),
@@ -40,14 +47,14 @@ public class App extends Application {
                 () -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         Intent intent = new Intent(
-                                android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                                Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         intent.setData(Uri.fromParts("package", activity.getPackageName(), null));
                         activity.startActivity(intent);
                     } else {
                         ActivityCompat.requestPermissions(activity,
-                                new String[] { android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                        android.Manifest.permission.READ_EXTERNAL_STORAGE },
+                                new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                        Manifest.permission.READ_EXTERNAL_STORAGE },
                                 0);
                     }
                 });
@@ -60,24 +67,20 @@ public class App extends Application {
         instance = this;
         
         if (Application.getProcessName().equals(BuildConfig.APPLICATION_ID)) {
-            if (!BuildConfig.DEBUG) {
+            // Re-apply Firebase consent state from the saved preference.
+            // FirebaseInitProvider (restored in the manifest) auto-inits the Firebase App object,
+            // but collection stays OFF (manifest default = false) until we explicitly enable it.
+            // This block re-enables collection on subsequent launches for users who already consented.
+            if (BuildConfig.FIREBASE_ENABLED && !BuildConfig.DEBUG) {
                 try {
-                    boolean enableCrashAnalytics = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("enable_crash_analytics", false);
-                    if (enableCrashAnalytics) {
-                        Class<?> firebaseAppClass = Class.forName("com.google.firebase.FirebaseApp");
-                        firebaseAppClass.getMethod("initializeApp", Context.class).invoke(null, App.this);
-                        
-                        Class<?> firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
-                        Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", Context.class).invoke(null, App.this);
-                        firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled", boolean.class).invoke(analyticsInstance, true);
-                        
-                        Class<?> firebaseCrashlyticsClass = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics");
-                        Object crashlyticsInstance = firebaseCrashlyticsClass.getMethod("getInstance").invoke(null);
-                        firebaseCrashlyticsClass.getMethod("setCrashlyticsCollectionEnabled", boolean.class).invoke(crashlyticsInstance, true);
-                    }
-                } catch (Throwable ignored) {
+                    boolean consented = PreferenceManager.getDefaultSharedPreferences(this)
+                            .getBoolean("enable_crash_analytics", false);
+                    applyFirebaseConsent(this, consented);
+                } catch (Throwable e) {
+                    if (BuildConfig.DEBUG) Log.e("WaeX-Firebase", "Failed to apply Firebase consent state", e);
                 }
             }
+
 
             // Local expiration check (offline fail-safe)
             try {
@@ -101,12 +104,12 @@ public class App extends Application {
                             .putBoolean("delete_message_file_sent", false)
                             .putString("floating_bottom_bar_pill_design", "regular")
                             .commit();
-                    com.waenhancer.xposed.utils.ProHelper.setForceFree(true);
+                    ProHelper.setForceFree(true);
                     
-                    com.waenhancer.xposed.utils.Utils.handleSubscriptionDowngrade(App.this, "Your subscription plan has expired.");
+                    Utils.handleSubscriptionDowngrade(App.this, "Your subscription plan has expired.");
                     
                     try {
-                        com.waenhancer.xposed.utils.LicenseManager.makePrefsWorldReadable(App.this);
+                        LicenseManager.makePrefsWorldReadable(App.this);
                     } catch (Exception ignored) {}
 
                     try {
@@ -120,9 +123,9 @@ public class App extends Application {
 
             // Perform silent background license re-verification at startup
             try {
-                com.waenhancer.xposed.utils.LicenseManager.silentCheck(App.this);
+                LicenseManager.silentCheck(App.this);
             } catch (Exception e) {
-                android.util.Log.e("WaeX-App", "Failed to invoke silentCheck", e);
+                Log.e("WaeX-App", "Failed to invoke silentCheck", e);
             }
         }
         
@@ -135,26 +138,26 @@ public class App extends Application {
         try {
             var pm = getPackageManager();
             var info = pm.getApplicationInfo("com.waex.helper", 0);
-            if (info.sourceDir != null && new java.io.File(info.sourceDir).exists()) {
+            if (info.sourceDir != null && new File(info.sourceDir).exists()) {
                 sharedPreferences.edit()
                     .putString("pro_plugin_path", info.sourceDir)
                     .putString("pro_plugin_lib_path", info.nativeLibraryDir)
                     .apply();
                 try {
-                    com.waenhancer.xposed.utils.LicenseManager.makePrefsWorldReadable(this);
+                    LicenseManager.makePrefsWorldReadable(this);
                 } catch (Exception ignored) {}
             }
         } catch (Throwable t) {
-            android.util.Log.e("WaeX-App", "Failed to resolve companion APK path", t);
+            Log.e("WaeX-App", "Failed to resolve companion APK path", t);
         }
 
         // Initialize limited-free feature config. Run unconditionally — the pro plugin is now a
         // separate APK (com.waex.helper), so HAS_PRO_FEATURES may be false even when it is installed.
         // initLimitedFree() handles the "not available" case gracefully.
         try {
-            com.waenhancer.xposed.utils.ProHelper.initLimitedFree(this, sharedPreferences);
+            ProHelper.initLimitedFree(this, sharedPreferences);
         } catch (Throwable t) {
-            android.util.Log.e("WaeX-App", "Failed to initialize LimitedFreeManager", t);
+            Log.e("WaeX-App", "Failed to initialize LimitedFreeManager", t);
         }
         
         // Force create the preferences file if it doesn't exist so LSPosed file watcher doesn't fail
@@ -235,6 +238,40 @@ public class App extends Application {
         Intent intent = new Intent(BuildConfig.APPLICATION_ID + ".WHATSAPP.RESTART");
         intent.putExtra("PKG", packageWpp);
         sendBroadcast(intent);
+    }
+
+    /**
+     * Enables or disables Firebase Analytics and Crashlytics collection at runtime.
+     * Should only be called when {@link BuildConfig#FIREBASE_ENABLED} is {@code true}.
+     * Uses reflection so the code compiles even when Firebase is not on the classpath
+     * (i.e. when building without google-services.json).
+     *
+     * @param context  any valid Context
+     * @param enabled  {@code true} = user has consented; {@code false} = user has declined or revoked
+     */
+    public static void applyFirebaseConsent(Context context, boolean enabled) {
+        try {
+            Class<?> analyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
+            Object analyticsInstance = analyticsClass
+                    .getMethod("getInstance", Context.class)
+                    .invoke(null, context.getApplicationContext());
+            analyticsClass
+                    .getMethod("setAnalyticsCollectionEnabled", boolean.class)
+                    .invoke(analyticsInstance, enabled);
+        } catch (Throwable e) {
+            if (BuildConfig.DEBUG) Log.e("WaeX-Firebase", "Analytics consent apply failed", e);
+        }
+        try {
+            Class<?> crashlyticsClass = Class.forName("com.google.firebase.crashlytics.FirebaseCrashlytics");
+            Object crashlyticsInstance = crashlyticsClass
+                    .getMethod("getInstance")
+                    .invoke(null);
+            crashlyticsClass
+                    .getMethod("setCrashlyticsCollectionEnabled", boolean.class)
+                    .invoke(crashlyticsInstance, enabled);
+        } catch (Throwable e) {
+            if (BuildConfig.DEBUG) Log.e("WaeX-Firebase", "Crashlytics consent apply failed", e);
+        }
     }
 
     public static void changeLanguage(Context context) {

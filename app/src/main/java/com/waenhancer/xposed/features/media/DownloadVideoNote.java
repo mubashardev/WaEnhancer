@@ -17,6 +17,10 @@ import java.io.File;
 
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import com.waenhancer.xposed.core.WppCore;
 
 public class DownloadVideoNote extends Feature {
 
@@ -50,21 +54,21 @@ public class DownloadVideoNote extends Feature {
                 if (actionButtonId == 0) return;
 
                 View actionButton = viewGroup.findViewById(actionButtonId);
-                if (actionButton instanceof android.widget.ImageView) {
-                    android.widget.ImageView origAction = (android.widget.ImageView) actionButton;
+                if (actionButton instanceof ImageView) {
+                    ImageView origAction = (ImageView) actionButton;
                     ViewGroup parent = (ViewGroup) origAction.getParent();
-                    if (parent instanceof android.widget.LinearLayout) {
-                        android.widget.LinearLayout actionContainer = (android.widget.LinearLayout) parent;
+                    if (parent instanceof LinearLayout) {
+                        LinearLayout actionContainer = (LinearLayout) parent;
 
                         String tag = "wae_download_video_note_btn";
                         if (actionContainer.findViewWithTag(tag) != null) return;
 
                         // Create duplicate button
-                        android.widget.ImageView downloadBtn = new android.widget.ImageView(actionButton.getContext());
+                        ImageView downloadBtn = new ImageView(actionButton.getContext());
                         downloadBtn.setTag(tag);
 
                         // Try to load our custom download drawable from the module package
-                        android.graphics.drawable.Drawable customIcon = null;
+                        Drawable customIcon = null;
                         try {
                             Context modContext = actionButton.getContext().createPackageContext(
                                     "com.waenhancer",
@@ -102,12 +106,12 @@ public class DownloadVideoNote extends Feature {
 
                         // Copy layout params
                         ViewGroup.LayoutParams origLp = origAction.getLayoutParams();
-                        android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                                 origLp.width,
                                 origLp.height
                         );
-                        if (origLp instanceof android.widget.LinearLayout.LayoutParams) {
-                            android.widget.LinearLayout.LayoutParams origLpLinear = (android.widget.LinearLayout.LayoutParams) origLp;
+                        if (origLp instanceof LinearLayout.LayoutParams) {
+                            LinearLayout.LayoutParams origLpLinear = (LinearLayout.LayoutParams) origLp;
                             lp.gravity = origLpLinear.gravity;
                             lp.weight = origLpLinear.weight;
                             lp.setMargins(
@@ -142,7 +146,7 @@ public class DownloadVideoNote extends Feature {
             var destination = Utils.getDestination("Video Notes");
             
             // Build a unique, deterministic filename using the messageID to prevent duplicates
-            var contactName = com.waenhancer.xposed.core.WppCore.getContactName(userJid);
+            var contactName = WppCore.getContactName(userJid);
             var number = userJid.getPhoneRawString();
             var name = Utils.toValidFileName(contactName) + "_" + number + "_" + fMessage.getKey().messageID + ".mp4";
             

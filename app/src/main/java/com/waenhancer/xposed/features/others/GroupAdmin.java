@@ -32,6 +32,10 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.app.Activity;
+import android.content.ContextWrapper;
+import android.content.res.Configuration;
+import android.graphics.drawable.ColorDrawable;
 
 public class GroupAdmin extends Feature {
 
@@ -138,10 +142,10 @@ public class GroupAdmin extends Feature {
                     if (manager == null && rowView.getContext() != null) {
                         try {
                             Context ctx = rowView.getContext();
-                            while (ctx instanceof android.content.ContextWrapper && !(ctx instanceof android.app.Activity)) {
-                                ctx = ((android.content.ContextWrapper) ctx).getBaseContext();
+                            while (ctx instanceof ContextWrapper && !(ctx instanceof Activity)) {
+                                ctx = ((ContextWrapper) ctx).getBaseContext();
                             }
-                            if (ctx instanceof android.app.Activity) {
+                            if (ctx instanceof Activity) {
                                 Field f = ReflectionUtils.findFieldUsingFilterIfExists(ctx.getClass(), field -> managerClass.isAssignableFrom(field.getType()));
                                 if (f != null) manager = f.get(ctx);
                             }
@@ -225,8 +229,8 @@ public class GroupAdmin extends Feature {
         try {
             Context ctx = rowView.getContext();
             boolean isDarkMode = (ctx.getResources().getConfiguration().uiMode
-                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
-                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+                & Configuration.UI_MODE_NIGHT_MASK)
+                == Configuration.UI_MODE_NIGHT_YES;
 
             int baseColor = isDarkMode ? defaultDark : defaultLight;
 
@@ -234,11 +238,11 @@ public class GroupAdmin extends Feature {
             View bubbleView = rowView.findViewById(Utils.getID("bubble_row", "id"));
             if (bubbleView == null) bubbleView = rowView.findViewById(Utils.getID("bubble", "id"));
             if (bubbleView != null && bubbleView.getBackground() != null) {
-                if (bubbleView.getBackground() instanceof android.graphics.drawable.GradientDrawable) {
-                    var gd = (android.graphics.drawable.GradientDrawable) bubbleView.getBackground();
+                if (bubbleView.getBackground() instanceof GradientDrawable) {
+                    var gd = (GradientDrawable) bubbleView.getBackground();
                     if (gd.getColor() != null) baseColor = gd.getColor().getDefaultColor();
-                } else if (bubbleView.getBackground() instanceof android.graphics.drawable.ColorDrawable) {
-                    baseColor = ((android.graphics.drawable.ColorDrawable) bubbleView.getBackground()).getColor();
+                } else if (bubbleView.getBackground() instanceof ColorDrawable) {
+                    baseColor = ((ColorDrawable) bubbleView.getBackground()).getColor();
                 }
             }
 

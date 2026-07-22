@@ -155,7 +155,7 @@ public class FMessageWpp {
         try {
             if (getOriginalMessageKey == null) return null;
             Object result;
-            if (java.lang.reflect.Modifier.isStatic(getOriginalMessageKey.getModifiers())) {
+            if (Modifier.isStatic(getOriginalMessageKey.getModifiers())) {
                 result = getOriginalMessageKey.invoke(null, fmessage);
             } else {
                 result = getOriginalMessageKey.invoke(fmessage);

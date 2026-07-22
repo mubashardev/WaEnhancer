@@ -213,6 +213,8 @@
     <string name="enable_restart_button_sum">Add button in Home Screen to Restart App</string>
     <string name="toast_on_delete">Show toast notification on delete message</string>
     <string name="toast_on_delete_sum">Show toast notification if any contact deletes any message</string>
+    <string name="recover_deleted_media">Save Deleted Media Files</string>
+    <string name="recover_deleted_media_sum">Save media from deleted messages to .deleted folder (Pro)</string>
     <string name="hideread_group">Hide Blue Tick in Groups</string>
     <string name="hideread_group_sum">View messages in groups screen without users knowing</string>
     <string name="show_freezeLastSeen_button">Show Freeze Last Seen Button</string>
@@ -487,6 +489,8 @@
     <string name="always_online_sum">Show you online even if you minimize WhatsApp (Doesn\'t work if you remove it from recents)</string>
     <string name="additional_call_information">Additional call information</string>
     <string name="additional_call_information_sum">Receive a notification with additional information after the call ends</string>
+    <string name="call_blocked_notification">Call blocked notification</string>
+    <string name="call_blocked_notification_sum">Show a notification when an incoming call is automatically blocked</string>
     <string name="contact_s">Contact: %s</string>
     <string name="phone_number_s">Number: +%s</string>
     <string name="country_s">Country: %s</string>
@@ -519,12 +523,32 @@
     <string name="floating_bottom_bar">Floating Bottom Navigation</string>
     <string name="floating_bottom_bar_sum">Style bottom navigation menu to a modern floating pill bar</string>
     <string name="floating_bottom_bar_scroll_hide">Hide bottom navigation on scroll</string>
-    <string name="floating_bottom_bar_scroll_hide_sum">Animate bottom pill bar downward to hide when scrolling down, and show it again when scrolling up</string>
+    <string name="floating_bottom_bar_scroll_hide_sum">Animate bottom pill bar to hide when scrolling down, and show it again when scrolling up</string>
+    <string name="floating_bottom_bar_scroll_hide_mode">Scroll Hide Style</string>
+    <string name="floating_bottom_bar_scroll_hide_mode_sum">Choose how the pill hides when scrolling</string>
+    <string name="scroll_hide_downward">Downward</string>
+    <string name="scroll_hide_invisible">Invisible</string>
     <string name="floating_bottom_bar_glass">Glassmorphism Effect</string>
     <string name="floating_bottom_bar_glass_sum">Apply a translucent blurred glass effect to the bottom pill bar</string>
     <string name="floating_bottom_bar_fill_color">Pill Fill Color</string>
     <string name="floating_bottom_bar_glass_opacity">Glass Opacity</string>
     <string name="floating_bottom_bar_pill_design">Pill Design</string>
+    <string name="floating_bottom_bar_radius">Pill Corner Radius</string>
+    <string name="floating_bottom_bar_radius_sum">Adjust the corner border radius of the floating navigation pill bar</string>
+    <string name="floating_bottom_bar_margin_bottom">Pill Bottom Margin</string>
+    <string name="floating_bottom_bar_margin_bottom_sum">Adjust the vertical margin below the floating navigation pill bar</string>
+    <string name="floating_bottom_bar_fab_offset">FAB Vertical Offset</string>
+    <string name="floating_bottom_bar_fab_offset_sum">Adjust the vertical offset spacing for WhatsApp Floating Action Buttons (FABs)</string>
+    <string name="floating_bottom_bar_margin_horizontal">Pill Horizontal Margin</string>
+    <string name="floating_bottom_bar_margin_horizontal_sum">Adjust the side margin of the floating navigation pill bar</string>
+    <string name="pill_customization_title">Bottom Menu Customization</string>
+    <string name="floating_bottom_bar_icon_size">Menu Icon Size</string>
+    <string name="floating_bottom_bar_text_size">Menu Label Text Size</string>
+    <string name="floating_bottom_bar_padding_vertical">Pill Vertical Padding</string>
+    <string name="floating_bottom_bar_icon_label_spacing">Icon-Label Spacing</string>
+    <string name="pill_customization_desc">Customize colors, margins, opacity, radius and preview changes in real time</string>
+    <string name="unlock_premium_customization">Unlock Premium Customization</string>
+    <string name="unlock_premium_customization_sum">Unlocks exclusive visual themes, native app icons, premium sticker packs, and custom ringtones</string>
     <string name="download_not_available">Please wait until it is fully downloaded in WhatsApp before trying again.</string>
     <string name="call_recording_title">Call Recording</string>
     <string name="call_recording_enable">Enable Call Recording</string>
@@ -562,6 +586,8 @@
     <string name="enable_spy_sum">Logs internal events to Xposed log for debugging.</string>
     <string name="no_deleted_messages">No deleted messages found</string>
     <string name="deleted_messages_title">Deleted By Me</string>
+    <string name="deleted_messages_settings">Settings</string>
+    <string name="deleted_messages_settings_title">Deleted Messages Settings</string>
     <string name="restore_message">Restore</string>
     <string name="deleted_messages_sum">View messages deleted by others</string>
     <string name="restore_feature_title">Restore Feature</string>
@@ -758,5 +784,5 @@ You can still try it, but please wait for a stable version — it will be launch
     <string name="not_applied">Not Applied</string>
     <string name="become_pro">Become Pro</string>
     <string name="become_pro_summary">Upgrade to Pro, verify license key or view available plans</string>
-    <string name="premium_features_title">Premium &amp; Free Features</string>
+    <string name="premium_features_title">Premium &amp; Limited Free Features</string>
 </resources>

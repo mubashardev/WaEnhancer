@@ -17,6 +17,27 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.util.Base64;
+import androidx.preference.PreferenceManager;
+import com.waenhancer.BuildConfig;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import org.json.JSONException;
 
 /**
  * Handles communication with the Cloudflare Worker API to verify licensing keys.
@@ -128,7 +149,7 @@ public class LicenseManager {
                 String signature = KeystoreHelper.signData(normalizedKey);
                 payload.put("device_signature", signature != null ? signature : "");
 
-                String versionName = com.waenhancer.BuildConfig.VERSION_NAME;
+                String versionName = BuildConfig.VERSION_NAME;
                 if (versionName == null) versionName = "";
                 String encryptedVn = "";
                 try {
@@ -146,12 +167,12 @@ public class LicenseManager {
                             'W','a','E','n','h','a','n','c','e','r','X','_',
                             'I','V','_','_'
                         };
-                        javax.crypto.spec.SecretKeySpec keySpec = new javax.crypto.spec.SecretKeySpec(keyBytes, "AES");
-                        javax.crypto.spec.IvParameterSpec ivSpec = new javax.crypto.spec.IvParameterSpec(ivBytes);
-                        javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding");
-                        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, keySpec, ivSpec);
-                        byte[] encryptedBytes = cipher.doFinal(versionName.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                        encryptedVn = android.util.Base64.encodeToString(encryptedBytes, android.util.Base64.NO_WRAP);
+                        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+                        IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+                        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                        cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
+                        byte[] encryptedBytes = cipher.doFinal(versionName.getBytes(StandardCharsets.UTF_8));
+                        encryptedVn = Base64.encodeToString(encryptedBytes, Base64.NO_WRAP);
                     } catch (Exception ignored) {}
                 }
                 payload.put("vn", encryptedVn != null ? encryptedVn : "");
@@ -184,7 +205,7 @@ public class LicenseManager {
                 if (responseCode >= 200 && responseCode < 300) {
                     streamReader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
                 } else {
-                    java.io.InputStream errorStream = conn.getErrorStream();
+                    InputStream errorStream = conn.getErrorStream();
                     streamReader = new InputStreamReader(errorStream != null ? errorStream : conn.getInputStream(), StandardCharsets.UTF_8);
                 }
 
@@ -216,10 +237,72 @@ public class LicenseManager {
                     final String whitelistChannels = responseObj.optString("whitelist_channels", "");
                     final String planPrice = responseObj.optString("price", "");
 
-                    // Save verified status, tier parameters, and encrypted_config in a single transaction securely
+                    // Write values to the module using HookProvider content resolver call method
+                    try {
+                        Uri providerUri = Uri.parse("content://com.waenhancer.hookprovider");
+                        
+                        Bundle b1 = new Bundle();
+                        b1.putString("key", "is_pro_verified");
+                        b1.putString("type", "boolean");
+                        b1.putBoolean("value", true);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b1);
+                        
+                        Bundle b2 = new Bundle();
+                        b2.putString("key", "expires_at");
+                        b2.putString("type", "long");
+                        b2.putLong("value", expiresAt);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b2);
+
+                        Bundle b3 = new Bundle();
+                        b3.putString("key", "plan_name");
+                        b3.putString("type", "string");
+                        b3.putString("value", planName);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b3);
+
+                        Bundle b4 = new Bundle();
+                        b4.putString("key", "license_key");
+                        b4.putString("type", "string");
+                        b4.putString("value", normalizedKey);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b4);
+
+                        Bundle b5 = new Bundle();
+                        b5.putString("key", "tg_username");
+                        b5.putString("type", "string");
+                        b5.putString("value", tgUsername);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b5);
+
+                        Bundle b6 = new Bundle();
+                        b6.putString("key", "encrypted_config");
+                        b6.putString("type", "string");
+                        b6.putString("value", encryptedConfig);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b6);
+
+                        Bundle b7 = new Bundle();
+                        b7.putString("key", "whitelist_channels");
+                        b7.putString("type", "string");
+                        b7.putString("value", whitelistChannels);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b7);
+
+                        Bundle b8 = new Bundle();
+                        b8.putString("key", "plan_price");
+                        b8.putString("type", "string");
+                        b8.putString("value", planPrice);
+                        context.getContentResolver().call(providerUri, "put_preference", null, b8);
+                    } catch (Throwable t) {
+                        Log.e(TAG, "Failed to write license via ContentResolver", t);
+                    }
+
+                    // Fallback local write (if we are in-process)
+                    Context moduleContext = context;
+                    if (!"com.waenhancer".equals(context.getPackageName())) {
+                        try {
+                            moduleContext = context.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
+                        } catch (Throwable ignored) {}
+                    }
+                    
                     SafeSharedPreferences safePrefs = 
                             new SafeSharedPreferences(
-                                    androidx.preference.PreferenceManager.getDefaultSharedPreferences(context));
+                                    PreferenceManager.getDefaultSharedPreferences(moduleContext));
                     
                     safePrefs.edit()
                             .putBoolean("is_pro_verified", true)
@@ -231,16 +314,16 @@ public class LicenseManager {
                             .putString("whitelist_channels", whitelistChannels)
                             .putString("plan_price", planPrice)
                             .commit(); // Synchronous commit to ensure immediate disk write
-
+ 
                     // Make sure preferences are world-readable on disk
-                    makePrefsWorldReadable(context);
+                    makePrefsWorldReadable(moduleContext);
 
                     // Active key successfully validated, clear forced FREE status override
                     ProHelper.setForceFree(false);
 
                     // Broadcast status change to update UI
                     try {
-                        android.content.Intent broadcastIntent = new android.content.Intent(
+                        Intent broadcastIntent = new Intent(
                                 context.getPackageName() + ".ACTION_PRO_STATUS_CHANGED");
                         broadcastIntent.setPackage(context.getPackageName());
                         context.sendBroadcast(broadcastIntent);
@@ -250,7 +333,7 @@ public class LicenseManager {
                         try {
                             ClassLoader loader = ProHelper.getPluginClassLoader(context);
                             Class<?> proConfigClass = loader != null ? Class.forName("com.waex.helper.utils.ProConfig", true, loader) : Class.forName("com.waex.helper.utils.ProConfig");
-                            java.lang.reflect.Method loadConfigMethod = proConfigClass.getMethod("loadConfig", String.class);
+                            Method loadConfigMethod = proConfigClass.getMethod("loadConfig", String.class);
                             loadConfigMethod.invoke(null, encryptedConfig);
                         } catch (Exception ignored) {}
                         postSuccess(callback, encryptedConfig);
@@ -262,13 +345,13 @@ public class LicenseManager {
                     postError(callback, errorMessage);
                 }
 
-            } catch (java.net.SocketTimeoutException e) {
+            } catch (SocketTimeoutException e) {
                 Log.e(TAG, "Connection timed out verifying license", e);
                 postError(callback, "Connection timed out. Please check your network and try again.");
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 Log.e(TAG, "I/O exception verifying license", e);
                 postError(callback, "Network request failed. Please check your internet connection.");
-            } catch (org.json.JSONException e) {
+            } catch (JSONException e) {
                 Log.e(TAG, "JSON parsing error verifying license", e);
                 postError(callback, "Invalid response format from authorization server.");
             } catch (Exception e) {
@@ -292,7 +375,7 @@ public class LicenseManager {
      * @param listener Optional listener invoked on the main thread when the status changes to FREE.
      */
     public static void silentCheck(final Context context, final SilentCheckListener listener) {
-        final SharedPreferences rawPrefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        final SharedPreferences rawPrefs = PreferenceManager.getDefaultSharedPreferences(context);
         final SafeSharedPreferences safePrefs =
                 new SafeSharedPreferences(rawPrefs);
 
@@ -306,7 +389,7 @@ public class LicenseManager {
 
         // Reversion / Channel compatibility check
         String whitelist = safePrefs.getString("whitelist_channels", "");
-        final String versionName = com.waenhancer.BuildConfig.VERSION_NAME != null ? com.waenhancer.BuildConfig.VERSION_NAME : "";
+        final String versionName = BuildConfig.VERSION_NAME != null ? BuildConfig.VERSION_NAME : "";
         if (isVerified && !whitelist.isEmpty()) {
             boolean allowed = false;
             String channelName = "";
@@ -371,7 +454,7 @@ public class LicenseManager {
                 });
                 
                 // Broadcast status change
-                android.content.Intent broadcastIntent = new android.content.Intent(
+                Intent broadcastIntent = new Intent(
                         context.getPackageName() + ".ACTION_PRO_STATUS_CHANGED");
                 broadcastIntent.setPackage(context.getPackageName());
                 context.sendBroadcast(broadcastIntent);
@@ -417,12 +500,12 @@ public class LicenseManager {
                             'W','a','E','n','h','a','n','c','e','r','X','_',
                             'I','V','_','_'
                         };
-                        javax.crypto.spec.SecretKeySpec keySpec = new javax.crypto.spec.SecretKeySpec(keyBytes, "AES");
-                        javax.crypto.spec.IvParameterSpec ivSpec = new javax.crypto.spec.IvParameterSpec(ivBytes);
-                        javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding");
-                        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, keySpec, ivSpec);
-                        byte[] encryptedBytes = cipher.doFinal(versionName.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                        encryptedVn = android.util.Base64.encodeToString(encryptedBytes, android.util.Base64.NO_WRAP);
+                        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+                        IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+                        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                        cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
+                        byte[] encryptedBytes = cipher.doFinal(versionName.getBytes(StandardCharsets.UTF_8));
+                        encryptedVn = Base64.encodeToString(encryptedBytes, Base64.NO_WRAP);
                     } catch (Exception ignored) {}
                 }
                 payload.put("vn", encryptedVn != null ? encryptedVn : "");
@@ -452,7 +535,7 @@ public class LicenseManager {
                 if (responseCode >= 200 && responseCode < 300) {
                     streamReader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
                 } else {
-                    java.io.InputStream errorStream = conn.getErrorStream();
+                    InputStream errorStream = conn.getErrorStream();
                     streamReader = new InputStreamReader(
                             errorStream != null ? errorStream : conn.getInputStream(), StandardCharsets.UTF_8);
                 }
@@ -488,7 +571,7 @@ public class LicenseManager {
                         try {
                             ClassLoader loader = ProHelper.getPluginClassLoader(context);
                             Class<?> proConfigClass = loader != null ? Class.forName("com.waex.helper.utils.ProConfig", true, loader) : Class.forName("com.waex.helper.utils.ProConfig");
-                            java.lang.reflect.Method loadConfigMethod = proConfigClass.getMethod("loadConfig", String.class);
+                            Method loadConfigMethod = proConfigClass.getMethod("loadConfig", String.class);
                             loadConfigMethod.invoke(null, encryptedConfig);
                         } catch (Exception ignored) {}
                     }
@@ -587,7 +670,7 @@ public class LicenseManager {
                     } catch (Exception ignored) {}
 
                     // Broadcast status change to update UI in both cases
-                    android.content.Intent broadcastIntent = new android.content.Intent(context.getPackageName() + ".ACTION_PRO_STATUS_CHANGED");
+                    Intent broadcastIntent = new Intent(context.getPackageName() + ".ACTION_PRO_STATUS_CHANGED");
                     broadcastIntent.setPackage(context.getPackageName());
                     context.sendBroadcast(broadcastIntent);
 
@@ -597,7 +680,7 @@ public class LicenseManager {
                 }
                 // For other error codes (500, network flakes), do nothing — don't punish transient failures
 
-            } catch (java.net.SocketTimeoutException | java.net.UnknownHostException e) {
+            } catch (SocketTimeoutException | UnknownHostException e) {
                 // Network not available — fail silently, do NOT wipe data
             } catch (Exception e) {
                 Log.e(TAG, "silentCheck: Unexpected error", e);
@@ -628,15 +711,38 @@ public class LicenseManager {
             return;
         }
 
-        final SharedPreferences rawPrefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
-        final SafeSharedPreferences safePrefs =
-                new SafeSharedPreferences(rawPrefs);
-        final String licenseKey = safePrefs.getString("license_key", "").trim();
+        // When running inside WhatsApp's process (Xposed context), Utils.xprefs points to the
+        // module app's DefaultSharedPreferences — the authoritative source of license data.
+        // When called from inside the module app directly, fall back to context prefs.
+        String resolvedKey = "";
+        SafeSharedPreferences safePrefs = null;
+        try {
+            SharedPreferences xp = Utils.xprefs;
+            if (xp != null) {
+                SafeSharedPreferences xSafe = new SafeSharedPreferences(xp);
+                String xKey = xSafe.getString("license_key", "").trim();
+                if (!xKey.isEmpty()) {
+                    resolvedKey = xKey;
+                    safePrefs = xSafe;
+                }
+            }
+        } catch (Throwable ignored) {}
 
-        if (licenseKey.isEmpty()) {
+        if (resolvedKey.isEmpty()) {
+            // Fallback: normal in-app context (module app process)
+            final SharedPreferences rawPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+            safePrefs = new SafeSharedPreferences(rawPrefs);
+            resolvedKey = safePrefs.getString("license_key", "").trim();
+        }
+
+        if (resolvedKey.isEmpty()) {
             postUnlinkError(callback, "No license key found.");
             return;
         }
+
+        final String licenseKey = resolvedKey;
+        final SafeSharedPreferences finalSafePrefs = safePrefs != null ? safePrefs
+                : new SafeSharedPreferences(PreferenceManager.getDefaultSharedPreferences(context));
 
         executorService.execute(() -> {
             HttpURLConnection conn = null;
@@ -672,7 +778,7 @@ public class LicenseManager {
                 if (responseCode >= 200 && responseCode < 300) {
                     streamReader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
                 } else {
-                    java.io.InputStream errorStream = conn.getErrorStream();
+                    InputStream errorStream = conn.getErrorStream();
                     streamReader = new InputStreamReader(
                             errorStream != null ? errorStream : conn.getInputStream(), StandardCharsets.UTF_8);
                 }
@@ -692,19 +798,40 @@ public class LicenseManager {
 
                 if ("success".equalsIgnoreCase(status)) {
                     // Wipe all local license data
-                    clearLicenseData(safePrefs, context, "Your device has been unlinked from this license key.");
+                    clearLicenseData(finalSafePrefs, context, "Your device has been unlinked from this license key.");
                     ProHelper.setForceFree(true);
 
                     // Broadcast status change
-                    android.content.Intent broadcastIntent = new android.content.Intent(
+                    Intent broadcastIntent = new Intent(
                             context.getPackageName() + ".ACTION_PRO_STATUS_CHANGED");
                     broadcastIntent.setPackage(context.getPackageName());
                     context.sendBroadcast(broadcastIntent);
 
                     mainHandler.post(callback::onSuccess);
                 } else {
-                    String errorMsg = responseObj.optString("message", "Unlink failed.");
-                    postUnlinkError(callback, errorMsg);
+                    String errorMsg = responseObj.optString("message", "Unlink failed.").trim();
+
+                    // If the server says no device is linked, that means the device was already
+                    // unlinked (e.g., via Telegram bot). Treat this as success — clear local data.
+                    boolean alreadyUnlinked =
+                            errorMsg.toLowerCase().contains("no device") ||
+                            errorMsg.toLowerCase().contains("not linked") ||
+                            errorMsg.toLowerCase().contains("already unlinked") ||
+                            errorMsg.toLowerCase().contains("device not found");
+
+                    if (alreadyUnlinked) {
+                        clearLicenseData(finalSafePrefs, context, null);
+                        ProHelper.setForceFree(true);
+
+                        Intent bi = new Intent(
+                                context.getPackageName() + ".ACTION_PRO_STATUS_CHANGED");
+                        bi.setPackage(context.getPackageName());
+                        context.sendBroadcast(bi);
+
+                        mainHandler.post(callback::onSuccess);
+                    } else {
+                        postUnlinkError(callback, errorMsg);
+                    }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "unlinkDevice error", e);
@@ -761,13 +888,13 @@ public class LicenseManager {
         try {
             // First try parsing as ISO 8601 string (e.g. 2026-06-07T23:59:59.000Z)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                java.time.Instant instant = java.time.Instant.parse(expiresAtStr);
+                Instant instant = Instant.parse(expiresAtStr);
                 return instant.toEpochMilli();
             } else {
                 // Pre-O fallback
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
-                sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
-                java.util.Date date = sdf.parse(expiresAtStr);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                Date date = sdf.parse(expiresAtStr);
                 if (date != null) {
                     return date.getTime();
                 }
@@ -775,9 +902,9 @@ public class LicenseManager {
         } catch (Exception e) {
             // Try fallback without milliseconds in pre-O
             try {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US);
-                sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
-                java.util.Date date = sdf.parse(expiresAtStr);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                Date date = sdf.parse(expiresAtStr);
                 if (date != null) {
                     return date.getTime();
                 }
@@ -791,21 +918,21 @@ public class LicenseManager {
     public static void makePrefsWorldReadable(Context context) {
         try {
             // Make the app data directory traversable by other processes (kernel sandbox traversal)
-            java.io.File dataDir = context.getDataDir();
+            File dataDir = context.getDataDir();
             if (dataDir.exists()) {
                 dataDir.setReadable(true, false);
                 dataDir.setExecutable(true, false);
             }
             
             // Make the shared_prefs directory traversable and readable
-            java.io.File prefsDir = new java.io.File(dataDir, "shared_prefs");
+            File prefsDir = new File(dataDir, "shared_prefs");
             if (prefsDir.exists()) {
                 prefsDir.setReadable(true, false);
                 prefsDir.setExecutable(true, false);
             }
             
             // Make the preferences XML file world-readable
-            java.io.File prefsFile = new java.io.File(prefsDir, "com.waenhancer_preferences.xml");
+            File prefsFile = new File(prefsDir, "com.waenhancer_preferences.xml");
             if (prefsFile.exists()) {
                 prefsFile.setReadable(true, false);
             }

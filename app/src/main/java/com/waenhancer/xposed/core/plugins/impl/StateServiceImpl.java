@@ -10,6 +10,9 @@ import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.features.privacy.CustomPrivacy;
 import org.json.JSONObject;
+import com.waenhancer.xposed.core.ActivityStateRegistry;
+import de.robv.android.xposed.XposedBridge;
+import java.io.File;
 
 public class StateServiceImpl implements IStateService {
 
@@ -22,7 +25,7 @@ public class StateServiceImpl implements IStateService {
                     var m = listener.getClass().getMethod("onActivityStateChanged", Activity.class, String.class);
                     m.invoke(listener, activity, type.name());
                 } catch (Exception e) {
-                    de.robv.android.xposed.XposedBridge.log("addListenerActivity callback invocation error: " + e.getMessage());
+                    XposedBridge.log("addListenerActivity callback invocation error: " + e.getMessage());
                 }
             }
         });
@@ -30,7 +33,7 @@ public class StateServiceImpl implements IStateService {
 
     @Override
     public boolean isAnyActivityResumed() {
-        return com.waenhancer.xposed.core.ActivityStateRegistry.isAnyActivityInState(WppCore.ActivityChangeState.ChangeType.RESUMED);
+        return ActivityStateRegistry.isAnyActivityInState(WppCore.ActivityChangeState.ChangeType.RESUMED);
     }
 
     @Override
@@ -158,7 +161,7 @@ public class StateServiceImpl implements IStateService {
         ) : null;
 
         UserJidDTO senderDTO = mapJidToDTO(fMsg.getUserJid());
-        java.io.File mediaFile = fMsg.getMediaFile();
+        File mediaFile = fMsg.getMediaFile();
 
         return new MessageDTO(
             keyDTO,
@@ -180,7 +183,7 @@ public class StateServiceImpl implements IStateService {
     }
 
     @Override
-    public java.io.File getMessageMediaFile(Object messageObj) {
+    public File getMessageMediaFile(Object messageObj) {
         if (messageObj == null) return null;
         return new FMessageWpp(messageObj).getMediaFile();
     }

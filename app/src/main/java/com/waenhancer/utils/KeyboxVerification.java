@@ -36,6 +36,18 @@ import java.security.spec.ECGenParameterSpec;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import android.content.res.ColorStateList;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
+import androidx.annotation.Nullable;
+import com.waenhancer.activities.MainActivity;
+import com.waenhancer.utils.ModuleStatus;
+import com.waenhancer.xposed.utils.XPrefManager;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.util.TimeZone;
 
 public class KeyboxVerification {
 
@@ -176,7 +188,7 @@ public class KeyboxVerification {
 
         if (!result.parsed) {
             statusIcon.setImageResource(R.drawable.ic_round_error_outline_24);
-            statusIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF3B30));
+            statusIcon.setImageTintList(ColorStateList.valueOf(0xFFFF3B30));
             titleText.setText("Verification Failed");
             parseErrorCard.setVisibility(View.VISIBLE);
             parseErrorMsg.setText(result.errorMsg);
@@ -196,11 +208,11 @@ public class KeyboxVerification {
             MaterialTextView spooferAttestationText = view.findViewById(R.id.kb_spoofer_attestation_text);
 
             spooferActiveIcon.setImageResource(hookActive ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-            spooferActiveIcon.setImageTintList(android.content.res.ColorStateList.valueOf(hookActive ? 0xFF4CAF50 : 0xFFFF3B30));
+            spooferActiveIcon.setImageTintList(ColorStateList.valueOf(hookActive ? 0xFF4CAF50 : 0xFFFF3B30));
             spooferActiveText.setText("Hook active status: " + (hookActive ? "Pass" : "Failed"));
 
             spooferAttestationIcon.setImageResource(attestationSpoofed ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-            spooferAttestationIcon.setImageTintList(android.content.res.ColorStateList.valueOf(attestationSpoofed ? 0xFF4CAF50 : 0xFFFF3B30));
+            spooferAttestationIcon.setImageTintList(ColorStateList.valueOf(attestationSpoofed ? 0xFF4CAF50 : 0xFFFF3B30));
             if (isInWhatsApp) {
                 spooferAttestationText.setText("KeyStore attestation spoofing: " + (attestationSpoofed ? "Pass" : "Failed"));
             } else {
@@ -219,14 +231,14 @@ public class KeyboxVerification {
 
             if (result.ecCerts.isEmpty()) {
                 ecStatusIcon.setImageResource(R.drawable.ic_round_error_outline_24);
-                ecStatusIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF3B30));
+                ecStatusIcon.setImageTintList(ColorStateList.valueOf(0xFFFF3B30));
                 ecStatusText.setText("Not found");
                 ecExpiryText.setText("No expiry date available");
                 ecChainIcon.setImageResource(R.drawable.ic_round_error_outline_24);
-                ecChainIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF3B30));
+                ecChainIcon.setImageTintList(ColorStateList.valueOf(0xFFFF3B30));
                 ecChainText.setText("No trust chain");
                 ecMatchIcon.setImageResource(R.drawable.ic_round_error_outline_24);
-                ecMatchIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF3B30));
+                ecMatchIcon.setImageTintList(ColorStateList.valueOf(0xFFFF3B30));
                 ecMatchText.setText("No private key matches");
             } else {
                 X509Certificate ecLeaf = result.ecCerts.get(0);
@@ -234,23 +246,23 @@ public class KeyboxVerification {
                 boolean ecValid = !ecExpired && result.ecChainValid && result.ecKeyMatchesCert;
 
                 ecStatusIcon.setImageResource(ecValid ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-                ecStatusIcon.setImageTintList(android.content.res.ColorStateList.valueOf(ecValid ? 0xFF4CAF50 : 0xFFFF3B30));
+                ecStatusIcon.setImageTintList(ColorStateList.valueOf(ecValid ? 0xFF4CAF50 : 0xFFFF3B30));
                 ecStatusText.setText(ecValid ? "Pass" : (ecExpired ? "Expired" : "Failed"));
 
-                ecExpiryIcon.setImageTintList(android.content.res.ColorStateList.valueOf(ecExpired ? 0xFFFF3B30 : 0xFF8E8E93));
+                ecExpiryIcon.setImageTintList(ColorStateList.valueOf(ecExpired ? 0xFFFF3B30 : 0xFF8E8E93));
                 ecExpiryText.setText("Expires on: " + dateFmt.format(ecLeaf.getNotAfter()));
 
                 ecChainIcon.setImageResource(result.ecChainValid ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-                ecChainIcon.setImageTintList(android.content.res.ColorStateList.valueOf(result.ecChainValid ? 0xFF4CAF50 : 0xFFFF3B30));
+                ecChainIcon.setImageTintList(ColorStateList.valueOf(result.ecChainValid ? 0xFF4CAF50 : 0xFFFF3B30));
                 ecChainText.setText(result.ecChainValid ? "Trust chain verified" : "Broken trust chain");
 
                 if (result.ecKeyPresent) {
                     ecMatchIcon.setImageResource(result.ecKeyMatchesCert ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-                    ecMatchIcon.setImageTintList(android.content.res.ColorStateList.valueOf(result.ecKeyMatchesCert ? 0xFF4CAF50 : 0xFFFF3B30));
+                    ecMatchIcon.setImageTintList(ColorStateList.valueOf(result.ecKeyMatchesCert ? 0xFF4CAF50 : 0xFFFF3B30));
                     ecMatchText.setText(result.ecKeyMatchesCert ? "Private key matches leaf certificate" : "Private key mismatch");
                 } else {
                     ecMatchIcon.setImageResource(R.drawable.ic_round_warning_24);
-                    ecMatchIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF9500));
+                    ecMatchIcon.setImageTintList(ColorStateList.valueOf(0xFFFF9500));
                     ecMatchText.setText("Private key missing");
                 }
             }
@@ -267,14 +279,14 @@ public class KeyboxVerification {
 
             if (result.rsaCerts.isEmpty()) {
                 rsaStatusIcon.setImageResource(R.drawable.ic_round_error_outline_24);
-                rsaStatusIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF3B30));
+                rsaStatusIcon.setImageTintList(ColorStateList.valueOf(0xFFFF3B30));
                 rsaStatusText.setText("Not found");
                 rsaExpiryText.setText("No expiry date available");
                 rsaChainIcon.setImageResource(R.drawable.ic_round_error_outline_24);
-                rsaChainIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF3B30));
+                rsaChainIcon.setImageTintList(ColorStateList.valueOf(0xFFFF3B30));
                 rsaChainText.setText("No trust chain");
                 rsaMatchIcon.setImageResource(R.drawable.ic_round_error_outline_24);
-                rsaMatchIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF3B30));
+                rsaMatchIcon.setImageTintList(ColorStateList.valueOf(0xFFFF3B30));
                 rsaMatchText.setText("No private key matches");
             } else {
                 X509Certificate rsaLeaf = result.rsaCerts.get(0);
@@ -282,23 +294,23 @@ public class KeyboxVerification {
                 boolean rsaValid = !rsaExpired && result.rsaChainValid && result.rsaKeyMatchesCert;
 
                 rsaStatusIcon.setImageResource(rsaValid ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-                rsaStatusIcon.setImageTintList(android.content.res.ColorStateList.valueOf(rsaValid ? 0xFF4CAF50 : 0xFFFF3B30));
+                rsaStatusIcon.setImageTintList(ColorStateList.valueOf(rsaValid ? 0xFF4CAF50 : 0xFFFF3B30));
                 rsaStatusText.setText(rsaValid ? "Pass" : (rsaExpired ? "Expired" : "Failed"));
 
-                rsaExpiryIcon.setImageTintList(android.content.res.ColorStateList.valueOf(rsaExpired ? 0xFFFF3B30 : 0xFF8E8E93));
+                rsaExpiryIcon.setImageTintList(ColorStateList.valueOf(rsaExpired ? 0xFFFF3B30 : 0xFF8E8E93));
                 rsaExpiryText.setText("Expires on: " + dateFmt.format(rsaLeaf.getNotAfter()));
 
                 rsaChainIcon.setImageResource(result.rsaChainValid ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-                rsaChainIcon.setImageTintList(android.content.res.ColorStateList.valueOf(result.rsaChainValid ? 0xFF4CAF50 : 0xFFFF3B30));
+                rsaChainIcon.setImageTintList(ColorStateList.valueOf(result.rsaChainValid ? 0xFF4CAF50 : 0xFFFF3B30));
                 rsaChainText.setText(result.rsaChainValid ? "Trust chain verified" : "Broken trust chain");
 
                 if (result.rsaKeyPresent) {
                     rsaMatchIcon.setImageResource(result.rsaKeyMatchesCert ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-                    rsaMatchIcon.setImageTintList(android.content.res.ColorStateList.valueOf(result.rsaKeyMatchesCert ? 0xFF4CAF50 : 0xFFFF3B30));
+                    rsaMatchIcon.setImageTintList(ColorStateList.valueOf(result.rsaKeyMatchesCert ? 0xFF4CAF50 : 0xFFFF3B30));
                     rsaMatchText.setText(result.rsaKeyMatchesCert ? "Private key matches leaf certificate" : "Private key mismatch");
                 } else {
                     rsaMatchIcon.setImageResource(R.drawable.ic_round_warning_24);
-                    rsaMatchIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF9500));
+                    rsaMatchIcon.setImageTintList(ColorStateList.valueOf(0xFFFF9500));
                     rsaMatchText.setText("Private key missing");
                 }
             }
@@ -313,11 +325,11 @@ public class KeyboxVerification {
             boolean deviceOk = ecOk;
 
             basicIcon.setImageResource(basicOk ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-            basicIcon.setImageTintList(android.content.res.ColorStateList.valueOf(basicOk ? 0xFF4CAF50 : 0xFFFF3B30));
+            basicIcon.setImageTintList(ColorStateList.valueOf(basicOk ? 0xFF4CAF50 : 0xFFFF3B30));
             basicText.setText("MEETS_BASIC_INTEGRITY: " + (basicOk ? "Pass" : "Failed"));
 
             deviceIcon.setImageResource(deviceOk ? R.drawable.ic_round_check_circle_24 : R.drawable.ic_round_error_outline_24);
-            deviceIcon.setImageTintList(android.content.res.ColorStateList.valueOf(deviceOk ? 0xFF4CAF50 : 0xFFFF3B30));
+            deviceIcon.setImageTintList(ColorStateList.valueOf(deviceOk ? 0xFF4CAF50 : 0xFFFF3B30));
             deviceText.setText("MEETS_DEVICE_INTEGRITY: " + (deviceOk ? "Pass" : "Failed"));
 
             // Populate dynamic section titles with scores
@@ -349,9 +361,9 @@ public class KeyboxVerification {
 
             if ("Pass".equals(verifyStatus)) {
                 statusIcon.setImageResource(R.drawable.ic_round_verified_24);
-                statusIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFF4CAF50));
+                statusIcon.setImageTintList(ColorStateList.valueOf(0xFF4CAF50));
                 titleText.setText(label + " Pass");
-                recCard.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0x114CAF50));
+                recCard.setBackgroundTintList(ColorStateList.valueOf(0x114CAF50));
                 
                 boolean rsaOk = !result.rsaCerts.isEmpty() && 
                                 !now.after(result.rsaCerts.get(0).getNotAfter()) && 
@@ -361,9 +373,9 @@ public class KeyboxVerification {
                 recText.setText(spooferStatusMsg + "This spoofer configuration is valid and will pass Basic Integrity and Device Integrity. Strong Integrity is unsupported. Final Recommendation: Recommended for use." + rsaNote);
             } else {
                 statusIcon.setImageResource(R.drawable.ic_round_error_outline_24);
-                statusIcon.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF3B30));
+                statusIcon.setImageTintList(ColorStateList.valueOf(0xFFFF3B30));
                 titleText.setText(label + " Failed");
-                recCard.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0x11FF3B30));
+                recCard.setBackgroundTintList(ColorStateList.valueOf(0x11FF3B30));
 
                 if (!spooferEnabled) {
                     recText.setText("Bootloader Spoofer is currently disabled in settings. You must enable it to spoof bootloader status and pass WhatsApp integrity checks. Final Recommendation: Enable Bootloader Spoofer.");
@@ -475,7 +487,7 @@ public class KeyboxVerification {
 
     private static String getFragmentDefaultSpooferXml(PreferenceFragmentCompat fragment) {
         try {
-            java.lang.reflect.Method method = null;
+            Method method = null;
             Class<?> cls = fragment.getClass();
             while (cls != null && method == null) {
                 try {
@@ -498,7 +510,7 @@ public class KeyboxVerification {
 
     private static void triggerUpdateSummary(PreferenceFragmentCompat fragment) {
         try {
-            java.lang.reflect.Method method = null;
+            Method method = null;
             Class<?> cls = fragment.getClass();
             while (cls != null && method == null) {
                 try {
@@ -518,9 +530,9 @@ public class KeyboxVerification {
 
     private static String getXmlMd5(String xml) {
         try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] messageDigest = md.digest(xml.getBytes("UTF-8"));
-            java.math.BigInteger no = new java.math.BigInteger(1, messageDigest);
+            BigInteger no = new BigInteger(1, messageDigest);
             String hashtext = no.toString(16);
             while (hashtext.length() < 32) {
                 hashtext = "0" + hashtext;
@@ -547,10 +559,10 @@ public class KeyboxVerification {
             boolean enabled = prefs.getBoolean("bootloader_spoofer", false);
             if (!enabled) return false;
             
-            if (com.waenhancer.utils.ModuleStatus.isModuleActive()) {
+            if (ModuleStatus.isModuleActive()) {
                 return true;
             }
-            if (com.waenhancer.activities.MainActivity.isXposedFrameworkPresent(context)) {
+            if (MainActivity.isXposedFrameworkPresent(context)) {
                 return true;
             }
             
@@ -591,11 +603,11 @@ public class KeyboxVerification {
 
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
                     "EC", "AndroidKeyStore");
-            android.security.keystore.KeyGenParameterSpec spec = new android.security.keystore.KeyGenParameterSpec.Builder(
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
                     "waenhancer_attestation_test_key",
-                    android.security.keystore.KeyProperties.PURPOSE_SIGN)
+                    KeyProperties.PURPOSE_SIGN)
                     .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
-                    .setDigests(android.security.keystore.KeyProperties.DIGEST_SHA256)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
                     .setAttestationChallenge("waenhancer_challenge".getBytes())
                     .build();
             keyPairGenerator.initialize(spec);
@@ -651,7 +663,7 @@ public class KeyboxVerification {
         return false;
     }
 
-    @androidx.annotation.Nullable
+    @Nullable
     private static SharedPreferences resolvePrefs(PreferenceFragmentCompat fragment, Context context) {
         try {
             SharedPreferences p = fragment.getPreferenceManager().getSharedPreferences();
@@ -659,7 +671,7 @@ public class KeyboxVerification {
         } catch (Throwable ignored) {}
 
         try {
-            java.lang.reflect.Field field = null;
+            Field field = null;
             Class<?> cls = fragment.getClass();
             while (cls != null && field == null) {
                 try { field = cls.getDeclaredField("mPrefs"); } catch (NoSuchFieldException e) { cls = cls.getSuperclass(); }
@@ -672,7 +684,7 @@ public class KeyboxVerification {
         } catch (Throwable ignored) {}
 
         try {
-            return com.waenhancer.xposed.utils.XPrefManager.getPref(context);
+            return XPrefManager.getPref(context);
         } catch (Throwable ignored) {}
 
         return null;
@@ -680,10 +692,10 @@ public class KeyboxVerification {
 
     private static String formatLastUpdated(String rawIso) {
         try {
-            java.text.SimpleDateFormat isoFmt = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US);
-            isoFmt.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
-            java.util.Date parsed = isoFmt.parse(rawIso);
-            java.text.SimpleDateFormat outFmt = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
+            SimpleDateFormat isoFmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+            isoFmt.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date parsed = isoFmt.parse(rawIso);
+            SimpleDateFormat outFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
             return outFmt.format(parsed);
         } catch (Exception e) {
             return rawIso;
@@ -692,8 +704,8 @@ public class KeyboxVerification {
 
     private static long parseIsoToMillis(String rawIso) {
         try {
-            java.text.SimpleDateFormat isoFmt = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US);
-            isoFmt.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            SimpleDateFormat isoFmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+            isoFmt.setTimeZone(TimeZone.getTimeZone("UTC"));
             return isoFmt.parse(rawIso).getTime();
         } catch (Exception e) {
             return 0L;

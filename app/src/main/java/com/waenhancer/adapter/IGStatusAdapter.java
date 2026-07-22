@@ -42,6 +42,12 @@ import java.util.Objects;
 
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.drawable.GradientDrawable;
+import com.waenhancer.xposed.features.customization.IGStatus;
+import java.lang.reflect.Field;
 
 public class IGStatusAdapter extends ArrayAdapter {
 
@@ -106,8 +112,8 @@ public class IGStatusAdapter extends ArrayAdapter {
                         }
                         if (!clicked) {
                             var bnv = findBottomNavigationMenuView(decorView);
-                            if (bnv instanceof android.view.ViewGroup) {
-                                android.view.ViewGroup vg = (android.view.ViewGroup) bnv;
+                            if (bnv instanceof ViewGroup) {
+                                ViewGroup vg = (ViewGroup) bnv;
                                 if (vg.getChildCount() > 1) {
                                     vg.getChildAt(1).performClick();
                                     clicked = true;
@@ -175,13 +181,13 @@ public class IGStatusAdapter extends ArrayAdapter {
             if (name.endsWith(".Jid") || name.endsWith(".UserJid") || name.endsWith(".PhoneUserJid") || name.endsWith(".DeviceJid")) {
                 return obj;
             }
-            if (com.waenhancer.xposed.core.components.FMessageWpp.UserJid.TYPE_JID != null && com.waenhancer.xposed.core.components.FMessageWpp.UserJid.TYPE_JID.isInstance(obj)) {
+            if (FMessageWpp.UserJid.TYPE_JID != null && FMessageWpp.UserJid.TYPE_JID.isInstance(obj)) {
                 return obj;
             }
-            if (com.waenhancer.xposed.core.components.FMessageWpp.UserJid.TYPE_USERJID != null && com.waenhancer.xposed.core.components.FMessageWpp.UserJid.TYPE_USERJID.isInstance(obj)) {
+            if (FMessageWpp.UserJid.TYPE_USERJID != null && FMessageWpp.UserJid.TYPE_USERJID.isInstance(obj)) {
                 return obj;
             }
-            if (com.waenhancer.xposed.core.components.FMessageWpp.UserJid.TYPE_PHONEUSERJID != null && com.waenhancer.xposed.core.components.FMessageWpp.UserJid.TYPE_PHONEUSERJID.isInstance(obj)) {
+            if (FMessageWpp.UserJid.TYPE_PHONEUSERJID != null && FMessageWpp.UserJid.TYPE_PHONEUSERJID.isInstance(obj)) {
                 return obj;
             }
             
@@ -196,7 +202,7 @@ public class IGStatusAdapter extends ArrayAdapter {
                 }
             }
             
-            for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
+            for (Field f : clazz.getDeclaredFields()) {
                 try {
                     f.setAccessible(true);
                     Object val = f.get(obj);
@@ -268,7 +274,7 @@ public class IGStatusAdapter extends ArrayAdapter {
                 }
                 
                 Object statusInfo = null;
-                for (java.lang.reflect.Field f : item.getClass().getDeclaredFields()) {
+                for (Field f : item.getClass().getDeclaredFields()) {
                     try {
                         f.setAccessible(true);
                         Object val = f.get(item);
@@ -310,7 +316,7 @@ public class IGStatusAdapter extends ArrayAdapter {
                 igStatusContactPhoto.setImageDrawable(profile);
                 
                 int total = 1;
-                int countUnseen = (position <= com.waenhancer.xposed.features.customization.IGStatus.unseenCount) ? 1 : 0;
+                int countUnseen = (position <= IGStatus.unseenCount) ? 1 : 0;
                 setCountStatus(countUnseen, total);
             } catch (Exception e) {
                 XposedBridge.log(e);
@@ -430,16 +436,16 @@ public class IGStatusAdapter extends ArrayAdapter {
         return relativeLayout;
     }
 
-    private static android.view.View findViewByClassName(android.view.View root, String className) {
+    private static View findViewByClassName(View root, String className) {
         if (root == null) return null;
         if (root.getClass().getName().contains(className)) {
             return root;
         }
-        if (root instanceof android.view.ViewGroup) {
-            android.view.ViewGroup vg = (android.view.ViewGroup) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup) root;
             for (int i = 0; i < vg.getChildCount(); i++) {
-                android.view.View child = vg.getChildAt(i);
-                android.view.View found = findViewByClassName(child, className);
+                View child = vg.getChildAt(i);
+                View found = findViewByClassName(child, className);
                 if (found != null) return found;
             }
         }
@@ -468,20 +474,20 @@ public class IGStatusAdapter extends ArrayAdapter {
 
     public static Drawable getLetterAvatar(String name) {
         int size = Utils.dipToPixels(56);
-        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888);
-        android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
         
-        android.graphics.Paint circlePaint = new android.graphics.Paint();
+        Paint circlePaint = new Paint();
         circlePaint.setAntiAlias(true);
         circlePaint.setColor(0xFF4A1525);
         canvas.drawCircle(size / 2.0f, size / 2.0f, size / 2.0f, circlePaint);
         
-        android.graphics.Paint textPaint = new android.graphics.Paint();
+        Paint textPaint = new Paint();
         textPaint.setAntiAlias(true);
-        textPaint.setColor(android.graphics.Color.WHITE);
+        textPaint.setColor(Color.WHITE);
         textPaint.setTextSize(Utils.dipToPixels(24));
-        textPaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
-        textPaint.setTextAlign(android.graphics.Paint.Align.CENTER);
+        textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        textPaint.setTextAlign(Paint.Align.CENTER);
         
         String firstLetter = "O";
         if (name != null && !name.trim().isEmpty()) {
@@ -492,42 +498,42 @@ public class IGStatusAdapter extends ArrayAdapter {
         float y = (size / 2.0f) - ((textPaint.descent() + textPaint.ascent()) / 2.0f);
         canvas.drawText(firstLetter, x, y, textPaint);
         
-        return new android.graphics.drawable.BitmapDrawable(Utils.getApplication().getResources(), bitmap);
+        return new BitmapDrawable(Utils.getApplication().getResources(), bitmap);
     }
 
     public static Drawable getGreenPlusIcon() {
         int size = Utils.dipToPixels(20);
-        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888);
-        android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
         
-        android.graphics.Paint circlePaint = new android.graphics.Paint();
+        Paint circlePaint = new Paint();
         circlePaint.setAntiAlias(true);
         circlePaint.setColor(0xFF00E676);
         canvas.drawCircle(size / 2.0f, size / 2.0f, size / 2.0f, circlePaint);
         
-        android.graphics.Paint plusPaint = new android.graphics.Paint();
+        Paint plusPaint = new Paint();
         plusPaint.setAntiAlias(true);
-        plusPaint.setColor(android.graphics.Color.WHITE);
+        plusPaint.setColor(Color.WHITE);
         plusPaint.setStrokeWidth(Utils.dipToPixels(2.0f));
-        plusPaint.setStyle(android.graphics.Paint.Style.STROKE);
-        plusPaint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+        plusPaint.setStyle(Paint.Style.STROKE);
+        plusPaint.setStrokeCap(Paint.Cap.ROUND);
         
         float padding = Utils.dipToPixels(5);
         canvas.drawLine(padding, size / 2.0f, size - padding, size / 2.0f, plusPaint);
         canvas.drawLine(size / 2.0f, padding, size / 2.0f, size - padding, plusPaint);
         
-        return new android.graphics.drawable.BitmapDrawable(Utils.getApplication().getResources(), bitmap);
+        return new BitmapDrawable(Utils.getApplication().getResources(), bitmap);
     }
 
-    private static boolean clickViewByContentDescription(android.view.View root, String descSnippet) {
+    private static boolean clickViewByContentDescription(View root, String descSnippet) {
         if (root == null) return false;
         CharSequence desc = root.getContentDescription();
         if (desc != null && desc.toString().toLowerCase().contains(descSnippet.toLowerCase())) {
             root.performClick();
             return true;
         }
-        if (root instanceof android.view.ViewGroup) {
-            android.view.ViewGroup vg = (android.view.ViewGroup) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup) root;
             for (int i = 0; i < vg.getChildCount(); i++) {
                 if (clickViewByContentDescription(vg.getChildAt(i), descSnippet)) {
                     return true;
@@ -537,16 +543,16 @@ public class IGStatusAdapter extends ArrayAdapter {
         return false;
     }
 
-    private static android.view.View findBottomNavigationMenuView(android.view.View root) {
+    private static View findBottomNavigationMenuView(View root) {
         if (root == null) return null;
         String name = root.getClass().getName();
         if (name.contains("BottomNavigationMenuView") || name.contains("BottomNavigation") || name.contains("BottomBar")) {
             return root;
         }
-        if (root instanceof android.view.ViewGroup) {
-            android.view.ViewGroup vg = (android.view.ViewGroup) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup) root;
             for (int i = 0; i < vg.getChildCount(); i++) {
-                android.view.View found = findBottomNavigationMenuView(vg.getChildAt(i));
+                View found = findBottomNavigationMenuView(vg.getChildAt(i));
                 if (found != null) return found;
             }
         }
@@ -554,8 +560,8 @@ public class IGStatusAdapter extends ArrayAdapter {
     }
 
     public static Drawable createRingDrawable(int color) {
-        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-        gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        GradientDrawable gd = new GradientDrawable();
+        gd.setShape(GradientDrawable.OVAL);
         gd.setColor(Color.TRANSPARENT);
         gd.setStroke(Utils.dipToPixels(2.5f), color);
         return gd;

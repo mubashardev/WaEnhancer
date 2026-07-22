@@ -36,6 +36,15 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.app.Activity;
+import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.ImageView;
+import com.waenhancer.model.StatusForwardRule;
+import java.lang.reflect.Array;
+import java.lang.reflect.Modifier;
 
 /**
  * AutoStatusForward
@@ -90,15 +99,15 @@ public class AutoStatusForward extends Feature {
         // Auto click send for media statuses
         try {
             XposedHelpers.findAndHookMethod("com.whatsapp.mediacomposer.ui.app.MediaComposerActivity", classLoader,
-                    "onCreate", android.os.Bundle.class, new XC_MethodHook() {
+                    "onCreate", Bundle.class, new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            android.app.Activity activity = (android.app.Activity) param.thisObject;
-                            android.content.Intent intent = activity.getIntent();
+                            Activity activity = (Activity) param.thisObject;
+                            Intent intent = activity.getIntent();
                             if (intent != null && intent.getBooleanExtra("auto_forward_status", false)) {
                                 /* Log removed */
                                 // Hide the UI to make it silent
-                                activity.getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+                                activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                                 activity.getWindow().setDimAmount(0f);
                                 
                                 autoClickAndFinish(activity, "send", 15); // Try 15 times (approx 3 seconds)
@@ -112,7 +121,7 @@ public class AutoStatusForward extends Feature {
         }
     }
 
-    private void autoClickAndFinish(android.app.Activity activity, String buttonIdStr, int attemptsLeft) {
+    private void autoClickAndFinish(Activity activity, String buttonIdStr, int attemptsLeft) {
         if (attemptsLeft <= 0) {
             /* Log removed */
             activity.finishAndRemoveTask();
@@ -121,13 +130,13 @@ public class AutoStatusForward extends Feature {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             try {
                 int sendId = activity.getResources().getIdentifier(buttonIdStr, "id", activity.getPackageName());
-                android.view.View sendBtn = sendId != 0 ? activity.findViewById(sendId) : null;
+                View sendBtn = sendId != 0 ? activity.findViewById(sendId) : null;
                 
                 if (sendBtn == null) {
                     sendBtn = findSendButtonByIconOrClass(activity.getWindow().getDecorView());
                 }
 
-                if (sendBtn != null && sendBtn.isEnabled() && sendBtn.getVisibility() == android.view.View.VISIBLE) {
+                if (sendBtn != null && sendBtn.isEnabled() && sendBtn.getVisibility() == View.VISIBLE) {
                     sendBtn.performClick();
                     /* Log removed */
                     
@@ -148,19 +157,19 @@ public class AutoStatusForward extends Feature {
         }, 200);
     }
 
-    private android.view.View findSendButtonByIconOrClass(android.view.View root) {
+    private View findSendButtonByIconOrClass(View root) {
         if (root == null) return null;
-        if (root instanceof android.widget.ImageView || root.getClass().getName().contains("FloatingActionButton")) {
+        if (root instanceof ImageView || root.getClass().getName().contains("FloatingActionButton")) {
             // Check content description or resource ID name if possible
             CharSequence desc = root.getContentDescription();
             if (desc != null && desc.toString().toLowerCase().contains("send")) {
                 return root;
             }
         }
-        if (root instanceof android.view.ViewGroup) {
-            android.view.ViewGroup group = (android.view.ViewGroup) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
             for (int i = 0; i < group.getChildCount(); i++) {
-                android.view.View found = findSendButtonByIconOrClass(group.getChildAt(i));
+                View found = findSendButtonByIconOrClass(group.getChildAt(i));
                 if (found != null) return found;
             }
         }
@@ -214,7 +223,7 @@ public class AutoStatusForward extends Feature {
         /* Log removed */
 
         // 1. Rule matching
-        com.waenhancer.model.StatusForwardRule matchedRule = matchesRules(text);
+        StatusForwardRule matchedRule = matchesRules(text);
         if (matchedRule == null) {
             /* Log removed */
             return;
@@ -397,13 +406,13 @@ public class AutoStatusForward extends Feature {
     // Rule matching
     // -------------------------------------------------------------------------
 
-    private com.waenhancer.model.StatusForwardRule matchesRules(String messageText) {
+    private StatusForwardRule matchesRules(String messageText) {
         String json = prefs.getString("auto_status_forward_rules_json", "[]");
         try {
             JSONArray arr = new JSONArray(json);
             if (arr.length() == 0) {
                 /* Log removed */
-                return new com.waenhancer.model.StatusForwardRule("contains", "", true, true, false);
+                return new StatusForwardRule("contains", "", true, true, false);
             }
             if (TextUtils.isEmpty(messageText))
                 return null;
@@ -423,12 +432,12 @@ public class AutoStatusForward extends Feature {
 
                 if ("equals".equals(type) && lower.equals(ruleText)) {
                     /* Log removed */
-                    return new com.waenhancer.model.StatusForwardRule(type, ruleText, applyText, applyMedia,
+                    return new StatusForwardRule(type, ruleText, applyText, applyMedia,
                             applyVoice);
                 }
                 if (!"equals".equals(type) && lower.contains(ruleText)) {
                     /* Log removed */
-                    return new com.waenhancer.model.StatusForwardRule(type, ruleText, applyText, applyMedia,
+                    return new StatusForwardRule(type, ruleText, applyText, applyMedia,
                             applyVoice);
                 }
             }
@@ -563,9 +572,9 @@ public class AutoStatusForward extends Feature {
 
         Class<?> clazz = value.getClass();
         if (clazz.isArray()) {
-            int len = java.lang.reflect.Array.getLength(value);
+            int len = Array.getLength(value);
             for (int i = 0; i < len && i < 10; i++) {
-                collectFMessageCandidates(java.lang.reflect.Array.get(value, i), out, visited, depth + 1);
+                collectFMessageCandidates(Array.get(value, i), out, visited, depth + 1);
             }
             return;
         }
@@ -586,7 +595,7 @@ public class AutoStatusForward extends Feature {
         }
 
         for (Field field : getAllFields(clazz)) {
-            if (java.lang.reflect.Modifier.isStatic(field.getModifiers()) || field.getType().isPrimitive()) {
+            if (Modifier.isStatic(field.getModifiers()) || field.getType().isPrimitive()) {
                 continue;
             }
             try {

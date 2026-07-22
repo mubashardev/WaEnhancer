@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.os.Process;
 
 public class BridgeClient extends BaseClient implements ServiceConnection {
     private final Context context;
@@ -79,7 +80,7 @@ public class BridgeClient extends BaseClient implements ServiceConnection {
                     handlerThread.start();
                     Handler handler = new Handler(handlerThread.getLooper());
                     XposedHelpers.callMethod(context, "bindServiceAsUser", intent, this, Context.BIND_AUTO_CREATE,
-                            handler, android.os.Process.myUserHandle());
+                            handler, Process.myUserHandle());
                 }
             } catch (Exception e) {
                 XposedBridge.log(e);

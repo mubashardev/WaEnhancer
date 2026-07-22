@@ -20,15 +20,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ActionMode;
+import com.waenhancer.activities.MessageListActivity;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
 
 public class DeletedMessagesFragment extends Fragment implements DeletedMessagesAdapter.OnItemClickListener {
 
     private RecyclerView recyclerView;
     private View emptyView;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerViewContainer;
     private DeletedMessagesAdapter adapter;
     private DelMessageStore delMessageStore;
 
     private boolean isGroup;
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());
+    private Runnable showShimmerRunnable;
 
     public static DeletedMessagesFragment newInstance(boolean isGroup) {
         DeletedMessagesFragment fragment = new DeletedMessagesFragment();
@@ -57,13 +73,13 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull android.view.Menu menu, @NonNull android.view.MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_deleted_messages, menu);
         super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.filter_all || item.getItemId() == R.id.filter_whatsapp
                 || item.getItemId() == R.id.filter_whatsapp_business) {
             currentFilter = item.getItemId();
@@ -80,6 +96,7 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
 
         recyclerView = view.findViewById(R.id.recyclerView);
         emptyView = view.findViewById(R.id.empty_view);
+        shimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
 
         delMessageStore = DelMessageStore.getInstance(requireContext());
         adapter = new DeletedMessagesAdapter(this);
@@ -89,7 +106,7 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
 
         // Check for updates to names if permission is already granted, but don't ask
         if (requireContext().checkSelfPermission(
-                android.Manifest.permission.READ_CONTACTS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             adapter.notifyDataSetChanged();
         }
 
@@ -100,7 +117,7 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
     public void onResume() {
         super.onResume();
         if (requireContext().checkSelfPermission(
-                android.Manifest.permission.READ_CONTACTS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             if (adapter != null)
                 adapter.notifyDataSetChanged();
         }
@@ -108,9 +125,26 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
     }
 
     private void loadMessages() {
+        if (showShimmerRunnable != null) {
+            uiHandler.removeCallbacks(showShimmerRunnable);
+        }
+
+        showShimmerRunnable = () -> {
+            if (shimmerViewContainer != null) {
+                shimmerViewContainer.setVisibility(View.VISIBLE);
+                shimmerViewContainer.startShimmer();
+            }
+            if (recyclerView != null) {
+                recyclerView.setVisibility(View.GONE);
+            }
+            if (emptyView != null) {
+                emptyView.setVisibility(View.GONE);
+            }
+        };
+        uiHandler.postDelayed(showShimmerRunnable, 150);
+
         new Thread(() -> {
-            List<DeletedMessage> allMessages = delMessageStore.getDeletedMessages(isGroup); // Fetch ALL first, then
-                                                                                            // filter
+            List<DeletedMessage> allMessages = delMessageStore.getDeletedMessages(isGroup);
             Map<String, DeletedMessage> latestMessagesMap = new HashMap<>();
 
             for (DeletedMessage msg : allMessages) {
@@ -137,7 +171,17 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
             List<DeletedMessage> uniqueChats = new ArrayList<>(latestMessagesMap.values());
             uniqueChats.sort((m1, m2) -> Long.compare(m2.getTimestamp(), m1.getTimestamp()));
 
-            requireActivity().runOnUiThread(() -> {
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (showShimmerRunnable != null) {
+                    uiHandler.removeCallbacks(showShimmerRunnable);
+                }
+
+                if (shimmerViewContainer != null) {
+                    shimmerViewContainer.stopShimmer();
+                    shimmerViewContainer.setVisibility(View.GONE);
+                }
+
                 if (uniqueChats.isEmpty()) {
                     emptyView.setVisibility(View.VISIBLE);
                     recyclerView.setVisibility(View.GONE);
@@ -150,21 +194,29 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
         }).start();
     }
 
-    private androidx.appcompat.view.ActionMode actionMode;
-    private final androidx.appcompat.view.ActionMode.Callback actionModeCallback = new androidx.appcompat.view.ActionMode.Callback() {
+    @Override
+    public void onDestroyView() {
+        if (showShimmerRunnable != null) {
+            uiHandler.removeCallbacks(showShimmerRunnable);
+        }
+        super.onDestroyView();
+    }
+
+    private ActionMode actionMode;
+    private final ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
         @Override
-        public boolean onCreateActionMode(androidx.appcompat.view.ActionMode mode, android.view.Menu menu) {
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             mode.getMenuInflater().inflate(R.menu.menu_context_delete, menu); // Need to create this menu
             return true;
         }
 
         @Override
-        public boolean onPrepareActionMode(androidx.appcompat.view.ActionMode mode, android.view.Menu menu) {
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
             return false;
         }
 
         @Override
-        public boolean onActionItemClicked(androidx.appcompat.view.ActionMode mode, android.view.MenuItem item) {
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             if (item.getItemId() == R.id.action_delete) {
                 deleteSelectedChats();
                 mode.finish();
@@ -174,7 +226,7 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
         }
 
         @Override
-        public void onDestroyActionMode(androidx.appcompat.view.ActionMode mode) {
+        public void onDestroyActionMode(ActionMode mode) {
             adapter.clearSelection();
             actionMode = null;
         }
@@ -185,7 +237,7 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
         if (selected.isEmpty())
             return;
 
-        com.waenhancer.ui.helpers.BottomSheetHelper.showConfirmation(
+        BottomSheetHelper.showConfirmation(
                 requireContext(),
                 "Delete Chats?",
                 "Are you sure you want to delete " + selected.size() + " chat(s)? This cannot be undone.",
@@ -198,8 +250,8 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
                         }
                         requireActivity().runOnUiThread(() -> {
                             loadMessages();
-                            android.widget.Toast
-                                    .makeText(requireContext(), "Chats deleted", android.widget.Toast.LENGTH_SHORT)
+                            Toast
+                                    .makeText(requireContext(), "Chats deleted", Toast.LENGTH_SHORT)
                                     .show();
                         });
                     }).start();
@@ -211,8 +263,8 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
         if (actionMode != null) {
             toggleSelection(message.getChatJid());
         } else {
-            android.content.Intent intent = new android.content.Intent(requireContext(),
-                    com.waenhancer.activities.MessageListActivity.class);
+            Intent intent = new Intent(requireContext(),
+                    MessageListActivity.class);
             intent.putExtra("chat_jid", message.getChatJid());
             startActivity(intent);
         }
@@ -221,7 +273,7 @@ public class DeletedMessagesFragment extends Fragment implements DeletedMessages
     @Override
     public boolean onItemLongClick(DeletedMessage message) {
         if (actionMode == null) {
-            actionMode = ((androidx.appcompat.app.AppCompatActivity) requireActivity())
+            actionMode = ((AppCompatActivity) requireActivity())
                     .startSupportActionMode(actionModeCallback);
         }
         toggleSelection(message.getChatJid());

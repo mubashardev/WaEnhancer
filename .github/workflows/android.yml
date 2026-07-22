@@ -246,7 +246,6 @@ jobs:
             release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk
             release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_debug.apk
           tag_name: ${{ env.NEW_VERSION_NAME }}
-          prerelease: ${{ env.RELEASE_PRERELEASE }}
 
 #       - name: Sync commits and push custom tag to Xposed Repo fork
 #         run: |
@@ -267,32 +266,4 @@ jobs:
 #           tag_name: ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
 #           prerelease: ${{ env.RELEASE_PRERELEASE }}
 
-      - name: Read changelog
-        id: changelog
-        run: |
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64 | tr -dc 'a-zA-Z0-9')
-          echo "body<<$EOF" >> "$GITHUB_OUTPUT"
-          sed '/./,$!d' changelog.txt >> "$GITHUB_OUTPUT"
-          echo "" >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
 
-      - name: Post release to Telegram
-        if: env.RELEASE_PRERELEASE == 'false'
-        env:
-          CHANGELOG_BODY: ${{ steps.changelog.outputs.body }}
-          RELEASE_URL: ${{ steps.release.outputs.url }}
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
-        run: |
-          if [ -z "$BOT_TOKEN" ] || [ -z "$CHANNEL_ID" ]; then
-            echo "Telegram credentials missing. Skipping notification."
-            exit 0
-          fi
-          
-          CLEAN_BODY=$(printf '%s' "$CHANGELOG_BODY" | sed '/./,$!d' | cut -c 1-4000)
-          FULL_MESSAGE="$(printf 'STABLE %s\n\n%s\n\nRelease: %s' "${{ env.NEW_VERSION_NAME }}" "$CLEAN_BODY" "$RELEASE_URL")"
-
-          curl -f -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${CHANNEL_ID}" \
-            --data-urlencode "text=$FULL_MESSAGE" \
-            -d "disable_web_page_preview=true"

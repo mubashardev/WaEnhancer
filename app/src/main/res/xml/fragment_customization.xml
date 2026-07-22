@@ -200,44 +200,16 @@
             app:summary="@string/floating_bottom_bar_sum"
             app:title="@string/floating_bottom_bar" />
 
-        <com.waenhancer.preference.ProListPreference
-            app:defaultValue="regular"
+        <Preference
             app:dependency="floating_bottom_bar"
-            app:entries="@array/pill_design_entries"
-            app:entryValues="@array/pill_design_values"
-            app:key="floating_bottom_bar_pill_design"
-            app:summary="%s"
-            app:title="@string/floating_bottom_bar_pill_design"
-            app:proEntryValues="@array/pill_design_pro_values" />
+            app:key="floating_bottom_bar_customizer"
+            app:summary="@string/pill_customization_desc"
+            app:title="@string/pill_customization_title" />
 
-        <rikka.material.preference.MaterialSwitchPreference
-            app:dependency="floating_bottom_bar"
-            app:key="floating_bottom_bar_scroll_hide"
-            app:summary="@string/floating_bottom_bar_scroll_hide_sum"
-            app:title="@string/floating_bottom_bar_scroll_hide" />
-
-        <com.jaredrummler.android.colorpicker.ColorPreferenceWithDefault
-            app:cpv_showAlphaSlider="false"
-            app:dependency="floating_bottom_bar"
-            app:key="floating_bottom_bar_fill_color"
-            app:summary="@string/default_color"
-            app:title="@string/floating_bottom_bar_fill_color" />
-
-        <rikka.material.preference.MaterialSwitchPreference
-            app:dependency="floating_bottom_bar"
-            app:key="floating_bottom_bar_glass"
-            app:summary="@string/floating_bottom_bar_glass_sum"
-            app:title="@string/floating_bottom_bar_glass" />
-
-        <com.waenhancer.preference.FloatSeekBarPreference
-            app:defaultValue="35"
-            app:dependency="floating_bottom_bar_glass"
-            app:format="%.0f%%"
-            app:key="floating_bottom_bar_glass_opacity"
-            app:maxValue="100"
-            app:minValue="10"
-            app:title="@string/floating_bottom_bar_glass_opacity"
-            app:valueSpacing="5" />
+        <com.waenhancer.preference.ProSwitchPreference
+            app:key="unlock_premium_customization"
+            app:summary="@string/unlock_premium_customization_sum"
+            app:title="@string/unlock_premium_customization" />
 
     </PreferenceCategory>
 

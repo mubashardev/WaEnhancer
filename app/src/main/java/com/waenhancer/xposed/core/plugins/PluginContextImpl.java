@@ -4,6 +4,9 @@ import android.content.Context;
 import com.waex.api.plugin.IPluginContext;
 import com.waex.api.services.*;
 import com.waenhancer.xposed.core.plugins.impl.*;
+import android.content.SharedPreferences;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PluginContextImpl implements IPluginContext {
 
@@ -14,13 +17,13 @@ public class PluginContextImpl implements IPluginContext {
     private final IObfuscationService obfuscationService;
     private final IHookService hookService;
 
-    private static final java.util.List<IStatusMenuListener> statusMenuListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private static final List<IStatusMenuListener> statusMenuListeners = new CopyOnWriteArrayList<>();
 
-    public static java.util.List<IStatusMenuListener> getStatusMenuListeners() {
+    public static List<IStatusMenuListener> getStatusMenuListeners() {
         return statusMenuListeners;
     }
 
-    public PluginContextImpl(ClassLoader hostClassLoader, Context moduleContext, android.content.SharedPreferences pref) {
+    public PluginContextImpl(ClassLoader hostClassLoader, Context moduleContext, SharedPreferences pref) {
         this.hostClassLoader = hostClassLoader;
         this.moduleContext = moduleContext;
         this.coreBridge = new CoreBridgeImpl(pref);

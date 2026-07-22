@@ -20,6 +20,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import com.waenhancer.App;
+import java.math.BigInteger;
+import java.security.Principal;
+import java.security.PublicKey;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Public wrapper for custom KeyBox validation.
@@ -52,7 +58,7 @@ public class KeyboxValidator {
     public static ValidationResult validate(String xmlContent) {
         ValidationResult result = new ValidationResult();
         
-        Context context = com.waenhancer.App.getInstance();
+        Context context = App.getInstance();
         if (context == null) {
             result.errorMsg = "Android Context is not available.";
             return result;
@@ -176,13 +182,13 @@ public class KeyboxValidator {
             public int getVersion() { return 3; }
 
             @Override
-            public java.math.BigInteger getSerialNumber() { return java.math.BigInteger.ONE; }
+            public BigInteger getSerialNumber() { return BigInteger.ONE; }
 
             @Override
-            public java.security.Principal getIssuerDN() { return null; }
+            public Principal getIssuerDN() { return null; }
 
             @Override
-            public java.security.Principal getSubjectDN() { return null; }
+            public Principal getSubjectDN() { return null; }
 
             @Override
             public Date getNotBefore() { return new Date(); }
@@ -221,28 +227,28 @@ public class KeyboxValidator {
             public byte[] getEncoded() { return new byte[0]; }
 
             @Override
-            public void verify(java.security.PublicKey key) {}
+            public void verify(PublicKey key) {}
 
             @Override
-            public void verify(java.security.PublicKey key, String sigProvider) {}
+            public void verify(PublicKey key, String sigProvider) {}
 
             @Override
             public String toString() { return ""; }
 
             @Override
-            public java.security.PublicKey getPublicKey() { return null; }
+            public PublicKey getPublicKey() { return null; }
 
             @Override
-            public java.util.Collection<java.util.List<?>> getSubjectAlternativeNames() { return null; }
+            public Collection<List<?>> getSubjectAlternativeNames() { return null; }
 
             @Override
             public boolean hasUnsupportedCriticalExtension() { return false; }
 
             @Override
-            public java.util.Set<String> getCriticalExtensionOIDs() { return null; }
+            public Set<String> getCriticalExtensionOIDs() { return null; }
 
             @Override
-            public java.util.Set<String> getNonCriticalExtensionOIDs() { return null; }
+            public Set<String> getNonCriticalExtensionOIDs() { return null; }
 
             @Override
             public byte[] getExtensionValue(String oid) { return null; }

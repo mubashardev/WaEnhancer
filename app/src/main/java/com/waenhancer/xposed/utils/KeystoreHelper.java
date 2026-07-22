@@ -11,6 +11,10 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.cert.Certificate;
+import javax.security.auth.x500.X500Principal;
 
 /**
  * Hardware-backed security layer for WaEnhancerX licensing system.
@@ -71,7 +75,7 @@ public class KeystoreHelper {
     /**
      * Internal helper to build and generate KeyPair with or without StrongBox.
      */
-    private static java.security.KeyPair generateKeyPairInternal(boolean useStrongBox) throws Exception {
+    private static KeyPair generateKeyPairInternal(boolean useStrongBox) throws Exception {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance(
                 KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
 
@@ -80,8 +84,8 @@ public class KeystoreHelper {
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
                 .setDigests(KeyProperties.DIGEST_SHA256)
                 .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
-                .setCertificateSubject(new javax.security.auth.x500.X500Principal("CN=" + ALIAS))
-                .setCertificateSerialNumber(java.math.BigInteger.ONE);
+                .setCertificateSubject(new X500Principal("CN=" + ALIAS))
+                .setCertificateSerialNumber(BigInteger.ONE);
 
         if (useStrongBox) {
             builder.setIsStrongBoxBacked(true);
@@ -105,7 +109,7 @@ public class KeystoreHelper {
                 return null;
             }
 
-            java.security.cert.Certificate cert = keyStore.getCertificate(ALIAS);
+            Certificate cert = keyStore.getCertificate(ALIAS);
             if (cert == null) {
                 return null;
             }

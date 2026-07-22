@@ -39,6 +39,9 @@ import java.util.Arrays;
 
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.view.ViewParent;
+import android.widget.RadioButton;
+import androidx.core.widget.NestedScrollView;
 
 public class AlertDialogWpp {
 
@@ -58,6 +61,7 @@ public class AlertDialogWpp {
     private boolean mIsUsingSystem = false;
     private CharSequence mTitleText;
     private CharSequence mMessageText;
+    private DialogInterface.OnDismissListener mOnDismissListener;
     private CharSequence mPositiveButtonText;
     private DialogInterface.OnClickListener mPositiveListener;
     private CharSequence mNegativeButtonText;
@@ -119,7 +123,7 @@ public class AlertDialogWpp {
                      (CharSequence[].class.isAssignableFrom(method.getParameterTypes()[0]) && method.getParameterTypes()[1].equals(boolean[].class) && method.getParameterTypes()[2].equals(DialogInterface.OnMultiChoiceClickListener.class))));
             
             // Robust button discovery
-            java.lang.reflect.Method[] buttons = new java.lang.reflect.Method[0];
+            Method[] buttons = new Method[0];
             try {
                 buttons = ReflectionUtils.findAllMethodsUsingFilter(alertDialogClass, method -> 
                     method.getParameterCount() == 2 && 
@@ -132,7 +136,7 @@ public class AlertDialogWpp {
             setNeutralButtonMethod = null;
             setPositiveButtonMethod = null;
 
-            for (java.lang.reflect.Method m : buttons) {
+            for (Method m : buttons) {
                 if (m.getName().equals("setNegativeButton")) setNegativeButtonMethod = m;
                 else if (m.getName().equals("setNeutralButton")) setNeutralButtonMethod = m;
                 else if (m.getName().equals("setPositiveButton")) setPositiveButtonMethod = m;
@@ -227,7 +231,7 @@ public class AlertDialogWpp {
         if (!shouldUseSystem()) {
             try {
                 // Heuristic search for setTitle
-                java.lang.reflect.Method setTitleMethod = ReflectionUtils.findMethodUsingFilterIfExists(mAlertDialogWpp.getClass(),
+                Method setTitleMethod = ReflectionUtils.findMethodUsingFilterIfExists(mAlertDialogWpp.getClass(),
                     m -> m.getName().toLowerCase().contains("title") && m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(CharSequence.class));
                 
                 if (setTitleMethod != null) {
@@ -248,18 +252,19 @@ public class AlertDialogWpp {
         }
         mMessageText = message;
         mAlertDialog.setMessage(message);
-        if (!shouldUseSystem()) {
+        if (!shouldUseSystem() && setMessageMethod != null) {
             try {
-                if (setMessageMethod != null) {
-                    setMessageMethod.invoke(mAlertDialogWpp, message);
-                } else {
-                    XposedHelpers.callMethod(mAlertDialogWpp, "setMessage", message);
-                }
-            } catch (Throwable e) {
-                XposedBridge.log("[WAEX] AlertDialogWpp setMessage failed, falling back to system: " + e.getMessage());
-                mIsUsingSystem = true;
+                setMessageMethod.invoke(mAlertDialogWpp, message);
+            } catch (Throwable t) {
+                XposedBridge.log("[WAEX] AlertDialogWpp setMessage failed on Wpp builder: " + t.getMessage());
             }
         }
+        return this;
+    }
+
+    public AlertDialogWpp setOnDismissListener(DialogInterface.OnDismissListener listener) {
+        mOnDismissListener = listener;
+        mAlertDialog.setOnDismissListener(listener);
         return this;
     }
 
@@ -493,7 +498,7 @@ public class AlertDialogWpp {
         }
         if (mIsBottomSheet) {
             try {
-                android.app.Dialog dialog = new android.app.Dialog(mContext, android.R.style.Theme_Translucent_NoTitleBar);
+                Dialog dialog = new Dialog(mContext, android.R.style.Theme_Translucent_NoTitleBar);
                 
                 float density = mContext.getResources().getDisplayMetrics().density;
                 int dp8 = (int) (8 * density);
@@ -554,7 +559,7 @@ public class AlertDialogWpp {
                 mainLayout.setElevation(8 * density);
                 
                 // Drag Handle
-                android.view.View dragHandle = new android.view.View(mContext);
+                View dragHandle = new View(mContext);
                 LinearLayout.LayoutParams handleParams = new LinearLayout.LayoutParams((int) (40 * density), (int) (4 * density));
                 handleParams.gravity = Gravity.CENTER_HORIZONTAL;
                 handleParams.bottomMargin = dp16;
@@ -567,13 +572,13 @@ public class AlertDialogWpp {
                 mainLayout.addView(dragHandle);
                 
                 // Implement touch-to-drag downward gesture using GPU-accelerated translation
-                android.view.View.OnTouchListener dragListener = new android.view.View.OnTouchListener() {
+                View.OnTouchListener dragListener = new View.OnTouchListener() {
                     private float initialY;
                     private float initialTranslationY;
                     private boolean isDragging = false;
                     
                     @Override
-                    public boolean onTouch(android.view.View v, MotionEvent event) {
+                    public boolean onTouch(View v, MotionEvent event) {
                         switch (event.getAction()) {
                             case MotionEvent.ACTION_DOWN:
                                 initialY = event.getRawY();
@@ -628,7 +633,7 @@ public class AlertDialogWpp {
                 }
                 
                 // Scrollable content
-                androidx.core.widget.NestedScrollView scrollView = new androidx.core.widget.NestedScrollView(mContext);
+                NestedScrollView scrollView = new NestedScrollView(mContext);
                 LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
                 scrollView.setLayoutParams(scrollParams);
@@ -655,7 +660,7 @@ public class AlertDialogWpp {
                 
                 if (mCustomView != null) {
                     try {
-                        android.view.ViewParent parent = mCustomView.getParent();
+                        ViewParent parent = mCustomView.getParent();
                         if (parent instanceof ViewGroup) {
                             ((ViewGroup) parent).removeView(mCustomView);
                         }
@@ -699,7 +704,7 @@ public class AlertDialogWpp {
 
                         // If single choice mode, add RadioButton
                         if (mSelectedIndex >= 0) {
-                            android.widget.RadioButton radio = new android.widget.RadioButton(mContext);
+                            RadioButton radio = new RadioButton(mContext);
                             LinearLayout.LayoutParams radioLp = new LinearLayout.LayoutParams(
                                     LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                             radio.setLayoutParams(radioLp);
@@ -770,7 +775,7 @@ public class AlertDialogWpp {
                         CompoundButton switchView;
                         try {
                             Class<?> wdsSwitchClass = mContext.getClassLoader().loadClass("com.whatsapp.ui.wds.components.toggle.WDSSwitch");
-                            switchView = (CompoundButton) wdsSwitchClass.getConstructor(android.content.Context.class, AttributeSet.class).newInstance(mContext, null);
+                            switchView = (CompoundButton) wdsSwitchClass.getConstructor(Context.class, AttributeSet.class).newInstance(mContext, null);
                         } catch (Throwable t) {
                             XposedBridge.log("[WAEX] WDSSwitch failed, fallback MaterialSwitch: " + t.getMessage());
                             try {
@@ -954,6 +959,9 @@ public class AlertDialogWpp {
                 }
                 
                 mCreate = dialog;
+                if (mOnDismissListener != null) {
+                    mCreate.setOnDismissListener(mOnDismissListener);
+                }
                 return mCreate;
             } catch (Throwable t) {
                 XposedBridge.log("[WAEX] BottomSheetDialog instantiation failed: " + t.getMessage());
@@ -970,26 +978,29 @@ public class AlertDialogWpp {
                 mCreate = mAlertDialog.create();
             }
         }
+        if (mCreate != null && mOnDismissListener != null) {
+            mCreate.setOnDismissListener(mOnDismissListener);
+        }
         return mCreate;
     }
 
     private void setupExpandingGestures(
-            final androidx.core.widget.NestedScrollView scrollView,
+            final NestedScrollView scrollView,
             final LinearLayout mainLayout,
-            final android.view.View dragHandle,
+            final View dragHandle,
             final int defaultHeight,
             final int maxHeight,
             final int screenHeight,
             final float density,
-            final android.app.Dialog dialog) {
+            final Dialog dialog) {
 
-        android.view.View.OnTouchListener expandListener = new android.view.View.OnTouchListener() {
+        View.OnTouchListener expandListener = new View.OnTouchListener() {
             private float initialY = 0;
             private int initialHeight;
             private boolean isExpanding = false;
 
             @Override
-            public boolean onTouch(android.view.View v, MotionEvent event) {
+            public boolean onTouch(View v, MotionEvent event) {
                 int currentHeight = mainLayout.getHeight();
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
@@ -1140,7 +1151,7 @@ public class AlertDialogWpp {
             ((TextView) button).setText(text);
             try {
                 Class<?> variantClass = null;
-                for (java.lang.reflect.Method m : wdsButtonClass.getDeclaredMethods()) {
+                for (Method m : wdsButtonClass.getDeclaredMethods()) {
                     if (m.getName().equals("setVariant") && m.getParameterTypes().length == 1) {
                         variantClass = m.getParameterTypes()[0];
                         break;

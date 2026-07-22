@@ -15,6 +15,12 @@ import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
 
 import java.util.List;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.StrikethroughSpan;
+import com.waenhancer.xposed.core.FeatureLoader;
+import java.util.ArrayList;
 
 public class MessageAdapter extends ArrayAdapter<MessageHistory.MessageItem> {
     private final Context context;
@@ -70,7 +76,7 @@ public class MessageAdapter extends ArrayAdapter<MessageHistory.MessageItem> {
         textView1.setTypeface(null, Typeface.ITALIC);
         textView1.setTextColor(DesignUtils.getPrimaryTextColor());
         var timestamp = messageItem.timestamp;
-        textView1.setText((timestamp == 0L ? com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.message_original, "Original Message") : "✏️ " + Utils.getDateTimeFromMillis(timestamp)));
+        textView1.setText((timestamp == 0L ? FeatureLoader.getModuleString(Utils.getApplication(), R.string.message_original, "Original Message") : "✏️ " + Utils.getDateTimeFromMillis(timestamp)));
         return view1;
     }
 
@@ -112,7 +118,7 @@ public class MessageAdapter extends ArrayAdapter<MessageHistory.MessageItem> {
             }
 
             int i = m, j = n;
-            List<Chunk> chunks = new java.util.ArrayList<>();
+            List<Chunk> chunks = new ArrayList<>();
             StringBuilder currentText = new StringBuilder();
             Type currentType = null;
 
@@ -154,18 +160,18 @@ public class MessageAdapter extends ArrayAdapter<MessageHistory.MessageItem> {
             return chunks;
         }
 
-        public static android.text.SpannableStringBuilder getSpannableDiff(String original, String revision) {
+        public static SpannableStringBuilder getSpannableDiff(String original, String revision) {
             List<Chunk> chunks = diff(original, revision);
-            android.text.SpannableStringBuilder builder = new android.text.SpannableStringBuilder();
+            SpannableStringBuilder builder = new SpannableStringBuilder();
             for (Chunk chunk : chunks) {
                 int start = builder.length();
                 builder.append(chunk.text);
                 int end = builder.length();
                 if (chunk.type == Type.INSERTED) {
-                    builder.setSpan(new android.text.style.BackgroundColorSpan(0x334CAF50), start, end, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(new BackgroundColorSpan(0x334CAF50), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 } else if (chunk.type == Type.DELETED) {
-                    builder.setSpan(new android.text.style.BackgroundColorSpan(0x33F44336), start, end, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    builder.setSpan(new android.text.style.StrikethroughSpan(), start, end, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(new BackgroundColorSpan(0x33F44336), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(new StrikethroughSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
             }
             return builder;

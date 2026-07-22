@@ -8,6 +8,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
 
 public class FilePicker {
 
@@ -26,10 +29,10 @@ public class FilePicker {
         directoryCapture = activity.registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), FilePicker::setDirectory);
         fileSalve = activity.registerForActivityResult(new ActivityResultContracts.CreateDocument("*/*"), FilePicker::setFile);
 
-        activity.getLifecycle().addObserver(new androidx.lifecycle.LifecycleEventObserver() {
+        activity.getLifecycle().addObserver(new LifecycleEventObserver() {
             @Override
-            public void onStateChanged(androidx.lifecycle.LifecycleOwner source, androidx.lifecycle.Lifecycle.Event event) {
-                if (event == androidx.lifecycle.Lifecycle.Event.ON_DESTROY) {
+            public void onStateChanged(LifecycleOwner source, Lifecycle.Event event) {
+                if (event == Lifecycle.Event.ON_DESTROY) {
                     if (mActivity == activity) {
                         fileCapture = null;
                         imageCapture = null;

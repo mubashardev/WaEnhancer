@@ -41,12 +41,41 @@ import androidx.core.text.HtmlCompat;
 import com.waenhancer.utils.KeyboxValidator;
 import com.waenhancer.ui.helpers.BottomSheetHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.util.Log;
+import android.util.TypedValue;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.preference.EditTextPreference;
+import androidx.preference.MultiSelectListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceDataStore;
+import androidx.preference.PreferenceGroup;
+import androidx.preference.PreferenceViewHolder;
+import androidx.recyclerview.widget.RecyclerView;
+import com.waenhancer.activities.ChangelogActivity;
+import com.waenhancer.preference.ContactPickerPreference;
+import com.waenhancer.preference.FileSelectPreference;
+import com.waenhancer.preference.SafeSharedPreferences;
+import com.waenhancer.utils.KeyboxFetcher;
+import com.waenhancer.utils.KeyboxVerification;
+import com.waenhancer.xposed.utils.ProHelper;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
 
 public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String RELEASES_URL = "https://github.com/mubashardev/WaEnhancer/releases";
-    private static final String LATEST_STABLE_URL = "https://github.com/mubashardev/WaEnhancer/releases/latest";
     protected SharedPreferences mPrefs;
     // Default keybox verify results are persisted in SharedPreferences via KeyboxVerificationImpl (pro module).
     private boolean suppressRestartBroadcast;
@@ -56,11 +85,11 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             return;
         }
         // Collect changed preference titles
-        java.util.ArrayList<String> titles = null;
+        ArrayList<String> titles = null;
         try {
-            java.util.Set<String> changes = mPrefs.getStringSet("pending_restart_changes", null);
+            Set<String> changes = mPrefs.getStringSet("pending_restart_changes", null);
             if (changes != null && !changes.isEmpty()) {
-                titles = new java.util.ArrayList<>(changes);
+                titles = new ArrayList<>(changes);
             }
         } catch (Exception ignored) {
         }
@@ -81,9 +110,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         var localPrefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        mPrefs = new com.waenhancer.preference.SafeSharedPreferences(localPrefs);
+        mPrefs = new SafeSharedPreferences(localPrefs);
 
-        getPreferenceManager().setPreferenceDataStore(new androidx.preference.PreferenceDataStore() {
+        getPreferenceManager().setPreferenceDataStore(new PreferenceDataStore() {
             @Override
             public void putString(String key, @Nullable String value) {
                 mPrefs.edit().putString(key, value).apply();
@@ -175,7 +204,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         // Add bottom padding so the last preference items are not hidden
         // behind the floating bottom navigation pill.
         try {
-            androidx.recyclerview.widget.RecyclerView recyclerView = getListView();
+            RecyclerView recyclerView = getListView();
             if (recyclerView != null) {
                 int bottomPaddingPx = (int) (112 * requireContext().getResources().getDisplayMetrics().density);
                 recyclerView.setPadding(
@@ -202,11 +231,11 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         updateKeyboxVerifySummary();
 
         try {
-            com.waenhancer.utils.KeyboxFetcher.syncKeyboxAsync(requireContext());
+            KeyboxFetcher.syncKeyboxAsync(requireContext());
         } catch (Throwable ignored) {}
 
         // Lockdown pro preferences dynamically if not verified
-        com.waenhancer.xposed.utils.ProHelper.updatePreferences(requireContext(), getPreferenceScreen());
+        ProHelper.updatePreferences(requireContext(), getPreferenceScreen());
     }
 
     @Override
@@ -232,20 +261,20 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         super.onActivityResult(requestCode, resultCode, data);
         if (data != null && data.hasExtra("key")) {
             String key = data.getStringExtra("key");
-            androidx.preference.Preference preference = findPreference(key);
-            if (preference instanceof com.waenhancer.preference.ContactPickerPreference) {
-                ((com.waenhancer.preference.ContactPickerPreference) preference).handleActivityResult(requestCode, resultCode, data);
-            } else if (preference instanceof com.waenhancer.preference.FileSelectPreference) {
-                ((com.waenhancer.preference.FileSelectPreference) preference).handleActivityResult(requestCode, resultCode, data);
+            Preference preference = findPreference(key);
+            if (preference instanceof ContactPickerPreference) {
+                ((ContactPickerPreference) preference).handleActivityResult(requestCode, resultCode, data);
+            } else if (preference instanceof FileSelectPreference) {
+                ((FileSelectPreference) preference).handleActivityResult(requestCode, resultCode, data);
             }
         }
     }
 
     @Override
-    public void onDisplayPreferenceDialog(androidx.preference.Preference preference) {
-        if (preference instanceof androidx.preference.ListPreference) {
-            androidx.preference.ListPreference listPref = (androidx.preference.ListPreference) preference;
-            com.waenhancer.ui.helpers.BottomSheetHelper.showSingleChoice(
+    public void onDisplayPreferenceDialog(Preference preference) {
+        if (preference instanceof ListPreference) {
+            ListPreference listPref = (ListPreference) preference;
+            BottomSheetHelper.showSingleChoice(
                     getContext(),
                     listPref.getDialogTitle() != null ? listPref.getDialogTitle().toString()
                     : listPref.getTitle() != null ? listPref.getTitle().toString() : "",
@@ -258,9 +287,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                         }
                     });
             return;
-        } else if (preference instanceof androidx.preference.MultiSelectListPreference) {
-            androidx.preference.MultiSelectListPreference multiPref = (androidx.preference.MultiSelectListPreference) preference;
-            com.waenhancer.ui.helpers.BottomSheetHelper.showMultiChoice(
+        } else if (preference instanceof MultiSelectListPreference) {
+            MultiSelectListPreference multiPref = (MultiSelectListPreference) preference;
+            BottomSheetHelper.showMultiChoice(
                     getContext(),
                     multiPref.getDialogTitle() != null ? multiPref.getDialogTitle().toString()
                     : multiPref.getTitle() != null ? multiPref.getTitle().toString() : "",
@@ -273,11 +302,11 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                         }
                     });
             return;
-        } else if (preference instanceof androidx.preference.EditTextPreference) {
-            androidx.preference.EditTextPreference editPref = (androidx.preference.EditTextPreference) preference;
+        } else if (preference instanceof EditTextPreference) {
+            EditTextPreference editPref = (EditTextPreference) preference;
             String title = editPref.getDialogTitle() != null ? editPref.getDialogTitle().toString()
                     : editPref.getTitle() != null ? editPref.getTitle().toString() : "";
-            com.waenhancer.ui.helpers.BottomSheetHelper.showInput(
+            BottomSheetHelper.showInput(
                     getContext(),
                     title,
                     editPref.getText(),
@@ -296,26 +325,26 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     @Override
-    public boolean onPreferenceTreeClick(@NonNull androidx.preference.Preference preference) {
+    public boolean onPreferenceTreeClick(@NonNull Preference preference) {
         if ("bootloader_spoofer_verify".equals(preference.getKey())) {
-            com.waenhancer.xposed.utils.ProHelper.showKeyboxVerificationDialog(this);
+            ProHelper.showKeyboxVerificationDialog(this);
             return true;
         }
         if (preference.getFragment() != null) {
             try {
                 Class<?> clazz = Class.forName(preference.getFragment());
                 Object instance = clazz.getDeclaredConstructor().newInstance();
-                if (instance instanceof androidx.fragment.app.Fragment) {
-                    androidx.fragment.app.Fragment fragment = (androidx.fragment.app.Fragment) instance;
+                if (instance instanceof Fragment) {
+                    Fragment fragment = (Fragment) instance;
                     fragment.setArguments(preference.getExtras());
 
                     // Scope navigation to the correct fragment manager and container.
-                    androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
-                    int containerId = android.view.View.NO_ID;
-                    if (getView() != null && getView().getParent() instanceof android.view.View) {
-                        containerId = ((android.view.View) getView().getParent()).getId();
+                    FragmentManager fm = getParentFragmentManager();
+                    int containerId = View.NO_ID;
+                    if (getView() != null && getView().getParent() instanceof View) {
+                        containerId = ((View) getView().getParent()).getId();
                     }
-                    if (containerId == android.view.View.NO_ID) {
+                    if (containerId == View.NO_ID) {
                         containerId = com.waenhancer.R.id.frag_container; // Fallback container
                     }
 
@@ -326,7 +355,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                     return true;
                 }
             } catch (Exception e) {
-                android.util.Log.e("WAEX", "Failed to navigate to fragment: " + preference.getFragment(), e);
+                Log.e("WAEX", "Failed to navigate to fragment: " + preference.getFragment(), e);
             }
         }
         return super.onPreferenceTreeClick(preference);
@@ -380,15 +409,15 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
             // Track what changed for the restart dialog
             try {
-                androidx.preference.Preference pref = findPreference(s);
+                Preference pref = findPreference(s);
                 if (pref != null && pref.getTitle() != null) {
                     String title = pref.getTitle().toString();
-                    java.util.Set<String> changes = new java.util.HashSet<>(mPrefs.getStringSet("pending_restart_changes", new java.util.HashSet<>()));
+                    Set<String> changes = new HashSet<>(mPrefs.getStringSet("pending_restart_changes", new HashSet<>()));
                     changes.add(title);
                     mPrefs.edit().putStringSet("pending_restart_changes", changes).apply();
                 }
             } catch (Exception e) {
-                android.util.Log.e("WAEX_Manager", "Failed to track change title: " + e.getMessage());
+                Log.e("WAEX_Manager", "Failed to track change title: " + e.getMessage());
             }
 
             // Notify the Xposed module that preferences have changed via both ContentProvider and Broadcast
@@ -709,18 +738,41 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             return;
         }
 
+        final String resolvedKey;
+        if ("floating_bottom_bar_pill_design".equals(preferenceKey)
+                || "floating_bottom_bar_scroll_hide".equals(preferenceKey)
+                || "floating_bottom_bar_scroll_hide_mode".equals(preferenceKey)
+                || "floating_bottom_bar_glass".equals(preferenceKey)
+                || "floating_bottom_bar_fill_color".equals(preferenceKey)
+                || "floating_bottom_bar_glass_opacity".equals(preferenceKey)) {
+            resolvedKey = "floating_bottom_bar_customizer";
+        } else {
+            resolvedKey = preferenceKey;
+        }
+
         // Small delay to ensure preference screen is fully loaded
         if (rootView != null) {
             rootView.postDelayed(() -> {
                 if (!isAdded()) {
                     return; // Fragment not attached
-
                 }
-                var preference = findPreference(preferenceKey);
+                var preference = findPreference(resolvedKey);
+                if (preference == null) {
+                    preference = findPreference(preferenceKey);
+                }
                 if (preference != null) {
                     scrollToPreference(preference);
                     // Highlight the preference for visibility
                     highlightPreference(preference);
+
+                    if ("floating_bottom_bar_pill_design".equals(preferenceKey) || "floating_bottom_bar_customizer".equals(preferenceKey)) {
+                        if (getContext() != null) {
+                            try {
+                                Intent intent = new Intent(getContext(), com.waenhancer.activities.BottomBarCustomizationActivity.class);
+                                startActivity(intent);
+                            } catch (Exception ignored) {}
+                        }
+                    }
                 }
             }, 100);
         }
@@ -729,7 +781,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     /**
      * Highlight a preference with a temporary background color.
      */
-    private void highlightPreference(androidx.preference.Preference preference) {
+    private void highlightPreference(Preference preference) {
         var rootView = getView();
         if (rootView == null || preference == null || preference.getKey() == null) {
             return;
@@ -743,7 +795,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
                 return;
             }
 
-            androidx.recyclerview.widget.RecyclerView recyclerView;
+            RecyclerView recyclerView;
             try {
                 recyclerView = getListView();
             } catch (IllegalStateException e) {
@@ -756,19 +808,19 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
             boolean found = false;
             for (int i = 0; i < recyclerView.getChildCount(); i++) {
-                android.view.View child = recyclerView.getChildAt(i);
+                View child = recyclerView.getChildAt(i);
                 if (child == null) {
                     continue;
                 }
 
-                androidx.recyclerview.widget.RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
-                if (holder instanceof androidx.preference.PreferenceViewHolder) {
-                    androidx.preference.PreferenceViewHolder prefHolder = (androidx.preference.PreferenceViewHolder) holder;
+                RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
+                if (holder instanceof PreferenceViewHolder) {
+                    PreferenceViewHolder prefHolder = (PreferenceViewHolder) holder;
                     int position = prefHolder.getBindingAdapterPosition();
 
-                    if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
+                    if (position != RecyclerView.NO_POSITION) {
                         try {
-                            androidx.preference.Preference pref = findPreferenceAtPosition(getPreferenceScreen(), position);
+                            Preference pref = findPreferenceAtPosition(getPreferenceScreen(), position);
                             if (pref != null && targetKey.equals(pref.getKey())) {
                                 animateHighlight(prefHolder.itemView);
                                 found = true;
@@ -793,7 +845,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         if (!isAdded()) {
             return;
         }
-        androidx.recyclerview.widget.RecyclerView recyclerView;
+        RecyclerView recyclerView;
         try {
             recyclerView = getListView();
         } catch (IllegalStateException e) {
@@ -804,17 +856,17 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         }
 
         for (int i = 0; i < recyclerView.getChildCount(); i++) {
-            android.view.View child = recyclerView.getChildAt(i);
+            View child = recyclerView.getChildAt(i);
 
             // Simple approach: check all text views in the item for matching preference
-            if (child instanceof android.view.ViewGroup) {
-                android.view.ViewGroup group = (android.view.ViewGroup) child;
+            if (child instanceof ViewGroup) {
+                ViewGroup group = (ViewGroup) child;
                 // Get the preference at this position and check key
-                androidx.recyclerview.widget.RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
-                if (holder instanceof androidx.preference.PreferenceViewHolder) {
+                RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
+                if (holder instanceof PreferenceViewHolder) {
                     int position = holder.getBindingAdapterPosition();
-                    if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
-                        androidx.preference.Preference pref = findPreferenceAtPosition(getPreferenceScreen(), position);
+                    if (position != RecyclerView.NO_POSITION) {
+                        Preference pref = findPreferenceAtPosition(getPreferenceScreen(), position);
                         if (pref != null && pref.getKey() != null && pref.getKey().equals(targetKey)) {
                             animateHighlight(child);
                             break;
@@ -825,7 +877,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         }
     }
 
-    private androidx.preference.Preference findPreferenceAtPosition(androidx.preference.PreferenceGroup group,
+    private Preference findPreferenceAtPosition(PreferenceGroup group,
             int targetPosition) {
         if (group == null) {
             return null;
@@ -833,7 +885,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
         int currentPosition = 0;
         for (int i = 0; i < group.getPreferenceCount(); i++) {
-            androidx.preference.Preference pref = group.getPreference(i);
+            Preference pref = group.getPreference(i);
             if (pref == null) {
                 continue;
             }
@@ -844,8 +896,8 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             currentPosition++;
 
             // Recursively check groups
-            if (pref instanceof androidx.preference.PreferenceGroup) {
-                androidx.preference.PreferenceGroup subGroup = (androidx.preference.PreferenceGroup) pref;
+            if (pref instanceof PreferenceGroup) {
+                PreferenceGroup subGroup = (PreferenceGroup) pref;
                 int subCount = countPreferences(subGroup);
                 if (targetPosition < currentPosition + subCount) {
                     return findPreferenceAtPosition(subGroup, targetPosition - currentPosition);
@@ -856,12 +908,12 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         return null;
     }
 
-    private int countPreferences(androidx.preference.PreferenceGroup group) {
+    private int countPreferences(PreferenceGroup group) {
         int count = 0;
         for (int i = 0; i < group.getPreferenceCount(); i++) {
-            androidx.preference.Preference pref = group.getPreference(i);
-            if (pref instanceof androidx.preference.PreferenceGroup) {
-                count += countPreferences((androidx.preference.PreferenceGroup) pref);
+            Preference pref = group.getPreference(i);
+            if (pref instanceof PreferenceGroup) {
+                count += countPreferences((PreferenceGroup) pref);
             } else {
                 count++;
             }
@@ -872,25 +924,25 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     /**
      * Animate a highlight effect on the view.
      */
-    private void animateHighlight(android.view.View view) {
+    private void animateHighlight(View view) {
         if (view == null || getContext() == null) {
             return;
         }
 
         // Get primary color using android attribute
-        android.util.TypedValue typedValue = new android.util.TypedValue();
+        TypedValue typedValue = new TypedValue();
         view.getContext().getTheme().resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
         int primaryColor = typedValue.data;
 
         // Make it 20% opacity (dim)
-        int highlightColor = android.graphics.Color.argb(
+        int highlightColor = Color.argb(
                 51, // ~20% of 255
-                android.graphics.Color.red(primaryColor),
-                android.graphics.Color.green(primaryColor),
-                android.graphics.Color.blue(primaryColor));
+                Color.red(primaryColor),
+                Color.green(primaryColor),
+                Color.blue(primaryColor));
 
         // Save original background
-        android.graphics.drawable.Drawable originalBackground = view.getBackground();
+        Drawable originalBackground = view.getBackground();
 
         // Set highlight background
         view.setBackgroundColor(highlightColor);
@@ -900,7 +952,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
             if (originalBackground != null) {
                 view.setBackground(originalBackground);
             } else {
-                view.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+                view.setBackgroundColor(Color.TRANSPARENT);
             }
         }, 1500);
     }
@@ -972,14 +1024,14 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         boolean isBeta = "beta".equals(selectedChannel);
         String title = getString(isBeta ? R.string.release_channel_beta_install_title : R.string.release_channel_stable_install_title);
         String message = getString(isBeta ? R.string.release_channel_beta_install_message : R.string.release_channel_stable_install_message);
-        String url = isBeta ? RELEASES_URL : LATEST_STABLE_URL;
+        String url = RELEASES_URL;
 
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        new AlertDialog.Builder(requireContext())
                 .setTitle(title)
                 .setMessage(message)
                 .setPositiveButton(R.string.download, (dialog, which) -> {
-                    Intent intent = new Intent(requireContext(), com.waenhancer.activities.ChangelogActivity.class);
-                    intent.putExtra(com.waenhancer.activities.ChangelogActivity.EXTRA_TARGET_CHANNEL, selectedChannel);
+                    Intent intent = new Intent(requireContext(), ChangelogActivity.class);
+                    intent.putExtra(ChangelogActivity.EXTRA_TARGET_CHANNEL, selectedChannel);
                     startActivity(intent);
                     dialog.dismiss();
                 })
@@ -988,7 +1040,7 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
     }
 
     private void updateKeyboxVerifySummary() {
-        androidx.preference.Preference verifyPref = findPreference("bootloader_spoofer_verify");
+        Preference verifyPref = findPreference("bootloader_spoofer_verify");
         if (verifyPref == null) {
             return;
         }
@@ -1022,9 +1074,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         }
 
         // Live check for spoofer status
-        android.content.Context context = getContext();
-        boolean hookActive = com.waenhancer.utils.KeyboxVerification.isBootloaderSpooferActive(context, mPrefs);
-        boolean attestationSpoofed = com.waenhancer.utils.KeyboxVerification.isBootloaderAttestationSpoofed();
+        Context context = getContext();
+        boolean hookActive = KeyboxVerification.isBootloaderSpooferActive(context, mPrefs);
+        boolean attestationSpoofed = KeyboxVerification.isBootloaderAttestationSpoofed();
         if (context != null) {
             String currentPkg = context.getPackageName();
             boolean isInWhatsApp = "com.whatsapp".equals(currentPkg) || "com.whatsapp.w4b".equals(currentPkg);
@@ -1056,31 +1108,31 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
         if (context != null) {
             if (lastCheckTime == 0L || status == null || status.isEmpty()) {
                 verifyPref.setSummary("Check spoofer trust chain, keys, and expiration");
-                android.graphics.drawable.Drawable icon = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_round_help_outline_24);
+                Drawable icon = ContextCompat.getDrawable(context, R.drawable.ic_round_help_outline_24);
                 if (icon != null) {
-                    icon = androidx.core.graphics.drawable.DrawableCompat.wrap(icon);
-                    androidx.core.graphics.drawable.DrawableCompat.setTint(icon, 0xFF8E8E93);
+                    icon = DrawableCompat.wrap(icon);
+                    DrawableCompat.setTint(icon, 0xFF8E8E93);
                     verifyPref.setIcon(icon);
                 }
             } else {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
-                String formattedDate = sdf.format(new java.util.Date(lastCheckTime));
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+                String formattedDate = sdf.format(new Date(lastCheckTime));
                 String scoreSuffix = (score >= 0) ? " (Score: " + score + "/100)" : "";
 
                 if ("Pass".equals(status)) {
                     verifyPref.setSummary(label + " Pass" + scoreSuffix + " - " + formattedDate);
-                    android.graphics.drawable.Drawable icon = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_round_verified_24);
+                    Drawable icon = ContextCompat.getDrawable(context, R.drawable.ic_round_verified_24);
                     if (icon != null) {
-                        icon = androidx.core.graphics.drawable.DrawableCompat.wrap(icon);
-                        androidx.core.graphics.drawable.DrawableCompat.setTint(icon, 0xFF4CAF50);
+                        icon = DrawableCompat.wrap(icon);
+                        DrawableCompat.setTint(icon, 0xFF4CAF50);
                         verifyPref.setIcon(icon);
                     }
                 } else {
                     verifyPref.setSummary(label + " Failed" + scoreSuffix + " - " + formattedDate);
-                    android.graphics.drawable.Drawable icon = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_round_error_outline_24);
+                    Drawable icon = ContextCompat.getDrawable(context, R.drawable.ic_round_error_outline_24);
                     if (icon != null) {
-                        icon = androidx.core.graphics.drawable.DrawableCompat.wrap(icon);
-                        androidx.core.graphics.drawable.DrawableCompat.setTint(icon, 0xFFFF3B30);
+                        icon = DrawableCompat.wrap(icon);
+                        DrawableCompat.setTint(icon, 0xFFFF3B30);
                         verifyPref.setIcon(icon);
                     }
                 }
@@ -1331,9 +1383,9 @@ public abstract class BasePreferenceFragment extends PreferenceFragmentCompat
 
     private String getXmlMd5(String xml) {
         try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] messageDigest = md.digest(xml.getBytes("UTF-8"));
-            java.math.BigInteger no = new java.math.BigInteger(1, messageDigest);
+            BigInteger no = new BigInteger(1, messageDigest);
             String hashtext = no.toString(16);
             while (hashtext.length() < 32) {
                 hashtext = "0" + hashtext;

@@ -3,14 +3,13 @@ package com.waenhancer.xposed.features.general;
 import android.content.Context;
 
 import com.waenhancer.xposed.core.Feature;
+import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.components.WaContactWpp;
-import com.waenhancer.xposed.core.db.DelMessageStore;
 import com.waenhancer.xposed.core.db.DeletedMessage;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.Utils;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -19,6 +18,12 @@ import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.ContactsContract;
+import android.widget.Toast;
+import com.waenhancer.BuildConfig;
 
 public class RecoverDeleteForMe extends Feature {
 
@@ -66,8 +71,6 @@ public class RecoverDeleteForMe extends Feature {
                             ;
                             return;
                         }
-                        // DelMessageStore store = DelMessageStore.getInstance(ctx); // No longer needed
-                        // for insertion
                         for (Object msg : msgs) {
                             try {
                                 saveOne(ctx, msg);
@@ -184,15 +187,16 @@ public class RecoverDeleteForMe extends Feature {
             senderJid = isGroupChat ? "Unknown" : chatJid;
         }
 
-        // 8. Media Details
-        String mediaPath = null;
-        var mediaFile = fMessage.getMediaFile();
-        if (mediaFile != null && mediaFile.exists()) {
-            mediaPath = mediaFile.getAbsolutePath();
+        // 8. Media Details - media file storage is handled entirely by pro module
+        String mediaCaption = null;
+        if (mediaType > 0) {
+            String rawCaption = fMessage.getMessageStr();
+            if (rawCaption != null && !rawCaption.isEmpty()
+                    && !rawCaption.startsWith("http")
+                    && !(rawCaption.length() > 20 && !rawCaption.contains(" "))) {
+                mediaCaption = rawCaption;
+            }
         }
-
-        String mediaCaption = null; // FMessageWpp doesn't have getCaption yet, but we can add it or find it
-        // For now, let's keep the heuristic for caption if needed, or better, add to FMessageWpp
 
         long timestamp = System.currentTimeMillis();
 
@@ -200,7 +204,7 @@ public class RecoverDeleteForMe extends Feature {
         String contactName = null;
         try {
             // Priority 1: Current Chat Room Title (Most Reliable as per User Suggestion)
-            contactName = com.waenhancer.xposed.core.WppCore.getCurrentChatTitle();
+            contactName = WppCore.getCurrentChatTitle();
 
             // Priority 2: WaContactWpp Internal Lookup (New Reliable Fallback)
             if (contactName == null && chatJid != null) {
@@ -272,14 +276,15 @@ public class RecoverDeleteForMe extends Feature {
             XposedBridge.log("[WAEX] Error extracting original timestamp: " + e.getMessage());
         }
 
-        // Create and Save
+        // Create and Save (media_path left null — pro module populates it when recover_deleted_media is enabled)
         DeletedMessage deletedMessage = new DeletedMessage(
-                0, keyId, chatJid, senderJid, timestamp, originalTimestamp, mediaType, textContent, mediaPath,
+                0, keyId, chatJid, senderJid, timestamp, originalTimestamp, mediaType, textContent, null,
                 mediaCaption, fromMe,
                 contactName, packageName);
 
         saveToDatabase(context, deletedMessage);
     }
+
 
     private String getContactName(Context context, String jid) {
         if (jid == null)
@@ -289,12 +294,12 @@ public class RecoverDeleteForMe extends Feature {
             phoneNumber = phoneNumber.split("@")[0];
 
         try {
-            android.net.Uri uri = android.net.Uri.withAppendedPath(
-                    android.provider.ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                    android.net.Uri.encode(phoneNumber));
-            String[] projection = new String[] { android.provider.ContactsContract.PhoneLookup.DISPLAY_NAME };
+            Uri uri = Uri.withAppendedPath(
+                    ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                    Uri.encode(phoneNumber));
+            String[] projection = new String[] { ContactsContract.PhoneLookup.DISPLAY_NAME };
 
-            try (android.database.Cursor cursor = context.getContentResolver().query(uri, projection, null, null,
+            try (Cursor cursor = context.getContentResolver().query(uri, projection, null, null,
                     null)) {
                 if (cursor != null && cursor.moveToFirst()) {
                     return cursor.getString(0);
@@ -308,7 +313,7 @@ public class RecoverDeleteForMe extends Feature {
 
     private void saveToDatabase(Context context, DeletedMessage message) {
         try {
-            android.content.ContentValues values = new android.content.ContentValues();
+            ContentValues values = new ContentValues();
             values.put("key_id", message.getKeyId());
             values.put("chat_jid", message.getChatJid());
             values.put("sender_jid", message.getSenderJid());
@@ -316,14 +321,33 @@ public class RecoverDeleteForMe extends Feature {
             values.put("original_timestamp", message.getOriginalTimestamp());
             values.put("media_type", message.getMediaType());
             values.put("text_content", message.getTextContent());
-            values.put("media_path", message.getMediaPath());
             values.put("media_caption", message.getMediaCaption());
             values.put("is_from_me", message.isFromMe() ? 1 : 0);
             values.put("contact_name", message.getContactName());
             values.put("package_name", message.getPackageName());
 
-            String authority = com.waenhancer.BuildConfig.APPLICATION_ID + ".provider";
-            android.net.Uri uri = android.net.Uri.parse("content://" + authority + "/deleted_messages");
+            // Check if Pro module has a pending media path for this message
+            String mediaPath = null;
+            if (message.getKeyId() != null) {
+                try {
+                    ClassLoader proLoader = (ClassLoader) System.getProperties().get("com.waex.helper.classloader");
+                    if (proLoader != null) {
+                        Class<?> proClass = proLoader.loadClass("com.waex.helper.RecoverDeletedMediaPro");
+                        Method consumeMethod = proClass.getMethod("consumePendingMediaPath", String.class);
+                        mediaPath = (String) consumeMethod.invoke(null, message.getKeyId());
+                    }
+                } catch (ClassNotFoundException e) {
+                    // Pro module not available — that's expected for free users
+                } catch (Throwable t) {
+                    XposedBridge.log("[WAEX] consumePendingMediaPath reflection failed: " + t.getMessage());
+                }
+            }
+            if (mediaPath != null) {
+                values.put("media_path", mediaPath);
+            }
+
+            String authority = BuildConfig.APPLICATION_ID + ".provider";
+            Uri uri = Uri.parse("content://" + authority + "/deleted_messages");
             context.getContentResolver().insert(uri, values);
             ;
         } catch (Exception e) {
@@ -430,15 +454,15 @@ public class RecoverDeleteForMe extends Feature {
         return "Recover Delete For Me";
     }
 
-    public static void restoreMessage(android.content.Context context, DeletedMessage message) {
+    public static void restoreMessage(Context context, DeletedMessage message) {
         try {
             if (message.getTextContent() != null && !message.getTextContent().isEmpty()) {
-                android.widget.Toast
-                        .makeText(context, "Message: " + message.getTextContent(), android.widget.Toast.LENGTH_LONG)
+                Toast
+                        .makeText(context, "Message: " + message.getTextContent(), Toast.LENGTH_LONG)
                         .show();
             } else {
-                android.widget.Toast
-                        .makeText(context, "Media restore not supported yet", android.widget.Toast.LENGTH_SHORT).show();
+                Toast
+                        .makeText(context, "Media restore not supported yet", Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             XposedBridge.log("[WAEX] Restore failed: " + e.getMessage());

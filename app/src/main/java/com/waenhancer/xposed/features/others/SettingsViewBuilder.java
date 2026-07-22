@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.waenhancer.xposed.utils.ThemeUtils;
+import android.os.Build;
 
 public final class SettingsViewBuilder {
 
@@ -122,7 +123,7 @@ public final class SettingsViewBuilder {
         container.setLayoutParams(containerParams);
         
         // Add a subtle top radius to the settings container if in dark mode for "sheet" look
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             container.setElevation(dp(context, 2));
         }
         

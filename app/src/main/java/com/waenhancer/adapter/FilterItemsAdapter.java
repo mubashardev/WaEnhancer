@@ -17,6 +17,7 @@ import com.waenhancer.model.FilterItem;
 import com.waenhancer.xposed.utils.DesignUtils;
 
 import java.util.List;
+import java.util.Locale;
 
 public class FilterItemsAdapter extends RecyclerView.Adapter<FilterItemsAdapter.FilterViewHolder> {
 
@@ -96,7 +97,7 @@ public class FilterItemsAdapter extends RecyclerView.Adapter<FilterItemsAdapter.
                     filterIcon.setImageTintList(ColorStateList.valueOf(accentColor));
                     break;
                 case FilterItem.BEHAVIOR_RESIZE:
-                    subtitle = String.format(java.util.Locale.US, "Behavior: Resize (%.1fx)", item.scale);
+                    subtitle = String.format(Locale.US, "Behavior: Resize (%.1fx)", item.scale);
                     filterIcon.setImageResource(android.R.drawable.ic_menu_crop);
                     filterIcon.setImageTintList(ColorStateList.valueOf(accentColor));
                     break;

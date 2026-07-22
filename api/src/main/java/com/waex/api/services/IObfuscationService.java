@@ -30,10 +30,11 @@ public interface IObfuscationService {
     Object getDexKit(ClassLoader classLoader);
     List<String> findCallers(ClassLoader classLoader, Method method);
 
-    java.lang.reflect.Method findVoiceTransitionMethod(ClassLoader classLoader, Class<?> fragmentClass, String recorderTypeName);
-    java.lang.reflect.Method findVoiceSendTriggerMethod(ClassLoader classLoader, Class<?> fragmentClass, String recorderTypeName);
-    java.lang.reflect.Field findVoiceDurationField(ClassLoader classLoader, java.lang.reflect.Method setDurationMethod);
-    java.lang.reflect.Method findVoiceGetPreviewStateMethod(ClassLoader classLoader, Class<?> delegateClass, String recorderTypeName, Class<?> stateSuperClass);
+    Method findVoiceTransitionMethod(ClassLoader classLoader, Class<?> fragmentClass, String recorderTypeName);
+    Method findVoiceSendTriggerMethod(ClassLoader classLoader, Class<?> fragmentClass, String recorderTypeName);
+    Field findVoiceDurationField(ClassLoader classLoader, Method setDurationMethod);
+    Method findVoiceGetPreviewStateMethod(ClassLoader classLoader, Class<?> delegateClass, String recorderTypeName, Class<?> stateSuperClass);
     Class<?> loadFStatusClass(ClassLoader classLoader);
     Class<?> loadFStatusKeyClass(ClassLoader classLoader);
+    Class<?> loadCoreMessageStoreClass(ClassLoader classLoader);
 }

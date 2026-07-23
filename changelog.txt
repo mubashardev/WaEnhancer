@@ -1,10 +1,2 @@
-[Added]
-- Added version support for 2.26.29.xx WA/WB
-
-[Improvements]
-- Improved New Chat Dialog
-- Improved Pill Customization
-
 [Fixed]
-- Floating Pill Customization was not working as expected for some devices
-- Improved custom version support
+- Quick Fix: HideSeen

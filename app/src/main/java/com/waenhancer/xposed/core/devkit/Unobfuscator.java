@@ -4221,6 +4221,16 @@ public class Unobfuscator {
                                     .usingStrings(Collections.singletonList("class"), StringMatchType.Contains, false)
                     )
             );
+            if (methods.isEmpty()) {
+                methods = classData.findMethod(
+                        FindMethod.create().matcher(
+                                MethodMatcher.create()
+                                        .addInvoke(methodReceiptData.getDescriptor())
+                                        .paramCount(1)
+                                        .paramTypes(messageInfoClass.getName())
+                        )
+                );
+            }
             if (methods.isEmpty()) return null;
             return methods.get(0).getMethodInstance(classLoader);
         });
@@ -4229,12 +4239,19 @@ public class Unobfuscator {
     public synchronized static Method[] loadReceiptCallersMethod(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethods(classLoader, () -> {
             var methodReceiptMainCaller = loadReceiptMainCallerMethod(classLoader);
+            if (methodReceiptMainCaller == null) return null;
             var methodData = dexkit.getMethodData(methodReceiptMainCaller);
             if (methodData == null) return null;
             var methods = new ArrayList<Method>();
             for (var methodCaller : methodData.getCallers()) {
-                if (methodCaller.getParamCount() > 1 && methodCaller.getParamTypes().get(0).getSimpleName().equals("Message")) {
-                    methods.add(methodCaller.getMethodInstance(classLoader));
+                if (methodCaller.getParamCount() > 0) {
+                    var paramTypes = methodCaller.getParamTypes();
+                    for (var pt : paramTypes) {
+                        if ("Message".equals(pt.getSimpleName()) || "android.os.Message".equals(pt.getName())) {
+                            methods.add(methodCaller.getMethodInstance(classLoader));
+                            break;
+                        }
+                    }
                 }
             }
             if (methods.isEmpty()) return null;

@@ -325,14 +325,21 @@ public class UnobfuscatorCache {
 
     public Method[] getMethods(ClassLoader loader, FunctionCall<Method[]> functionCall) throws Exception {
         var methodName = getKeyName();
+        if (failedKeys.contains(methodName)) {
+            throw new NoSuchMethodException("Methods lookup failed previously in this session: " + methodName);
+        }
         String value = sPrefsCacheHooks.getString(methodName, null);
         if (value == null) {
             try {
                 Method[] result = functionCall.call();
-                if (result == null) throw new NoSuchMethodException("Methods is null");
+                if (result == null) {
+                    failedKeys.add(methodName);
+                    throw new NoSuchMethodException("Methods is null");
+                }
                 saveMethods(methodName, result);
                 return result;
             } catch (Exception e) {
+                failedKeys.add(methodName);
                 throw new Exception("Error getting methods " + methodName + ": " + e.getMessage(), e);
             }
         }

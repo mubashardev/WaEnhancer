@@ -169,35 +169,49 @@ public class HideSeen extends Feature {
 
     private void hookReceiptMethod() throws Exception {
         Method receiptMethod = Unobfuscator.loadReceiptMethod(classLoader);
-        Method receiptMainCallerMethod = Unobfuscator.loadReceiptMainCallerMethod(classLoader);
-        Method[] receiptCallerMethods = Unobfuscator.loadReceiptCallersMethod(classLoader);
+        Method receiptMainCallerMethod = null;
+        try {
+            receiptMainCallerMethod = Unobfuscator.loadReceiptMainCallerMethod(classLoader);
+        } catch (Throwable t) {
+            XposedBridge.log("WaEnhancer: HideSeen receiptMainCallerMethod lookup failed: " + t.getMessage());
+        }
+
+        Method[] receiptCallerMethods = null;
+        try {
+            receiptCallerMethods = Unobfuscator.loadReceiptCallersMethod(classLoader);
+        } catch (Throwable t) {
+            XposedBridge.log("WaEnhancer: HideSeen receiptCallerMethods lookup failed: " + t.getMessage());
+        }
 
         final ThreadLocal<Boolean> inManualReceiptCheck = new ThreadLocal<>();
 
-        XC_MethodHook hookCallerMethod = new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Message)) return;
-                Message firstArg = (Message) param.args[0];
-                if (firstArg.arg1 != 419 && firstArg.arg1 != 89) return;
-                Object obj = firstArg.obj;
-                inManualReceiptCheck.set(true);
-                Object checkResult = null;
-                try {
-                    checkResult = receiptMainCallerMethod.invoke(null, obj);
-                } finally {
-                    inManualReceiptCheck.set(false);
-                }
+        if (receiptCallerMethods != null && receiptMainCallerMethod != null) {
+            final Method finalMainCallerMethod = receiptMainCallerMethod;
+            XC_MethodHook hookCallerMethod = new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Message)) return;
+                    Message firstArg = (Message) param.args[0];
+                    if (firstArg.arg1 != 419 && firstArg.arg1 != 89) return;
+                    Object obj = firstArg.obj;
+                    inManualReceiptCheck.set(true);
+                    Object checkResult = null;
+                    try {
+                        checkResult = finalMainCallerMethod.invoke(null, obj);
+                    } finally {
+                        inManualReceiptCheck.set(false);
+                    }
 
-                if (checkResult == null) {
-                    param.setResult(null);
+                    if (checkResult == null) {
+                        param.setResult(null);
+                    }
                 }
-            }
-        };
+            };
 
-        if (receiptCallerMethods != null) {
             for (Method m : receiptCallerMethods) {
-                XposedBridge.hookMethod(m, hookCallerMethod);
+                if (m != null) {
+                    XposedBridge.hookMethod(m, hookCallerMethod);
+                }
             }
         }
 

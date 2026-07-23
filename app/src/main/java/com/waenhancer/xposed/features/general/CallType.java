@@ -23,6 +23,9 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.os.Bundle;
+import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.utils.Utils;
 
 public class CallType extends Feature {
     private XC_MethodHook.Unhook hookBundleBoolean;
@@ -35,7 +38,17 @@ public class CallType extends Feature {
     @Override
     public void doHook() throws Throwable {
 
-        if (!prefs.getBoolean("calltype", false)) return;
+        boolean callTypeEnabled = false;
+        try {
+            callTypeEnabled = prefs.getBoolean("calltype", false);
+        } catch (ClassCastException e) {
+            try {
+                String strVal = prefs.getString("calltype", "false");
+                callTypeEnabled = "true".equalsIgnoreCase(strVal) || "1".equals(strVal);
+                prefs.edit().putBoolean("calltype", callTypeEnabled).apply();
+            } catch (Exception ignored) {}
+        }
+        if (!callTypeEnabled) return;
 
         SharedPreferencesWrapper.addHook((key, value) -> {
             if (Objects.equals(key, "call_confirmation_dialog_count")) {
@@ -46,7 +59,7 @@ public class CallType extends Feature {
 
 
         var callConfirmationFragment = XposedHelpers.findClass("com.whatsapp.calling.fragment.CallConfirmationFragment", classLoader);
-        var method = ReflectionUtils.findMethodUsingFilter(callConfirmationFragment, m -> m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(android.os.Bundle.class));
+        var method = ReflectionUtils.findMethodUsingFilter(callConfirmationFragment, m -> m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(Bundle.class));
         XposedBridge.hookMethod(method, new XC_MethodHook() {
             private boolean isVideoCall;
             private String jid;
@@ -82,7 +95,7 @@ public class CallType extends Feature {
                 var context = origDialog.getContext();
                 var mAlertDialog = new AlertDialogWpp(origDialog.getContext());
                 mAlertDialog.setTitle(UnobfuscatorCache.getInstance().getString("selectcalltype"));
-                mAlertDialog.setItems(new String[]{com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.phone_call), com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.whatsapp_call)}, (dialog, which) -> {
+                mAlertDialog.setItems(new String[]{FeatureLoader.getModuleString(Utils.getApplication(), R.string.phone_call), FeatureLoader.getModuleString(Utils.getApplication(), R.string.whatsapp_call)}, (dialog, which) -> {
                     newDialog.dismiss();
                     switch (which) {
                         case 0:

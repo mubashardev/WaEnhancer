@@ -8,27 +8,32 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.materialthemebuilder)
     alias(libs.plugins.kotlinAndroid)
-    alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.google.services)
-    alias(libs.plugins.firebase.crashlytics)
+    // google-services and firebase-crashlytics are applied conditionally below
+    // so the build succeeds when google-services.json is absent (forks, local dev)
+}
+
+// Apply Firebase plugins only when google-services.json is present.
+// This keeps the build fork-friendly: contributors without the secret can build normally.
+val hasGoogleServices = file("google-services.json").exists()
+if (hasGoogleServices) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
+    apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)
 }
 
 kotlin {
     jvmToolchain(17)
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Private pro submodule
-// settings.gradle.kts computes this flag by scanning app/src/pro for real files.
-// ─────────────────────────────────────────────────────────────────────────────
-val hasProSources: Boolean = (rootProject.extra.has("hasProSources") && rootProject.extra["hasProSources"] as Boolean) ||
-    (gradle.extra.has("hasProSources") && gradle.extra["hasProSources"] as Boolean)
 
 
 android {
     namespace = "com.waenhancer"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
+
+    androidResources {
+        ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~:!PublicSuffixDatabase.list"
+    }
 
     flavorDimensions += "version"
 
@@ -61,10 +66,13 @@ android {
         val githubToken = (project.findProperty("GH_PUBLIC_TOKEN")?.toString() ?: env.getProperty("GH_PUBLIC_TOKEN") ?: "").trim()
         buildConfigField("String", "GH_PUBLIC_TOKEN", "\"$githubToken\"")
 
-        buildConfigField("String", "NOTICES_URL", "\"https://waenhancer.com/notices.json\"")
-        // Expose pro feature availability to app code
-        buildConfigField("boolean", "HAS_PRO_FEATURES", hasProSources.toString())
+        val noticesUrl = (project.findProperty("NOTICES_URL")?.toString() ?: env.getProperty("NOTICES_URL") ?: "https://waex.mubashar.dev/notices.json").trim()
+        buildConfigField("String", "NOTICES_URL", "\"$noticesUrl\"")
         multiDexEnabled = true
+        resourceConfigurations += listOf("en", "ar", "de", "es", "fr", "id", "in", "it", "iw", "pt", "ru", "tr", "zh")
+
+        // Expose whether Firebase is compiled in so runtime code can guard reflection calls
+        buildConfigField("boolean", "FIREBASE_ENABLED", hasGoogleServices.toString())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -86,12 +94,13 @@ android {
                     ?: keystoreProperties.getProperty("androidKeyAlias")
                 keyPassword = project.findProperty("androidKeyPassword") as String?
                     ?: keystoreProperties.getProperty("androidKeyPassword")
+                enableV1Signing = true
+                enableV2Signing = true
             }
         }
 
         ndk {
-            abiFilters.add("armeabi-v7a")
-            abiFilters.add("arm64-v8a")
+            abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
         }
 
     }
@@ -114,10 +123,18 @@ android {
             excludes += "org/**"
             excludes += "**.properties"
             excludes += "**.bin"
+            excludes += "DebugProbesKt.bin"
+            excludes += "kotlin-tooling-metadata.json"
+            excludes += "client_analytics.proto"
+            excludes += "assets/PublicSuffixDatabase.list"
         }
         jniLibs {
+            useLegacyPackaging = true
             excludes += "lib/x86/**"
             excludes += "lib/x86_64/**"
+        }
+        dex {
+            useLegacyPackaging = true
         }
     }
 
@@ -157,7 +174,6 @@ android {
         viewBinding = true
         buildConfig = true
         aidl = true
-        compose = true
     }
 
 
@@ -187,39 +203,18 @@ android {
         }
         // Add Material Design 3 color tokens (such as palettePrimary100) in generated theme
         // rikka.material >= 2.0.0 provides such attributes
-        generatePalette = true
+        generatePalette = false
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Conditionally add the private pro source set
-    // When the submodule is populated, Gradle will compile those sources
-    // as part of the main app — no separate module, no separate APK.
-    // ─────────────────────────────────────────────────────────────────────
-    if (hasProSources) {
-        sourceSets {
-            named("main") {
-                java.srcDirs("src/pro/java", "src/pro/kotlin")
-                res.srcDirs("src/pro/res")
-                assets.srcDirs("src/pro/assets")
-                aidl.srcDirs("src/pro/aidl")
-            }
-        }
-        // Native build for pro security layer
-        externalNativeBuild {
-            cmake {
-                path = file("src/pro/jni/CMakeLists.txt")
-                version = "3.22.1"
-            }
-        }
-    }
+
 
     applicationVariants.all {
         val variant = this
         variant.outputs.forEach {
             val output = it as? com.android.build.gradle.api.ApkVariantOutput
             if (output != null) {
-                val debugSuffix = if (variant.buildType.name == "debug") "-debug" else ""
-                output.outputFileName = "WaEnhancerX-v${variant.versionName}${debugSuffix}.apk"
+                val suffix = if (variant.buildType.name == "debug") "_debug" else "_release"
+                output.outputFileName = "WaEnhancerX-v${variant.versionName}${suffix}.apk"
             }
         }
     }
@@ -227,15 +222,16 @@ android {
 
 
 dependencies {
+    implementation(project(":api"))
     implementation(libs.blurview)
     implementation(libs.colorpicker)
     implementation(libs.dexkit)
-    implementation(libs.flatbuffers)
     compileOnly(libs.libxposed.legacy)
 
     implementation(libs.androidx.activity)
     implementation(libs.androidx.documentfile)
     implementation(libs.androidx.constraintlayout)
+    implementation("com.facebook.shimmer:shimmer:0.5.0")
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
@@ -252,25 +248,18 @@ dependencies {
     implementation(libs.bcpkix.jdk18on)
     implementation(libs.arscblamer)
     implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("com.facebook.shimmer:shimmer:0.5.0")
+
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     implementation(libs.markwon.core)
     implementation(libs.markwon.html)
 
-    val composeBom = platform(libs.androidx.compose.bom)
-    implementation(composeBom)
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.savedstate.ktx)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.activity.compose)
-    
-    // Firebase
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.crashlytics)
+    // Firebase — only compiled in when google-services.json is present
+    if (hasGoogleServices) {
+        implementation(platform(libs.firebase.bom))
+        implementation(libs.firebase.analytics)
+        implementation(libs.firebase.crashlytics)
+    }
 }
 
 configurations.all {

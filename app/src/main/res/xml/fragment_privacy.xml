@@ -25,6 +25,12 @@
             app:title="@string/ghost_mode_title" />
 
         <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="true"
+            app:key="show_hidereceipt"
+            app:summary="@string/show_hidereceipt_sum"
+            app:title="@string/show_hidereceipt_title" />
+
+        <rikka.material.preference.MaterialSwitchPreference
             app:key="always_online"
             app:summary="@string/always_online_sum"
             app:title="@string/always_online" />
@@ -141,6 +147,11 @@
             app:key="call_info"
             app:summary="@string/additional_call_information_sum"
             app:title="@string/additional_call_information" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="call_blocked_notification"
+            app:summary="@string/call_blocked_notification_sum"
+            app:title="@string/call_blocked_notification" />
 
         <ListPreference
             app:entries="@array/call_blocker_buttons"

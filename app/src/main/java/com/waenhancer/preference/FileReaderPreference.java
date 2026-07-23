@@ -40,6 +40,11 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import android.content.SharedPreferences;
+import android.provider.Settings;
+import android.view.View;
+import androidx.preference.PreferenceViewHolder;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
 
 public class FileReaderPreference extends Preference implements Preference.OnPreferenceClickListener,
         FilePicker.OnFilePickedListener, FilePicker.OnUriPickedListener {
@@ -66,14 +71,14 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void showAlertPermission() {
-        com.waenhancer.ui.helpers.BottomSheetHelper.showConfirmation(
+        BottomSheetHelper.showConfirmation(
                 getContext(),
                 getContext().getString(R.string.storage_permission),
                 getContext().getString(R.string.permission_storage),
                 getContext().getString(R.string.allow),
                 false,
                 () -> {
-                    Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.setData(Uri.fromParts("package", getContext().getPackageName(), null));
                     getContext().startActivity(intent);
@@ -171,6 +176,8 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
 
         // Display file path in summary
         setSummary(filePath);
+        setWidgetLayoutResource(R.layout.layout_delete_widget);
+        notifyChanged();
         Toast.makeText(getContext(), "XML file loaded successfully", Toast.LENGTH_SHORT).show();
     }
 
@@ -182,15 +189,46 @@ public class FileReaderPreference extends Preference implements Preference.OnPre
         if (savedXml != null) {
             this.xmlContent = savedXml;
             setSummary(this.filePath != null ? this.filePath : "XML content loaded");
+            setWidgetLayoutResource(R.layout.layout_delete_widget);
+        } else {
+            setWidgetLayoutResource(0);
         }
     }
 
-    @androidx.annotation.NonNull
-    private android.content.SharedPreferences getSafeSharedPreferences() {
-        android.content.SharedPreferences prefs = getSharedPreferences();
+    @Override
+    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
+        super.onBindViewHolder(holder);
+        View deleteBtn = holder.findViewById(R.id.delete_button);
+        if (deleteBtn != null) {
+            deleteBtn.setOnClickListener(v -> {
+                new MaterialAlertDialogBuilder(getContext())
+                        .setTitle("Remove Custom KeyBox")
+                        .setMessage("Are you sure you want to remove the imported custom keybox.xml file?")
+                        .setPositiveButton("Remove", (dialog, which) -> {
+                            xmlContent = null;
+                            filePath = null;
+                            getSafeSharedPreferences().edit()
+                                    .remove(getKey())
+                                    .remove("keybox_verify_status")
+                                    .remove("keybox_verify_time")
+                                    .apply();
+                            setSummary("No file selected");
+                            setWidgetLayoutResource(0);
+                            notifyChanged();
+                            Toast.makeText(getContext(), "Custom KeyBox removed", Toast.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.dismiss())
+                        .show();
+            });
+        }
+    }
+
+    @NonNull
+    private SharedPreferences getSafeSharedPreferences() {
+        SharedPreferences prefs = getSharedPreferences();
         if (prefs != null) {
             return prefs;
         }
-        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+        return PreferenceManager.getDefaultSharedPreferences(getContext());
     }
 }

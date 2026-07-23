@@ -103,7 +103,7 @@ public class ProviderClient extends BaseClient {
         connect().whenComplete((canLoad, ex) -> {
             try {
                 if (ex != null || !canLoad) {
-                    Log.e("ProviderClient", "failed to reconnect to service, result=" + canLoad);
+                    /* Log removed */
                     Utils.doRestart(context);
                 } else {
                     Utils.showToast("Reconnected to Bridge", Toast.LENGTH_SHORT);

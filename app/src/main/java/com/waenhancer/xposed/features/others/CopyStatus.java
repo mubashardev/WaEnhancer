@@ -15,6 +15,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import com.waenhancer.xposed.core.FeatureLoader;
 
 public class CopyStatus extends Feature {
     public CopyStatus(@NonNull ClassLoader classLoader, @NonNull SharedPreferences preferences) {
@@ -27,7 +28,7 @@ public class CopyStatus extends Feature {
         if (!prefs.getBoolean("copystatus", false)) return;
 
         var viewButtonMethod = Unobfuscator.loadBlueOnReplayViewButtonMethod(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(viewButtonMethod));
+        /* Log removed */
 
         XposedBridge.hookMethod(viewButtonMethod, new XC_MethodHook() {
             @Override
@@ -37,7 +38,7 @@ public class CopyStatus extends Feature {
                 if (caption != null) {
                     caption.setOnLongClickListener((view1 -> {
                         Utils.setToClipboard(caption.getText().toString());
-                        Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.copied_to_clipboard), Toast.LENGTH_LONG);
+                        Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.copied_to_clipboard), Toast.LENGTH_LONG);
                         return true;
                     }));
                 }
@@ -54,7 +55,7 @@ public class CopyStatus extends Feature {
                 if (text != null) {
                     text.setOnLongClickListener((view1 -> {
                         Utils.setToClipboard(text.getText().toString());
-                        Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.copied_to_clipboard), Toast.LENGTH_LONG);
+                        Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.copied_to_clipboard), Toast.LENGTH_LONG);
                         return true;
                     }));
                 }

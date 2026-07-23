@@ -31,6 +31,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import com.waenhancer.xposed.core.db.DelMessageStore;
+import java.util.function.Consumer;
 
 public class ContactPickerActivity extends BaseActivity {
 
@@ -74,11 +79,11 @@ public class ContactPickerActivity extends BaseActivity {
 
         int limit = getIntent().getIntExtra("limit", -1);
         if (limit > 0) {
-            selectAllButton.setVisibility(android.view.View.GONE);
+            selectAllButton.setVisibility(View.GONE);
         }
 
         adapter = new ContactPickerAdapter((contact, toSelectedState) -> {
-            if (toSelectedState) {
+            if (toSelectedState && limit != -1) {
                 int currentSelectedCount = 0;
                 for (SelectableContact c : allContacts) {
                     if (c.isSelected()) currentSelectedCount++;
@@ -123,36 +128,80 @@ public class ContactPickerActivity extends BaseActivity {
     @NonNull
     private List<SelectableContact> queryContacts() {
         Map<String, SelectableContact> uniqueContacts = new LinkedHashMap<>();
-        String[] projection = {
-                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                ContactsContract.CommonDataKinds.Phone.NUMBER
-        };
 
-        try (Cursor cursor = getContentResolver().query(
-                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                projection,
-                ContactsContract.CommonDataKinds.Phone.NUMBER + " IS NOT NULL",
-                null,
-                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE NOCASE ASC")) {
-            if (cursor == null) {
-                return new ArrayList<>();
+        // 1. Read phone contacts if permission is granted
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED) {
+            String[] projection = {
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER
+            };
+
+            try (Cursor cursor = getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    projection,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER + " IS NOT NULL",
+                    null,
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE NOCASE ASC")) {
+                if (cursor != null) {
+                    int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                    int numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                    while (cursor.moveToNext()) {
+                        String name = nameIndex >= 0 ? cursor.getString(nameIndex) : null;
+                        String number = numberIndex >= 0 ? cursor.getString(numberIndex) : null;
+                        String normalized = normalizePhone(number);
+                        if (normalized.isEmpty() || uniqueContacts.containsKey(normalized)) {
+                            continue;
+                        }
+                        String displayName = (name == null || name.trim().isEmpty()) ? normalized : name.trim();
+                        uniqueContacts.put(normalized,
+                                new SelectableContact(displayName, normalized, preselectedContacts.contains(normalized)));
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+        }
 
-            int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
-            int numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-            while (cursor.moveToNext()) {
-                String name = nameIndex >= 0 ? cursor.getString(nameIndex) : null;
-                String number = numberIndex >= 0 ? cursor.getString(numberIndex) : null;
-                String normalized = normalizePhone(number);
-                if (normalized.isEmpty() || uniqueContacts.containsKey(normalized)) {
+        // 2. Read synced WhatsApp contacts from our local database
+        try {
+            ArrayList<DelMessageStore.ContactInfo> waContacts =
+                    DelMessageStore.getInstance(this).getWhatsAppContacts();
+            for (DelMessageStore.ContactInfo wa : waContacts) {
+                // Skip groups, communities, broadcasts, or other non-individual JIDs
+                if (wa.jid == null || wa.jid.endsWith("@g.us") || wa.jid.contains("broadcast") || wa.jid.contains("call") || wa.jid.contains("temp")) {
                     continue;
                 }
-                String displayName = (name == null || name.trim().isEmpty()) ? normalized : name.trim();
-                uniqueContacts.put(normalized,
-                        new SelectableContact(displayName, normalized, preselectedContacts.contains(normalized)));
+
+                String normalized = wa.number;
+                if (normalized == null || normalized.isEmpty()) {
+                    normalized = wa.jid.replace("@s.whatsapp.net", "").replace("@lid", "");
+                    if (normalized.contains("@")) normalized = normalized.split("@")[0];
+                }
+                normalized = normalizePhone(normalized);
+                if (normalized.isEmpty()) continue;
+
+                // Skip raw LID/JID entries that do not have a mapped readable contact name to avoid duplicate/garbled entries
+                boolean isRawLid = normalized.matches("\\d+") && normalized.length() >= 12;
+                String displayName = wa.displayName;
+                if (displayName == null || displayName.trim().isEmpty()) {
+                    displayName = wa.waName;
+                }
+                
+                if (isRawLid && (displayName == null || displayName.trim().isEmpty() || displayName.equals(normalized))) {
+                    continue; // Skip this unmapped raw LID contact
+                }
+
+                if (!uniqueContacts.containsKey(normalized)) {
+                    if (displayName == null || displayName.trim().isEmpty()) {
+                        displayName = normalized;
+                    }
+                    uniqueContacts.put(normalized,
+                            new SelectableContact(displayName.trim(), normalized, preselectedContacts.contains(normalized)));
+                }
             }
-        } catch (Exception e) {
-            runOnUiThread(() -> Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show());
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
 
         List<SelectableContact> resultList = new ArrayList<>(uniqueContacts.values());
@@ -237,8 +286,8 @@ public class ContactPickerActivity extends BaseActivity {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             loadContacts();
         } else {
-            Toast.makeText(this, R.string.grant_contacts_permission, Toast.LENGTH_SHORT).show();
-            finish();
+            Toast.makeText(this, "Listing WhatsApp contacts", Toast.LENGTH_SHORT).show();
+            loadContacts();
         }
     }
 
@@ -251,10 +300,10 @@ public class ContactPickerActivity extends BaseActivity {
         return normalized != null ? normalized : phone.trim();
     }
 
-    private static class SimpleTextWatcher implements android.text.TextWatcher {
-        private final java.util.function.Consumer<String> onChanged;
+    private static class SimpleTextWatcher implements TextWatcher {
+        private final Consumer<String> onChanged;
 
-        SimpleTextWatcher(java.util.function.Consumer<String> onChanged) {
+        SimpleTextWatcher(Consumer<String> onChanged) {
             this.onChanged = onChanged;
         }
 
@@ -267,7 +316,7 @@ public class ContactPickerActivity extends BaseActivity {
         }
 
         @Override
-        public void afterTextChanged(android.text.Editable s) {
+        public void afterTextChanged(Editable s) {
             onChanged.accept(s != null ? s.toString() : "");
         }
     }

@@ -1,6 +1,5 @@
 package com.waenhancer.views.dialog;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -8,189 +7,388 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.GridLayout;
 import android.widget.SeekBar;
+import android.app.Dialog;
+import android.content.res.Configuration;
+import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.view.Gravity;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.waenhancer.xposed.core.components.AlertDialogWpp;
-import com.waenhancer.xposed.utils.DesignUtils;
+public class SimpleColorPickerDialog {
 
-public class SimpleColorPickerDialog extends AlertDialogWpp {
-
+    private final Context mContext;
     private final OnColorSelectedListener listener;
-    private int selectedColor = Color.BLACK;
+    private int selectedColor;
     private boolean isUpdating = false;
 
+    private Dialog dialog;
+
+    private View colorPreview;
+    private EditText hexInput;
+    private SeekBar hueSeekBar;
+    private SeekBar brightnessSeekBar;
+    private GridLayout presetsGrid;
+
+    private static final int[] PRESETS = {
+        0xFFE53935, // Red
+        0xFFD81B60, // Pink
+        0xFF8E24AA, // Purple
+        0xFF5E35B1, // Deep Purple
+        0xFF1E88E5, // Blue
+        0xFF039BE5, // Light Blue
+        0xFF00897B, // Teal
+        0xFF43A047, // Green
+        0xFFFFB300, // Amber
+        0xFFFB8C00, // Orange
+        0xFFFFFFFF, // White
+        0xFF000000  // Black
+    };
+
     public SimpleColorPickerDialog(Context context, OnColorSelectedListener listener) {
-        super(context);
+        this.mContext = context;
+        this.selectedColor = 0xFFFF0000;
         this.listener = listener;
     }
 
-    @Override
-    public Dialog create() {
-        setFullHeight(true);
-        setTitle("Select a Color");
+    public SimpleColorPickerDialog(Context context, int initialColor, OnColorSelectedListener listener) {
+        this.mContext = context;
+        this.selectedColor = initialColor != -1 ? initialColor : 0xFFFF0000;
+        this.listener = listener;
+    }
 
-        // Configura o layout principal do diálogo
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(20, 20, 20, 20);
+    public void show() {
+        dialog = new Dialog(mContext);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // Cria os SeekBars para ajustar as cores
-        final SeekBar redSeekBar = new SeekBar(getContext());
-        final SeekBar greenSeekBar = new SeekBar(getContext());
-        final SeekBar blueSeekBar = new SeekBar(getContext());
+        View contentView = createContentView(mContext);
+        dialog.setContentView(contentView);
 
-        redSeekBar.setMax(255);
-        greenSeekBar.setMax(255);
-        blueSeekBar.setMax(255);
+        // Build presets
+        presetsGrid.removeAllViews();
+        for (int color : PRESETS) {
+            View circle = new View(mContext);
+            int size = dpToPx(40);
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.width = size;
+            params.height = size;
+            params.setMargins(dpToPx(5), dpToPx(5), dpToPx(5), dpToPx(5));
+            circle.setLayoutParams(params);
 
-        // Adiciona os SeekBars ao layout
-        layout.addView(createSeekBarLayout("Red", redSeekBar));
-        layout.addView(createSeekBarLayout("Green", greenSeekBar));
-        layout.addView(createSeekBarLayout("Blue", blueSeekBar));
-
-        // Cria a visualização da cor selecionada
-        final View colorPreview = new View(getContext());
-        colorPreview.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 200));
-        GradientDrawable borderDrawable = new GradientDrawable();
-        borderDrawable.setColor(selectedColor);
-        borderDrawable.setStroke(1, DesignUtils.getPrimaryTextColor()); // Borda branca de 5 pixels
-
-        colorPreview.setBackground(borderDrawable);
-        layout.addView(colorPreview);
-
-        // Cria o EditText para entrada de cor hexadecimal
-        final EditText hexInput = new EditText(getContext());
-        hexInput.setHint("#000000");
-        layout.addView(hexInput);
-
-        // Atualiza a visualização da cor conforme os SeekBars são ajustados
-        redSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (!isUpdating) {
-                    isUpdating = true;
-                    updateColorPreview(borderDrawable, redSeekBar, greenSeekBar, blueSeekBar, hexInput);
-                    isUpdating = false;
-                }
+            GradientDrawable gd = new GradientDrawable();
+            gd.setShape(GradientDrawable.OVAL);
+            gd.setColor(color);
+            // White gets a stroke so it's visible
+            if (color == 0xFFFFFFFF) {
+                gd.setStroke(dpToPx(1), 0xFFCCCCCC);
             }
+            circle.setBackground(gd);
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
+            final int clickedColor = color;
+            circle.setOnClickListener(v -> {
+                selectedColor = clickedColor;
+                updateUIFromColor();
+            });
+            presetsGrid.addView(circle);
+        }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
+        // Rainbow hue gradient
+        int[] rainbowColors = {
+            0xFFFF0000, 0xFFFF00FF, 0xFF0000FF,
+            0xFF00FFFF, 0xFF00FF00, 0xFFFFFF00, 0xFFFF0000
+        };
+        GradientDrawable rainbowGd = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT, rainbowColors);
+        rainbowGd.setCornerRadius(dpToPx(8));
+        hueSeekBar.setBackground(rainbowGd);
+        hueSeekBar.setProgressDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        // Brightness bar
+        brightnessSeekBar.setProgressDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        // Hue listener
+        hueSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser && !isUpdating) updateColorFromSliders();
             }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        greenSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (!isUpdating) {
-                    isUpdating = true;
-                    updateColorPreview(borderDrawable, redSeekBar, greenSeekBar, blueSeekBar, hexInput);
-                    isUpdating = false;
-                }
+        // Brightness listener
+        brightnessSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser && !isUpdating) updateColorFromSliders();
             }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        blueSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (!isUpdating) {
-                    isUpdating = true;
-                    updateColorPreview(borderDrawable, redSeekBar, greenSeekBar, blueSeekBar, hexInput);
-                    isUpdating = false;
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-        });
-
-        // Atualiza a cor conforme o valor hexadecimal é inserido
+        // Hex text watcher
         hexInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (!isUpdating && s.length() == 7 && s.charAt(0) == '#') {
                     try {
                         isUpdating = true;
                         selectedColor = Color.parseColor(s.toString());
-                        borderDrawable.setColor(selectedColor);
-                        redSeekBar.setProgress(Color.red(selectedColor));
-                        greenSeekBar.setProgress(Color.green(selectedColor));
-                        blueSeekBar.setProgress(Color.blue(selectedColor));
+                        updateSlidersFromColor();
+                        updatePreview();
                         isUpdating = false;
-                    } catch (IllegalArgumentException e) {
-                        // Cor inválida, não faz nada
-                    }
+                    } catch (IllegalArgumentException ignored) {}
                 }
             }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
+            @Override public void afterTextChanged(Editable s) {}
         });
 
-        setPositiveButton("OK", (dialogInterface, i) -> {
+        // Initialize everything from current color
+        updateUIFromColor();
+
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            int width = (int) (mContext.getResources().getDisplayMetrics().widthPixels * 0.9);
+            dialog.getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+    }
+
+    private View createContentView(Context context) {
+        boolean isDark = isDarkTheme(context);
+        int textColor = isDark ? 0xFFFFFFFF : 0xFF1E1E1E;
+        int textSecondary = isDark ? 0xFFB0B0B0 : 0xFF666666;
+        int cardBg = isDark ? 0xFF2C2C2C : 0xFFF5F5F5;
+
+        // Root Layout
+        LinearLayout root = new LinearLayout(context);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dpToPx(20), dpToPx(24), dpToPx(20), dpToPx(24));
+        
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(isDark ? 0xFF1E1E1E : 0xFFFFFFFF);
+        bg.setCornerRadius(dpToPx(28));
+        root.setBackground(bg);
+
+        // 1. Title
+        TextView title = new TextView(context);
+        title.setText("Choose Color");
+        title.setTextSize(20);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setTextColor(textColor);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        titleParams.setMargins(0, 0, 0, dpToPx(20));
+        root.addView(title, titleParams);
+
+        // 2. Presets Label
+        TextView presetsLabel = new TextView(context);
+        presetsLabel.setText("Presets");
+        presetsLabel.setTextSize(14);
+        presetsLabel.setTextColor(textSecondary);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        labelParams.setMargins(0, 0, 0, dpToPx(10));
+        root.addView(presetsLabel, labelParams);
+
+        // 3. Presets Scroll + Grid
+        HorizontalScrollView presetScroll = new HorizontalScrollView(context);
+        presetScroll.setHorizontalScrollBarEnabled(false);
+        presetScroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+
+        presetsGrid = new GridLayout(context);
+        presetsGrid.setColumnCount(6);
+        presetsGrid.setRowCount(2);
+
+        presetScroll.addView(presetsGrid, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        scrollParams.setMargins(0, 0, 0, dpToPx(24));
+        root.addView(presetScroll, scrollParams);
+
+        // 4. Custom Color Label
+        TextView customLabel = new TextView(context);
+        customLabel.setText("Custom Color");
+        customLabel.setTextSize(14);
+        customLabel.setTextColor(textSecondary);
+        root.addView(customLabel, labelParams);
+
+        // 5. Preview + Hex Row
+        LinearLayout previewRow = new LinearLayout(context);
+        previewRow.setOrientation(LinearLayout.HORIZONTAL);
+        previewRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        colorPreview = new View(context);
+        LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(dpToPx(52), dpToPx(52));
+        previewParams.setMargins(0, 0, dpToPx(16), 0);
+        previewRow.addView(colorPreview, previewParams);
+
+        hexInput = new EditText(context);
+        hexInput.setHint("Hex Code (#RRGGBB)");
+        hexInput.setSingleLine(true);
+        hexInput.setTextColor(textColor);
+        hexInput.setHintTextColor(textSecondary);
+        hexInput.setFilters(new InputFilter[]{new InputFilter.LengthFilter(7)});
+        hexInput.setInputType(InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        
+        GradientDrawable editBg = new GradientDrawable();
+        editBg.setColor(cardBg);
+        editBg.setCornerRadius(dpToPx(8));
+        hexInput.setBackground(editBg);
+        hexInput.setPadding(dpToPx(12), dpToPx(8), dpToPx(12), dpToPx(8));
+        
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+        previewRow.addView(hexInput, inputParams);
+
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowParams.setMargins(0, 0, 0, dpToPx(20));
+        root.addView(previewRow, rowParams);
+
+        // 6. Hue Label
+        TextView hueLabel = new TextView(context);
+        hueLabel.setText("Hue");
+        hueLabel.setTextSize(12);
+        hueLabel.setTextColor(textSecondary);
+        LinearLayout.LayoutParams smallLabelParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        smallLabelParams.setMargins(0, 0, 0, dpToPx(4));
+        root.addView(hueLabel, smallLabelParams);
+
+        // 7. Hue SeekBar
+        hueSeekBar = new SeekBar(context);
+        hueSeekBar.setMax(360);
+        LinearLayout.LayoutParams seekParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(48));
+        seekParams.setMargins(0, 0, 0, dpToPx(16));
+        root.addView(hueSeekBar, seekParams);
+
+        // 8. Brightness Label
+        TextView brightnessLabel = new TextView(context);
+        brightnessLabel.setText("Brightness");
+        brightnessLabel.setTextSize(12);
+        brightnessLabel.setTextColor(textSecondary);
+        root.addView(brightnessLabel, smallLabelParams);
+
+        // 9. Brightness SeekBar
+        brightnessSeekBar = new SeekBar(context);
+        brightnessSeekBar.setMax(100);
+        brightnessSeekBar.setProgress(100);
+        LinearLayout.LayoutParams brightnessParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(48));
+        brightnessParams.setMargins(0, 0, 0, dpToPx(24));
+        root.addView(brightnessSeekBar, brightnessParams);
+
+        // 10. Buttons Row
+        LinearLayout buttonsRow = new LinearLayout(context);
+        buttonsRow.setOrientation(LinearLayout.HORIZONTAL);
+        buttonsRow.setGravity(Gravity.END);
+
+        Button btnCancel = new Button(context);
+        btnCancel.setText("Cancel");
+        btnCancel.setTextColor(textColor);
+        btnCancel.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        GradientDrawable cancelBg = new GradientDrawable();
+        cancelBg.setColor(Color.TRANSPARENT);
+        btnCancel.setBackground(cancelBg);
+        btnCancel.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(8));
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        buttonsRow.addView(btnCancel);
+
+        Button btnSelect = new Button(context);
+        btnSelect.setText("Select");
+        btnSelect.setTextColor(isDark ? 0xFF000000 : 0xFFFFFFFF);
+        btnSelect.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        GradientDrawable selectBg = new GradientDrawable();
+        selectBg.setColor(isDark ? 0xFF00E676 : 0xFF00A884); // Bright green for dark theme, teal green for light theme
+        selectBg.setCornerRadius(dpToPx(100)); // Fully rounded
+        btnSelect.setBackground(selectBg);
+        btnSelect.setPadding(dpToPx(24), dpToPx(8), dpToPx(24), dpToPx(8));
+        btnSelect.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onColorSelected(selectedColor);
             }
-            dismiss();
+            dialog.dismiss();
         });
 
-        setNegativeButton("Cancel", (dialogInterface, i) -> {
-            dismiss();
-        });
+        LinearLayout.LayoutParams selectParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        selectParams.setMargins(dpToPx(12), 0, 0, 0);
+        buttonsRow.addView(btnSelect, selectParams);
 
-        // Define o layout do diálogo
-        setView(layout);
+        root.addView(buttonsRow, new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        return super.create();
+        ScrollView scrollView = new ScrollView(context);
+        scrollView.addView(root);
+        return scrollView;
     }
 
-    private void updateColorPreview(GradientDrawable borderDrawable, SeekBar redSeekBar, SeekBar greenSeekBar, SeekBar blueSeekBar, EditText hexInput) {
-        int red = redSeekBar.getProgress();
-        int green = greenSeekBar.getProgress();
-        int blue = blueSeekBar.getProgress();
-        selectedColor = Color.rgb(red, green, blue);
-        borderDrawable.setColor(selectedColor);
-        hexInput.setText(String.format("#%02X%02X%02X", red, green, blue));
+    private boolean isDarkTheme(Context context) {
+        return (context.getResources().getConfiguration().uiMode & 
+                Configuration.UI_MODE_NIGHT_MASK) == 
+                Configuration.UI_MODE_NIGHT_YES;
     }
 
-    private LinearLayout createSeekBarLayout(String label, SeekBar seekBar) {
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(10, 10, 10, 10);
+    private void updateUIFromColor() {
+        isUpdating = true;
+        updateSlidersFromColor();
+        updatePreview();
+        hexInput.setText(String.format("#%06X", (0xFFFFFF & selectedColor)));
+        isUpdating = false;
+    }
 
-        TextView labelView = new TextView(getContext());
-        labelView.setText(label);
-        labelView.setTextColor(DesignUtils.getPrimaryTextColor());
+    private void updateSlidersFromColor() {
+        float[] hsv = new float[3];
+        Color.colorToHSV(selectedColor, hsv);
+        hueSeekBar.setProgress((int) hsv[0]);
+        brightnessSeekBar.setProgress((int) (hsv[2] * 100));
+        updateBrightnessBarGradient(hsv[0]);
+    }
 
-        layout.addView(labelView);
-        layout.addView(seekBar);
+    private void updateColorFromSliders() {
+        float hue = hueSeekBar.getProgress();
+        float brightness = brightnessSeekBar.getProgress() / 100f;
+        selectedColor = Color.HSVToColor(new float[]{hue, 1.0f, brightness});
+        updatePreview();
+        updateBrightnessBarGradient(hue);
 
-        return layout;
+        isUpdating = true;
+        hexInput.setText(String.format("#%06X", (0xFFFFFF & selectedColor)));
+        isUpdating = false;
+    }
+
+    private void updatePreview() {
+        GradientDrawable gd = new GradientDrawable();
+        gd.setShape(GradientDrawable.OVAL);
+        gd.setColor(selectedColor);
+        gd.setStroke(dpToPx(1), 0x33000000);
+        colorPreview.setBackground(gd);
+    }
+
+    private void updateBrightnessBarGradient(float hue) {
+        int colorEnd = Color.HSVToColor(new float[]{hue, 1.0f, 1.0f});
+        GradientDrawable gd = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.BLACK, colorEnd});
+        gd.setCornerRadius(dpToPx(8));
+        brightnessSeekBar.setBackground(gd);
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * mContext.getResources().getDisplayMetrics().density);
     }
 
     public interface OnColorSelectedListener {

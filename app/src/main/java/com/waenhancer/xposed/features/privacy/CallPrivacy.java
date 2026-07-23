@@ -28,9 +28,105 @@ import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.content.Context;
+import android.app.NotificationManager;
+import androidx.core.app.NotificationCompat;
+import java.io.File;
+import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+
 public class CallPrivacy extends Feature {
 
     private Object mVoipManager;
+    private static String lastBlockedNumber = "";
+    private static long lastBlockedTime = 0;
+
+    private String getFriendlyBlockType(String type) {
+        if (type == null) return "Blocked";
+        switch (type) {
+            case "no_internet": return "No internet";
+            case "uncallable": return "Unable to receive calls";
+            case "declined": return "Declined";
+            case "busy": return "Busy";
+            case "ended": return "Not answered";
+            default: return "Blocked";
+        }
+    }
+
+    private synchronized void showBlockedCallNotification(FMessageWpp.UserJid userJid, String blockType) {
+        if (!prefs.getBoolean("call_blocked_notification", false)) {
+            return;
+        }
+
+        String phoneNum = userJid.getPhoneNumber();
+        long now = System.currentTimeMillis();
+        if (Objects.equals(phoneNum, lastBlockedNumber) && (now - lastBlockedTime < 5000)) {
+            return; // Avoid duplicate notifications within 5 seconds
+        }
+        lastBlockedNumber = phoneNum;
+        lastBlockedTime = now;
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                String contactName = WppCore.getContactName(userJid);
+                String displayName = TextUtils.isEmpty(contactName) ? "+" + phoneNum : contactName;
+
+                // Load contact avatar bitmap
+                Bitmap avatarBitmap = null;
+                try {
+                    File file = WppCore.getContactPhotoFile(userJid.getPhoneRawString());
+                    if (file != null && file.exists()) {
+                        avatarBitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                    }
+                } catch (Throwable ignored) {}
+
+                boolean additionalInfoEnabled = prefs.getBoolean("call_info", false);
+
+                Context context = Utils.getApplication();
+                NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+                String channelId = "waex";
+                // Ensure notification channel is created
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    android.app.NotificationChannel channel = new android.app.NotificationChannel(channelId, "Wa Enhancer X", NotificationManager.IMPORTANCE_HIGH);
+                    notificationManager.createNotificationChannel(channel);
+                }
+
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
+                        .setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setAutoCancel(true)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+                if (avatarBitmap != null) {
+                    builder.setLargeIcon(avatarBitmap);
+                }
+
+                if (additionalInfoEnabled) {
+                    // Title: Call Blocked: Name/Number
+                    builder.setContentTitle("Call Blocked: " + displayName);
+                    
+                    // Content text / Big text style
+                    String body = "Call from " + displayName + " (+" + phoneNum + ") was blocked.\nBlock Method: " + blockType;
+                    builder.setContentText(body);
+                    builder.setStyle(new NotificationCompat.BigTextStyle().bigText(body));
+                } else {
+                    // Title: Call Blocked
+                    builder.setContentTitle("Call Blocked");
+                    
+                    // Content text: Name + blocked tag
+                    String body = "Call from " + displayName + " was blocked (" + blockType + ")";
+                    builder.setContentText(body);
+                    builder.setStyle(new NotificationCompat.BigTextStyle().bigText(body));
+                }
+
+                notificationManager.notify(new Random().nextInt(), builder.build());
+            } catch (Throwable t) {
+                XposedBridge.log(t);
+            }
+        });
+    }
 
     /**
      * @noinspection unchecked
@@ -74,6 +170,8 @@ public class CallPrivacy extends Feature {
                 var blockCall = checkCallBlock(userJid, PrivacyType.getByValue(type));
                 if (!blockCall) return;
                 var rejectType = prefs.getString("call_type", "no_internet");
+                
+                showBlockedCallNotification(userJid, getFriendlyBlockType(rejectType));
 
                 switch (rejectType) {
                     case "uncallable":
@@ -106,6 +204,7 @@ public class CallPrivacy extends Feature {
                 var type = Integer.parseInt(prefs.getString("call_privacy", "0"));
                 var block = checkCallBlock(userJid, PrivacyType.getByValue(type));
                 if (block) {
+                    showBlockedCallNotification(userJid, getFriendlyBlockType("no_internet"));
                     param.setResult(1);
                 }
             }

@@ -249,7 +249,7 @@ public class MessageHistory extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
         if (oldVersion < 7) {
-            Utils.log("[WAEX] Upgrading database from version " + oldVersion + " to " + newVersion + " (version < 7). Recreating all tables to apply the new schema and indexes.");
+            /* Log removed */
             sqLiteDatabase.execSQL("DROP TABLE IF EXISTS MessageHistory;");
             sqLiteDatabase.execSQL("DROP TABLE IF EXISTS hide_seen_messages;");
             onCreate(sqLiteDatabase);
@@ -259,7 +259,7 @@ public class MessageHistory extends SQLiteOpenHelper {
     @Override
     public void onDowngrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
         try {
-            Utils.log("[WAEX] Database downgrade detected from version " + oldVersion + " to " + newVersion + ". Recreating tables.");
+            /* Log removed */
             sqLiteDatabase.execSQL("DROP TABLE IF EXISTS MessageHistory;");
             sqLiteDatabase.execSQL("DROP TABLE IF EXISTS hide_seen_messages;");
             onCreate(sqLiteDatabase);

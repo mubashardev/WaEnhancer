@@ -105,7 +105,7 @@ public class MediaQuality extends Feature {
 
 
             var videoMethod = Unobfuscator.loadMediaQualityVideoMethod2(classLoader);
-            logDebug(Unobfuscator.getMethodDescriptor(videoMethod));
+            /* Log removed */
 
             var mediaFields = Unobfuscator.loadMediaQualityOriginalVideoFields(classLoader);
             var mediaTranscodeParams = Unobfuscator.loadMediaQualityVideoFields(classLoader);

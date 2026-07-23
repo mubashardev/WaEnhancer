@@ -2,20 +2,138 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference
-        app:fragment="com.waenhancer.ui.fragments.GeneralFragment$HomeGeneralPreference"
+    <PreferenceCategory
         app:iconSpaceReserved="false"
-        app:title="@string/general" />
+        app:title="@string/general">
 
-    <Preference
-        app:fragment="com.waenhancer.ui.fragments.GeneralFragment$HomeScreenGeneralPreference"
-        app:iconSpaceReserved="false"
-        app:title="@string/home_screen" />
+        <ListPreference
+            app:entries="@array/thememode_entries"
+            app:entryValues="@array/thememode_values"
+            app:key="thememode"
+            app:summary="%s"
+            app:title="@string/theme_mode" />
 
-    <Preference
-        app:fragment="com.waenhancer.ui.fragments.GeneralFragment$ConversationGeneralPreference"
-        app:iconSpaceReserved="false"
-        app:title="@string/conversation" />
+        <ListPreference
+            app:defaultValue="preset"
+            app:entries="@array/wae_color_mode_entries"
+            app:entryValues="@array/wae_color_mode_values"
+            app:key="wae_color_mode"
+            app:summary="%s"
+            app:title="@string/wae_color_mode" />
+
+        <ListPreference
+            app:defaultValue="green"
+            app:entries="@array/wae_color_preset_entries"
+            app:entryValues="@array/wae_color_preset_values"
+            app:key="wae_color_preset"
+            app:summary="%s"
+            app:title="@string/wae_color_preset" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="update_check"
+            app:defaultValue="true"
+            app:summary="@string/update_check_sum"
+            app:title="@string/update_check" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="disable_expiration"
+            app:summary="@string/disable_whatsapp_expiration_sum"
+            app:title="@string/disable_whatsapp_expiration" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="force_restore_backup_feature"
+            app:summary="@string/force_restore_backup_summary"
+            app:title="@string/force_restore_backup" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="lite_mode"
+            app:summary="@string/lite_mode_sum"
+            app:title="@string/lite_mode" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="force_english"
+            app:title="@string/force_english" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="true"
+            app:key="show_hook_toast"
+            app:summary="@string/show_hook_toast_sum"
+            app:title="@string/show_hook_toast" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="enable_crash_analytics"
+            app:title="@string/enable_crash_analytics"
+            app:summary="@string/enable_crash_analytics_sum" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="bypass_version_check"
+            app:summary="@string/disable_version_check_sum"
+            app:title="@string/disable_version_check" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="customize_supported_versions"
+            app:summary="@string/customize_supported_versions_sum"
+            app:title="@string/customize_supported_versions" />
+
+        <Preference
+            app:dependency="customize_supported_versions"
+            app:key="manage_supported_versions"
+            app:summary="@string/manage_supported_versions_sum"
+            app:title="@string/manage_supported_versions">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetPackage="com.waenhancer"
+                android:targetClass="com.waenhancer.ui.fragments.SupportedVersionsActivity" />
+        </Preference>
+
+        <rikka.material.preference.MaterialSwitchPreference
+            android:summary="@string/bootloader_spoofer_sum"
+            android:title="@string/bootloader_spoofer"
+            app:key="bootloader_spoofer" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            android:summary="@string/bootloader_spoofer_sum"
+            android:title="Enable Custom KeyBox"
+            app:key="bootloader_spoofer_custom" />
+
+        <com.waenhancer.preference.FileReaderPreference
+            android:key="bootloader_spoofer_xml"
+            android:dependency="bootloader_spoofer_custom"
+            android:title="Use Custom keybox.xml file"
+            android:summary="No file selected" />
+
+        <Preference
+            android:key="bootloader_spoofer_verify"
+            android:title="Verify Spoofer"
+            android:summary="Check spoofer trust chain, keys, and expiration" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="ampm"
+            app:title="@string/ampm" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="segundos"
+            app:summary="@string/segundosnahora_sum"
+            app:title="@string/segundosnahora" />
+
+        <EditTextPreference
+            app:iconSpaceReserved="false"
+            app:key="secondstotime"
+            app:summary="@string/textonahora_sum"
+            app:title="@string/textonahora" />
+
+        <Preference
+            app:fragment="com.waenhancer.ui.fragments.TaskerPreferenceFragment"
+            app:iconSpaceReserved="false"
+            app:summary="@string/enable_tasker_automation_sum"
+            app:title="@string/enable_tasker_automation" />
+
+    </PreferenceCategory>
 
     <PreferenceCategory
         app:iconSpaceReserved="false"
@@ -40,6 +158,12 @@
             app:key="enable_spy"
             app:summary="@string/enable_spy_sum"
             app:title="@string/enable_spy" />
+
+        <com.waenhancer.preference.ProSwitchPreference
+            app:defaultValue="false"
+            app:key="send_audio_as_voice_status"
+            app:summary="@string/send_audio_as_voice_status_sum"
+            app:title="@string/send_audio_as_voice_status" />
 
     </PreferenceCategory>
 
@@ -72,7 +196,6 @@
             app:summary="@string/remove_status_heart_button_sum"
             app:title="@string/remove_status_heart_button" />
 
-
         <rikka.material.preference.MaterialSwitchPreference
             app:defaultValue="false"
             app:key="status_bottom_play_pause_button"
@@ -100,7 +223,20 @@
             app:summary="@string/status_video_fast_speed_sum"
             app:title="@string/status_video_fast_speed" />
 
-
     </com.waenhancer.preference.ProPreferenceCategory>
+
+    <PreferenceCategory
+        android:key="plugin_pack_category"
+        app:title="@string/extended_plugin_pack"
+        app:iconSpaceReserved="false">
+        <Preference
+            android:key="unlock_limited_free"
+            android:title="@string/unlock_limited_free_title"
+            android:summary="@string/unlock_limited_free_sum" />
+        <Preference
+            android:key="pro_plugin_updates"
+            android:title="Plugin Updates &amp; Changelog"
+            android:summary="Check for updates and view the helper plugin changelog" />
+    </PreferenceCategory>
 
 </PreferenceScreen>

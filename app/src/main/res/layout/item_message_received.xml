@@ -45,6 +45,40 @@
                 tools:visibility="visible"
                 android:layout_marginBottom="4dp" />
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/media_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="6dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:id="@+id/media_preview"
+                        android:layout_width="220dp"
+                        android:layout_height="220dp"
+                        android:scaleType="centerCrop"
+                        android:adjustViewBounds="true" />
+
+                    <ImageView
+                        android:id="@+id/media_play_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:src="@android:drawable/ic_media_play"
+                        android:background="@android:color/transparent"
+                        android:visibility="gone"
+                        app:tint="@android:color/white" />
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <TextView
                 android:id="@+id/message_content"
                 android:layout_width="wrap_content"

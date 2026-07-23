@@ -37,38 +37,13 @@ jobs:
     env:
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+      NOTICES_URL: ${{ secrets.NOTICES_URL }}
     steps:
-      # ─────────────────────────────────────────────────────────────────
-      # Checkout public repo (without recursive submodule — we handle the
-      # private one separately so forks without the secret don't break)
-      # ─────────────────────────────────────────────────────────────────
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: false  # we init the private submodule manually below
 
-      # ─────────────────────────────────────────────────────────────────
-      # Private submodule — only when the deploy key secret is available.
-      # Forks that lack PRO_DEPLOY_KEY will skip this block and build the
-      # open-source variant (hasProSources=false) without errors.
-      # ─────────────────────────────────────────────────────────────────
-      - name: Setup SSH for private submodule
-        env:
-          PRO_DEPLOY_KEY: ${{ secrets.PRO_DEPLOY_KEY }}
-        if: ${{ env.PRO_DEPLOY_KEY != '' }}
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.PRO_DEPLOY_KEY }}
 
-      - name: Checkout private pro submodule
-        env:
-          PRO_DEPLOY_KEY: ${{ secrets.PRO_DEPLOY_KEY }}
-        if: ${{ env.PRO_DEPLOY_KEY != '' }}
-        run: |
-          git config --global url."git@github.com:".insteadOf "https://github.com/"
-          git submodule update --init --recursive app/src/pro
-          git config --global --unset url."git@github.com:".insteadOf
-          echo "Pro submodule checked out successfully."
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -224,32 +199,41 @@ jobs:
 
       - name: Build WhatsApp flavor
         run: |
-          BUILD_TASKS="assembleWhatsappRelease"
+          BUILD_TASKS="assembleWhatsappRelease assembleWhatsappDebug"
           if [ -s "app/google-services.json" ]; then
             BUILD_TASKS="$BUILD_TASKS uploadCrashlyticsMappingFileWhatsappRelease"
           fi
           
+          NOTICES_URL_FLAG=""
+          if [ -n "$NOTICES_URL" ]; then
+            NOTICES_URL_FLAG="-PNOTICES_URL=${NOTICES_URL}"
+          fi
+
           if [ -n "${{ secrets.KEY_STORE }}" ]; then
             echo "${{ secrets.KEY_STORE }}" | base64 --decode > release.jks
             ./gradlew $BUILD_TASKS -Pminify=true \
               -PandroidStoreFile=release.jks \
               -PandroidStorePassword='${{ secrets.KEY_STORE_PASSWORD }}' \
               -PandroidKeyAlias='${{ secrets.ALIAS }}' \
-              -PandroidKeyPassword='${{ secrets.KEY_PASSWORD }}'
+              -PandroidKeyPassword='${{ secrets.KEY_PASSWORD }}' \
+              $NOTICES_URL_FLAG
           else
-            ./gradlew $BUILD_TASKS -Pminify=true
+            ./gradlew $BUILD_TASKS -Pminify=true $NOTICES_URL_FLAG
           fi
 
       - name: Rename APK to versioned name
         run: |
           mkdir -p release_artifacts
-          cp app/build/outputs/apk/whatsapp/release/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk "release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk"
+          cp app/build/outputs/apk/whatsapp/release/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk "release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk"
+          cp app/build/outputs/apk/whatsapp/debug/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_debug.apk "release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_debug.apk"
 
       - name: Upload WhatsApp flavor artifact
         uses: actions/upload-artifact@v5
         with:
-          name: WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
-          path: release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
+          name: WaEnhancerX-v${{ env.NEW_VERSION_NAME }}
+          path: |
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_debug.apk
 
       - name: Upload to GitHub release
         id: release
@@ -259,55 +243,27 @@ jobs:
           name: WaEnhancerX v${{ env.NEW_VERSION_NAME }}
           body_path: changelog.txt
           files: |
-            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk
+            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_debug.apk
           tag_name: ${{ env.NEW_VERSION_NAME }}
-          prerelease: ${{ env.RELEASE_PRERELEASE }}
 
-      - name: Sync commits and push custom tag to Xposed Repo fork
-        run: |
-          git remote add xposed-repo https://x-access-token:${{ secrets.XPOSED_REPO_TOKEN }}@github.com/Xposed-Modules-Repo/com.waenhancer.git
-          git push xposed-repo HEAD:master --force || git push xposed-repo HEAD:main --force
-          git tag ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
-          git push xposed-repo ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
+#       - name: Sync commits and push custom tag to Xposed Repo fork
+#         run: |
+#           git remote add xposed-repo https://x-access-token:${{ secrets.XPOSED_REPO_TOKEN }}@github.com/Xposed-Modules-Repo/com.waenhancer.git
+#           git push xposed-repo HEAD:master --force || git push xposed-repo HEAD:main --force
+#           git tag ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
+#           git push xposed-repo ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
+# 
+#       - name: Upload to Xposed Repo release
+#         uses: softprops/action-gh-release@v2
+#         with:
+#           repository: Xposed-Modules-Repo/com.waenhancer
+#           token: ${{ secrets.XPOSED_REPO_TOKEN }}
+#           name: WaEnhancerX v${{ env.NEW_VERSION_NAME }}
+#           body_path: changelog.txt
+#           files: |
+#             release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}_release.apk
+#           tag_name: ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
+#           prerelease: ${{ env.RELEASE_PRERELEASE }}
 
-      - name: Upload to Xposed Repo release
-        uses: softprops/action-gh-release@v2
-        with:
-          repository: Xposed-Modules-Repo/com.waenhancer
-          token: ${{ secrets.XPOSED_REPO_TOKEN }}
-          name: WaEnhancerX v${{ env.NEW_VERSION_NAME }}
-          body_path: changelog.txt
-          files: |
-            release_artifacts/WaEnhancerX-v${{ env.NEW_VERSION_NAME }}.apk
-          tag_name: ${{ env.NEW_VERSION_CODE }}-${{ env.NEW_VERSION_NAME }}
-          prerelease: ${{ env.RELEASE_PRERELEASE }}
 
-      - name: Read changelog
-        id: changelog
-        run: |
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64 | tr -dc 'a-zA-Z0-9')
-          echo "body<<$EOF" >> "$GITHUB_OUTPUT"
-          sed '/./,$!d' changelog.txt >> "$GITHUB_OUTPUT"
-          echo "" >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
-
-      - name: Post release to Telegram
-        if: env.RELEASE_PRERELEASE == 'false'
-        env:
-          CHANGELOG_BODY: ${{ steps.changelog.outputs.body }}
-          RELEASE_URL: ${{ steps.release.outputs.url }}
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
-        run: |
-          if [ -z "$BOT_TOKEN" ] || [ -z "$CHANNEL_ID" ]; then
-            echo "Telegram credentials missing. Skipping notification."
-            exit 0
-          fi
-          
-          CLEAN_BODY=$(printf '%s' "$CHANGELOG_BODY" | sed '/./,$!d' | cut -c 1-4000)
-          FULL_MESSAGE="$(printf 'STABLE %s\n\n%s\n\nRelease: %s' "${{ env.NEW_VERSION_NAME }}" "$CLEAN_BODY" "$RELEASE_URL")"
-
-          curl -f -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${CHANNEL_ID}" \
-            --data-urlencode "text=$FULL_MESSAGE" \
-            -d "disable_web_page_preview=true"

@@ -31,10 +31,18 @@
         tools:ignore="ScopedStorage" />
 
 
-<!--    <queries>-->
-<!--        <package android:name="com.whatsapp" />-->
-<!--        <package android:name="com.whatsapp.w4b" />-->
-<!--    </queries>-->
+    <queries>
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
+        <package android:name="com.waex.helper" />
+        <!-- Xposed/LSPosed framework manager packages for framework detection -->
+        <package android:name="org.lsposed.manager" />
+        <package android:name="io.github.lsposed.manager" />
+        <package android:name="org.meowcat.edxposed.manager" />
+        <package android:name="com.solohsu.android.edxp.manager" />
+        <package android:name="de.robv.android.xposed.installer" />
+        <package android:name="me.weishu.exp" />
+    </queries>
 
     <application
         android:forceQueryable="true"
@@ -78,17 +86,15 @@
             android:authorities="${applicationId}.provider"
             android:exported="true" />
 
+        <!-- Firebase auto-initialises its App object via this provider.
+             Collection stays OFF by default (see firebase_analytics_collection_enabled
+             and firebase_crashlytics_collection_enabled above) until the user consents. -->
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"
             android:authorities="${applicationId}.firebaseinitprovider"
-            tools:node="remove" />
+            android:exported="false"
+            android:initOrder="100" />
 
-        <activity
-            android:name=".xposed.features.others.EmbeddedSettingsActivity"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:taskAffinity="com.whatsapp"
-            android:theme="@style/Theme.AppCompat.DayNight" />
 
         <activity
             android:name=".activities.MainActivity"
@@ -105,6 +111,10 @@
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/noexist" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
@@ -127,6 +137,11 @@
             android:parentActivityName=".activities.MainActivity" />
 
         <activity
+            android:name=".activities.BottomBarCustomizationActivity"
+            android:theme="@style/AppTheme"
+            android:parentActivityName=".activities.MainActivity" />
+
+        <activity
             android:name=".activities.RecordingsActivity"
             android:theme="@style/AppTheme"
             android:exported="true"
@@ -136,6 +151,11 @@
 
         <activity
             android:name=".activities.StatusForwardRulesActivity"
+            android:theme="@style/NoActionBarTheme"
+            android:parentActivityName=".activities.MainActivity" />
+
+        <activity
+            android:name=".activities.FilterItemsActivity"
             android:theme="@style/NoActionBarTheme"
             android:parentActivityName=".activities.MainActivity" />
 
@@ -206,8 +226,14 @@
         <activity
             android:name=".activities.LicenseActivity"
             android:theme="@style/AppTheme"
-            android:exported="false"
+            android:exported="true"
             android:parentActivityName=".activities.MainActivity" />
+
+        <activity
+            android:name=".activities.ProFeaturesActivity"
+            android:theme="@style/AppTheme"
+            android:exported="false"
+            android:parentActivityName=".activities.LicenseActivity" />
 
         <activity
             android:name=".activities.ForceStartActivity"
@@ -241,6 +267,128 @@
             android:name=".xposed.bridge.service.BridgeService"
             android:exported="true"
             tools:ignore="ExportedService" />
+
+        <service
+            android:name=".services.GhostModeTileService"
+            android:icon="@drawable/ghost_enabled"
+            android:label="@string/ghost_mode"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.DndModeTileService"
+            android:icon="@drawable/airplane_enabled"
+            android:label="@string/dnd_mode_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.FreezeLastSeenTileService"
+            android:icon="@drawable/eye_enabled"
+            android:label="@string/freezelastseen"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.StealthReadTicksTileService"
+            android:icon="@drawable/eye_disabled"
+            android:label="@string/hideread"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.StealthStatusViewingTileService"
+            android:icon="@drawable/preview_eye"
+            android:label="@string/hidestatusview"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.AlwaysOnlineTileService"
+            android:icon="@drawable/online"
+            android:label="@string/always_online"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.ProximitySensorSwitchTileService"
+            android:icon="@drawable/ic_media"
+            android:label="@string/disable_audio_sensor"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.BlockCallsTileService"
+            android:icon="@drawable/deleted"
+            android:label="@string/call_blocker"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.SmartTypingTileService"
+            android:icon="@drawable/ic_recording"
+            android:label="@string/always_typing_global"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.ContactOnlineNotificationsTileService"
+            android:icon="@drawable/ic_notifications_black_24dp"
+            android:label="@string/show_toast_on_contact_online"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".services.HideDeliveredTileService"
+            android:icon="@drawable/eye_disabled"
+            android:label="@string/hidereceipt"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
 
         <provider
             android:name="androidx.core.content.FileProvider"

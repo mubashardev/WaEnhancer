@@ -32,7 +32,7 @@ public class CustomTime extends Feature {
         }
 
         var secondsToTimeMethod = Unobfuscator.loadTimeToSecondsMethod(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(secondsToTimeMethod));
+        /* Log removed */
 
         XposedBridge.hookMethod(secondsToTimeMethod, new XC_MethodHook() {
 

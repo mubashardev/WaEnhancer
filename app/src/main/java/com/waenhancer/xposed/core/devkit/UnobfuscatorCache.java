@@ -530,9 +530,11 @@ public class UnobfuscatorCache {
         AtomicReference<String> keyName = new AtomicReference<>("");
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         
-        // Try finding Unobfuscator method first
+        // Try finding Unobfuscator method first (ignoring synthetic/obfuscated/lambda methods)
         Arrays.stream(stackTrace)
-                .filter(stackTraceElement -> stackTraceElement.getClassName().equals(Unobfuscator.class.getName()))
+                .filter(stackTraceElement -> stackTraceElement.getClassName().equals(Unobfuscator.class.getName())
+                        && stackTraceElement.getMethodName().startsWith("load")
+                        && !stackTraceElement.getMethodName().contains("$"))
                 .findFirst()
                 .ifPresent(stackTraceElement -> keyName.set(stackTraceElement.getMethodName()));
         

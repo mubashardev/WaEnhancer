@@ -2,10 +2,17 @@
 <div align="center">
   <p><strong>WaEnhancer X is a powerful Xposed/LSPosed module that supercharges your WhatsApp experience with advanced privacy, customization, and utility features.</strong></p>
 
+  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@waenhancerx&label=Channel&showOnline=true)](https://t.me/waenhancerx)
+  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@waenhancerxhub&label=Community&showOnline=true)](https://t.me/waenhancerxhub)
+
   > **Legal & DMCA Disclaimer:** WaEnhancer X is a community-driven, independent fork. It is not affiliated with, endorsed by, or in any way associated with WhatsApp Inc. or Meta Platforms, Inc. This project is provided "as is" for research and educational purposes. Use at your own risk.
 </div>
 
-[![Youtube Video](http://thumb.mubashar.dev/?id=BIrojFtTGJ8)](https://www.youtube.com/watch?v=BIrojFtTGJ8)
+## Star History
+
+
+[![Star History Chart](https://api.star-history.com/chart?repos=mubashardev/WaEnhancer&type=date&legend=top-left&sealed_token=rqcOyQSf9bz9cMgCispMkgxaEZg_NsBmSd8ucE4evj1ng65axCKlZPNMpl7wuk8oyL9sE_vHbbZ6gyirkYbkVBu5ZPjrNzgioRhE55FTHVaOVuxIVlJ0rXwfsk5Zh_mRUZos52cPmKEkosfpyO9g62Z0DK4PZRDqXh5vzAi1e2FkBw2cdl_VIlxJiDgi)](https://www.star-history.com/?repos=mubashardev%2FWaEnhancer&type=date&legend=top-left)
+<!-- [![Youtube Video](http://thumb.mubashar.dev/?id=BIrojFtTGJ8)](https://www.youtube.com/watch?v=BIrojFtTGJ8) -->
 
 ## Why WaEnhancer X?
 - **Unified LSPosed scope**: Optimized hooks for seamless integration.
@@ -14,7 +21,9 @@
 
 ## Main Features
 
-### ⚡ Pro Features (Exclusive to WaEnhancer X Pro)
+<details>
+<summary><strong>⚡ Pro Features (Exclusive to WaEnhancer X Pro)</strong></summary>
+
 - **Message Bomber**: Send multiple repeated messages to a contact or group instantly with customizable count and delays.
 - **Enhanced Media Deletion (Delete Message File)**: Automatically delete downloaded media files from your local storage when a message is deleted for you/me or by the sender.
 - **Sent Media Clean-Up (Delete Message File Sent)**: Automatically delete sent media files from your device's local storage when you delete a sent message.
@@ -22,7 +31,11 @@
 - **Status View Customization**: Customize the status/stories viewing layout and gestures (hide bottom reply bar, remove quick reaction emojis or the heart/like button, add a Play/Pause button, add a reply option directly to the status menu, disable the swipe-up reply gesture, and enable long-press gestures to fast-forward or rewind status video playback).
 - **Status Video Splitter**: Automatically split long videos into 30, 60, or 90-second clips for seamless uploading to WhatsApp Status.
 
-### Privacy & Security
+</details>
+
+<details>
+<summary><strong>Privacy &amp; Security</strong></summary>
+
 - `Anti-Revoke` (Prevents chats/messages from being deleted for you)
 - `Anti-View Once` (Bypasses restriction to view view-once messages/media infinitely)
 - `Hide Read Receipts` (Prevent others from knowing you read their messages)
@@ -38,7 +51,11 @@
 - `Locked Chats Enhancer` (Secure and extend standard locked chats)
 - `Hide Chat` (Completely hide specific chats from your main chat screen)
 
-### Visual Customization
+</details>
+
+<details>
+<summary><strong>Visual Customization</strong></summary>
+
 - `Custom Themes (V2)` (Advanced custom dark/light color themes)
 - `Bubble Colors` (Personalize incoming and outgoing message bubble backgrounds)
 - `Custom Toolbar` (Modify or hide elements in the main conversation toolbar)
@@ -49,7 +66,11 @@
 - `Custom Time` (Display precise message and call timestamps)
 - `Custom Views` (Inject customized background shapes and layouts)
 
-### Media & Data
+</details>
+
+<details>
+<summary><strong>Media &amp; Data</strong></summary>
+
 - `Auto Status Forward on Reply` (Auto-forward specific status updates instantly)
 - `Force Cloud Restore` (Manually trigger local/cloud backup database restoration)
 - `Status Download` (Download and save status videos and images)
@@ -61,7 +82,11 @@
 - `Share Limit Bypass` (Share files to unlimited contacts at once)
 - `Status Length Bypass` (Upload high-duration status videos)
 
-### Tools & Utilities
+</details>
+
+<details>
+<summary><strong>Tools &amp; Utilities</strong></summary>
+
 - `Call Recording` (Record incoming and outgoing calls with high audio quality)
 - `Google Translate Integration` (Inline translate messages instantly)
 - `Audio Transcript` (Transcribe incoming audio messages to text)
@@ -75,7 +100,11 @@
 - `Lite Mode` (Performance booster for low-end Android devices)
 - `Anti-WA Expiration` (Bypass hardcoded WhatsApp version expiration/reversion prompts)
 
-### Chat Enhancements
+</details>
+
+<details>
+<summary><strong>Chat Enhancements</strong></summary>
+
 - `Pinned Limit Bypass` (Pin unlimited chats to the top of your chat list)
 - `Chat Filters` (Organize and filter conversations with custom tabs)
 - `Separate Groups` (Separate personal chats from groups into distinct tabs)
@@ -89,6 +118,7 @@
 - `Copy Status Text` (Copy text from picture or text status updates easily)
 - `Channels Enhancements` (Lock or improve standard channels integration)
 
+</details>
 
 ## Why choose WaEnhancerX
 
@@ -127,17 +157,63 @@ WaEnhancerX isn't just a fork; it's a **high-performance, native-first evolution
 
 ---
 
-### ⚖️ Open Source Attribution & Architectural Divergence
+### ⚖️ Architecture, Licensing Boundaries & Open Source Attribution
 
-WaEnhancerX originally started as a direct fork of **WaEnhancer** by **Dev4Mod**. We deeply respect the foundational work and legacy Xposed hooking concepts created by the original author.
+WaEnhancerX is structured to enforce strict legal, compilation, and architectural boundaries between the open-source framework and the proprietary helper features:
+
+#### 1. Modular Architecture & Licensing Boundaries
+The project is structured to enforce strict legal, compilation, and architectural boundaries between the open-source framework and the proprietary helper features:
+
+```mermaid
+flowchart TB
+
+    Helper([Helper Plugin APK<br/>🔒 Proprietary / Closed-Source])
+
+    API{{:api Module<br/>Apache-2.0<br/>Open Interface & DTO Bridge}}
+
+    App[:app Module<br/>GPL-3.0<br/>Open-Source Host Hooking Framework]
+
+    Helper -->|Compile-Time Dependency| API
+    App -->|Shared API Dependency| API
+
+    classDef proprietary fill:#ffe5e5,stroke:#d32f2f,color:#000,stroke-width:2px;
+    classDef apache fill:#e3f2fd,stroke:#1976d2,color:#000,stroke-width:2px;
+    classDef gpl fill:#e8f5e9,stroke:#2e7d32,color:#000,stroke-width:2px;
+
+    class Helper proprietary;
+    class API apache;
+    class App gpl;
+```
+
+*   **Host Hooking Framework (`:app` Module - GPL-3.0)**: The open-source core application and injection framework. It handles process initialization, Xposed hooks, and base features. It is licensed under the GNU General Public License v3.
+*   **Interface Bridge (`:api` Module - Apache-2.0)**: The open-source contract and DTO layer. Licensed under the permissive Apache License 2.0, it establishes a clean legal and compilation barrier, ensuring no copyleft requirements propagate to external extensions.
+*   **WAEX Helper (Proprietary Helper APK - Closed-Source)**: WAEX Helper is a separate installable plugin APK that provides optional capabilities through the public WAEX API. The GPL host dynamically discovers and loads WAEX Helper at runtime through public interfaces defined in the Apache-2.0 API module. To prevent license contamination, the Helper APK is compiled with zero binary dependencies on the host (`:app`) and contains no GPL code. Build-time compliance is enforced via automated Gradle static analysis tasks.
+
+#### 2. Runtime Classloader Integration & Compatibility
+At runtime, WaEnhancerX integrates the companion APK using a decoupled, host-driven execution model:
+1.  **Dynamic Discovery**: The open-source host detects the presence of the independent companion APK via Android's Package Manager and a secure local `ContentProvider` (`HookProvider`).
+2.  **Xposed Compatibility Classloading**: To satisfy Android's process security model and LSPosed's hook rewriting requirements, the host resolves the companion APK's path and appends it to the ClassLoader. This is an environment-specific compatibility wrapper that allows the companion APK's hooks to run safely in the target process (WhatsApp) without static linking or architectural coupling.
+3.  **Interface-Driven Execution**: Communication between the host and the companion APK is governed strictly by the `:api` interface boundaries. The host reflectively instantiates the companion entry point (`PluginEntry` implementing `IPlugin` from the `:api` module) and executes its capabilities within isolated error boundaries.
+
+#### 3. Open Source Attribution & Upstream Divergence
+WaEnhancerX originally started as a direct fork of **WaEnhancer** by **Dev4Mod**. We deeply respect the foundational work, architecture, and Xposed hooking concepts created by the original author.
 
 **Why the Repository Was Detached (Architectural Independence):**
-The repository was officially detached from the upstream network to pursue an independent architectural roadmap. At the time, the original project initiated a rapid migration to Kotlin. While Kotlin is an excellent modern standard, staying attached would have caused massive merge conflicts with our ongoing, deep-level Java optimizations.
+The repository was officially detached from the upstream network to pursue an independent architectural roadmap. At the time, the upstream project initiated a rapid migration to Kotlin. While Kotlin is an excellent modern standard, staying attached would have caused massive merge conflicts with our ongoing, deep-level Java optimizations.
 
-Detaching allowed us to first stabilize, refactor, and achieve a zero-lag UI entirely on our own terms, without upstream changes breaking our core architecture. This gives WaEnhancerX the freedom to evolve at its own pace, whether that means perfecting the current foundation or transitioning frameworks in the future.
+Detaching allowed us to stabilize, refactor, and achieve a zero-lag UI entirely on our own terms, without upstream changes breaking our core architecture. This gives WaEnhancerX the freedom to evolve at its own pace, maintaining a highly optimized, tracker-free, and stable ecosystem.
 
-All legacy logic and core methods adapted from Dev4Mod are explicitly attributed here in full compliance with open-source ethics. Today, WaEnhancerX continues to evolve independently as a highly optimized, tracker-free, and stable ecosystem.
+All legacy logic and core methods adapted from Dev4Mod are explicitly attributed here in full compliance with open-source ethics.
 
 *Built for the community.*
 
 *Managed and Optimized by [Mubashar Dev](https://mubashar.dev)*
+#
+
+<div align="center">
+  <a href="https://t.me/waenhancerx">
+    <img src="https://telegram-badge.pages.dev/api/telegram-badge?channelId=@waenhancerx&style=button&label=Join+Telegram&color=2AABEE&radius=5&padding=24" alt="Join Telegram" />
+  </a>
+</div>
+
+#

@@ -39,6 +39,8 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import com.waenhancer.xposed.core.FeatureLoader;
+import java.util.List;
 
 public class CustomToolbar extends Feature {
 
@@ -53,6 +55,7 @@ public class CustomToolbar extends Feature {
     private static Method onMenuItemSelected;
     private static final WeakHashMap<Object, View> TAB_TOOLBAR_TARGETS = new WeakHashMap<>();
     private static volatile boolean tabVisibilityHookInstalled = false;
+    private static volatile int chatsTabIndex = 0;
 
     public CustomToolbar(ClassLoader loader, SharedPreferences preferences) {
         super(loader, preferences);
@@ -65,6 +68,24 @@ public class CustomToolbar extends Feature {
         var typeArchive = prefs.getString("typearchive", "0");
 
         onMenuItemSelected = Unobfuscator.loadOnMenuItemSelected(classLoader);
+
+        try {
+            var tabListMethod = Unobfuscator.loadTabListMethod(classLoader);
+            XposedBridge.hookMethod(tabListMethod, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    if (param.getResult() instanceof List) {
+                        List<?> list = (List<?>) param.getResult();
+                        int idx = list.indexOf(200); // 200 is menuitem_chats
+                        if (idx != -1) {
+                            chatsTabIndex = idx;
+                        }
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("[WaEnhancerX] CustomToolbar: Failed to hook tabListMethod: " + t.getMessage());
+        }
 
         var methodHook = new ToolbarMethodHook(showName, showBio, typeArchive);
         XposedHelpers.findAndHookMethod(
@@ -99,10 +120,23 @@ public class CustomToolbar extends Feature {
                 var method = ReflectionUtils.findMethodUsingFilter(
                         param.thisObject.getClass(),
                         m -> m.getReturnType().equals(Date.class)
+                                || m.getReturnType().equals(long.class)
+                                || m.getReturnType().equals(Long.class)
                 );
-                var date = (Date) method.invoke(param.thisObject);
-                mDateExpiration = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                        .format(Objects.requireNonNull(date));
+                if (method != null) {
+                    Object result = method.invoke(param.thisObject);
+                    if (result instanceof Date) {
+                        mDateExpiration = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                .format(result);
+                    } else if (result instanceof Long) {
+                        long ms = (Long) result;
+                        if (ms < 10000000000L) {
+                            ms *= 1000L;
+                        }
+                        mDateExpiration = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                .format(new Date(ms));
+                    }
+                }
             }
         });
     }
@@ -121,8 +155,13 @@ public class CustomToolbar extends Feature {
                         var version = (TextView) viewRoot.findViewById(Utils.getID("version", "id"));
 
                         if (version != null) {
-                            var expirationText = activity.getString(R.string.expiration, mDateExpiration);
-                            version.setText(version.getText() + " " + expirationText);
+                            try {
+                                var expirationText = FeatureLoader.getModuleString(activity, R.string.expiration, "expires %s");
+                                String formatted = String.format(expirationText, mDateExpiration);
+                                version.setText(version.getText() + " " + formatted);
+                            } catch (Throwable t) {
+                                XposedBridge.log("[WAEX] Error setting expiration text: " + t.toString());
+                            }
                         }
                     }
                 }
@@ -283,7 +322,7 @@ public class CustomToolbar extends Feature {
                         var toolbarTarget = TAB_TOOLBAR_TARGETS.get(param.thisObject);
                         if (toolbarTarget == null) return;
                         var currentIndex = (int) param.args[0];
-                        var visibility = currentIndex == 0 ? View.VISIBLE : View.GONE;
+                        var visibility = currentIndex == chatsTabIndex ? View.VISIBLE : View.GONE;
                         if (toolbarTarget.getVisibility() != visibility) {
                             toolbarTarget.setVisibility(visibility);
                         }

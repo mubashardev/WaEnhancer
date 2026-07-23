@@ -108,4 +108,9 @@
         <attr name="subtitle" />
     </declare-styleable>
 
+    <declare-styleable name="ProListPreference">
+        <!-- Array of entryValues that require an active Pro license to select. -->
+        <attr name="proEntryValues" format="reference" />
+    </declare-styleable>
+
 </resources>

@@ -1,5 +1,6 @@
 package com.waenhancer.xposed.features.customization;
 
+import java.lang.reflect.Method;
 import static com.waenhancer.utils.ColorReplacement.replaceColors;
 import static com.waenhancer.utils.DrawableColors.replaceColor;
 import static com.waenhancer.utils.IColors.alphacolors;
@@ -48,6 +49,8 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CustomThemeV2 extends Feature {
 
@@ -57,9 +60,9 @@ public class CustomThemeV2 extends Feature {
     private Properties properties;
     // Pre-computed set of source color ints for O(1) rejection in hot hooks.
     // Populated after loadAndApplyColors() so hooks can skip unmatched colors instantly.
-    private static final Set<Integer> sourceColorInts = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
-    private static final Set<Object> processedDrawableStates = java.util.Collections.newSetFromMap(new WeakHashMap<>());
-    private static final Set<View> processedWallpaperFrames = java.util.Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Set<Integer> sourceColorInts = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Set<Object> processedDrawableStates = Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Set<View> processedWallpaperFrames = Collections.newSetFromMap(new WeakHashMap<>());
     // Cached ID for conversations_row_message_count to avoid repeated lookups
     private static int cachedMsgCountId = 0;
 
@@ -155,7 +158,7 @@ public class CustomThemeV2 extends Feature {
                     });
         } else {
             // Log only in debug mode - theming is disabled so skip expensive hooks
-            logDebug("Theming disabled - skipping expensive theme hooks for performance");
+            /* Log removed */
         }
     }
 
@@ -328,7 +331,7 @@ public class CustomThemeV2 extends Feature {
                 // Without this, the exception propagates through the hook and crashes WhatsApp.
                 if (param.hasThrowable()) {
                     var throwable = param.getThrowable();
-                    if (throwable instanceof android.content.res.Resources.NotFoundException) {
+                    if (throwable instanceof Resources.NotFoundException) {
                         param.setResult(null);
                         param.setThrowable(null);
                     }

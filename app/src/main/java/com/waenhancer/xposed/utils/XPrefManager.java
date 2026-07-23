@@ -3,6 +3,8 @@ package com.waenhancer.xposed.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 import com.waenhancer.BuildConfig;
+import android.util.Log;
+import com.waenhancer.xposed.utils.Utils;
 
 /**
  * Safely manages access to XSharedPreferences without triggering NoClassDefFoundError
@@ -15,8 +17,8 @@ public class XPrefManager {
 
     public static SharedPreferences getPref() {
         if (pref != null) return pref;
-        if (com.waenhancer.xposed.utils.Utils.xprefs != null) {
-            pref = com.waenhancer.xposed.utils.Utils.xprefs;
+        if (Utils.xprefs != null) {
+            pref = Utils.xprefs;
             return pref;
         }
         if (xprefsUnavailable) return null;
@@ -36,7 +38,7 @@ public class XPrefManager {
             return pref;
         } catch (Throwable t) {
             if (!(t instanceof ClassNotFoundException) && !(t.getCause() != null && t.getCause() instanceof ClassNotFoundException)) {
-                android.util.Log.e("WaE-XPrefManager", "Failed to initialize XSharedPreferences", t);
+                Log.e("WaE-XPrefManager", "Failed to initialize XSharedPreferences", t);
             }
             xprefsUnavailable = true;
             return null;
@@ -56,14 +58,14 @@ public class XPrefManager {
                 }
             } catch (Throwable ignored) {}
         }
-        if (com.waenhancer.xposed.utils.Utils.xprefs != null) {
+        if (Utils.xprefs != null) {
             try {
                 Class<?> xPrefsClass = Class.forName("de.robv.android.xposed.XSharedPreferences");
-                if (xPrefsClass.isInstance(com.waenhancer.xposed.utils.Utils.xprefs)) {
-                    xPrefsClass.getMethod("reload").invoke(com.waenhancer.xposed.utils.Utils.xprefs);
+                if (xPrefsClass.isInstance(Utils.xprefs)) {
+                    xPrefsClass.getMethod("reload").invoke(Utils.xprefs);
                 } else {
                     try {
-                        com.waenhancer.xposed.utils.Utils.xprefs.getClass().getMethod("reload").invoke(com.waenhancer.xposed.utils.Utils.xprefs);
+                        Utils.xprefs.getClass().getMethod("reload").invoke(Utils.xprefs);
                     } catch (Throwable ignored) {}
                 }
             } catch (Throwable ignored) {}

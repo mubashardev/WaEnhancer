@@ -41,6 +41,7 @@ import java.util.zip.ZipOutputStream;
 
 import kotlin.io.FilesKt;
 import rikka.core.util.IOUtils;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
 
 public class TextEditorActivity extends BaseActivity {
     // private CodeView codeView;
@@ -216,7 +217,7 @@ public class TextEditorActivity extends BaseActivity {
         if (uri == null) {
             return;
         }
-        com.waenhancer.ui.helpers.BottomSheetHelper.showInput(
+        BottomSheetHelper.showInput(
                 this,
                 getString(R.string.enter_image_file_name),
                 "example.png",

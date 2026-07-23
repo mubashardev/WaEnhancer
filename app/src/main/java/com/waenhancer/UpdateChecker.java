@@ -1,4 +1,5 @@
 package com.waenhancer;
+
 import com.waenhancer.ui.helpers.BottomSheetHelper;
 
 import android.app.Activity;
@@ -24,13 +25,20 @@ import java.util.regex.Pattern;
 import de.robv.android.xposed.XposedBridge;
 import io.noties.markwon.Markwon;
 import okhttp3.OkHttpClient;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import androidx.preference.PreferenceManager;
+import com.waenhancer.BuildConfig;
+import com.waenhancer.xposed.core.FeatureLoader;
+import de.robv.android.xposed.XSharedPreferences;
 
 public class UpdateChecker implements Runnable {
 
     private static final String TAG = "WAE_UpdateChecker";
     private static final String RELEASES_API = "https://api.github.com/repos/mubashardev/WaEnhancer/releases";
     private static final String RELEASE_TAG_PREFIX = "debug-";
-    private static final String TELEGRAM_UPDATE_URL = "https://github.com/mubashardev/WaEnhancerX/releases";
+    private static final String TELEGRAM_UPDATE_URL = "https://github.com/mubashardev/WaEnhancer/releases";
     private static final Pattern BETA_TAG_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+-beta-\\d+$");
     private static final Pattern VERSION_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+(-beta-\\d+)?$");
 
@@ -42,11 +50,22 @@ public class UpdateChecker implements Runnable {
     private boolean mSilent = false;
 
     public interface OnUpdateFoundListener {
+
         void onUpdateFound(String version, String tagName, String changelog, String publishedAt, String downloadUrl);
     }
 
+    public interface OnNoUpdateFoundListener {
+        void onNoUpdateFound();
+    }
+
+    private OnNoUpdateFoundListener mNoUpdateListener;
+
     public void setOnUpdateFoundListener(OnUpdateFoundListener listener) {
         this.mListener = listener;
+    }
+
+    public void setOnNoUpdateFoundListener(OnNoUpdateFoundListener listener) {
+        this.mNoUpdateListener = listener;
     }
 
     public void setSilent(boolean silent) {
@@ -91,21 +110,21 @@ public class UpdateChecker implements Runnable {
 
             var request = requestBuilder.build();
 
-            String installedVersion = normalizeVersion(com.waenhancer.BuildConfig.VERSION_NAME);
+            String installedVersion = normalizeVersion(BuildConfig.VERSION_NAME);
             writeDebugLog("[UpdateChecker] run() - Installed Version: " + installedVersion);
-            
+
             // Check if there is an ignored version and if we should skip based on frequency
-            android.content.SharedPreferences localPrefs = getLocalPrefs(mActivity);
+            SharedPreferences localPrefs = getLocalPrefs(mActivity);
             String ignoredVersion = localPrefs.getString("ignored_version", "");
             if (!ignoredVersion.isEmpty()) {
                 long ignoredTimestamp = localPrefs.getLong("ignored_timestamp", 0);
                 String frequency = getPrefs().getString("update_alert_frequency", "restart");
-                
+
                 if (frequency.equals("never")) {
                     writeDebugLog("[UpdateChecker] Skipping update check: frequency is 'never'");
                     return;
                 }
-                
+
                 if (frequency.equals("restart")) {
                     // If 'restart' is selected, and we already ignored it in a previous check, 
                     // we keep it ignored for this session. 
@@ -118,13 +137,19 @@ public class UpdateChecker implements Runnable {
                     long currentTime = System.currentTimeMillis();
                     long diffMillis = currentTime - ignoredTimestamp;
                     long requiredMillis = 0;
-                    
+
                     switch (frequency) {
-                        case "1h": requiredMillis = TimeUnit.HOURS.toMillis(1); break;
-                        case "12h": requiredMillis = TimeUnit.HOURS.toMillis(12); break;
-                        case "24h": requiredMillis = TimeUnit.HOURS.toMillis(24); break;
+                        case "1h":
+                            requiredMillis = TimeUnit.HOURS.toMillis(1);
+                            break;
+                        case "12h":
+                            requiredMillis = TimeUnit.HOURS.toMillis(12);
+                            break;
+                        case "24h":
+                            requiredMillis = TimeUnit.HOURS.toMillis(24);
+                            break;
                     }
-                    
+
                     if (diffMillis < requiredMillis) {
                         writeDebugLog("[UpdateChecker] Skipping update check: frequency " + frequency + " not reached yet");
                         return;
@@ -163,10 +188,14 @@ public class UpdateChecker implements Runnable {
 
                 for (int i = 0; i < releases.length(); i++) {
                     JSONObject release = releases.optJSONObject(i);
-                    if (release == null) continue;
+                    if (release == null) {
+                        continue;
+                    }
 
                     String tagName = release.optString("tag_name", "").trim();
-                    if (tagName.isEmpty()) continue;
+                    if (tagName.isEmpty()) {
+                        continue;
+                    }
 
                     String parsedVersion;
                     if (tagName.startsWith(RELEASE_TAG_PREFIX)) {
@@ -175,9 +204,15 @@ public class UpdateChecker implements Runnable {
                         parsedVersion = normalizeVersion(tagName);
                     }
 
-                    if (parsedVersion.isEmpty()) continue;
-                    if (!VERSION_PATTERN.matcher(parsedVersion).matches()) continue;
-                    if (!shouldShowReleaseType(parsedVersion, effectiveChannel)) continue;
+                    if (parsedVersion.isEmpty()) {
+                        continue;
+                    }
+                    if (!VERSION_PATTERN.matcher(parsedVersion).matches()) {
+                        continue;
+                    }
+                    if (!shouldShowReleaseType(parsedVersion, effectiveChannel)) {
+                        continue;
+                    }
 
                     long releaseVersionNum = versionToLong(parsedVersion);
                     if (releaseVersionNum > installedVersionNum) {
@@ -185,7 +220,7 @@ public class UpdateChecker implements Runnable {
                         selectedTagName = tagName;
                         selectedChangelog = release.optString("body", "No changelog available.").trim();
                         selectedPublishedAt = release.optString("published_at", "");
-                        
+
                         // Extract APK download URL
                         JSONArray assets = release.optJSONArray("assets");
                         if (assets != null) {
@@ -220,12 +255,17 @@ public class UpdateChecker implements Runnable {
                 if (!mSilent) {
                     mActivity.runOnUiThread(() -> showUpdateDialog(finalVersion, finalTagName, finalChangelog, finalPublishedAt, finalDownloadUrl));
                 }
-            } else if (isManualCheck) {
-                mActivity.runOnUiThread(this::showAlreadyLatestDialog);
+            } else {
+                if (mNoUpdateListener != null) {
+                    mActivity.runOnUiThread(() -> mNoUpdateListener.onNoUpdateFound());
+                }
+                if (isManualCheck) {
+                    mActivity.runOnUiThread(this::showAlreadyLatestDialog);
+                }
             }
         } catch (Exception e) {
             String errMsg = "[UpdateChecker] Exception: " + e.getMessage();
-            XposedBridge.log("[" + TAG + "] " + errMsg);
+            // XposedBridge.log("[" + TAG + "] " + errMsg);
             writeDebugLog(errMsg);
         }
     }
@@ -257,7 +297,7 @@ public class UpdateChecker implements Runnable {
         }
     }
 
-    private void showUpdateDialog(String version, String tagName, String changelog, String publishedAt, String downloadUrl) {
+    public void showUpdateDialog(String version, String tagName, String changelog, String publishedAt, String downloadUrl) {
         try {
             var markwon = Markwon.create(mActivity);
             String releaseTypeBadge = getReleaseTypeBadge(tagName);
@@ -276,9 +316,9 @@ public class UpdateChecker implements Runnable {
 
             if (!isXposed) {
                 BottomSheetHelper.showConfirmation(mActivity, title, styledMessage, "Update Now", false, () -> {
-                    android.content.Intent intent = new android.content.Intent();
-                    intent.setComponent(new android.content.ComponentName("com.waenhancer", "com.waenhancer.activities.ChangelogActivity"));
-                    intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName("com.waenhancer", "com.waenhancer.activities.ChangelogActivity"));
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     mActivity.startActivity(intent);
                 });
             } else {
@@ -287,30 +327,40 @@ public class UpdateChecker implements Runnable {
                 dialog.setMessage(styledMessage);
                 dialog.setNegativeButton("Ignore", (dialog1, which) -> {
                     getLocalPrefs(mActivity).edit()
-                        .putString("ignored_version", version)
-                        .putLong("ignored_timestamp", System.currentTimeMillis())
-                        .apply();
-                    
+                            .putString("ignored_version", version)
+                            .putLong("ignored_timestamp", System.currentTimeMillis())
+                            .apply();
+
                     String freq = getPrefs().getString("update_alert_frequency", "restart");
                     String freqDisplay = freq;
                     switch (freq) {
-                        case "restart": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_restart); break;
-                        case "1h": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_1h); break;
-                        case "12h": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_12h); break;
-                        case "24h": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_24h); break;
-                        case "never": freqDisplay = com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_freq_never); break;
+                        case "restart":
+                            freqDisplay = FeatureLoader.getModuleString(mActivity, R.string.update_freq_restart);
+                            break;
+                        case "1h":
+                            freqDisplay = FeatureLoader.getModuleString(mActivity, R.string.update_freq_1h);
+                            break;
+                        case "12h":
+                            freqDisplay = FeatureLoader.getModuleString(mActivity, R.string.update_freq_12h);
+                            break;
+                        case "24h":
+                            freqDisplay = FeatureLoader.getModuleString(mActivity, R.string.update_freq_24h);
+                            break;
+                        case "never":
+                            freqDisplay = FeatureLoader.getModuleString(mActivity, R.string.update_freq_never);
+                            break;
                     }
-                    
-                    Toast.makeText(mActivity, String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(mActivity, R.string.update_ignored_toast), version, freqDisplay), Toast.LENGTH_LONG).show();
+
+                    Toast.makeText(mActivity, String.format(FeatureLoader.getModuleString(mActivity, R.string.update_ignored_toast), version, freqDisplay), Toast.LENGTH_LONG).show();
                     dialog1.dismiss();
                 });
                 dialog.setPositiveButton("Update Now", (dialog1, which) -> {
                     // Clear ignored state if updating
                     getLocalPrefs(mActivity).edit().putString("ignored_version", "").apply();
-                    
-                    android.content.Intent intent = new android.content.Intent();
-                    intent.setComponent(new android.content.ComponentName("com.waenhancer", "com.waenhancer.activities.ChangelogActivity"));
-                    intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName("com.waenhancer", "com.waenhancer.activities.ChangelogActivity"));
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     mActivity.startActivity(intent);
                     dialog1.dismiss();
                 });
@@ -339,7 +389,9 @@ public class UpdateChecker implements Runnable {
     }
 
     private static String normalizeVersion(String version) {
-        if (version == null) return "";
+        if (version == null) {
+            return "";
+        }
         String normalized = version.trim();
         if (normalized.startsWith("v") || normalized.startsWith("V")) {
             normalized = normalized.substring(1);
@@ -375,9 +427,15 @@ public class UpdateChecker implements Runnable {
         long patch = 0;
         try {
             String[] parts = base.split("\\.");
-            if (parts.length > 0) major = Long.parseLong(parts[0]);
-            if (parts.length > 1) minor = Long.parseLong(parts[1]);
-            if (parts.length > 2) patch = Long.parseLong(parts[2]);
+            if (parts.length > 0) {
+                major = Long.parseLong(parts[0]);
+            }
+            if (parts.length > 1) {
+                minor = Long.parseLong(parts[1]);
+            }
+            if (parts.length > 2) {
+                patch = Long.parseLong(parts[2]);
+            }
         } catch (Exception e) {
             return 0L;
         }
@@ -397,14 +455,14 @@ public class UpdateChecker implements Runnable {
 
     private String getUpdateAlertPreference() {
         // First try to get it from WaEnhancer's XSharedPreferences (available in Xposed context)
-        if (com.waenhancer.xposed.core.WppCore.waePrefs != null) {
-            if (com.waenhancer.xposed.core.WppCore.waePrefs instanceof de.robv.android.xposed.XSharedPreferences) {
-                ((de.robv.android.xposed.XSharedPreferences) com.waenhancer.xposed.core.WppCore.waePrefs).reload();
+        if (WppCore.waePrefs != null) {
+            if (WppCore.waePrefs instanceof XSharedPreferences) {
+                ((XSharedPreferences) WppCore.waePrefs).reload();
             }
-            String pref = com.waenhancer.xposed.core.WppCore.waePrefs.getString("update_alert_pref", null);
+            String pref = WppCore.waePrefs.getString("update_alert_pref", null);
             if (pref == null) {
                 // Fallback to legacy channel key if new one isn't set
-                String legacy = com.waenhancer.xposed.core.WppCore.waePrefs.getString("release_channel", "stable");
+                String legacy = WppCore.waePrefs.getString("release_channel", "stable");
                 pref = "beta".equals(legacy) ? "both" : "stable";
             }
             writeDebugLog("[UpdateChecker] Alert pref from waePrefs: " + pref);
@@ -412,14 +470,14 @@ public class UpdateChecker implements Runnable {
         }
 
         // Fallback to WppCore's WaGlobal prefs (legacy/other contexts)
-        String pref = com.waenhancer.xposed.core.WppCore.getPrivString("update_alert_pref", null);
+        String pref = WppCore.getPrivString("update_alert_pref", null);
         if (pref != null) {
-             writeDebugLog("[UpdateChecker] Alert pref from getPrivString: " + pref);
-             return pref;
+            writeDebugLog("[UpdateChecker] Alert pref from getPrivString: " + pref);
+            return pref;
         }
 
         // Fallback to default prefs (running in Enhancer App context)
-        android.content.SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(mActivity);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
         String defaultPref = prefs.getString("update_alert_pref", "both");
         writeDebugLog("[UpdateChecker] Alert pref from default prefs: " + defaultPref);
         return defaultPref;
@@ -431,7 +489,7 @@ public class UpdateChecker implements Runnable {
 
     private boolean shouldShowReleaseType(String releaseTagName, String updateAlertPref) {
         boolean isBetaRelease = releaseTagName != null && releaseTagName.contains("-beta-");
-        
+
         switch (updateAlertPref) {
             case "stable":
                 return !isBetaRelease;
@@ -451,30 +509,45 @@ public class UpdateChecker implements Runnable {
     }
 
     private String getModuleString(int resId) {
-        String s = com.waenhancer.xposed.core.FeatureLoader.getModuleString(resId);
+        String s = FeatureLoader.getModuleString(resId);
         if (s == null || s.isEmpty()) {
             try {
-                android.content.Context moduleContext = mActivity.createPackageContext("com.waenhancer", android.content.Context.CONTEXT_IGNORE_SECURITY);
+                Context moduleContext = mActivity.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
                 return moduleContext.getString(resId);
             } catch (Exception e) {
                 // Fallback to hardcoded English if everything fails to prevent crash
-                if (resId == R.string.update_freq_restart) return "will be shown after WhatsApp Restart";
-                if (resId == R.string.update_freq_1h) return "will be shown after 1 hour";
-                if (resId == R.string.update_freq_12h) return "will be shown after 12 hours";
-                if (resId == R.string.update_freq_24h) return "will be shown after 24 hours";
-                if (resId == R.string.update_freq_never) return "will never be shown";
-                if (resId == R.string.update_ignored_toast) return "Next update alert for v%1$s %2$s";
+                if (resId == R.string.update_freq_restart) {
+                    return "will be shown after WhatsApp Restart";
+                }
+                if (resId == R.string.update_freq_1h) {
+                    return "will be shown after 1 hour";
+                }
+                if (resId == R.string.update_freq_12h) {
+                    return "will be shown after 12 hours";
+                }
+                if (resId == R.string.update_freq_24h) {
+                    return "will be shown after 24 hours";
+                }
+                if (resId == R.string.update_freq_never) {
+                    return "will never be shown";
+                }
+                if (resId == R.string.update_ignored_toast) {
+                    return "Next update alert for v%1$s %2$s";
+                }
                 return "Unknown Resource";
             }
         }
         return s;
     }
-    private android.content.SharedPreferences getPrefs() {
-        if (WppCore.waePrefs != null) return WppCore.waePrefs;
-        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(mActivity);
+
+    private SharedPreferences getPrefs() {
+        if (WppCore.waePrefs != null) {
+            return WppCore.waePrefs;
+        }
+        return PreferenceManager.getDefaultSharedPreferences(mActivity);
     }
 
-    private android.content.SharedPreferences getLocalPrefs(Context context) {
+    private SharedPreferences getLocalPrefs(Context context) {
         return context.getSharedPreferences("wae_update_ignored", Context.MODE_PRIVATE);
     }
 }

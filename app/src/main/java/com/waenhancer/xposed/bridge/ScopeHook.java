@@ -118,7 +118,7 @@ public class ScopeHook {
                             }
                         }
                     } catch (Exception e) {
-                        XposedBridge.log("Error while hooking Android System");
+                        // XposedBridge.log("Error while hooking Android System");
                         XposedBridge.log(e);
                         unhook();
                     }
@@ -144,7 +144,7 @@ public class ScopeHook {
                             }
                         }
                     } catch (Exception e) {
-                        XposedBridge.log("Error while hooking Android System");
+                        // XposedBridge.log("Error while hooking Android System");
                         XposedBridge.log(e);
                         unhook();
                     }

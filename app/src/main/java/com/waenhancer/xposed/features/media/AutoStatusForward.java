@@ -36,6 +36,15 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.app.Activity;
+import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.ImageView;
+import com.waenhancer.model.StatusForwardRule;
+import java.lang.reflect.Array;
+import java.lang.reflect.Modifier;
 
 /**
  * AutoStatusForward
@@ -56,7 +65,7 @@ public class AutoStatusForward extends Feature {
     @Override
     public void doHook() throws Exception {
         Method notificationMethod = Unobfuscator.loadNotificationMethod(classLoader);
-        log("AutoStatusForward – hooking notification method: " + notificationMethod);
+        /* Log removed */
         XposedBridge.hookMethod(notificationMethod, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -76,18 +85,11 @@ public class AutoStatusForward extends Feature {
                 candidates = dedupeCandidates(candidates);
 
                 if (candidates.isEmpty()) {
-                    log("AutoStatusForward – notification hook found no FMessage candidates"
-                            + " [thisObject=" + describeObject(param.thisObject)
-                            + ", resultType=" + describeObject(result)
-                            + ", argCount=" + (param.args != null ? param.args.length : 0) + "]");
+                    /* Log removed */
                     return;
                 }
 
-                log("AutoStatusForward – notification hook extracted " + candidates.size()
-                        + " candidate message(s)"
-                        + " [thisObject=" + describeObject(param.thisObject)
-                        + ", resultType=" + describeObject(result)
-                        + ", argCount=" + (param.args != null ? param.args.length : 0) + "]");
+                /* Log removed */
                 for (Object candidate : candidates) {
                     handleNotificationCandidate(candidate);
                 }
@@ -97,15 +99,15 @@ public class AutoStatusForward extends Feature {
         // Auto click send for media statuses
         try {
             XposedHelpers.findAndHookMethod("com.whatsapp.mediacomposer.ui.app.MediaComposerActivity", classLoader,
-                    "onCreate", android.os.Bundle.class, new XC_MethodHook() {
+                    "onCreate", Bundle.class, new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            android.app.Activity activity = (android.app.Activity) param.thisObject;
-                            android.content.Intent intent = activity.getIntent();
+                            Activity activity = (Activity) param.thisObject;
+                            Intent intent = activity.getIntent();
                             if (intent != null && intent.getBooleanExtra("auto_forward_status", false)) {
-                                log("AutoStatusForward - auto_forward_status=true, will auto click send");
+                                /* Log removed */
                                 // Hide the UI to make it silent
-                                activity.getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+                                activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                                 activity.getWindow().setDimAmount(0f);
                                 
                                 autoClickAndFinish(activity, "send", 15); // Try 15 times (approx 3 seconds)
@@ -119,24 +121,24 @@ public class AutoStatusForward extends Feature {
         }
     }
 
-    private void autoClickAndFinish(android.app.Activity activity, String buttonIdStr, int attemptsLeft) {
+    private void autoClickAndFinish(Activity activity, String buttonIdStr, int attemptsLeft) {
         if (attemptsLeft <= 0) {
-            log("AutoStatusForward - exhausted attempts to find send button in " + activity.getClass().getSimpleName());
+            /* Log removed */
             activity.finishAndRemoveTask();
             return;
         }
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             try {
                 int sendId = activity.getResources().getIdentifier(buttonIdStr, "id", activity.getPackageName());
-                android.view.View sendBtn = sendId != 0 ? activity.findViewById(sendId) : null;
+                View sendBtn = sendId != 0 ? activity.findViewById(sendId) : null;
                 
                 if (sendBtn == null) {
                     sendBtn = findSendButtonByIconOrClass(activity.getWindow().getDecorView());
                 }
 
-                if (sendBtn != null && sendBtn.isEnabled() && sendBtn.getVisibility() == android.view.View.VISIBLE) {
+                if (sendBtn != null && sendBtn.isEnabled() && sendBtn.getVisibility() == View.VISIBLE) {
                     sendBtn.performClick();
-                    log("AutoStatusForward - Successfully clicked send on " + activity.getClass().getSimpleName());
+                    /* Log removed */
                     
                     // Finish silently after a brief delay to ensure the click is processed
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -155,19 +157,19 @@ public class AutoStatusForward extends Feature {
         }, 200);
     }
 
-    private android.view.View findSendButtonByIconOrClass(android.view.View root) {
+    private View findSendButtonByIconOrClass(View root) {
         if (root == null) return null;
-        if (root instanceof android.widget.ImageView || root.getClass().getName().contains("FloatingActionButton")) {
+        if (root instanceof ImageView || root.getClass().getName().contains("FloatingActionButton")) {
             // Check content description or resource ID name if possible
             CharSequence desc = root.getContentDescription();
             if (desc != null && desc.toString().toLowerCase().contains("send")) {
                 return root;
             }
         }
-        if (root instanceof android.view.ViewGroup) {
-            android.view.ViewGroup group = (android.view.ViewGroup) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
             for (int i = 0; i < group.getChildCount(); i++) {
-                android.view.View found = findSendButtonByIconOrClass(group.getChildAt(i));
+                View found = findSendButtonByIconOrClass(group.getChildAt(i));
                 if (found != null) return found;
             }
         }
@@ -189,12 +191,11 @@ public class AutoStatusForward extends Feature {
                 String processedKey = "last_processed_" + key.messageID;
                 String inFlightKey = "forwarding_" + key.messageID;
                 if (WppCore.getPrivBoolean(processedKey, false) || WppCore.getPrivBoolean(inFlightKey, false)) {
-                    log("AutoStatusForward – notification path skipped duplicate messageId=" + key.messageID);
+                    /* Log removed */
                     return;
                 }
 
-                log("AutoStatusForward – notification path saw messageId=" + key.messageID
-                        + ", sender=" + safeJid(key.remoteJid));
+                /* Log removed */
                 handleFMessage(fMessageRaw, 0);
             } catch (Throwable t) {
                 log("AutoStatusForward – notification path err: " + t);
@@ -219,12 +220,12 @@ public class AutoStatusForward extends Feature {
 
         String phone = senderJid.getPhoneNumber();
         String text = incoming.getMessageStr();
-        log("AutoStatusForward – incoming msg from " + phone + " [text: «" + text + "»]");
+        /* Log removed */
 
         // 1. Rule matching
-        com.waenhancer.model.StatusForwardRule matchedRule = matchesRules(text);
+        StatusForwardRule matchedRule = matchesRules(text);
         if (matchedRule == null) {
-            log("AutoStatusForward – did not match any text rule, skipping.");
+            /* Log removed */
             return;
         }
 
@@ -232,13 +233,12 @@ public class AutoStatusForward extends Feature {
         FMessageWpp quotedStatus = extractQuotedStatus(fMessageObj);
         if (quotedStatus == null) {
             if (attempt < MAX_RESOLVE_ATTEMPTS) {
-                log("AutoStatusForward – quoted status not ready yet, retrying for message ID: " + key.messageID);
+                /* Log removed */
                 new Handler(Looper.getMainLooper()).postDelayed(
                         () -> handleFMessage(fMessageObj, attempt + 1),
                         300L * (attempt + 1));
             } else {
-                log("AutoStatusForward – no quoted status found after retries for message ID: " + key.messageID
-                        + ", replyText=" + safeText(text));
+                /* Log removed */
             }
             return;
         }
@@ -250,13 +250,13 @@ public class AutoStatusForward extends Feature {
         boolean isMedia = quotedStatus.isMediaFile();
 
         if (isVoiceNote && !matchedRule.applyVoice) {
-            log("AutoStatusForward – matched rule but applyVoice is false. Skipping voice status.");
+            /* Log removed */
             return;
         } else if (isMedia && !isVoiceNote && !matchedRule.applyMedia) {
-            log("AutoStatusForward – matched rule but applyMedia is false. Skipping media status.");
+            /* Log removed */
             return;
         } else if (!isMedia && !isVoiceNote && !matchedRule.applyText) {
-            log("AutoStatusForward – matched rule but applyText is false. Skipping text status.");
+            /* Log removed */
             return;
         }
 
@@ -286,7 +286,7 @@ public class AutoStatusForward extends Feature {
     // -------------------------------------------------------------------------
 
     private FMessageWpp extractQuotedStatus(Object fMessageObj) {
-        log("AutoStatusForward – extractQuotedStatus starting");
+        /* Log removed */
         try {
             if (!scannedForQuoted)
                 scanForQuotedContextInfo(fMessageObj.getClass());
@@ -300,14 +300,13 @@ public class AutoStatusForward extends Feature {
             if (rawQuotedKey == null && quotedContextFieldCache != null) {
                 try {
                     Object contextInfo = quotedContextFieldCache.get(fMessageObj);
-                    log("AutoStatusForward – extractQuotedStatus Strategy 2 contextInfo: " + contextInfo);
+                    /* Log removed */
                     if (contextInfo != null) {
                         for (Field f : getAllFields(contextInfo.getClass())) {
                             if (FMessageWpp.Key.TYPE.isAssignableFrom(f.getType())) {
                                 f.setAccessible(true);
                                 rawQuotedKey = f.get(contextInfo);
-                                log("AutoStatusForward – extractQuotedStatus Strategy 2 rawQuotedKey from field: "
-                                        + rawQuotedKey);
+                                /* Log removed */
                                 if (rawQuotedKey != null) {
                                     break;
                                 }
@@ -318,34 +317,33 @@ public class AutoStatusForward extends Feature {
                     log("AutoStatusForward – extractQuotedStatus Strategy 2 err: " + t);
                 }
             } else if (rawQuotedKey == null) {
-                log("AutoStatusForward – extractQuotedStatus Strategy 2 skipped (field null)");
+                /* Log removed */
             }
 
             // Since it's fully populated, we can also use getOriginalKey() API
             if (rawQuotedKey == null) {
                 FMessageWpp wrapper = new FMessageWpp(fMessageObj);
                 FMessageWpp.Key originalKey = wrapper.getOriginalKey(); // Context key
-                log("AutoStatusForward – extractQuotedStatus Strategy 3 originalKey: " + originalKey);
+                /* Log removed */
                 if (originalKey != null) {
                     rawQuotedKey = originalKey.thisObject;
                 }
             }
 
             if (rawQuotedKey == null) {
-                log("AutoStatusForward – extractQuotedStatus unable to find rawQuotedKey");
+                /* Log removed */
                 return null;
             }
 
             FMessageWpp.Key msgKey = new FMessageWpp.Key(rawQuotedKey);
-            log("AutoStatusForward – extractQuotedStatus msgKey remoteJid: "
-                    + (msgKey.remoteJid != null ? msgKey.remoteJid.getPhoneNumber() : "null"));
+            /* Log removed */
             if (msgKey.remoteJid != null) {
                 String phone = msgKey.remoteJid.getPhoneNumber();
                 if (phone != null && (phone.equals("status") || phone.contains("broadcast"))) {
                     Object q = WppCore.getFMessageFromKey(rawQuotedKey);
                     if (q != null)
                         return new FMessageWpp(q);
-                    log("AutoStatusForward – replied to status but it's not in cache db.");
+                    /* Log removed */
                     return new FMessageWpp(fMessageObj); // fallback to trigger forwarding anyway
                 }
             }
@@ -377,8 +375,7 @@ public class AutoStatusForward extends Feature {
                 }
             }
             if (hasKey) {
-                log("AutoStatusForward – found quoted context info field: " + f.getName() + " of type "
-                        + type.getName());
+                /* Log removed */
                 quotedContextFieldCache = f;
                 f.setAccessible(true);
                 break;
@@ -409,13 +406,13 @@ public class AutoStatusForward extends Feature {
     // Rule matching
     // -------------------------------------------------------------------------
 
-    private com.waenhancer.model.StatusForwardRule matchesRules(String messageText) {
+    private StatusForwardRule matchesRules(String messageText) {
         String json = prefs.getString("auto_status_forward_rules_json", "[]");
         try {
             JSONArray arr = new JSONArray(json);
             if (arr.length() == 0) {
-                log("AutoStatusForward – no rules set (catch-all).");
-                return new com.waenhancer.model.StatusForwardRule("contains", "", true, true, false);
+                /* Log removed */
+                return new StatusForwardRule("contains", "", true, true, false);
             }
             if (TextUtils.isEmpty(messageText))
                 return null;
@@ -434,13 +431,13 @@ public class AutoStatusForward extends Feature {
                     continue;
 
                 if ("equals".equals(type) && lower.equals(ruleText)) {
-                    log("AutoStatusForward – rule matched (EQUALS): " + ruleText);
-                    return new com.waenhancer.model.StatusForwardRule(type, ruleText, applyText, applyMedia,
+                    /* Log removed */
+                    return new StatusForwardRule(type, ruleText, applyText, applyMedia,
                             applyVoice);
                 }
                 if (!"equals".equals(type) && lower.contains(ruleText)) {
-                    log("AutoStatusForward – rule matched (CONTAINS): " + ruleText);
-                    return new com.waenhancer.model.StatusForwardRule(type, ruleText, applyText, applyMedia,
+                    /* Log removed */
+                    return new StatusForwardRule(type, ruleText, applyText, applyMedia,
                             applyVoice);
                 }
             }
@@ -465,11 +462,7 @@ public class AutoStatusForward extends Feature {
             name = recipientJid.getPhoneNumber();
 
         boolean isVoiceNote = statusMsg.getMediaType() == 2;
-        log("AutoStatusForward – forwardStatus start: recipient=" + safeJid(recipientJid)
-                + ", contactName=" + name
-                + ", statusType=" + describeStatusType(statusMsg)
-                + ", statusText=" + safeText(statusMsg.getMessageStr())
-                + ", replyText=" + safeText(replyText));
+        /* Log removed */
 
         if (statusMsg.isMediaFile() && !isVoiceNote) {
             forwardMediaStatus(statusMsg, jidRaw);
@@ -503,7 +496,7 @@ public class AutoStatusForward extends Feature {
                     WppCore.sendMessage(rawJidObj, text);
                 } else {
                     Utils.showToast("⚠️ Could not forward: no WA notification for " + contactName, Toast.LENGTH_LONG);
-                    log("AutoStatusForward - forwardTextStatus: no notification and no jid for " + contactName);
+                    /* Log removed */
                 }
             }
         } catch (Exception e) {
@@ -515,9 +508,7 @@ public class AutoStatusForward extends Feature {
         var file = status.getMediaFile();
         if (file == null || !file.exists()) {
             // Utils.showToast("⚠️ Status media not cached.", Toast.LENGTH_LONG);
-            log("AutoStatusForward – media forward skipped: cached file missing for status"
-                    + " [statusType=" + describeStatusType(status)
-                    + ", statusText=" + safeText(status.getMessageStr()) + "]");
+            /* Log removed */
             return;
         }
         try {
@@ -538,10 +529,7 @@ public class AutoStatusForward extends Feature {
                 intent.putExtra(Intent.EXTRA_TEXT, caption);
             intent.putExtra("auto_forward_status", true);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-            log("AutoStatusForward – launching MediaComposerActivity for media forward:"
-                    + " recipient=" + jidRaw
-                    + ", file=" + file.getAbsolutePath()
-                    + ", caption=" + safeText(caption));
+            /* Log removed */
             Utils.getApplication().startActivity(intent);
         } catch (Exception e) {
             log("AutoStatusForward - forwardMediaStatus err: " + e);
@@ -584,9 +572,9 @@ public class AutoStatusForward extends Feature {
 
         Class<?> clazz = value.getClass();
         if (clazz.isArray()) {
-            int len = java.lang.reflect.Array.getLength(value);
+            int len = Array.getLength(value);
             for (int i = 0; i < len && i < 10; i++) {
-                collectFMessageCandidates(java.lang.reflect.Array.get(value, i), out, visited, depth + 1);
+                collectFMessageCandidates(Array.get(value, i), out, visited, depth + 1);
             }
             return;
         }
@@ -607,7 +595,7 @@ public class AutoStatusForward extends Feature {
         }
 
         for (Field field : getAllFields(clazz)) {
-            if (java.lang.reflect.Modifier.isStatic(field.getModifiers()) || field.getType().isPrimitive()) {
+            if (Modifier.isStatic(field.getModifiers()) || field.getType().isPrimitive()) {
                 continue;
             }
             try {
@@ -621,14 +609,7 @@ public class AutoStatusForward extends Feature {
     private void logReplyDiagnostics(FMessageWpp incoming, FMessageWpp quotedStatus) {
         FMessageWpp.Key replyKey = incoming.getKey();
         FMessageWpp.Key statusKey = quotedStatus.getKey();
-        log("AutoStatusForward – reply diagnostics:"
-                + " replyMessageId=" + (replyKey != null ? replyKey.messageID : "null")
-                + ", replier=" + safeJid(replyKey != null ? replyKey.remoteJid : null)
-                + ", replyText=" + safeText(incoming.getMessageStr())
-                + ", quotedStatusMessageId=" + (statusKey != null ? statusKey.messageID : "null")
-                + ", quotedStatusOwner=" + safeJid(statusKey != null ? statusKey.remoteJid : null)
-                + ", quotedStatusType=" + describeStatusType(quotedStatus)
-                + ", quotedStatusText=" + safeText(quotedStatus.getMessageStr()));
+        /* Log removed */
     }
 
     private String describeStatusType(FMessageWpp message) {

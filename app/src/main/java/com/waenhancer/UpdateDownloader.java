@@ -21,15 +21,27 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import android.content.ContextWrapper;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Process;
+import android.view.LayoutInflater;
+import android.view.View;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.textview.MaterialTextView;
+import com.waenhancer.utils.RootUtils;
+import de.robv.android.xposed.XposedBridge;
+import java.util.Locale;
 
 public class UpdateDownloader {
 
     private static Activity getActivity(Context context) {
-        while (context instanceof android.content.ContextWrapper) {
+        while (context instanceof ContextWrapper) {
             if (context instanceof Activity) {
                 return (Activity) context;
             }
-            context = ((android.content.ContextWrapper) context).getBaseContext();
+            context = ((ContextWrapper) context).getBaseContext();
         }
         return null;
     }
@@ -41,9 +53,19 @@ public class UpdateDownloader {
     }
 
     public static Call downloadApk(Context context, String url, String versionName, DownloadCallback callback) {
-        String safeVersion = versionName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        String fileName = null;
+        try {
+            Uri uri = Uri.parse(url);
+            fileName = uri.getLastPathSegment();
+        } catch (Exception ignored) {}
+
+        if (fileName == null || !fileName.endsWith(".apk")) {
+            String safeVersion = versionName.replaceAll("[^a-zA-Z0-9.-]", "_");
+            fileName = "WaEnhancer X_" + safeVersion + ".apk";
+        }
+
         File cacheDir = context.getCacheDir();
-        File apkFile = new File(cacheDir, "WaEnhancer X_" + safeVersion + ".apk");
+        File apkFile = new File(cacheDir, fileName);
 
         if (apkFile.exists()) {
             callback.onSuccess(apkFile);
@@ -136,30 +158,49 @@ public class UpdateDownloader {
             String apkPath = apkFile.getAbsolutePath();
             String tmpPath = "/data/local/tmp/wa_update.apk";
             
-            // Copy to /data/local/tmp first to ensure pm can read it
-            String copyCmd = "cp \"" + apkPath + "\" " + tmpPath + " && chmod 666 " + tmpPath;
-            com.waenhancer.utils.RootUtils.runRootCommand(copyCmd);
+            // Clean up old file first
+            RootUtils.runRootCommand("rm -f " + tmpPath);
 
-            // -r: replace existing application
-            // -d: allow version code downgrade
-            // --user 0: install for owner (common on most devices)
-            String cmd = "pm install -r -d --user 0 " + tmpPath;
-            String result = com.waenhancer.utils.RootUtils.runRootCommand(cmd);
+            // Copy to /data/local/tmp using cat to bypass SELinux read restrictions on /data/data
+            String copyCmd = "cat \"" + apkPath + "\" > " + tmpPath + " && chmod 666 " + tmpPath;
+            RootUtils.runRootCommand(copyCmd);
+
+            // Validate that file exists and is not empty
+            String sizeResult = RootUtils.runRootCommand("wc -c < " + tmpPath);
+            long bytes = 0;
+            try {
+                if (sizeResult != null) {
+                    bytes = Long.parseLong(sizeResult.trim());
+                }
+            } catch (Exception ignored) {}
+
+            boolean successVal = false;
+            String resultVal = "";
+            if (bytes > 1000) {
+                // -r: replace existing application
+                // -d: allow version code downgrade
+                // --user 0: install for owner
+                String cmd = "pm install -r -d --user 0 " + tmpPath;
+                resultVal = RootUtils.runRootCommand(cmd);
+                successVal = resultVal != null && (resultVal.toLowerCase().contains("success") || resultVal.toLowerCase().contains("pkg:"));
+            } else {
+                resultVal = "Failed to copy APK file to /data/local/tmp. Check root permissions.";
+            }
             
             // Cleanup
-            com.waenhancer.utils.RootUtils.runRootCommand("rm " + tmpPath);
-
-            boolean success = result != null && (result.toLowerCase().contains("success") || result.toLowerCase().contains("pkg:"));
+            RootUtils.runRootCommand("rm -f " + tmpPath);
             
+            final boolean finalSuccess = successVal;
+            final String finalResult = resultVal;
             activity.runOnUiThread(() -> {
-                if (success) {
+                if (finalSuccess) {
                     Toast.makeText(activity, "Installation successful. Restarting...", Toast.LENGTH_LONG).show();
-                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                        android.os.Process.killProcess(android.os.Process.myPid());
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        Process.killProcess(Process.myPid());
                         System.exit(0);
                     }, 2000);
                 } else {
-                    String error = (result != null && !result.isEmpty()) ? result.trim() : "Unknown error";
+                    String error = (finalResult != null && !finalResult.isEmpty()) ? finalResult.trim() : "Unknown error";
                     Toast.makeText(activity, "Root installation failed: " + error, Toast.LENGTH_LONG).show();
                 }
             });
@@ -182,7 +223,7 @@ public class UpdateDownloader {
             try {
                 modContext = activity.createPackageContext(BuildConfig.APPLICATION_ID, Context.CONTEXT_IGNORE_SECURITY);
             } catch (Exception e) {
-                de.robv.android.xposed.XposedBridge.log("[WAEX] Error creating package context: " + e.getMessage());
+                XposedBridge.log("[WAEX] Error creating package context: " + e.getMessage());
             }
         }
 
@@ -197,10 +238,10 @@ public class UpdateDownloader {
             return;
         }
 
-        android.view.View dialogView = android.view.LayoutInflater.from(modContext).inflate(layoutId, null);
-        var progressBar = (com.google.android.material.progressindicator.LinearProgressIndicator) dialogView.findViewById(progressBarId);
-        var statusText = (com.google.android.material.textview.MaterialTextView) dialogView.findViewById(statusTextId);
-        var cancelBtn = (com.google.android.material.button.MaterialButton) dialogView.findViewById(cancelBtnId);
+        View dialogView = LayoutInflater.from(modContext).inflate(layoutId, null);
+        var progressBar = (LinearProgressIndicator) dialogView.findViewById(progressBarId);
+        var statusText = (MaterialTextView) dialogView.findViewById(statusTextId);
+        var cancelBtn = (MaterialButton) dialogView.findViewById(cancelBtnId);
 
         // Final references for inner class
         final Call[] currentCall = {null};
@@ -223,7 +264,7 @@ public class UpdateDownloader {
             public void onProgress(int progress, long currentBytes, long totalBytes) {
                 activity.runOnUiThread(() -> {
                     if (progressBar != null) progressBar.setProgress(progress);
-                    String sizeInfo = String.format(java.util.Locale.US, "%.1f MB / %.1f MB", 
+                    String sizeInfo = String.format(Locale.US, "%.1f MB / %.1f MB", 
                         currentBytes / (1024.0 * 1024.0), totalBytes / (1024.0 * 1024.0));
                     if (statusText != null) statusText.setText(sizeInfo + " (" + progress + "%)");
                 });

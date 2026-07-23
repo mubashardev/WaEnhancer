@@ -7,6 +7,11 @@ import androidx.annotation.NonNull;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class Feature {
 
@@ -15,9 +20,9 @@ public abstract class Feature {
     public static boolean DEBUG = false;
 
     // Global tracking to prevent hook leaks if doHook is called multiple times
-    private static final java.util.Set<java.lang.reflect.Member> hookedMethods = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    private static final Set<Member> hookedMethods = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    protected boolean markHooked(java.lang.reflect.Member member) {
+    protected boolean markHooked(Member member) {
         if (member == null) return false;
         return hookedMethods.add(member);
     }
@@ -44,10 +49,10 @@ public abstract class Feature {
 
     public void logError(Object object) {
         if (object instanceof Throwable) {
-            XposedBridge.log(String.format("[%s] CRITICAL ERROR:", this.getPluginName()));
-            XposedBridge.log((Throwable) object);
+            // XposedBridge.log(String.format("[%s] CRITICAL ERROR:", this.getPluginName()));
+            // XposedBridge.log((Throwable) object);
         } else {
-            XposedBridge.log(String.format("[%s] CRITICAL ERROR: %s", this.getPluginName(), object));
+            // XposedBridge.log(String.format("[%s] CRITICAL ERROR: %s", this.getPluginName(), object));
         }
     }
 
@@ -56,7 +61,7 @@ public abstract class Feature {
             ((XSharedPreferences) prefs).reload();
         } else if (prefs.getClass().getName().contains("ProviderSharedPreferences")) {
             try {
-                java.lang.reflect.Method reload = prefs.getClass().getMethod("reload");
+                Method reload = prefs.getClass().getMethod("reload");
                 reload.invoke(prefs);
             } catch (Exception ignored) {}
         }

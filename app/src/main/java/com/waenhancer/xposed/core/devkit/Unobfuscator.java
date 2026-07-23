@@ -1,5 +1,6 @@
 package com.waenhancer.xposed.core.devkit;
 
+import java.lang.reflect.Member;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -64,6 +65,14 @@ import java.util.stream.Collectors;
 
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.format.DateFormat;
+import androidx.annotation.NonNull;
+import com.waenhancer.BuildConfig;
+import java.io.File;
+import java.util.HashSet;
 
 public class Unobfuscator {
 
@@ -81,8 +90,8 @@ public class Unobfuscator {
 
     public static void loadLibrary(Context context) {
         try {
-            var libraryPath = context.getPackageManager().getApplicationInfo(com.waenhancer.BuildConfig.APPLICATION_ID, 0).nativeLibraryDir;
-            var file = new java.io.File(libraryPath, "libdexkit.so");
+            var libraryPath = context.getPackageManager().getApplicationInfo(BuildConfig.APPLICATION_ID, 0).nativeLibraryDir;
+            var file = new File(libraryPath, "libdexkit.so");
             if (file.exists()) {
                 System.load(file.getAbsolutePath());
             }
@@ -453,6 +462,23 @@ public class Unobfuscator {
         });
     }
 
+    public synchronized static Class<?> loadMultiSelectionLimitInfoClass(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
+            try {
+                var matcher = new ClassMatcher();
+                matcher.addUsingString("MultiSelectionLimitInfo", StringMatchType.Contains);
+                var result = dexkit.findClass(FindClass.create().matcher(matcher));
+                if (!result.isEmpty()) {
+                    return result.get(0).getInstance(classLoader);
+                }
+            } catch (Throwable t) {
+                XposedBridge.log("[SHARE_LIMIT] Error in DexKit lookup: " + t.toString());
+            }
+            throw new ClassNotFoundException("MultiSelectionLimitInfo class not found");
+        });
+    }
+
+
     // TODO: Classes and Methods for HideView
     public synchronized static Method loadHideViewSendReadJob(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
@@ -702,7 +728,7 @@ public class Unobfuscator {
             Method setTimeInMillis = Calendar.class.getDeclaredMethod("setTimeInMillis", long.class);
             Method is24HourFormat = null;
             try {
-                is24HourFormat = android.text.format.DateFormat.class.getDeclaredMethod("is24HourFormat", Context.class);
+                is24HourFormat = DateFormat.class.getDeclaredMethod("is24HourFormat", Context.class);
             } catch (Exception ignored) {}
 
             MethodDataList resultList = null;
@@ -899,13 +925,105 @@ public class Unobfuscator {
         return UnobfuscatorCache.getInstance().getField(classLoader, () -> {
             var shareLimitMethod = loadShareLimitMethod(classLoader);
             var methodData = dexkit.getMethodData(shareLimitMethod);
-            var usingFields = Objects.requireNonNull(methodData).getUsingFields();
-            for (var ufield : usingFields) {
-                var field = ufield.getField().getFieldInstance(classLoader);
-                if (field.getType() == Map.class)
-                    return field;
+            if (methodData != null) {
+                var usingFields = methodData.getUsingFields();
+                for (var ufield : usingFields) {
+                    try {
+                        var field = ufield.getField().getFieldInstance(classLoader);
+                        var type = field.getType();
+                        var typeName = type.getName();
+                        if (Map.class.isAssignableFrom(type) ||
+                            typeName.equals("java.util.Map") ||
+                            typeName.equals("java.util.HashMap") ||
+                            typeName.equals("java.util.LinkedHashMap") ||
+                            typeName.equals("java.util.concurrent.ConcurrentHashMap")) {
+                            return field;
+                        }
+                    } catch (Throwable ignored) {}
+                }
             }
-            throw new Exception("ShareItem field not found");
+            
+            // Search class hierarchy starting from ContactPickerFragment
+            Class<?> targetClass = null;
+            try {
+                targetClass = Class.forName("com.whatsapp.contact.ui.picker.ContactPickerFragment", true, classLoader);
+            } catch (Throwable e) {
+                targetClass = shareLimitMethod.getDeclaringClass();
+            }
+
+            Class<?> current = targetClass;
+            List<Field> mapFields = new ArrayList<>();
+            while (current != null && current.getName().startsWith("com.whatsapp")) {
+                for (var field : current.getDeclaredFields()) {
+                    var type = field.getType();
+                    var typeName = type.getName();
+                    if (Map.class.isAssignableFrom(type) ||
+                        typeName.equals("java.util.Map") ||
+                        typeName.equals("java.util.HashMap") ||
+                        typeName.equals("java.util.LinkedHashMap") ||
+                        typeName.equals("java.util.concurrent.ConcurrentHashMap")) {
+                        field.setAccessible(true);
+                        mapFields.add(field);
+                    }
+                }
+                current = current.getSuperclass();
+            }
+
+            if (mapFields.isEmpty()) {
+                throw new Exception("No Map fields found in class hierarchy of " + targetClass.getName());
+            }
+
+            if (mapFields.size() == 1) {
+                return mapFields.get(0);
+            }
+
+            // If there are multiple Map fields, select the one referenced in the most methods
+            Field bestField = null;
+            int maxCount = -1;
+            
+            Set<String> classNamesToScan = new HashSet<>();
+            current = targetClass;
+            while (current != null && current.getName().startsWith("com.whatsapp")) {
+                classNamesToScan.add(current.getName());
+                current = current.getSuperclass();
+            }
+
+            Map<String, Integer> usageCounts = new HashMap<>();
+            for (var className : classNamesToScan) {
+                try {
+                    var classData = dexkit.getClassData(className);
+                    if (classData == null) continue;
+                    for (var mData : classData.getMethods()) {
+                        try {
+                            for (var ufield : mData.getUsingFields()) {
+                                try {
+                                    var fInstance = ufield.getField().getFieldInstance(classLoader);
+                                    var fName = fInstance.getName();
+                                    var fDeclaringClass = fInstance.getDeclaringClass().getName();
+                                    if (classNamesToScan.contains(fDeclaringClass)) {
+                                        String key = fDeclaringClass + "->" + fName;
+                                        usageCounts.put(key, usageCounts.getOrDefault(key, 0) + 1);
+                                    }
+                                } catch (Throwable ignored) {}
+                            }
+                        } catch (Throwable ignored) {}
+                    }
+                } catch (Throwable ignored) {}
+            }
+
+            for (var field : mapFields) {
+                String key = field.getDeclaringClass().getName() + "->" + field.getName();
+                int count = usageCounts.getOrDefault(key, 0);
+                if (count > maxCount) {
+                    maxCount = count;
+                    bestField = field;
+                }
+            }
+
+            if (bestField != null) {
+                return bestField;
+            }
+            return mapFields.get(0);
         });
     }
 
@@ -1606,12 +1724,86 @@ public class Unobfuscator {
             var conversationClass = XposedHelpers.findClass("com.whatsapp.Conversation", loader);
             if (conversationClass == null)
                 throw new RuntimeException("BlueOnReplayCreateMenuConversation class not found");
-            var method = Arrays.stream(conversationClass.getDeclaredMethods())
-                    .filter(m -> m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(Menu.class)).findFirst()
-                    .orElse(null);
-            if (method == null)
-                throw new RuntimeException("BlueOnReplayCreateMenuConversation method not found");
-            return method;
+            
+            Class<?> current = conversationClass;
+            Method selectedMethod = null;
+            
+            while (current != null && current != Object.class) {
+                String clsName = current.getName();
+                if (clsName.startsWith("android.") || clsName.startsWith("androidx.")) {
+                    break;
+                }
+                
+                /* Log removed */
+                
+                // Debug log all methods taking Menu
+                for (Method m : current.getDeclaredMethods()) {
+                    for (Class<?> pType : m.getParameterTypes()) {
+                        if (pType.equals(Menu.class)) {
+                            /* Log removed */
+                        }
+                    }
+                }
+
+                // Look for onCreateOptionsMenu override (Menu)
+                selectedMethod = Arrays.stream(current.getDeclaredMethods())
+                        .filter(m -> m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(Menu.class))
+                        .filter(m -> m.getName().equals("onCreateOptionsMenu"))
+                        .findFirst().orElse(null);
+                if (selectedMethod != null) {
+                    /* Log removed */
+                    return selectedMethod;
+                }
+
+                // Look for onCreatePanelMenu override (int, Menu)
+                selectedMethod = Arrays.stream(current.getDeclaredMethods())
+                        .filter(m -> m.getParameterCount() == 2 && m.getParameterTypes()[0].equals(int.class) && m.getParameterTypes()[1].equals(Menu.class))
+                        .filter(m -> m.getName().equals("onCreatePanelMenu"))
+                        .findFirst().orElse(null);
+                if (selectedMethod != null) {
+                    /* Log removed */
+                    return selectedMethod;
+                }
+
+                // Look for direct single parameter Menu method
+                selectedMethod = Arrays.stream(current.getDeclaredMethods())
+                        .filter(m -> m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(Menu.class)).findFirst()
+                        .orElse(null);
+                if (selectedMethod != null) {
+                    /* Log removed */
+                    return selectedMethod;
+                }
+
+                // Look for relaxed matching: first param is Menu
+                selectedMethod = Arrays.stream(current.getDeclaredMethods())
+                        .filter(m -> m.getParameterCount() >= 1 && m.getParameterTypes()[0].equals(Menu.class)).findFirst()
+                        .orElse(null);
+                if (selectedMethod != null) {
+                    /* Log removed */
+                    return selectedMethod;
+                }
+                
+                current = current.getSuperclass();
+            }
+            
+            // If still not found, try to locate onCreateOptionsMenu on the parent Activity/FragmentActivity level
+            try {
+                selectedMethod = XposedHelpers.findMethodExact(conversationClass, "onCreateOptionsMenu", Menu.class);
+                if (selectedMethod != null) {
+                    /* Log removed */
+                    return selectedMethod;
+                }
+            } catch (Throwable ignored) {}
+            
+            try {
+                selectedMethod = XposedHelpers.findMethodExact(conversationClass, "onCreatePanelMenu", int.class, Menu.class);
+                if (selectedMethod != null) {
+                    /* Log removed */
+                    return selectedMethod;
+                }
+            } catch (Throwable ignored) {}
+
+            throw new RuntimeException("BlueOnReplayCreateMenuConversation method not found");
         });
     }
 
@@ -2071,7 +2263,7 @@ public class Unobfuscator {
             var callConfirmationFragment = XposedHelpers
                     .findClass("com.whatsapp.calling.fragment.CallConfirmationFragment", loader);
             var method = ReflectionUtils.findMethodUsingFilter(callConfirmationFragment,
-                    m -> m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(android.os.Bundle.class));
+                    m -> m.getParameterCount() == 1 && m.getParameterTypes()[0].equals(Bundle.class));
             var methodData = dexkit.getMethodData(method);
             var invokes = methodData.getInvokes();
             for (var invoke : invokes) {
@@ -2152,7 +2344,7 @@ public class Unobfuscator {
                             check = check.getSuperclass();
                         }
 
-                        if (hasFMessage && android.view.View.class.isAssignableFrom(cls)) {
+                        if (hasFMessage && View.class.isAssignableFrom(cls)) {
                             targetClass = cls;
                             ;
                             break;
@@ -2298,6 +2490,39 @@ public class Unobfuscator {
         });
     }
 
+    public synchronized static Class<?>[] loadEmojiSpanClasses(ClassLoader loader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClasses(loader, () -> {
+            var list = new ArrayList<Class<?>>();
+            String[] superClasses = {
+                "android.text.style.ReplacementSpan",
+                "android.text.style.DynamicDrawableSpan",
+                "android.text.style.ImageSpan"
+            };
+            String[] targetPackages = {"com.whatsapp", "X."};
+            for (String superCls : superClasses) {
+                for (String pkg : targetPackages) {
+                    try {
+                        var results = dexkit.findClass(FindClass.create()
+                                .searchPackages(pkg)
+                                .matcher(ClassMatcher.create().superClass(superCls)));
+                        for (var data : results) {
+                            try {
+                                var cls = data.getInstance(loader);
+                                String name = cls.getName();
+                                if (name.startsWith("com.whatsapp") || (name.contains(".") && !name.startsWith("android") && !name.startsWith("androidx") && !name.startsWith("java"))) {
+                                    if (!list.contains(cls)) {
+                                        list.add(cls);
+                                    }
+                                }
+                            } catch (Throwable ignored) {}
+                        }
+                    } catch (Throwable ignored) {}
+                }
+            }
+            return list.toArray(new Class<?>[0]);
+        });
+    }
+
     public synchronized static Class loadVideoViewContainerClass(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(loader, () -> {
             var clazz = findFirstClassUsingStrings(loader, StringMatchType.Contains, "frame_visibility_serial_worker");
@@ -2330,7 +2555,7 @@ public class Unobfuscator {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
             var filterAdaperClass = Unobfuscator.loadFilterAdaperClass(loader);
             var constructors = filterAdaperClass.getConstructors();
-            var methods = new java.util.ArrayList<org.luckypray.dexkit.result.MethodData>();
+            var methods = new ArrayList<MethodData>();
             for (var constructor : constructors) {
                 methods.addAll(dexkit.findMethod(new FindMethod()
                         .matcher(new MethodMatcher().addInvoke(DexSignUtil.getMethodDescriptor(constructor)))));
@@ -2491,7 +2716,7 @@ public class Unobfuscator {
             if (classMsgReplyAct == null)
                 throw new ClassNotFoundException("Class MessageReplyActivity not found");
             var method = classMsgReplyAct.getMethod("onActivityResult", int.class, int.class,
-                    android.content.Intent.class);
+                    Intent.class);
             var methodData = Objects.requireNonNull(dexkit.getMethodData(method));
             var invokes = methodData.getInvokes();
             for (var invoke : invokes) {
@@ -2700,7 +2925,10 @@ public class Unobfuscator {
             var methods = findAllMethodUsingStrings(classLoader, StringMatchType.Contains,
                     "software_forced_expiration");
             var expirationMethod = Arrays.stream(methods)
-                    .filter(methodData -> methodData.getReturnType().equals(Date.class)).findFirst().orElse(null);
+                    .filter(methodData -> methodData.getReturnType().equals(Date.class)
+                                       || methodData.getReturnType().equals(long.class)
+                                       || methodData.getReturnType().equals(Long.class))
+                    .findFirst().orElse(null);
             if (expirationMethod == null)
                 throw new RuntimeException("Expiration class not found");
             return expirationMethod.getDeclaringClass();
@@ -3094,18 +3322,55 @@ public class Unobfuscator {
     public static Class<?> loadRefreshStatusClass(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
             Method keyset = Map.class.getDeclaredMethod("keySet");
-            ClassMatcher matcher = ClassMatcher.create()
+            String keysetDescriptor = DexSignUtil.getMethodDescriptor(keyset);
+
+            // Strategy 1: Original matcher (WA < 2.26.24.80)
+            ClassMatcher matcher1 = ClassMatcher.create()
                     .addMethod(
                             MethodMatcher.create().returnType(String.class)
-                                    .addInvoke(DexSignUtil.getMethodDescriptor(keyset))
+                                    .addInvoke(keysetDescriptor)
                                     .addUsingString(",", StringMatchType.Equals)
                                     .addUsingString("", StringMatchType.Equals))
                     .addMethod(MethodMatcher.create().addUsingNumber(0x3684));
+            List<ClassData> results = dexkit.findClass(FindClass.create().matcher(matcher1));
+            if (!results.isEmpty())
+                return results.get(0).getInstance(classLoader);
 
-            List<ClassData> results = dexkit.findClass(FindClass.create().matcher(matcher));
-            if (results.isEmpty())
-                throw new RuntimeException("RefreshStatus Class Not Found");
-            return results.get(0).getInstance(classLoader);
+            // Strategy 2: Relax — drop the magic number constraint (WA 2.26.24.80+)
+            ClassMatcher matcher2 = ClassMatcher.create()
+                    .addMethod(
+                            MethodMatcher.create().returnType(String.class)
+                                    .addInvoke(keysetDescriptor)
+                                    .addUsingString(",", StringMatchType.Equals)
+                                    .addUsingString("", StringMatchType.Equals));
+            results = dexkit.findClass(FindClass.create().matcher(matcher2));
+            if (!results.isEmpty())
+                return results.get(0).getInstance(classLoader);
+
+            // Strategy 3: Try nearby magic numbers that WhatsApp may have changed to
+            for (int candidate : new int[]{0x3685, 0x3683, 0x3686, 0x3682, 0x36A0, 0x3700}) {
+                ClassMatcher matcher3 = ClassMatcher.create()
+                        .addMethod(
+                                MethodMatcher.create().returnType(String.class)
+                                        .addInvoke(keysetDescriptor))
+                        .addMethod(MethodMatcher.create().addUsingNumber(candidate));
+                results = dexkit.findClass(FindClass.create().matcher(matcher3));
+                if (!results.isEmpty())
+                    return results.get(0).getInstance(classLoader);
+            }
+
+            // Strategy 4: Find via "conversation/refresh" string used in loadMediaTypeField context
+            try {
+                var methodData = dexkit.findMethod(
+                        FindMethod.create().matcher(MethodMatcher.create().addUsingString("conversation/refresh")));
+                if (!methodData.isEmpty()) {
+                    var declClass = methodData.get(0).getDeclaredClass();
+                    if (declClass != null)
+                        return declClass.getInstance(classLoader);
+                }
+            } catch (Exception ignored) {}
+
+            throw new RuntimeException("RefreshStatus Class Not Found");
         });
     }
 
@@ -3466,8 +3731,8 @@ public class Unobfuscator {
                 var clazz = loadWaContactClass(classLoader);
                 for (var f : clazz.getDeclaredFields()) {
                     if (f.getType() == String.class
-                            && !java.lang.reflect.Modifier.isStatic(f.getModifiers())
-                            && java.lang.reflect.Modifier.isPublic(f.getModifiers())) {
+                            && !Modifier.isStatic(f.getModifiers())
+                            && Modifier.isPublic(f.getModifiers())) {
                         return f;
                     }
                 }
@@ -3540,7 +3805,7 @@ public class Unobfuscator {
                 for (var m : waContactClass.getDeclaredMethods()) {
                     if (m.getParameterCount() == 0 
                             && (m.getReturnType() == String.class || m.getReturnType() == CharSequence.class)
-                            && !java.lang.reflect.Modifier.isStatic(m.getModifiers())) {
+                            && !Modifier.isStatic(m.getModifiers())) {
                         return m;
                     }
                 }
@@ -3550,7 +3815,7 @@ public class Unobfuscator {
 
             // Verbose logging if all search strategies fail for easy future troubleshooting
             try {
-                XposedBridge.log("[WAEX] WaContactDisplayName method lookup failed. Listing all methods of " + waContactClass.getName() + ":");
+                // XposedBridge.log("[WAEX] WaContactDisplayName method lookup failed. Listing all methods of " + waContactClass.getName() + ":");
                 for (var m : waContactClass.getDeclaredMethods()) {
                     ;
                 }
@@ -3721,7 +3986,7 @@ public class Unobfuscator {
             for (String identifier : settingsIdentifiers) {
                 try {
                     Class<?> clazz = findFirstClassUsingStrings(loader, StringMatchType.Contains, identifier);
-                    if (clazz != null && android.app.Activity.class.isAssignableFrom(clazz)) {
+                    if (clazz != null && Activity.class.isAssignableFrom(clazz)) {
                         return clazz;
                     }
                 } catch (Exception ignored) {}
@@ -3771,7 +4036,7 @@ public class Unobfuscator {
             for (String identifier : settingsIdentifiers) {
                 try {
                     Class<?> clazz = findFirstClassUsingStrings(loader, StringMatchType.Contains, identifier);
-                    if (clazz != null && !android.app.Activity.class.isAssignableFrom(clazz)) {
+                    if (clazz != null && !Activity.class.isAssignableFrom(clazz)) {
                         // Check if it's a fragment class (standard or androidx)
                         if (isFragmentClass(clazz)) {
                             return clazz;
@@ -3793,43 +4058,43 @@ public class Unobfuscator {
         }
         return false;
     }
-    public static @androidx.annotation.NonNull Class<?> loadFStatusKeyClass(ClassLoader classLoader) throws Exception {
-        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> dexkit.findClass(org.luckypray.dexkit.query.FindClass.create().matcher(
-                        org.luckypray.dexkit.query.matchers.ClassMatcher.create()
+    public static @NonNull Class<?> loadFStatusKeyClass(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> dexkit.findClass(FindClass.create().matcher(
+                        ClassMatcher.create()
                                 .addUsingString("Key(id=").
                                 addUsingString("senderJid")))
                 .first().getInstance(classLoader));
     }
 
-    public static @androidx.annotation.NonNull Class<?> loadFStatusClass(@androidx.annotation.NonNull ClassLoader classLoader) throws Exception {
+    public static @NonNull Class<?> loadFStatusClass(@NonNull ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
-            return findFirstClassUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, "FStatus state");
+            return findFirstClassUsingStrings(classLoader, StringMatchType.Contains, "FStatus state");
         });
     }
 
-    public static Method loadAntiRevokeFStatusMethod(@androidx.annotation.NonNull ClassLoader classLoader) throws Exception {
+    public static Method loadAntiRevokeFStatusMethod(@NonNull ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
             var fStatusKeyClass = loadFStatusKeyClass(classLoader);
-            var clazz = findFirstClassUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, "RevokeStatusManager/failed");
+            var clazz = findFirstClassUsingStrings(classLoader, StringMatchType.Contains, "RevokeStatusManager/failed");
             return ReflectionUtils.findMethodUsingFilter(clazz, method -> method.getParameterCount() > 0 && fStatusKeyClass.isAssignableFrom(method.getParameterTypes()[0]));
         });
     }
 
-    public static @androidx.annotation.NonNull Method loadGetStatusByKey(@androidx.annotation.NonNull ClassLoader classLoader) throws Exception {
-        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> findFirstMethodUsingStrings(classLoader, org.luckypray.dexkit.query.enums.StringMatchType.Contains, "StatusStore/GET_STATUS_BY_KEY"));
+    public static @NonNull Method loadGetStatusByKey(@NonNull ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> findFirstMethodUsingStrings(classLoader, StringMatchType.Contains, "StatusStore/GET_STATUS_BY_KEY"));
     }
 
     // Find the WDSActionTileGroup class using DexKit by its simple class name
     public static Class<?> loadWDSActionTileGroupClass(ClassLoader classLoader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(classLoader, () ->
                 findFirstClassUsingName(classLoader,
-                        org.luckypray.dexkit.query.enums.StringMatchType.EndsWith,
+                        StringMatchType.EndsWith,
                         "WDSActionTileGroup"));
     }
 
     public static Method loadPausePlaybackMethod(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
                     "playbackPage/pausePlayback page=");
             if (method == null)
                 throw new RuntimeException("pausePlayback method not found");
@@ -3839,7 +4104,7 @@ public class Unobfuscator {
 
     public static Method loadResumePlaybackMethod(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
                     "playbackPage/resumePlayback page=");
             if (method == null)
                 throw new RuntimeException("resumePlayback method not found");
@@ -3850,10 +4115,10 @@ public class Unobfuscator {
     public static Class<?> loadVideoPlayerClass(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getClass(loader, () -> {
             var classes = dexkit.findClass(
-                    org.luckypray.dexkit.query.FindClass.create().matcher(
-                            org.luckypray.dexkit.query.matchers.ClassMatcher.create()
-                                    .addMethod(org.luckypray.dexkit.query.matchers.MethodMatcher.create().name("seekTo").paramTypes(java.util.List.of("int")))
-                                    .addMethod(org.luckypray.dexkit.query.matchers.MethodMatcher.create().name("getDuration").returnType("int"))));
+                    FindClass.create().matcher(
+                            ClassMatcher.create()
+                                    .addMethod(MethodMatcher.create().name("seekTo").paramTypes(List.of("int")))
+                                    .addMethod(MethodMatcher.create().name("getDuration").returnType("int"))));
             if (classes.isEmpty())
                 throw new RuntimeException("Not Found VideoPlayerClass");
             return classes.get(0).getInstance(loader);
@@ -3862,7 +4127,7 @@ public class Unobfuscator {
 
     public static Method loadStatusReplyMethod(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
                     "playbackPage/reply page=");
             if (method == null)
                 throw new RuntimeException("status reply method not found");
@@ -3872,7 +4137,7 @@ public class Unobfuscator {
 
     public static Method loadPageOnViewCreatedMethod(ClassLoader loader) throws Exception {
         return UnobfuscatorCache.getInstance().getMethod(loader, () -> {
-            var method = findFirstMethodUsingStrings(loader, org.luckypray.dexkit.query.enums.StringMatchType.Contains,
+            var method = findFirstMethodUsingStrings(loader, StringMatchType.Contains,
                     "StatusPlaybackPage/onViewCreated");
             if (method == null)
                 throw new RuntimeException("pageOnViewCreated method not found");
@@ -3885,7 +4150,7 @@ public class Unobfuscator {
             Class<?> fragmentClass = XposedHelpers.findClass("com.whatsapp.status.playback.fragment.StatusPlaybackContactFragment", loader);
             Class<?> pageControllerBaseClass = loadPausePlaybackMethod(loader).getDeclaringClass();
             for (Method method : fragmentClass.getDeclaredMethods()) {
-                if (java.lang.reflect.Modifier.isStatic(method.getModifiers()) 
+                if (Modifier.isStatic(method.getModifiers()) 
                         && method.getParameterCount() == 1 
                         && method.getParameterTypes()[0] == fragmentClass
                         && method.getReturnType().isAssignableFrom(pageControllerBaseClass)
@@ -3987,8 +4252,184 @@ public class Unobfuscator {
             );
             return callers.stream().map(c -> c.getDescriptor()).collect(Collectors.toList());
         } catch (Throwable t) {
-            return java.util.Collections.singletonList("Error: " + t.getMessage());
+            return Collections.singletonList("Error: " + t.getMessage());
         }
     }
-}
 
+    public synchronized static Method findVoiceTransitionMethod(ClassLoader classLoader, Class<?> fragmentClass, String recorderTypeName) {
+        try {
+            var classData = dexkit.getClassData(fragmentClass.getName());
+            if (classData != null) {
+                for (var md : classData.getMethods()) {
+                    if (Modifier.isStatic(md.getModifiers())
+                            && md.getParamCount() == 1
+                            && md.getParamTypeNames().get(0).equals(fragmentClass.getName())
+                            && md.getReturnType().equals("void")) {
+                        boolean usesRecorderField = false;
+                        for (var uf : md.getUsingFields()) {
+                            if (uf.getField().getType().getName().equals(recorderTypeName)) {
+                                usesRecorderField = true;
+                                break;
+                            }
+                        }
+                        if (usesRecorderField) {
+                            Method m = md.getMethodInstance(classLoader);
+                            m.setAccessible(true);
+                            return m;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+        return null;
+    }
+
+    public synchronized static Method findVoiceSendTriggerMethod(ClassLoader classLoader, Class<?> fragmentClass, String recorderTypeName) {
+        try {
+            var classData = dexkit.getClassData(fragmentClass.getName());
+            if (classData != null) {
+                for (var md : classData.getMethods()) {
+                    if (!Modifier.isStatic(md.getModifiers())
+                            && md.getParamCount() == 0
+                            && md.getReturnType().equals("void")) {
+                        boolean usesRecorderField = false;
+                        for (var uf : md.getUsingFields()) {
+                            if (uf.getField().getType().getName().equals(recorderTypeName)) {
+                                usesRecorderField = true;
+                                break;
+                            }
+                        }
+                        if (usesRecorderField) {
+                            Method m = md.getMethodInstance(classLoader);
+                            m.setAccessible(true);
+                            return m;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+        return null;
+    }
+
+    public synchronized static Field findVoiceDurationField(ClassLoader classLoader, Method setDurationMethod) {
+        try {
+            var methodData = dexkit.getMethodData(setDurationMethod);
+            if (methodData != null) {
+                for (var uf : methodData.getUsingFields()) {
+                    if (uf.getField().getType().getName().equals("long")) {
+                        Field f = uf.getField().getFieldInstance(classLoader);
+                        if (!Modifier.isStatic(f.getModifiers())) {
+                            f.setAccessible(true);
+                            return f;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+        return null;
+    }
+
+    public synchronized static Method findVoiceGetPreviewStateMethod(ClassLoader classLoader, Class<?> delegateClass, String recorderTypeName, Class<?> stateSuperClass) {
+        try {
+            var recorderClassData = dexkit.getClassData(recorderTypeName);
+            if (recorderClassData != null) {
+                for (var md : recorderClassData.getMethods()) {
+                    for (var inv : md.getInvokes()) {
+                        if (inv.getClassName().equals(delegateClass.getName())) {
+                            try {
+                                Method targetMethod = delegateClass.getDeclaredMethod(inv.getName(), delegateClass);
+                                if (Modifier.isStatic(targetMethod.getModifiers())
+                                        && stateSuperClass.isAssignableFrom(targetMethod.getReturnType())) {
+                                    targetMethod.setAccessible(true);
+                                    return targetMethod;
+                                }
+                            } catch (Throwable ignored) {}
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+        return null;
+    }
+
+    // --- PhoneNumberUtil Unobfuscation ---
+
+    public synchronized static Class<?> loadPhoneNumberUtilClass(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getClass(classLoader, () -> {
+            Class<?> cls = findFirstClassUsingStrings(classLoader, StringMatchType.Equals,
+                    "invalid metadata (country calling code was mapped to the non-geo entity as well as specific region(s))");
+            if (cls == null) {
+                cls = findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "PhoneNumberUtil");
+            }
+            if (cls == null) {
+                throw new ClassNotFoundException("PhoneNumberUtil class not found");
+            }
+            return cls;
+        });
+    }
+
+    public synchronized static Method loadPhoneNumberUtilGetInstance(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
+            Class<?> clazz = loadPhoneNumberUtilClass(classLoader);
+            for (Method m : clazz.getDeclaredMethods()) {
+                if (Modifier.isStatic(m.getModifiers())
+                        && m.getParameterCount() == 0
+                        && m.getReturnType().equals(clazz)) {
+                    return m;
+                }
+            }
+            throw new NoSuchMethodError("PhoneNumberUtil.getInstance method not found");
+        });
+    }
+
+    public synchronized static Method loadPhoneNumberUtilParse(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
+            Class<?> clazz = loadPhoneNumberUtilClass(classLoader);
+            for (Method m : clazz.getDeclaredMethods()) {
+                if (m.getParameterCount() == 2
+                        && m.getParameterTypes()[0].equals(String.class)
+                        && m.getParameterTypes()[1].equals(String.class)
+                        && !m.getReturnType().equals(void.class)
+                        && !m.getReturnType().getName().startsWith("java.")) {
+                    return m;
+                }
+            }
+            throw new NoSuchMethodError("PhoneNumberUtil.parse method not found");
+        });
+    }
+
+    public synchronized static Method loadPhoneNumberUtilIsValidNumber(ClassLoader classLoader) throws Exception {
+        return UnobfuscatorCache.getInstance().getMethod(classLoader, () -> {
+            Class<?> clazz = loadPhoneNumberUtilClass(classLoader);
+            Method parseMethod = loadPhoneNumberUtilParse(classLoader);
+            Class<?> phoneNumberClass = parseMethod.getReturnType();
+            
+            List<Method> boolMethods = new ArrayList<>();
+            for (Method m : clazz.getDeclaredMethods()) {
+                if (m.getParameterCount() == 1
+                        && m.getParameterTypes()[0].equals(phoneNumberClass)
+                        && m.getReturnType().equals(boolean.class)) {
+                    boolMethods.add(m);
+                }
+            }
+            
+            for (Method m : boolMethods) {
+                if (m.getName().equals("A0R") || m.getName().toLowerCase().contains("isvalid")) {
+                    return m;
+                }
+            }
+            if (!boolMethods.isEmpty()) {
+                return boolMethods.get(boolMethods.size() - 1);
+            }
+            throw new NoSuchMethodError("PhoneNumberUtil.isValidNumber method not found");
+        });
+    }
+}

@@ -15,6 +15,17 @@ import com.waenhancer.activities.ContactPickerActivity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import android.content.ContextWrapper;
+import android.os.Parcelable;
+import com.waenhancer.xposed.core.WppCore;
+import com.waenhancer.xposed.features.others.ActivityController;
+import com.waenhancer.xposed.utils.ReflectionUtils;
+import de.robv.android.xposed.XposedBridge;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ContactPickerPreference extends Preference implements Preference.OnPreferenceClickListener {
 
@@ -40,10 +51,10 @@ public class ContactPickerPreference extends Preference implements Preference.On
         init(context, attrs);
     }
 
-    public static final java.util.Map<String, java.lang.ref.WeakReference<ContactPickerPreference>> activePreferences = new java.util.concurrent.ConcurrentHashMap<>();
+    public static final Map<String, WeakReference<ContactPickerPreference>> activePreferences = new ConcurrentHashMap<>();
 
     public static void updatePreferenceValue(String key, ArrayList<String> contacts) {
-        java.lang.ref.WeakReference<ContactPickerPreference> ref = activePreferences.get(key);
+        WeakReference<ContactPickerPreference> ref = activePreferences.get(key);
         if (ref != null) {
             ContactPickerPreference pref = ref.get();
             if (pref != null) {
@@ -71,11 +82,11 @@ public class ContactPickerPreference extends Preference implements Preference.On
 
     private Activity getActivityContext() {
         Context context = getContext();
-        while (context instanceof android.content.ContextWrapper) {
+        while (context instanceof ContextWrapper) {
             if (context instanceof Activity) {
                 return (Activity) context;
             }
-            context = ((android.content.ContextWrapper) context).getBaseContext();
+            context = ((ContextWrapper) context).getBaseContext();
         }
         return null;
     }
@@ -89,7 +100,7 @@ public class ContactPickerPreference extends Preference implements Preference.On
 
         if (activity.getPackageName().contains("whatsapp")) {
             try {
-                Class<?> statusDistributionClass = com.waenhancer.xposed.features.others.ActivityController.getStatusDistributionClass();
+                Class<?> statusDistributionClass = ActivityController.getStatusDistributionClass();
                 if (statusDistributionClass != null) {
                     Intent intent = new Intent();
                     intent.setClassName(activity.getPackageName(),
@@ -105,7 +116,7 @@ public class ContactPickerPreference extends Preference implements Preference.On
                                 if (!jidStr.contains("@")) {
                                     jidStr = jidStr + "@s.whatsapp.net";
                                 }
-                                Object jid = com.waenhancer.xposed.core.WppCore.createUserJid(jidStr);
+                                Object jid = WppCore.createUserJid(jidStr);
                                 if (jid != null) {
                                     listContacts.add(jid);
                                 }
@@ -113,24 +124,24 @@ public class ContactPickerPreference extends Preference implements Preference.On
                         }
                     }
 
-                    java.lang.reflect.Constructor<?> constructor = com.waenhancer.xposed.utils.ReflectionUtils.findConstructorUsingFilter(statusDistributionClass,
+                    Constructor<?> constructor = ReflectionUtils.findConstructorUsingFilter(statusDistributionClass,
                             c -> c.getParameterCount() > 5);
-                    Object[] params = com.waenhancer.xposed.utils.ReflectionUtils.initArray(constructor.getParameterTypes());
-                    var lists = com.waenhancer.xposed.utils.ReflectionUtils.findClassesOfType(constructor.getParameterTypes(), java.util.List.class);
+                    Object[] params = ReflectionUtils.initArray(constructor.getParameterTypes());
+                    var lists = ReflectionUtils.findClassesOfType(constructor.getParameterTypes(), List.class);
                     for (int i = 0; i < lists.size(); i++) {
                         params[lists.get(i).first] = new ArrayList<>();
                     }
                     params[lists.get(0).first] = listContacts;
-                    android.os.Parcelable instance = (android.os.Parcelable) constructor.newInstance(params);
+                    Parcelable instance = (Parcelable) constructor.newInstance(params);
                     intent.putExtra("status_distribution", instance);
 
-                    com.waenhancer.xposed.features.others.ActivityController.setPickingKey(getKey());
+                    ActivityController.setPickingKey(getKey());
 
                     activity.startActivityForResult(intent, REQUEST_CONTACT_PICKER);
                     return true;
                 }
             } catch (Exception e) {
-                de.robv.android.xposed.XposedBridge.log("[WaEnhancerX] Failed to launch WhatsApp contact picker: " + e.getMessage());
+                XposedBridge.log("[WaEnhancerX] Failed to launch WhatsApp contact picker: " + e.getMessage());
             }
         }
 
@@ -164,7 +175,7 @@ public class ContactPickerPreference extends Preference implements Preference.On
         }
 
         if (getKey() != null) {
-            activePreferences.put(getKey(), new java.lang.ref.WeakReference<>(this));
+            activePreferences.put(getKey(), new WeakReference<>(this));
         }
     }
 

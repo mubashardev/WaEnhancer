@@ -635,6 +635,38 @@
                             android:alpha="0.5"
                             android:background="?attr/colorOutlineVariant" />
 
+                        <!-- Xposed / LSPosed Framework -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingVertical="12dp">
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/xposed_version_label"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Xposed/LSPosed Version"
+                                android:textAppearance="?attr/textAppearanceBodyMedium"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:id="@+id/xposed_version"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textAppearance="?attr/textAppearanceBodyMedium"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:alpha="0.5"
+                            android:background="?attr/colorOutlineVariant" />
+
                         <!-- WhatsApp Version -->
                         <LinearLayout
                             android:id="@+id/wpp_version_row"
@@ -703,7 +735,7 @@
                                     android:minWidth="0dp"
                                     android:paddingHorizontal="8dp"
                                     android:paddingVertical="4dp"
-                                    android:text="Why?"
+                                    android:text="Solve"
                                     android:textColor="?attr/colorError"
                                     android:textSize="12sp"
                                     android:visibility="gone" />
@@ -784,7 +816,7 @@
                                     android:minWidth="0dp"
                                     android:paddingHorizontal="8dp"
                                     android:paddingVertical="4dp"
-                                    android:text="Why?"
+                                    android:text="Solve"
                                     android:textColor="?attr/colorError"
                                     android:textSize="12sp"
                                     android:visibility="gone" />

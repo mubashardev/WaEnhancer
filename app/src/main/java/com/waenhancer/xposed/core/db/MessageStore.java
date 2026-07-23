@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.robv.android.xposed.XposedBridge;
+import android.text.TextUtils;
 
 public class MessageStore {
 
@@ -193,7 +194,7 @@ public class MessageStore {
         try {
             if (sqLiteDatabase == null) return;
             if (sqLiteDatabase.isReadOnly()) {
-                XposedBridge.log("Cannot execute SQL because database is opened in read-only mode: " + sql);
+                // XposedBridge.log("Cannot execute SQL because database is opened in read-only mode: " + sql);
                 return;
             }
             sqLiteDatabase.execSQL(sql);
@@ -254,7 +255,7 @@ public class MessageStore {
 
     public synchronized MessageInfo getFirstMessageInfoByChatRawJid(String rawJid) {
         SQLiteDatabase db = getDatabase();
-        if (db == null || android.text.TextUtils.isEmpty(rawJid)) {
+        if (db == null || TextUtils.isEmpty(rawJid)) {
             return null;
         }
 

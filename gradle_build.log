@@ -1,0 +1,344 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.13/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+WaEnhancerX: Private pro submodule detected — building with pro features.
+> Task :api:preBuild UP-TO-DATE
+> Task :pro:preBuild UP-TO-DATE
+> Task :api:preDebugBuild UP-TO-DATE
+> Task :pro:preDebugBuild UP-TO-DATE
+> Task :pro:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :pro:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :api:checkDebugAarMetadata
+> Task :api:mergeDebugJniLibFolders
+> Task :api:mergeDebugNativeLibs NO-SOURCE
+> Task :api:stripDebugDebugSymbols NO-SOURCE
+> Task :api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :api:copyDebugJniLibsProjectAndLocalJars
+> Task :api:generateDebugResValues
+> Task :api:generateDebugResources
+> Task :api:packageDebugResources
+> Task :api:processDebugNavigationResources
+> Task :api:parseDebugLocalResources
+> Task :api:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :api:mergeDebugShaders
+> Task :api:compileDebugShaders NO-SOURCE
+> Task :api:generateDebugAssets UP-TO-DATE
+> Task :api:mergeDebugAssets
+> Task :api:prepareDebugArtProfile UP-TO-DATE
+> Task :api:javaPreCompileDebug
+> Task :api:prepareLintJarForPublish UP-TO-DATE
+> Task :api:generateDebugRFile
+> Task :api:compileDebugKotlin NO-SOURCE
+> Task :api:processDebugManifest
+> Task :pro:checkDebugAarMetadata
+> Task :pro:processDebugNavigationResources
+> Task :pro:generateDebugResValues
+> Task :api:extractDebugAnnotations
+> Task :pro:compileDebugNavigationResources
+> Task :pro:mapDebugSourceSetPaths
+> Task :pro:generateDebugResources
+> Task :api:compileDebugJavaWithJavac
+> Task :api:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :api:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :api:processDebugJavaRes NO-SOURCE
+> Task :api:preReleaseBuild UP-TO-DATE
+> Task :api:writeDebugAarMetadata
+> Task :api:checkReleaseAarMetadata
+> Task :api:mergeReleaseJniLibFolders
+> Task :api:mergeReleaseNativeLibs NO-SOURCE
+> Task :api:stripReleaseDebugSymbols NO-SOURCE
+> Task :api:copyReleaseJniLibsProjectAndLocalJars
+> Task :api:generateReleaseResValues
+> Task :api:extractDeepLinksForAarRelease
+> Task :api:generateReleaseResources
+> Task :api:packageReleaseResources
+> Task :api:processReleaseNavigationResources
+> Task :api:mergeDebugJavaResource
+> Task :api:parseReleaseLocalResources
+> Task :api:syncDebugLibJars
+> Task :api:bundleDebugAar
+> Task :api:assembleDebug
+> Task :api:mergeReleaseShaders
+> Task :api:compileReleaseShaders NO-SOURCE
+> Task :api:generateReleaseAssets UP-TO-DATE
+> Task :api:generateReleaseRFile
+> Task :api:mergeReleaseAssets
+> Task :api:compileReleaseKotlin NO-SOURCE
+> Task :api:extractReleaseAnnotations
+> Task :api:javaPreCompileRelease
+> Task :api:prepareReleaseArtProfile
+> Task :api:compileReleaseJavaWithJavac
+> Task :api:mergeReleaseGeneratedProguardFiles
+> Task :api:mergeReleaseConsumerProguardFiles
+> Task :api:processReleaseJavaRes NO-SOURCE
+> Task :api:processReleaseManifest
+> Task :api:mergeReleaseJavaResource
+> Task :api:writeReleaseAarMetadata
+> Task :api:syncReleaseLibJars
+> Task :api:bundleReleaseAar
+> Task :api:mapReleaseSourceSetPaths
+> Task :api:mergeReleaseResources
+> Task :api:bundleDebugLocalLintAar
+> Task :api:bundleLibRuntimeToJarDebug
+> Task :api:createFullJarDebug
+> Task :api:preDebugAndroidTestBuild UP-TO-DATE
+> Task :api:generateDebugAndroidTestResValues
+> Task :api:writeDebugLintModelMetadata
+> Task :api:generateDebugAndroidTestLintModel
+> Task :api:extractProguardFiles
+> Task :api:generateDebugLintReportModel
+> Task :api:preDebugUnitTestBuild UP-TO-DATE
+> Task :api:generateDebugUnitTestLintModel
+> Task :api:bundleLibCompileToJarDebug
+> Task :api:generateDebugUnitTestStubRFile
+> Task :api:compileDebugUnitTestKotlin NO-SOURCE
+> Task :api:javaPreCompileDebugUnitTest
+> Task :api:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :api:processDebugUnitTestJavaRes NO-SOURCE
+> Task :api:testDebugUnitTest NO-SOURCE
+> Task :api:bundleLibRuntimeToJarRelease
+> Task :api:bundleLibCompileToJarRelease
+> Task :api:preReleaseUnitTestBuild UP-TO-DATE
+> Task :api:generateReleaseUnitTestStubRFile
+> Task :api:compileReleaseUnitTestKotlin NO-SOURCE
+> Task :api:javaPreCompileReleaseUnitTest
+> Task :api:compileReleaseUnitTestJavaWithJavac NO-SOURCE
+> Task :api:processReleaseUnitTestJavaRes NO-SOURCE
+> Task :api:testReleaseUnitTest NO-SOURCE
+> Task :api:test UP-TO-DATE
+> Task :api:generateReleaseLintVitalModel
+> Task :api:verifyReleaseResources
+> Task :api:assembleRelease
+> Task :api:assemble
+> Task :pro:packageDebugResources
+> Task :pro:parseDebugLocalResources
+> Task :pro:createDebugCompatibleScreenManifests
+> Task :pro:extractDeepLinksDebug
+> Task :pro:mergeDebugResources
+> Task :api:createFullJarRelease
+> Task :api:generateReleaseLintModel
+> Task :api:bundleReleaseLocalLintAar
+> Task :api:writeReleaseLintModelMetadata
+> Task :api:generateDebugLintModel
+
+> Task :pro:processDebugMainManifest
+package="com.waenhancer.pro" found in source AndroidManifest.xml: /Users/mubasharhussain/Developer/Android Projects/WaEnhancer/app/src/pro/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.waenhancer.pro" from the source AndroidManifest.xml: /Users/mubasharhussain/Developer/Android Projects/WaEnhancer/app/src/pro/AndroidManifest.xml.
+
+> Task :pro:processDebugManifest
+> Task :pro:javaPreCompileDebug
+> Task :pro:processDebugManifestForPackage
+> Task :pro:mergeDebugShaders
+> Task :pro:compileDebugShaders NO-SOURCE
+> Task :pro:generateDebugAssets UP-TO-DATE
+> Task :pro:mergeDebugAssets
+> Task :pro:compressDebugAssets
+> Task :pro:desugarDebugFileDependencies
+> Task :pro:checkDebugDuplicateClasses
+> Task :pro:processDebugResources
+> Task :pro:compileDebugKotlin NO-SOURCE
+> Task :api:lintAnalyzeDebugAndroidTest
+> Task :api:lintAnalyzeDebugUnitTest
+> Task :api:lintVitalAnalyzeRelease
+
+> Task :pro:compileDebugJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :api:lintAnalyzeDebug
+> Task :api:lintReportDebug
+> Task :api:lintDebug
+> Task :api:lint
+> Task :api:check
+> Task :api:build
+> Task :pro:dexBuilderDebug
+> Task :pro:processDebugJavaRes NO-SOURCE
+> Task :pro:mergeDebugGlobalSynthetics
+> Task :pro:mergeLibDexDebug
+
+> Task :pro:configureCMakeDebug[arm64-v8a]
+[CXX5304] This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+[CXX5304] This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+
+> Task :pro:mergeProjectDexDebug
+> Task :pro:mergeDebugJavaResource
+> Task :pro:buildCMakeDebug[arm64-v8a]
+> Task :pro:configureCMakeDebug[armeabi-v7a]
+> Task :pro:buildCMakeDebug[armeabi-v7a]
+> Task :pro:configureCMakeDebug[x86]
+> Task :pro:mergeExtDexDebug
+> Task :pro:buildCMakeDebug[x86]
+> Task :pro:configureCMakeDebug[x86_64]
+> Task :pro:buildCMakeDebug[x86_64]
+> Task :pro:mergeDebugJniLibFolders
+> Task :pro:validateSigningDebug
+> Task :pro:writeDebugAppMetadata
+> Task :pro:writeDebugSigningConfigVersions
+> Task :pro:preReleaseBuild UP-TO-DATE
+> Task :pro:mergeDebugNativeLibs
+> Task :pro:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :pro:stripDebugDebugSymbols
+> Task :pro:buildCMakeRelWithDebInfo[arm64-v8a]
+> Task :pro:configureCMakeRelWithDebInfo[armeabi-v7a]
+> Task :pro:buildCMakeRelWithDebInfo[armeabi-v7a]
+> Task :pro:configureCMakeRelWithDebInfo[x86]
+> Task :pro:buildCMakeRelWithDebInfo[x86]
+> Task :pro:configureCMakeRelWithDebInfo[x86_64]
+> Task :pro:buildCMakeRelWithDebInfo[x86_64]
+> Task :pro:mergeReleaseJniLibFolders
+> Task :pro:mergeReleaseNativeLibs
+> Task :pro:packageDebug
+> Task :pro:createDebugApkListingFileRedirect
+> Task :pro:assembleDebug
+> Task :pro:stripReleaseDebugSymbols
+> Task :pro:buildKotlinToolingMetadata
+> Task :pro:checkReleaseDuplicateClasses
+> Task :pro:processReleaseNavigationResources
+> Task :pro:compileReleaseNavigationResources
+> Task :pro:checkReleaseAarMetadata
+> Task :pro:generateReleaseResValues
+> Task :pro:mapReleaseSourceSetPaths
+> Task :pro:generateReleaseResources
+> Task :pro:extractReleaseNativeSymbolTables
+> Task :pro:packageReleaseResources
+> Task :pro:createReleaseCompatibleScreenManifests
+> Task :pro:extractDeepLinksRelease
+> Task :pro:parseReleaseLocalResources
+
+> Task :pro:processReleaseMainManifest
+package="com.waenhancer.pro" found in source AndroidManifest.xml: /Users/mubasharhussain/Developer/Android Projects/WaEnhancer/app/src/pro/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.waenhancer.pro" from the source AndroidManifest.xml: /Users/mubasharhussain/Developer/Android Projects/WaEnhancer/app/src/pro/AndroidManifest.xml.
+
+> Task :pro:processReleaseManifest
+> Task :pro:javaPreCompileRelease
+> Task :pro:desugarReleaseFileDependencies
+> Task :pro:mergeReleaseStartupProfile
+> Task :pro:mergeReleaseNativeDebugMetadata
+> Task :pro:mergeReleaseResources
+> Task :pro:mergeReleaseShaders
+> Task :pro:compileReleaseShaders NO-SOURCE
+> Task :pro:generateReleaseAssets UP-TO-DATE
+> Task :pro:mergeReleaseArtProfile
+> Task :pro:mergeReleaseAssets
+> Task :pro:compressReleaseAssets
+> Task :pro:extractReleaseVersionControlInfo
+> Task :pro:extractProguardFiles
+> Task :pro:collectReleaseDependencies
+> Task :pro:sdkReleaseDependencyData
+> Task :pro:writeReleaseAppMetadata
+> Task :pro:writeReleaseSigningConfigVersions
+> Task :pro:preDebugAndroidTestBuild SKIPPED
+> Task :pro:generateDebugAndroidTestResValues
+> Task :pro:bundleDebugClassesToCompileJar
+> Task :pro:generateDebugLintReportModel
+> Task :pro:generateDebugAndroidTestLintModel
+> Task :pro:preDebugUnitTestBuild UP-TO-DATE
+> Task :pro:generateDebugUnitTestLintModel
+> Task :pro:processReleaseManifestForPackage
+> Task :pro:bundleDebugClassesToRuntimeJar
+> Task :pro:compileDebugUnitTestKotlin NO-SOURCE
+> Task :pro:javaPreCompileDebugUnitTest
+> Task :pro:lintAnalyzeDebugUnitTest
+> Task :pro:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :pro:lintAnalyzeDebugAndroidTest
+> Task :pro:processDebugUnitTestJavaRes NO-SOURCE
+> Task :pro:testDebugUnitTest NO-SOURCE
+> Task :pro:preReleaseUnitTestBuild UP-TO-DATE
+> Task :pro:javaPreCompileReleaseUnitTest
+> Task :pro:processReleaseResources
+> Task :pro:compileReleaseKotlin NO-SOURCE
+> Task :pro:mergeExtDexRelease
+
+> Task :pro:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :pro:dexBuilderRelease
+> Task :pro:mergeReleaseGlobalSynthetics
+> Task :pro:generateReleaseLintVitalReportModel
+> Task :pro:processReleaseJavaRes
+> Task :pro:optimizeReleaseResources
+> Task :pro:bundleReleaseClassesToRuntimeJar
+> Task :pro:bundleReleaseClassesToCompileJar
+> Task :pro:compileReleaseUnitTestKotlin NO-SOURCE
+> Task :pro:compileReleaseUnitTestJavaWithJavac NO-SOURCE
+> Task :pro:processReleaseUnitTestJavaRes NO-SOURCE
+> Task :pro:testReleaseUnitTest NO-SOURCE
+> Task :pro:test UP-TO-DATE
+> Task :pro:mergeReleaseJavaResource
+> Task :pro:mergeDexRelease
+> Task :pro:compileReleaseArtProfile
+> Task :pro:lintVitalAnalyzeRelease
+> Task :pro:lintVitalReportRelease SKIPPED
+> Task :pro:lintVitalRelease SKIPPED
+> Task :pro:packageRelease
+> Task :pro:createReleaseApkListingFileRedirect
+> Task :pro:assembleRelease
+> Task :pro:assemble
+> Task :pro:lintAnalyzeDebug
+
+> Task :pro:lintReportDebug
+Wrote HTML report to file:///Users/mubasharhussain/Developer/Android%20Projects/WaEnhancer/app/src/pro/build/reports/lint-results-debug.html
+Lint found 1 error, 148 warnings and 1 hint. First failure:
+/Users/mubasharhussain/Developer/Android Projects/WaEnhancer/app/src/pro/java/com/waenhancer/pro/StatusSplitter.java:775: Error: Must be one or more of: MediaCodec.BUFFER_FLAG_SYNC_FRAME, MediaCodec.BUFFER_FLAG_KEY_FRAME, MediaCodec.BUFFER_FLAG_CODEC_CONFIG, MediaCodec.BUFFER_FLAG_END_OF_STREAM, MediaCodec.BUFFER_FLAG_PARTIAL_FRAME, MediaCodec.BUFFER_FLAG_DECODE_ONLY, but could be MediaExtractor.SAMPLE_FLAG_SYNC, MediaExtractor.SAMPLE_FLAG_ENCRYPTED, MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME [WrongConstant]
+                info.flags = extractor.getSampleFlags();
+                             ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+> Task :pro:lintDebug FAILED
+Lint found 1 error, 148 warnings, 1 hint. First failure:
+
+/Users/mubasharhussain/Developer/Android Projects/WaEnhancer/app/src/pro/java/com/waenhancer/pro/StatusSplitter.java:775: Error: Must be one or more of: MediaCodec.BUFFER_FLAG_SYNC_FRAME, MediaCodec.BUFFER_FLAG_KEY_FRAME, MediaCodec.BUFFER_FLAG_CODEC_CONFIG, MediaCodec.BUFFER_FLAG_END_OF_STREAM, MediaCodec.BUFFER_FLAG_PARTIAL_FRAME, MediaCodec.BUFFER_FLAG_DECODE_ONLY, but could be MediaExtractor.SAMPLE_FLAG_SYNC, MediaExtractor.SAMPLE_FLAG_ENCRYPTED, MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME [WrongConstant]
+                info.flags = extractor.getSampleFlags();
+                             ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "WrongConstant":
+   Ensures that when parameter in a method only allows a specific set of
+   constants, calls obey those rules.
+
+
+The full lint text report is located at:
+  /Users/mubasharhussain/Developer/Android Projects/WaEnhancer/app/src/pro/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+
+[Incubating] Problems report is available at: file:///Users/mubasharhussain/Developer/Android%20Projects/WaEnhancer/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':pro:lintDebug'.
+> Lint found errors in the project; aborting build.
+  
+  Fix the issues identified by lint, or create a baseline to see only new errors.
+  To create a baseline, run `gradlew updateLintBaseline` after adding the following to the module's build.gradle file:
+  ```
+  android {
+      lint {
+          baseline = file("lint-baseline.xml")
+      }
+  }
+  ```
+  For more details, see https://developer.android.com/studio/write/lint#snapshot
+  
+  Lint found 1 error, 148 warnings, 1 hint. First failure:
+  
+  /Users/mubasharhussain/Developer/Android Projects/WaEnhancer/app/src/pro/java/com/waenhancer/pro/StatusSplitter.java:775: Error: Must be one or more of: MediaCodec.BUFFER_FLAG_SYNC_FRAME, MediaCodec.BUFFER_FLAG_KEY_FRAME, MediaCodec.BUFFER_FLAG_CODEC_CONFIG, MediaCodec.BUFFER_FLAG_END_OF_STREAM, MediaCodec.BUFFER_FLAG_PARTIAL_FRAME, MediaCodec.BUFFER_FLAG_DECODE_ONLY, but could be MediaExtractor.SAMPLE_FLAG_SYNC, MediaExtractor.SAMPLE_FLAG_ENCRYPTED, MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME [WrongConstant]
+                  info.flags = extractor.getSampleFlags();
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+     Explanation for issues of type "WrongConstant":
+     Ensures that when parameter in a method only allows a specific set of
+     constants, calls obey those rules.
+  
+  
+  The full lint text report is located at:
+    /Users/mubasharhussain/Developer/Android Projects/WaEnhancer/app/src/pro/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 31s
+193 actionable tasks: 188 executed, 5 up-to-date

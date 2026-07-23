@@ -49,7 +49,7 @@
             android:orientation="vertical"
             android:paddingHorizontal="20dp"
             android:paddingTop="16dp"
-            android:paddingBottom="80dp">
+            android:paddingBottom="100dp">
 
             <!-- Summary Header Card -->
             <com.google.android.material.card.MaterialCardView
@@ -159,4 +159,17 @@
         </LinearLayout>
     </rikka.widget.borderview.BorderNestedScrollView>
 
+    <!-- FAB: only visible when customize_supported_versions is enabled -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fab_add_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="20dp"
+        android:text="@string/add_version"
+        android:visibility="gone"
+        app:icon="@drawable/ic_add"
+        app:layout_dodgeInsetEdges="bottom" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

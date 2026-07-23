@@ -37,6 +37,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import android.content.SharedPreferences;
+import com.waenhancer.ui.helpers.BottomSheetHelper;
 
 public class FileSelectPreference extends Preference implements Preference.OnPreferenceClickListener,
         FilePicker.OnFilePickedListener, FilePicker.OnUriPickedListener {
@@ -62,7 +64,7 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     private void showAlertPermission() {
-        com.waenhancer.ui.helpers.BottomSheetHelper.showConfirmation(
+        BottomSheetHelper.showConfirmation(
                 getContext(),
                 getContext().getString(R.string.storage_permission),
                 getContext().getString(R.string.permission_storage),
@@ -182,7 +184,7 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
         String message = getContext().getString(R.string.folder_picker_description) + "\n\n"
                 + getContext().getString(R.string.folder_picker_current, currentFolder);
 
-        com.waenhancer.ui.helpers.BottomSheetHelper.showConfirmation(
+        BottomSheetHelper.showConfirmation(
                 getContext(),
                 getContext().getString(R.string.folder_picker_title),
                 message,
@@ -314,8 +316,8 @@ public class FileSelectPreference extends Preference implements Preference.OnPre
     }
 
     @NonNull
-    private android.content.SharedPreferences getSafeSharedPreferences() {
-        android.content.SharedPreferences prefs = getSharedPreferences();
+    private SharedPreferences getSafeSharedPreferences() {
+        SharedPreferences prefs = getSharedPreferences();
         if (prefs != null) {
             return prefs;
         }

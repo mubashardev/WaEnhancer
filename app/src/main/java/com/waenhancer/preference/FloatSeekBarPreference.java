@@ -10,6 +10,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceViewHolder;
 
 import com.waenhancer.R;
+import com.google.android.material.slider.Slider;
 public class FloatSeekBarPreference extends Preference {
 
     private float minValue;
@@ -17,7 +18,7 @@ public class FloatSeekBarPreference extends Preference {
     private float valueSpacing;
     private String format;
 
-    private com.google.android.material.slider.Slider slider;
+    private Slider slider;
     private SeekBar seekBar;
     private TextView textView;
 
@@ -83,7 +84,7 @@ public class FloatSeekBarPreference extends Preference {
         seekBar = null;
 
         var seekbarView = holder.findViewById(R.id.seekbar);
-        if (seekbarView instanceof com.google.android.material.slider.Slider materialSlider) {
+        if (seekbarView instanceof Slider materialSlider) {
             slider = materialSlider;
         } else if (seekbarView instanceof SeekBar legacySeekBar) {
             seekBar = legacySeekBar;
@@ -138,13 +139,13 @@ public class FloatSeekBarPreference extends Preference {
         slider.clearOnSliderTouchListeners();
 
         slider.addOnChangeListener((slider, value, fromUser) -> textView.setText(String.format(format, normalizeValue(value))));
-        slider.addOnSliderTouchListener(new com.google.android.material.slider.Slider.OnSliderTouchListener() {
+        slider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
-            public void onStartTrackingTouch(com.google.android.material.slider.Slider slider) {
+            public void onStartTrackingTouch(Slider slider) {
             }
 
             @Override
-            public void onStopTrackingTouch(com.google.android.material.slider.Slider slider) {
+            public void onStopTrackingTouch(Slider slider) {
                 float value = normalizeValue(slider.getValue());
                 newValue = value;
                 persistFloat(value);

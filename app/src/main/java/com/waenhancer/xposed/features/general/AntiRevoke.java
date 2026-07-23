@@ -35,6 +35,16 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
+import android.view.View;
+import android.widget.ListView;
+import androidx.recyclerview.widget.RecyclerView;
+import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.utils.DesignUtils;
+import java.util.HashSet;
 
 public class AntiRevoke extends Feature {
 
@@ -104,11 +114,11 @@ public class AntiRevoke extends Feature {
     private static Set<String> getRevokedMessagesForJid(FMessageWpp fMessage) {
         String stripJID = fMessage.getKey().remoteJid.getPhoneNumber();
         if (stripJID == null)
-            return Collections.synchronizedSet(new java.util.HashSet<>());
+            return Collections.synchronizedSet(new HashSet<>());
         return messageRevokedMap.computeIfAbsent(stripJID, k -> {
             var messages = DelMessageStore.getInstance(Utils.getApplication()).getMessagesByJid(k);
             if (messages == null)
-                return Collections.synchronizedSet(new java.util.HashSet<>());
+                return Collections.synchronizedSet(new HashSet<>());
             return Collections.synchronizedSet(messages);
         });
     }
@@ -117,16 +127,16 @@ public class AntiRevoke extends Feature {
     public void doHook() throws Exception {
 
         var antiRevokeMessageMethod = Unobfuscator.loadAntiRevokeMessageMethod(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(antiRevokeMessageMethod));
+        /* Log removed */
 
         var unknownStatusPlaybackMethod = Unobfuscator.loadUnknownStatusPlaybackMethod(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(unknownStatusPlaybackMethod));
+        /* Log removed */
 
         Class<?> statusPlaybackClass = Unobfuscator.loadStatusPlaybackViewClass(classLoader);
-        logDebug(statusPlaybackClass);
+        /* Log removed */
 
         var antiRevokeFStatusMethod = Unobfuscator.loadAntiRevokeFStatusMethod(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(antiRevokeFStatusMethod));
+        /* Log removed */
 
         XposedBridge.hookMethod(antiRevokeFStatusMethod, new XC_MethodHook() {
             @Override
@@ -150,7 +160,7 @@ public class AntiRevoke extends Feature {
                 
                 Object fMessageObj = ReflectionUtils.getArg(param.args, FMessageWpp.TYPE, 0);
                 if (fMessageObj == null) {
-                    logDebug("FMessageObj is null in revoke!");
+                    /* Log removed */
                     return;
                 }
 
@@ -212,7 +222,7 @@ public class AntiRevoke extends Feature {
 
                 var textViews = ReflectionUtils.getFieldsByType(statusPlaybackClass, TextView.class);
                 if (textViews.isEmpty()) {
-                    log("Could not find TextView");
+                    /* Log removed */
                     return;
                 }
                 int dateId = Utils.getID("date", "id");
@@ -248,7 +258,7 @@ public class AntiRevoke extends Feature {
      * Since we can't undo the DELETE, we block the DELETE preemptively by checking if
      * from_me=0 for that row before allowing it.
      */
-    private final java.util.Set<String> recentDeletedIds = java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+    private final Set<String> recentDeletedIds = Collections.synchronizedSet(new HashSet<>());
 
     private void addAntiRevokeSqlHooks() {
         int antiRevokeValue = Integer.parseInt(prefs.getString("antirevoke", "0"));
@@ -261,7 +271,7 @@ public class AntiRevoke extends Feature {
             // HOOK 1: Block DELETE FROM message — this is step 1 of WhatsApp's revocation.
             // We block ALL deletes on the message table for non-self messages.
             // Normal "delete for me" uses a different code path (not raw SQL delete).
-            XposedBridge.hookAllMethods(android.database.sqlite.SQLiteDatabase.class, "delete", new XC_MethodHook() {
+            XposedBridge.hookAllMethods(SQLiteDatabase.class, "delete", new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) {
                     try {
@@ -278,8 +288,8 @@ public class AntiRevoke extends Feature {
                             // Check if this message is from_me=0 (not our own message)
                             // by querying the DB before the delete happens
                             try {
-                                android.database.sqlite.SQLiteDatabase db = (android.database.sqlite.SQLiteDatabase) param.thisObject;
-                                android.database.Cursor cursor = db.rawQuery(
+                                SQLiteDatabase db = (SQLiteDatabase) param.thisObject;
+                                Cursor cursor = db.rawQuery(
                                     "SELECT from_me, message_type, key_id, chat_row_id FROM message WHERE _id=?", 
                                     new String[]{msgId});
                                 if (cursor != null && cursor.moveToFirst()) {
@@ -301,7 +311,7 @@ public class AntiRevoke extends Feature {
                                             // The jid table has columns: _id, user, server, agent, device, type, raw_string
                                             // We need the 'user' column which contains the phone number
                                             String phoneNumber = null;
-                                            android.database.Cursor jidCursor = db.rawQuery(
+                                            Cursor jidCursor = db.rawQuery(
                                                 "SELECT j.user, j.raw_string FROM jid j " +
                                                 "INNER JOIN chat c ON c.jid_row_id = j._id " +
                                                 "WHERE c._id=?",
@@ -332,7 +342,7 @@ public class AntiRevoke extends Feature {
                                                     DelMessageStore.getInstance(Utils.getApplication())
                                                         .insertMessage(phoneNumber, keyId, now);
                                                     messageRevokedMap.computeIfAbsent(phoneNumber, k -> 
-                                                        Collections.synchronizedSet(new java.util.HashSet<>())).add(keyId);
+                                                        Collections.synchronizedSet(new HashSet<>())).add(keyId);
                                                 }
                                                 
                                                 ;
@@ -370,14 +380,14 @@ public class AntiRevoke extends Feature {
 
             // HOOK 2: Block INSERT of message_type=15 records (the "deleted" placeholder).
             // This is step 2 of WhatsApp's revocation — it inserts a new row with type=15.
-            XposedBridge.hookAllMethods(android.database.sqlite.SQLiteDatabase.class, "insertWithOnConflict", new XC_MethodHook() {
+            XposedBridge.hookAllMethods(SQLiteDatabase.class, "insertWithOnConflict", new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) {
                     try {
                         String table = (String) param.args[0];
                         if (!"message".equals(table)) return;
                         
-                        android.content.ContentValues cv = (android.content.ContentValues) param.args[2];
+                        ContentValues cv = (ContentValues) param.args[2];
                         if (cv == null) return;
                         
                         Integer msgType = cv.getAsInteger("message_type");
@@ -439,7 +449,7 @@ public class AntiRevoke extends Feature {
                 String colorStr = prefs.getString("deleted_message_color", "");
                 if (!colorStr.isEmpty()) {
                     try {
-                        customColor = android.graphics.Color.parseColor(colorStr);
+                        customColor = Color.parseColor(colorStr);
                     } catch (Exception parseException) {
                         customColor = Integer.parseInt(colorStr);
                     }
@@ -448,11 +458,11 @@ public class AntiRevoke extends Feature {
         }
 
         String messageID = null;
-        if (messageRevokedList.contains(key.messageID) || revokedKeyIds.containsKey(key.messageID) || com.waenhancer.xposed.core.db.DelMessageStore.getInstance(com.waenhancer.xposed.utils.Utils.getApplication()).getTimestampByMessageId(key.messageID) > 0) {
+        if (messageRevokedList.contains(key.messageID) || revokedKeyIds.containsKey(key.messageID) || DelMessageStore.getInstance(Utils.getApplication()).getTimestampByMessageId(key.messageID) > 0) {
             messageID = key.messageID;
         } else {
-            String originalKey = com.waenhancer.xposed.core.db.MessageStore.getInstance().getOriginalMessageKey(fMessage.getRowId());
-            if (originalKey != null && !originalKey.isEmpty() && (messageRevokedList.contains(originalKey) || revokedKeyIds.containsKey(originalKey) || com.waenhancer.xposed.core.db.DelMessageStore.getInstance(com.waenhancer.xposed.utils.Utils.getApplication()).getTimestampByMessageId(originalKey) > 0)) {
+            String originalKey = MessageStore.getInstance().getOriginalMessageKey(fMessage.getRowId());
+            if (originalKey != null && !originalKey.isEmpty() && (messageRevokedList.contains(originalKey) || revokedKeyIds.containsKey(originalKey) || DelMessageStore.getInstance(Utils.getApplication()).getTimestampByMessageId(originalKey) > 0)) {
                 messageID = originalKey;
             }
         }
@@ -466,7 +476,7 @@ public class AntiRevoke extends Feature {
                 var date = Objects.requireNonNull(DATE_FORMAT_THREAD_LOCAL.get()).format(new Date(timestamp));
                 dateTextView.getPaint().setUnderlineText(true);
                 dateTextView.setOnClickListener(v -> {
-                    String toastFormat = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.message_removed_on);
+                    String toastFormat = FeatureLoader.getModuleString(Utils.getApplication(), R.string.message_removed_on);
                     if (toastFormat == null || toastFormat.isEmpty() || !toastFormat.contains("%s")) {
                         toastFormat = "Deleted on: %s"; // Fallback
                     }
@@ -491,7 +501,7 @@ public class AntiRevoke extends Feature {
                 dateTextView.setText(newTextData);
                 XposedHelpers.setAdditionalInstanceField(dateTextView, "originalMessage", messageText);
             } else if (antirevokeValue == 2) {
-                var drawable = com.waenhancer.xposed.utils.DesignUtils.getDrawable(R.drawable.deleted);
+                var drawable = DesignUtils.getDrawable(R.drawable.deleted);
                 dateTextView.setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null);
                 dateTextView.setCompoundDrawablePadding(5);
             }
@@ -537,17 +547,17 @@ public class AntiRevoke extends Feature {
                             mConversation.runOnUiThread(() -> {
                                 if (mConversation.hasWindowFocus()) {
                                     // Fix shuttering: notify the RecyclerView adapter directly instead of restarting Activity
-                                    android.view.View list = mConversation.findViewById(android.R.id.list);
-                                    if (list instanceof androidx.recyclerview.widget.RecyclerView) {
-                                        androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) list;
+                                    View list = mConversation.findViewById(android.R.id.list);
+                                    if (list instanceof RecyclerView) {
+                                        RecyclerView rv = (RecyclerView) list;
                                         if (rv.getAdapter() != null) {
                                             rv.getAdapter().notifyDataSetChanged();
                                         }
-                                    } else if (list instanceof android.widget.ListView) {
-                                        ((android.widget.ListView) list).invalidateViews();
+                                    } else if (list instanceof ListView) {
+                                        ((ListView) list).invalidateViews();
                                     } else {
                                         // Fallback
-                                        android.view.View contentView = mConversation.getWindow().getDecorView().findViewById(android.R.id.content);
+                                        View contentView = mConversation.getWindow().getDecorView().findViewById(android.R.id.content);
                                         if (contentView != null) contentView.postInvalidate();
                                     }
                                 }
@@ -566,9 +576,9 @@ public class AntiRevoke extends Feature {
 
     private void showRevocationToast(FMessageWpp fMessage) {
         var jidAuthor = fMessage.getKey().remoteJid;
-        var messageSuffix = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.deleted_message);
+        var messageSuffix = FeatureLoader.getModuleString(Utils.getApplication(), R.string.deleted_message);
         if (jidAuthor.isStatus()) {
-            messageSuffix = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.deleted_status);
+            messageSuffix = FeatureLoader.getModuleString(Utils.getApplication(), R.string.deleted_status);
             jidAuthor = fMessage.getUserJid();
         }
         if (jidAuthor.userJid == null)

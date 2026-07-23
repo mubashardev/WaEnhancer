@@ -70,7 +70,7 @@ public class HideSeen extends Feature {
     }
 
     private void loadPreferences() {
-        ghostMode = WppCore.getPrivBoolean("ghostmode", false);
+        ghostMode = prefs.getBoolean("ghostmode_actual", false);
         hideRead = prefs.getBoolean("hideread", false);
         hideAudioSeen = prefs.getBoolean("hideaudioseen", false);
         hideOnceSeen = prefs.getBoolean("hideonceseen", false);
@@ -82,7 +82,7 @@ public class HideSeen extends Feature {
     private void hookSendReadReceiptJob() throws Exception {
         Method sendReadReceiptJobMethod = Unobfuscator.loadHideViewSendReadJob(classLoader);
         Class<?> sendJobClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "SendReadReceiptJob");
-        log(Unobfuscator.getMethodDescriptor(sendReadReceiptJobMethod));
+        /* Log removed */
 
         XposedBridge.hookMethod(sendReadReceiptJobMethod, new XC_MethodHook() {
             @Override

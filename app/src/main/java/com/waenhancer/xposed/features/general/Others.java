@@ -32,7 +32,7 @@ import com.waenhancer.xposed.utils.ReflectionUtils;
 import com.waenhancer.xposed.core.components.AlertDialogWpp;
 import com.waenhancer.R;
 import com.waenhancer.xposed.utils.Utils;
-
+import com.waenhancer.model.FilterItem;
 
 import org.json.JSONObject;
 import org.luckypray.dexkit.query.enums.StringMatchType;
@@ -48,40 +48,59 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
+import android.app.Instrumentation;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.ImageView;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import android.net.Uri;
 import java.io.File;
-import com.waenhancer.xposed.utils.AudioToOpusConverter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.function.Consumer;
+import org.json.JSONArray;
+import com.waenhancer.xposed.utils.ProHelper;
+import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.features.customization.SeparateGroup;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 
 public class Others extends Feature {
+
     private static final String DEVICE_SOURCE_SUFFIX_FIELD = "wae_device_source_suffix";
     private static final String DEVICE_SOURCE_GUARD_FIELD = "wae_device_source_guard";
 
-    /**
-     * Thread-local flag to suspend property overrides during non-HomeActivity onCreate.
-     * When true, hookProps() will skip all boolean/integer property overrides,
-     * letting WhatsApp use its default values for layout initialization.
-     * This prevents "Window feature must be requested before adding content" crashes
-     * in activities like ArchivedConversationsActivity.
-     */
-    private static volatile boolean sSuspendPropOverrides = false;
 
-    private static java.lang.reflect.Field cachedAbsViewField;
+
+    private static Field cachedAbsViewField;
     private static final Set<String> dumpedMessageIds = ConcurrentHashMap.newKeySet();
     private static final Set<String> dumpedMessageRowViews = ConcurrentHashMap.newKeySet();
     private static final String PRIMARY_DEVICE_EMOJI = " \uD83D\uDCF1";
     private static final String LINKED_DEVICE_EMOJI = " \uD83D\uDDA5\uFE0F";
     private static volatile boolean messageDeviceSourceConversationActive = false;
 
-    public static HashMap<Integer, Boolean> propsBoolean = new HashMap<>();
-    public static HashMap<Integer, Integer> propsInteger = new HashMap<>();
+    public static ConcurrentHashMap<Integer, Boolean> propsBoolean = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<Integer, Integer> propsInteger = new ConcurrentHashMap<>();
     private Properties properties;
 
     public Others(ClassLoader loader, SharedPreferences preferences) {
@@ -96,11 +115,9 @@ public class Others extends Feature {
         }
 
         // receivedIncomingTimestamp
-
         properties = Utils.getProperties(prefs, "custom_css", "custom_filters");
 
         var menuWIcons = prefs.getBoolean("menuwicon", false);
-        var newSettings = prefs.getBoolean("novaconfig", false);
         var filterChats = prefs.getString("chatfilter", "2");
         var filterSeen = prefs.getBoolean("filterseen", false);
         var status_style = Integer.parseInt(prefs.getString("status_style", "1"));
@@ -118,7 +135,7 @@ public class Others extends Feature {
         var igstatus = prefs.getBoolean("igstatus", false);
         var animationEmojis = prefs.getBoolean("animation_emojis", false);
         var disableProfileStatus = prefs.getBoolean("disable_profile_status", false);
-        var disableExpiration = prefs.getBoolean("disable_expiration", false);
+        var disableExpiration = prefs.getBoolean("disable_expiration", true);
         var disableAds = prefs.getBoolean("disable_ads", false);
 
         propsInteger.put(3877, oldStatus ? igstatus ? 2 : 0 : 2);
@@ -127,9 +144,7 @@ public class Others extends Feature {
         propsBoolean.put(11528, false);
 
         propsBoolean.put(4497, menuWIcons);
-        propsBoolean.put(4023, false);
-        propsBoolean.put(14862, newSettings);
-        propsInteger.put(18564, newSettings ? 1 : 0);
+        // propsBoolean.put(4023, false);
 
         propsBoolean.put(2889, floatingMenu);
 
@@ -175,7 +190,7 @@ public class Others extends Feature {
         propsBoolean.put(5625, true);  // Enable option to autodelete channels media
 
         propsBoolean.put(8643, true);  // Enable TextStatusComposerActivityV2
-//        propsBoolean.put(3403, true);  // Enable Sticker Suggestion
+       propsBoolean.put(3403, true);  // Enable Sticker Suggestion
         propsBoolean.put(8607, true);  // Enable Dialer keyboard
         propsBoolean.put(9578, true);  // Enable Privacy Checkup
         propsInteger.put(8135, 2);  // Call Filters
@@ -243,16 +258,29 @@ public class Others extends Feature {
         if (proximity_audios) {
             var classes = Unobfuscator.loadProximitySensorListenerClasses(classLoader);
             for (var cls : classes) {
-                XposedBridge.hookAllMethods(cls, "onSensorChanged", XC_MethodReplacement.DO_NOTHING);
+                try {
+                    XposedBridge.hookAllMethods(cls, "onSensorChanged", new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            if (param.args != null && param.args.length > 0 && param.args[0] != null) {
+                                SensorEvent event = (SensorEvent) param.args[0];
+                                if (event.sensor != null && event.sensor.getType() == Sensor.TYPE_PROXIMITY) {
+                                    param.setResult(null);
+                                }
+                            }
+                        }
+                    });
+                } catch (Throwable t) {
+                    XposedBridge.log("[WAEX] Failed to hook onSensorChanged on class: " + cls.getName() + " : " + t.toString());
+                }
             }
         }
-
 
         if (disableMetaAI) {
             hideMetaAIFab();
         }
         if (filter_items != null && prefs.getBoolean("custom_filters", true)) {
-            filterItemsInHomeActivity(filter_items);
+            filterItems(filter_items);
         }
 
         if (disable_defemojis) {
@@ -282,7 +310,7 @@ public class Others extends Feature {
 
         stampCopiedMessage();
         debugDumpMessageMetadata();
-        
+
         if (prefs.getBoolean("message_device_source", true)) {
             WppCore.addListenerActivity((activity, state) -> {
                 String simpleName = activity.getClass().getSimpleName();
@@ -290,9 +318,9 @@ public class Others extends Feature {
                     messageDeviceSourceConversationActive = "Conversation".equals(simpleName);
                     return;
                 }
-                if ("Conversation".equals(simpleName) &&
-                        (state == WppCore.ActivityChangeState.ChangeType.PAUSED
-                                || state == WppCore.ActivityChangeState.ChangeType.ENDED)) {
+                if ("Conversation".equals(simpleName)
+                        && (state == WppCore.ActivityChangeState.ChangeType.PAUSED
+                        || state == WppCore.ActivityChangeState.ChangeType.ENDED)) {
                     messageDeviceSourceConversationActive = false;
                 }
             });
@@ -323,7 +351,6 @@ public class Others extends Feature {
             });
         }
 
-
         try {
             doubleTapReaction();
         } catch (Exception e) {
@@ -334,8 +361,12 @@ public class Others extends Feature {
 
         callInfo();
 
-        if (disableProfileStatus) {
+        XposedBridge.log("[WAEX] Unconditional disablePhotoProfileStatus check starting...");
+        try {
             disablePhotoProfileStatus();
+            XposedBridge.log("[WAEX] disablePhotoProfileStatus hook applied successfully!");
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] disablePhotoProfileStatus error: " + t.toString());
         }
 
         if (disableExpiration) {
@@ -351,30 +382,47 @@ public class Others extends Feature {
         }
         try {
             Class<?> conversationClass = XposedHelpers.findClass("com.whatsapp.Conversation", classLoader);
-            XposedHelpers.findAndHookMethod(conversationClass, "onResume", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    Activity activity = (Activity) param.thisObject;
-                    android.content.Intent intent = activity.getIntent();
-                    if (intent != null && disableMetaAI) {
-                        String jid = intent.getStringExtra("jid");
-                        boolean isMetaAi = false;
-                        if (jid != null && (jid.contains("1313555") || jid.contains("meta"))) {
-                            isMetaAi = true;
+            Class<?> current = conversationClass;
+            Method onResumeMethod = null;
+            while (current != null && current != Object.class) {
+                try {
+                    onResumeMethod = current.getDeclaredMethod("onResume");
+                    break;
+                } catch (NoSuchMethodException e) {
+                    current = current.getSuperclass();
+                }
+            }
+            if (onResumeMethod != null) {
+                XposedBridge.hookMethod(onResumeMethod, new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        Activity activity = (Activity) param.thisObject;
+                        if (!conversationClass.isInstance(activity)) {
+                            return;
                         }
-                        if (intent.hasExtra("bot_metrics_entrypoint") || intent.hasExtra("extra_presentation_source")) {
-                            isMetaAi = true;
-                        }
-                        
-                        if (isMetaAi) {
-                            if (!activity.isFinishing()) {
-                                activity.finish();
-                                android.widget.Toast.makeText(activity, "Meta AI functions are disabled", android.widget.Toast.LENGTH_SHORT).show();
+                        Intent intent = activity.getIntent();
+                        if (intent != null && disableMetaAI) {
+                            String jid = intent.getStringExtra("jid");
+                            boolean isMetaAi = false;
+                            if (jid != null && (jid.contains("1313555") || jid.contains("meta"))) {
+                                isMetaAi = true;
+                            }
+                            if (intent.hasExtra("bot_metrics_entrypoint") || intent.hasExtra("extra_presentation_source")) {
+                                isMetaAi = true;
+                            }
+
+                            if (isMetaAi) {
+                                if (!activity.isFinishing()) {
+                                    activity.finish();
+                                    Toast.makeText(activity, "Meta AI functions are disabled", Toast.LENGTH_SHORT).show();
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            } else {
+                /* Log removed */
+            }
         } catch (Throwable t) {
             XposedBridge.log("[WAEX] Failed to hook Conversation: " + t.toString());
         }
@@ -398,7 +446,9 @@ public class Others extends Feature {
                 if (current == null) {
                     current = WppCore.getCurrentActivity();
                 }
-                if (current == null || !homeClass.isInstance(current)) return;
+                if (current == null || !homeClass.isInstance(current)) {
+                    return;
+                }
                 view.setVisibility(View.GONE);
             }
         });
@@ -412,7 +462,9 @@ public class Others extends Feature {
                     if (current == null) {
                         current = WppCore.getCurrentActivity();
                     }
-                    if (current == null || !homeClass.isInstance(current)) return;
+                    if (current == null || !homeClass.isInstance(current)) {
+                        return;
+                    }
                     if ((int) param.args[0] != View.GONE) {
                         param.args[0] = View.GONE;
                     }
@@ -430,7 +482,9 @@ public class Others extends Feature {
                     if (current == null) {
                         current = WppCore.getCurrentActivity();
                     }
-                    if (current == null || !homeClass.isInstance(current)) return;
+                    if (current == null || !homeClass.isInstance(current)) {
+                        return;
+                    }
                     view.setVisibility(View.GONE);
                 }
             });
@@ -439,16 +493,19 @@ public class Others extends Feature {
     }
 
     /**
-     * Hides the Meta AI FAB (resource id: fab_second, content-desc: "Message your assistant").
-     * The FAB lives inside ConversationsFragment, not HomeActivity's layout directly.
-     * We hook onViewCreated (initial inflation) and onResume (re-show safety net),
-     * both scoped only to ConversationsFragment — zero global hook overhead.
+     * Hides the Meta AI FAB (resource id: fab_second, content-desc: "Message
+     * your assistant"). The FAB lives inside ConversationsFragment, not
+     * HomeActivity's layout directly. We hook onViewCreated (initial inflation)
+     * and onResume (re-show safety net), both scoped only to
+     * ConversationsFragment — zero global hook overhead.
      */
-    private static java.lang.reflect.Method cachedGetCurrentItemMethod = null;
+    private static Method cachedGetCurrentItemMethod = null;
     private static int cachedPagerId = -1;
 
     private static boolean isNotUpdatesTabActive(View view) {
-        if (view == null) return false;
+        if (view == null) {
+            return false;
+        }
         try {
             View root = view.getRootView();
             if (cachedPagerId == -1) {
@@ -464,11 +521,12 @@ public class Others extends Feature {
                     if (currentItem != null) {
                         int statusIndex = 1;
                         try {
-                            int idx = com.waenhancer.xposed.features.customization.SeparateGroup.tabs.indexOf(com.waenhancer.xposed.features.customization.SeparateGroup.STATUS);
+                            int idx = SeparateGroup.tabs.indexOf(SeparateGroup.STATUS);
                             if (idx != -1) {
                                 statusIndex = idx;
                             }
-                        } catch (Throwable ignored) {}
+                        } catch (Throwable ignored) {
+                        }
                         return currentItem != statusIndex;
                     }
                 }
@@ -479,17 +537,19 @@ public class Others extends Feature {
         return true; // Fallback to hiding during initial layout / early inflation
     }
 
-    private static final java.util.Set<String> hookedPageChangeListeners = new java.util.HashSet<>();
+    private static final Set<String> hookedPageChangeListeners = new HashSet<>();
 
     private static void hookOnPageSelectedOnListenerClass(Class<?> listenerClass, final int fabId, Class<?> listenerInterface) {
         final String className = listenerClass.getName();
         synchronized (hookedPageChangeListeners) {
-            if (hookedPageChangeListeners.contains(className)) return;
+            if (hookedPageChangeListeners.contains(className)) {
+                return;
+            }
             hookedPageChangeListeners.add(className);
         }
 
         // Find all void(int) methods declared in the listener interface (obfuscated or not) and hook them
-        for (java.lang.reflect.Method m : listenerInterface.getDeclaredMethods()) {
+        for (Method m : listenerInterface.getDeclaredMethods()) {
             if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class && m.getReturnType() == void.class) {
                 final String methodName = m.getName();
                 try {
@@ -534,7 +594,7 @@ public class Others extends Feature {
 
             // Programmatically find the listener interface from setOnPageChangeListener signature
             Class<?> listenerInterface = null;
-            for (java.lang.reflect.Method m : vpSuper.getDeclaredMethods()) {
+            for (Method m : vpSuper.getDeclaredMethods()) {
                 if (m.getName().equals("setOnPageChangeListener") && m.getParameterTypes().length == 1) {
                     listenerInterface = m.getParameterTypes()[0];
                     break;
@@ -542,7 +602,7 @@ public class Others extends Feature {
             }
 
             if (listenerInterface == null) {
-                for (java.lang.reflect.Method m : vpSuper.getMethods()) {
+                for (Method m : vpSuper.getMethods()) {
                     if (m.getName().equals("setOnPageChangeListener") && m.getParameterTypes().length == 1) {
                         listenerInterface = m.getParameterTypes()[0];
                         break;
@@ -557,7 +617,7 @@ public class Others extends Feature {
             final Class<?> finalInterface = listenerInterface;
 
             // Find all methods on ViewPager that accept finalInterface as a single parameter and hook them
-            for (java.lang.reflect.Method m : vpSuper.getDeclaredMethods()) {
+            for (Method m : vpSuper.getDeclaredMethods()) {
                 if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == finalInterface) {
                     final String mName = m.getName();
                     try {
@@ -576,7 +636,7 @@ public class Others extends Feature {
             }
 
             // Also check standard public methods from superclasses
-            for (java.lang.reflect.Method m : vpSuper.getMethods()) {
+            for (Method m : vpSuper.getMethods()) {
                 if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == finalInterface) {
                     final String mName = m.getName();
                     try {
@@ -623,11 +683,11 @@ public class Others extends Feature {
             };
 
             // Hook setVisibility on ImageView.class to narrow down hook scope significantly (since FAB is an ImageView)
-            XposedHelpers.findAndHookMethod(android.widget.ImageView.class, "setVisibility", int.class, visibilityHook);
+            XposedHelpers.findAndHookMethod(ImageView.class, "setVisibility", int.class, visibilityHook);
 
             // Hook 1: Catch the view immediately when it attaches to the window hierarchy
-            XposedHelpers.findAndHookMethod(android.widget.ImageView.class, "onAttachedToWindow", new XC_MethodHook() {
-                private final java.util.Set<Class<?>> hookedClasses = new java.util.HashSet<>();
+            XposedHelpers.findAndHookMethod(ImageView.class, "onAttachedToWindow", new XC_MethodHook() {
+                private final Set<Class<?>> hookedClasses = new HashSet<>();
 
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -637,7 +697,7 @@ public class Others extends Feature {
 
                         // Dynamically traverse up the hierarchy to hook setVisibility overrides (always do this for fab_second)
                         Class<?> clazz = view.getClass();
-                        while (clazz != null && clazz != android.widget.ImageView.class && clazz != View.class) {
+                        while (clazz != null && clazz != ImageView.class && clazz != View.class) {
                             boolean alreadyHooked;
                             synchronized (hookedClasses) {
                                 alreadyHooked = hookedClasses.contains(clazz);
@@ -671,54 +731,126 @@ public class Others extends Feature {
 
     private static void hideFabSecond(View root) {
         try {
-            if (root == null) return;
+            if (root == null) {
+                return;
+            }
             int fabId = Utils.getID("fab_second", "id");
-            if (fabId <= 0) return;
+            if (fabId <= 0) {
+                return;
+            }
             View fab = root.findViewById(fabId);
             if (fab != null) {
                 if (fab.getVisibility() != View.GONE) {
                     fab.setVisibility(View.GONE);
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     /**
-     * Hides custom filter views by resource ID in HomeActivity only.
-     * One-time scan after layout inflation — no global View hooks.
+     * Filters layout elements by their resource ID by hooking
+     * View.invalidate(boolean). This replicates the dev4mod behavior of
+     * dynamically forcing visibility to GONE on any invalidated view whose ID
+     * is listed in the filter config.
      */
-    private void filterItemsInHomeActivity(String filterItems) throws Exception {
-        var ids = new ArrayList<Integer>();
-        for (String item : filterItems.split("\n")) {
-            int id = Utils.getID(item.trim(), "id");
-            if (id > 0) ids.add(id);
+    private void filterItems(String filterItems) {
+        String currentPkg = null;
+        if (FeatureLoader.mApp != null) {
+            currentPkg = FeatureLoader.mApp.getPackageName();
         }
-        if (ids.isEmpty()) return;
-
-        Class<?> homeClass = WppCore.getHomeActivityClass(classLoader);
-        XposedBridge.hookAllMethods(homeClass, "setContentView", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                hideViewsById((Activity) param.thisObject, ids);
+        if (currentPkg == null) {
+            try {
+                Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
+                currentPkg = (String) activityThreadClass.getMethod("currentPackageName").invoke(null);
+            } catch (Throwable ignored) {
             }
-        });
-        WppCore.addListenerActivity((activity, state) -> {
-            if (state != WppCore.ActivityChangeState.ChangeType.RESUMED) return;
-            if (!homeClass.isInstance(activity)) return;
-            hideViewsById(activity, ids);
-        });
-    }
+        }
+        if ("com.waenhancer".equals(currentPkg)) {
+            return;
+        }
 
-    private static void hideViewsById(Activity activity, java.util.List<Integer> ids) {
-        try {
-            View root = activity.getWindow().getDecorView();
-            for (int id : ids) {
-                View v = root.findViewById(id);
-                if (v != null && v.getVisibility() != View.GONE) {
-                    v.setVisibility(View.GONE);
+        var itemsList = new ArrayList<FilterItem>();
+        if (filterItems.trim().startsWith("[")) {
+            try {
+                JSONArray arr = new JSONArray(filterItems);
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.getJSONObject(i);
+                    String idStr = obj.optString("id", "").trim();
+                    if (!idStr.isEmpty()) {
+                        String behavior = obj.optString("behavior", FilterItem.BEHAVIOR_GONE);
+                        int color = obj.optInt("color", 0xFFFF0000);
+                        int opacity = obj.optInt("opacity", 100);
+                        double scale = obj.optDouble("scale", 1.0);
+                        itemsList.add(new FilterItem(idStr, behavior, color, opacity, (float) scale));
+                    }
+                }
+            } catch (Exception e) {
+                XposedBridge.log("[WAEX] Failed to parse JSON filter_items: " + e.toString());
+            }
+        } else {
+            // Fallback to old format
+            var items = filterItems.split("\n");
+            for (String item : items) {
+                String idStr = item.trim();
+                if (!idStr.isEmpty()) {
+                    itemsList.add(new FilterItem(idStr, FilterItem.BEHAVIOR_GONE, 0xFFFF0000, 100, 1.0f));
                 }
             }
-        } catch (Throwable ignored) {}
+        }
+
+        if (itemsList.isEmpty()) {
+            return;
+        }
+
+        // Build a map of layout ids to FilterItem config
+        var targetMap = new HashMap<Integer, FilterItem>();
+        for (var item : itemsList) {
+            var id = Utils.getID(item.id, "id");
+            if (id > 0) {
+                targetMap.put(id, item);
+            }
+        }
+        if (targetMap.isEmpty()) {
+            return;
+        }
+
+        try {
+            XposedHelpers.findAndHookMethod(View.class, "invalidate", boolean.class, new XC_MethodHook() {
+                private final ThreadLocal<Boolean> inHook = ThreadLocal.withInitial(() -> false);
+
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    if (inHook.get()) {
+                        return;
+                    }
+                    inHook.set(true);
+                    try {
+                        var view = (View) param.thisObject;
+                        var id = view.getId();
+                        if (id > 0 && targetMap.containsKey(id)) {
+                            FilterItem item = targetMap.get(id);
+                            if (item == null) {
+                                return;
+                            }
+                            switch (item.behavior) {
+                                case FilterItem.BEHAVIOR_GONE:
+                                    if (view.getVisibility() == View.VISIBLE) {
+                                        view.setVisibility(View.GONE);
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    } finally {
+                        inHook.set(false);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] Failed to hook View.invalidate(boolean) for item filtering: " + t.toString());
+        }
     }
 
     private void disableAds() {
@@ -726,16 +858,31 @@ public class Others extends Feature {
         propsBoolean.put(14306, false);
     }
 
-
     private void disablePhotoProfileStatus() throws Exception {
-        var refreshStatusClass = Unobfuscator.loadRefreshStatusClass(classLoader);
+        Class<?> refreshStatusClass;
+        try {
+            refreshStatusClass = Unobfuscator.loadRefreshStatusClass(classLoader);
+        } catch (Exception e) {
+            XposedBridge.log("[WAEX] disablePhotoProfileStatus: RefreshStatus class not found, skipping: " + e.toString());
+            return;
+        }
         var photoProfileClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, ".WDSProfilePhoto");
+        XposedBridge.log("[WAEX] disablePhotoProfileStatus: refreshStatusClass=" + refreshStatusClass.getName());
+        XposedBridge.log("[WAEX] disablePhotoProfileStatus: photoProfileClass=" + (photoProfileClass != null ? photoProfileClass.getName() : "null"));
         var convClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, ".ConversationsFragment");
+        XposedBridge.log("[WAEX] disablePhotoProfileStatus: convClass=" + (convClass != null ? convClass.getName() : "null"));
         var jidClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "jid.Jid");
+        XposedBridge.log("[WAEX] disablePhotoProfileStatus: jidClass=" + (jidClass != null ? jidClass.getName() : "null"));
         var method = ReflectionUtils.findMethodUsingFilter(convClass, m -> m.getParameterCount() > 0 && !Modifier.isStatic(m.getModifiers()) && m.getParameterTypes()[0] == View.class && ReflectionUtils.findIndexOfType(m.getParameterTypes(), jidClass) != -1);
+        XposedBridge.log("[WAEX] disablePhotoProfileStatus: method=" + (method != null ? method.getName() : "null"));
         var field = ReflectionUtils.getFieldByExtendType(convClass, refreshStatusClass);
+        XposedBridge.log("[WAEX] disablePhotoProfileStatus: field=" + (field != null ? field.getName() : "null"));
         if (field == null) {
-            ;
+            XposedBridge.log("[WAEX] disablePhotoProfileStatus: field is null, dumping all fields of convClass:");
+            for (Field f : convClass.getDeclaredFields()) {
+                XposedBridge.log("[WAEX] convClass field: " + f.getName() + " of type " + f.getType().getName());
+            }
+            XposedBridge.log("[WAEX] disablePhotoProfileStatus: field is null, returning early!");
             return;
         }
         XposedBridge.hookMethod(method, new XC_MethodHook() {
@@ -752,7 +899,6 @@ public class Others extends Feature {
                 field.set(param.thisObject, this.backup);
             }
         });
-
 
         XposedBridge.hookAllMethods(photoProfileClass, "setStatusIndicatorEnabled", new XC_MethodHook() {
             @Override
@@ -776,7 +922,9 @@ public class Others extends Feature {
     }
 
     private void callInfo() throws Exception {
-        if (!prefs.getBoolean("call_info", false)) return;
+        if (!prefs.getBoolean("call_info", false)) {
+            return;
+        }
 
         var clsCallEventCallback = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "VoiceServiceEventCallback");
         Class<?> clsWamCall = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "WamCall");
@@ -787,14 +935,18 @@ public class Others extends Feature {
                 if (clsWamCall.isInstance(param.args[0])) {
 
                     Object callinfo = XposedHelpers.callMethod(param.thisObject, "getCallInfo");
-                    if (callinfo == null) return;
+                    if (callinfo == null) {
+                        return;
+                    }
                     var userJid = new FMessageWpp.UserJid(XposedHelpers.callMethod(callinfo, "getPeerJid"));
-                    if (userJid.isNull()) return;
+                    if (userJid.isNull()) {
+                        return;
+                    }
                     CompletableFuture.runAsync(() -> {
                         try {
                             showCallInformation(param.args[0], userJid);
-                        } catch (Exception e) {
-                            logDebug(e);
+                        } catch (Throwable t) {
+                            logDebug(t);
                         }
                     });
                 }
@@ -802,54 +954,82 @@ public class Others extends Feature {
         });
     }
 
-    private void showCallInformation(Object wamCall, FMessageWpp.UserJid userJid) throws Exception {
-        if (userJid.isGroup()) return;
+    private static Object getObjectFieldSafe(Object obj, String fieldName) {
+        try {
+            return XposedHelpers.getObjectField(obj, fieldName);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private void showCallInformation(Object wamCall, FMessageWpp.UserJid userJid) throws Throwable {
+        if (userJid.isGroup()) {
+            return;
+        }
         var sb = new StringBuilder();
         var contact = WppCore.getContactName(userJid);
         var number = userJid.getPhoneNumber();
-        if (!TextUtils.isEmpty(contact))
-            sb.append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.contact_s, "Contact: %s"), contact)).append("\n");
-        sb.append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.phone_number_s, "Number: +%s"), number)).append("\n");
-        var ip = (String) XposedHelpers.getObjectField(wamCall, "callPeerIpStr");
-        if (ip != null) {
-            var client = new OkHttpClient.Builder().build();
-            var url = "http://ip-api.com/json/" + ip;
-            var request = new okhttp3.Request.Builder().url(url).build();
-            var content = client.newCall(request).execute().body().string();
-            var json = new JSONObject(content);
-            var country = json.getString("country");
-            var city = json.getString("city");
-            var isp = json.getString("isp");
-            var region = json.getString("regionName");
-            var timeZone = json.getString("timezone");
-            if (isp != "null")
-                sb.append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.isp_s, "ISP: %s"), isp)).append("\n");
-            if (region != "null")
-                sb.append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.region_s, "Region: %s"), region)).append("\n");
-            if (timeZone != "null")
-                sb.append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.timezone_s, "Timezone: %s"), timeZone)).append("\n");
-
-            sb.append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.country_s, "Country: %s"), country)).append("\n").append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.city_s, "City: %s"), city)).append("\n").append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.ip_s, "IP: %s"), ip)).append("\n");
+        if (!TextUtils.isEmpty(contact)) {
+            sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.contact_s, "Contact: %s"), contact)).append("\n");
         }
-        var platform = (String) XposedHelpers.getObjectField(wamCall, "callPeerPlatform");
-        if (platform != null)
-            sb.append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.platform_s, "Platform: %s"), platform)).append("\n");
-        var wppVersion = (String) XposedHelpers.getObjectField(wamCall, "callPeerAppVersion");
-        if (wppVersion != null)
-            sb.append(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.wpp_version_s, "WhatsApp Version: %s"), wppVersion)).append("\n");
-        Utils.showNotification(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.call_information, "Call Information"), sb.toString());
+        sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.phone_number_s, "Number: +%s"), number)).append("\n");
+        
+        var ip = (String) getObjectFieldSafe(wamCall, "callPeerIpStr");
+        if (ip != null) {
+            try {
+                var client = new OkHttpClient.Builder().build();
+                var url = "http://ip-api.com/json/" + ip;
+                var request = new Request.Builder().url(url).build();
+                var content = client.newCall(request).execute().body().string();
+                var json = new JSONObject(content);
+                var country = json.optString("country", "Unknown");
+                var city = json.optString("city", "Unknown");
+                var isp = json.optString("isp", "null");
+                var region = json.optString("regionName", "null");
+                var timeZone = json.optString("timezone", "null");
+                if (!"null".equals(isp)) {
+                    sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.isp_s, "ISP: %s"), isp)).append("\n");
+                }
+                if (!"null".equals(region)) {
+                    sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.region_s, "Region: %s"), region)).append("\n");
+                }
+                if (!"null".equals(timeZone)) {
+                    sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.timezone_s, "Timezone: %s"), timeZone)).append("\n");
+                }
+                sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.country_s, "Country: %s"), country)).append("\n")
+                  .append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.city_s, "City: %s"), city)).append("\n")
+                  .append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.ip_s, "IP: %s"), ip)).append("\n");
+            } catch (Throwable e) {
+                sb.append("IP: ").append(ip).append("\n");
+            }
+        }
+        
+        var platform = (String) getObjectFieldSafe(wamCall, "callPeerPlatform");
+        if (platform != null) {
+            sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.platform_s, "Platform: %s"), platform)).append("\n");
+        }
+        var wppVersion = (String) getObjectFieldSafe(wamCall, "callPeerAppVersion");
+        if (wppVersion != null) {
+            sb.append(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.wpp_version_s, "WhatsApp Version: %s"), wppVersion)).append("\n");
+        }
+        
+        XposedBridge.log("[WAEX] Call Info: " + sb.toString().replace("\n", ", "));
+        Utils.showNotification(FeatureLoader.getModuleString(Utils.getApplication(), R.string.call_information, "Call Information"), sb.toString());
     }
 
     private void alwaysOnline() throws Exception {
-        if (!prefs.getBoolean("always_online", false)) return;
+        if (!prefs.getBoolean("always_online", false)) {
+            return;
+        }
         var stateChange = Unobfuscator.loadStateChangeMethod(classLoader);
         XposedBridge.hookMethod(stateChange, XC_MethodReplacement.DO_NOTHING);
     }
 
-
     private void doubleTapReaction() throws Exception {
 
-        if (!prefs.getBoolean("doubletap2like", false)) return;
+        if (!prefs.getBoolean("doubletap2like", false)) {
+            return;
+        }
 
         var emoji = prefs.getString("doubletap2like_emoji", "👍");
 
@@ -902,14 +1082,16 @@ public class Others extends Feature {
     }
 
     private void stampCopiedMessage() throws Exception {
-        if (!prefs.getBoolean("stamp_copied_message", false)) return;
+        if (!prefs.getBoolean("stamp_copied_message", false)) {
+            return;
+        }
 
         var copiedMessage = Unobfuscator.loadCopiedMessageMethod(classLoader);
 
         XposedBridge.hookMethod(copiedMessage, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                var Collection = (java.util.Collection) param.args[param.args.length - 1];
+                var Collection = (Collection) param.args[param.args.length - 1];
                 param.args[param.args.length - 1] = new ArrayList<Object>(Collection) {
                     @Override
                     public int size() {
@@ -921,15 +1103,21 @@ public class Others extends Feature {
     }
 
     private void debugDumpMessageMetadata() {
-        if (!DEBUG) return;
+        if (!DEBUG) {
+            return;
+        }
 
         ConversationItemListener.conversationListeners.add(new ConversationItemListener.OnConversationItemListener() {
             @Override
             public void onItemBind(FMessageWpp fMessage, ViewGroup viewGroup) {
                 try {
                     var key = fMessage.getKey();
-                    if (key == null || TextUtils.isEmpty(key.messageID)) return;
-                    if (!dumpedMessageIds.add(key.messageID)) return;
+                    if (key == null || TextUtils.isEmpty(key.messageID)) {
+                        return;
+                    }
+                    if (!dumpedMessageIds.add(key.messageID)) {
+                        return;
+                    }
                 } catch (Throwable t) {
                     logDebug("MessageMetaDumpError", t);
                 }
@@ -938,30 +1126,38 @@ public class Others extends Feature {
     }
 
     private void messageDeviceSourceTag() {
-        if (!prefs.getBoolean("message_device_source", true)) return;
+        if (!prefs.getBoolean("message_device_source", true)) {
+            return;
+        }
 
         ConversationItemListener.conversationListeners.add(new ConversationItemListener.OnConversationItemListener() {
             @Override
             public void onItemBind(FMessageWpp fMessage, ViewGroup viewGroup) {
                 var dateTextView = (TextView) viewGroup.findViewById(Utils.getID("date", "id"));
-                if (dateTextView == null) return;
-                
+                if (dateTextView == null) {
+                    return;
+                }
+
                 var key = fMessage.getKey();
                 String messageId = key != null ? key.messageID : null;
-                if (messageId == null) return;
+                if (messageId == null) {
+                    return;
+                }
 
                 XposedHelpers.setAdditionalInstanceField(dateTextView, "wae_device_source_message_id", messageId);
-                
+
                 // Offload database lookup to a background thread
                 CompletableFuture.supplyAsync(() -> {
                     return resolveMessageDeviceId(messageId, fMessage);
                 }).thenAcceptAsync(resolvedDeviceId -> {
                     Object currentId = XposedHelpers.getAdditionalInstanceField(dateTextView, "wae_device_source_message_id");
-                    if (!Objects.equals(currentId, messageId)) return;
-                    
+                    if (!Objects.equals(currentId, messageId)) {
+                        return;
+                    }
+
                     String suffix = getDeviceEmojiSuffix(resolvedDeviceId);
                     XposedHelpers.setAdditionalInstanceField(dateTextView, DEVICE_SOURCE_SUFFIX_FIELD, suffix);
-                    
+
                     bindMessageDeviceSource(dateTextView, resolvedDeviceId);
                     // Optimized view update: only recurse if absolutely necessary
                     if (!suffix.isEmpty()) {
@@ -972,8 +1168,8 @@ public class Others extends Feature {
         });
     }
 
-    private static final java.util.concurrent.Executor executor = action -> {
-        var handler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private static final Executor executor = action -> {
+        var handler = new Handler(Looper.getMainLooper());
         handler.post(action);
     };
 
@@ -999,21 +1195,31 @@ public class Others extends Feature {
     }
 
     private String getDeviceEmojiSuffix(int deviceId) {
-        if (deviceId == 0) return PRIMARY_DEVICE_EMOJI;
-        if (deviceId > 0) return LINKED_DEVICE_EMOJI;
+        if (deviceId == 0) {
+            return PRIMARY_DEVICE_EMOJI;
+        }
+        if (deviceId > 0) {
+            return LINKED_DEVICE_EMOJI;
+        }
         return "";
     }
 
     private void applyDeviceSourceToMatchingTextViews(ViewGroup root, TextView anchor, String suffix) {
-        if (suffix.isEmpty()) return;
+        if (suffix.isEmpty()) {
+            return;
+        }
         String anchorBase = stripDeviceEmoji(String.valueOf(anchor.getText()));
-        if (TextUtils.isEmpty(anchorBase)) return;
+        if (TextUtils.isEmpty(anchorBase)) {
+            return;
+        }
         int deviceId = getDeviceIdFromSuffix(suffix);
 
         forEachTextView(root, textView -> {
             String current = String.valueOf(textView.getText());
             String base = stripDeviceEmoji(current);
-            if (!anchorBase.equals(base)) return;
+            if (!anchorBase.equals(base)) {
+                return;
+            }
 
             XposedHelpers.setAdditionalInstanceField(textView, DEVICE_SOURCE_SUFFIX_FIELD, suffix);
             bindMessageDeviceSourceClick(textView, deviceId);
@@ -1024,8 +1230,12 @@ public class Others extends Feature {
     }
 
     private int getDeviceIdFromSuffix(String suffix) {
-        if (PRIMARY_DEVICE_EMOJI.equals(suffix)) return 0;
-        if (LINKED_DEVICE_EMOJI.equals(suffix)) return 1;
+        if (PRIMARY_DEVICE_EMOJI.equals(suffix)) {
+            return 0;
+        }
+        if (LINKED_DEVICE_EMOJI.equals(suffix)) {
+            return 1;
+        }
         return -1;
     }
 
@@ -1037,11 +1247,11 @@ public class Others extends Feature {
 
         Utils.setViewClickListener(textView, "device_source", v -> {
             if (deviceId == 0) {
-                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+                Utils.showToast(FeatureLoader.getModuleString(
                         R.string.message_sent_via_phone,
                         "This message was sent via Phone"), Toast.LENGTH_SHORT);
             } else if (deviceId > 0) {
-                Utils.showToast(com.waenhancer.xposed.core.FeatureLoader.getModuleString(
+                Utils.showToast(FeatureLoader.getModuleString(
                         R.string.message_sent_via_linked_device,
                         "This message was sent via a Linked Device (Desktop/Phone)"), Toast.LENGTH_SHORT);
             }
@@ -1064,12 +1274,14 @@ public class Others extends Feature {
         return sb.toString();
     }
 
-    private void forEachTextView(View view, java.util.function.Consumer<TextView> consumer) {
+    private void forEachTextView(View view, Consumer<TextView> consumer) {
         if (view instanceof TextView textView) {
             consumer.accept(textView);
             return;
         }
-        if (!(view instanceof ViewGroup group)) return;
+        if (!(view instanceof ViewGroup group)) {
+            return;
+        }
         for (int i = 0; i < group.getChildCount(); i++) {
             forEachTextView(group.getChildAt(i), consumer);
         }
@@ -1083,11 +1295,17 @@ public class Others extends Feature {
         XC_MethodHook setTextHook = new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (!messageDeviceSourceConversationActive) return;
+                if (!messageDeviceSourceConversationActive) {
+                    return;
+                }
 
-                if (!(param.thisObject instanceof TextView textView)) return;
+                if (!(param.thisObject instanceof TextView textView)) {
+                    return;
+                }
                 Object suffixObj = XposedHelpers.getAdditionalInstanceField(textView, DEVICE_SOURCE_SUFFIX_FIELD);
-                if (!(suffixObj instanceof String suffix) || suffix.isEmpty()) return;
+                if (!(suffixObj instanceof String suffix) || suffix.isEmpty()) {
+                    return;
+                }
                 if (Boolean.TRUE.equals(XposedHelpers.getAdditionalInstanceField(textView, DEVICE_SOURCE_GUARD_FIELD))) {
                     return;
                 }
@@ -1095,7 +1313,9 @@ public class Others extends Feature {
                 String current = String.valueOf(textView.getText());
                 String base = current.replace(PRIMARY_DEVICE_EMOJI, "").replace(LINKED_DEVICE_EMOJI, "");
                 String desired = base + suffix;
-                if (desired.equals(current)) return;
+                if (desired.equals(current)) {
+                    return;
+                }
 
                 XposedHelpers.setAdditionalInstanceField(textView, DEVICE_SOURCE_GUARD_FIELD, true);
                 try {
@@ -1109,11 +1329,11 @@ public class Others extends Feature {
         try {
             Method internalSetText = ReflectionUtils.findMethodUsingFilter(TextView.class,
                     method -> method.getName().equals("setText")
-                            && method.getParameterCount() == 4
-                            && method.getParameterTypes()[0] == CharSequence.class
-                            && method.getParameterTypes()[1] == TextView.BufferType.class
-                            && method.getParameterTypes()[2] == boolean.class
-                            && method.getParameterTypes()[3] == int.class);
+                    && method.getParameterCount() == 4
+                    && method.getParameterTypes()[0] == CharSequence.class
+                    && method.getParameterTypes()[1] == TextView.BufferType.class
+                    && method.getParameterTypes()[2] == boolean.class
+                    && method.getParameterTypes()[3] == int.class);
             if (internalSetText != null) {
                 XposedBridge.hookMethod(internalSetText, setTextHook);
                 return;
@@ -1130,7 +1350,9 @@ public class Others extends Feature {
 
     private void animationList() throws Exception {
         final String animation = prefs.getString("animation_list", "default");
-        if (animation.equals("default") && !properties.containsKey("home_list_animation")) return;
+        if (animation.equals("default") && !properties.containsKey("home_list_animation")) {
+            return;
+        }
 
         var onChangeStatus = Unobfuscator.loadOnChangeStatus(classLoader);
         var field1 = Unobfuscator.loadViewHolderField1(classLoader);
@@ -1143,7 +1365,9 @@ public class Others extends Feature {
             }
         }
 
-        if (cachedAbsViewField == null) return;
+        if (cachedAbsViewField == null) {
+            return;
+        }
 
         XposedBridge.hookMethod(onChangeStatus, new XC_MethodHook() {
             @Override
@@ -1151,7 +1375,9 @@ public class Others extends Feature {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 var viewHolder = field1.get(param.thisObject);
                 var view = (View) cachedAbsViewField.get(viewHolder);
-                if (view == null) return;
+                if (view == null) {
+                    return;
+                }
 
                 Animation anim = null;
                 String currentAnim = animation;
@@ -1217,36 +1443,34 @@ public class Others extends Feature {
                 }
                 var mediaType = results.get(0);
                 var audioType = results.get(1);
-                if (mediaType.second != 2 && mediaType.second != 9) {
-                    return;
-                }
-
                 if (audio_type == 2) {
                     // Transcode local audio to Opus before sending as voice note
-                    android.net.Uri originalUri = null;
+                    Uri originalUri = null;
                     int uriArgIndex = -1;
 
-                    var uris = ReflectionUtils.findInstancesOfType(param.args, android.net.Uri.class);
+                    var uris = ReflectionUtils.findInstancesOfType(param.args, Uri.class);
                     if (!uris.isEmpty()) {
                         originalUri = uris.get(0).second;
                         uriArgIndex = uris.get(0).first;
                     }
 
-                    java.lang.reflect.Field fileField = null;
+                    Field fileField = null;
                     Object fileFieldContainer = null;
-                    java.io.File originalFile = null;
+                    File originalFile = null;
 
                     if (originalUri == null) {
                         // Scan arguments for a non-null java.io.File field
                         for (Object arg : param.args) {
-                            if (arg == null) continue;
+                            if (arg == null) {
+                                continue;
+                            }
                             Class<?> clazz = arg.getClass();
                             while (clazz != null && clazz != Object.class) {
                                 try {
-                                    for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
-                                        if (f.getType() == java.io.File.class) {
+                                    for (Field f : clazz.getDeclaredFields()) {
+                                        if (f.getType() == File.class) {
                                             f.setAccessible(true);
-                                            java.io.File fileVal = (java.io.File) f.get(arg);
+                                            File fileVal = (File) f.get(arg);
                                             if (fileVal != null) {
                                                 originalFile = fileVal;
                                                 fileField = f;
@@ -1255,21 +1479,26 @@ public class Others extends Feature {
                                             }
                                         }
                                     }
-                                } catch (Throwable ignored) {}
-                                if (originalFile != null) break;
+                                } catch (Throwable ignored) {
+                                }
+                                if (originalFile != null) {
+                                    break;
+                                }
                                 clazz = clazz.getSuperclass();
                             }
-                            if (originalFile != null) break;
+                            if (originalFile != null) {
+                                break;
+                            }
                         }
                         if (originalFile != null) {
-                            originalUri = android.net.Uri.fromFile(originalFile);
+                            originalUri = Uri.fromFile(originalFile);
                         }
                     }
 
                     if (originalUri != null) {
                         Context context = Utils.getApplication();
                         if (context != null) {
-                            java.io.File transcodedFile = AudioToOpusConverter.convert(context, originalUri);
+                            File transcodedFile = ProHelper.convertAudioToOpus(context, originalUri);
                             if (transcodedFile != null && transcodedFile.exists()) {
                                 boolean replacedOnDisk = false;
                                 if (originalFile != null && originalFile.exists()) {
@@ -1283,7 +1512,7 @@ public class Others extends Feature {
 
                                 if (!replacedOnDisk) {
                                     if (uriArgIndex != -1) {
-                                        param.args[uriArgIndex] = android.net.Uri.fromFile(transcodedFile);
+                                        param.args[uriArgIndex] = Uri.fromFile(transcodedFile);
                                     }
                                     if (fileField != null && fileFieldContainer != null) {
                                         try {
@@ -1317,9 +1546,8 @@ public class Others extends Feature {
         });
     }
 
-    private static void copyFile(java.io.File src, java.io.File dest) throws java.io.IOException {
-        try (java.io.InputStream in = new java.io.FileInputStream(src);
-             java.io.OutputStream out = new java.io.FileOutputStream(dest)) {
+    private static void copyFile(File src, File dest) throws IOException {
+        try (InputStream in = new FileInputStream(src); OutputStream out = new FileOutputStream(dest)) {
             byte[] buf = new byte[1024];
             int len;
             while ((len = in.read(buf)) > 0) {
@@ -1327,7 +1555,6 @@ public class Others extends Feature {
             }
         }
     }
-
 
     private void autoNextStatus() throws Exception {
         Class<?> StatusPlaybackContactFragmentClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "StatusPlaybackContactFragment");
@@ -1345,13 +1572,53 @@ public class Others extends Feature {
         XposedBridge.hookMethod(onPlayBackFinished, XC_MethodReplacement.DO_NOTHING);
     }
 
-
     private void disable_defEmojis() throws Exception {
-        var defEmojiClass = Unobfuscator.loadDefEmojiClass(classLoader);
-        XposedBridge.hookMethod(defEmojiClass, XC_MethodReplacement.returnConstant(null));
-    }
+        var spanClasses = Unobfuscator.loadEmojiSpanClasses(classLoader);
+        if (spanClasses == null || spanClasses.length == 0) {
+            /* Log removed */
+        } else {
+            /* Log removed */
+            for (var spanClass : spanClasses) {
+                /* Log removed */
+                try {
+                    if (Modifier.isAbstract(spanClass.getModifiers())) {
+                        /* Log removed */
+                        continue;
+                    }
+                    var methods = ReflectionUtils.findAllMethodsUsingFilter(spanClass, method -> 
+                        method.getName().equals("draw") && 
+                        method.getParameterCount() == 9 &&
+                        !Modifier.isAbstract(method.getModifiers())
+                    );
+                    /* Log removed */
+                    for (var method : methods) {
+                        /* Log removed */
+                        XposedBridge.hookMethod(method, new XC_MethodHook() {
+                            @Override
+                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                Canvas canvas = (Canvas) param.args[0];
+                                CharSequence text = (CharSequence) param.args[1];
+                                int start = (int) param.args[2];
+                                int end = (int) param.args[3];
+                                float x = (float) param.args[4];
+                                int top = (int) param.args[5];
+                                int y = (int) param.args[6];
+                                int bottom = (int) param.args[7];
+                                Paint paint = (Paint) param.args[8];
 
-
+                                if (text != null && start >= 0 && end > start && end <= text.length()) {
+                                    CharSequence emoji = text.subSequence(start, end);
+                                    canvas.drawText(emoji.toString(), x, y, paint);
+                                }
+                                param.setResult(null);
+                            }
+                        });
+                    }
+                } catch (Throwable t) {
+                    XposedBridge.log("[WAEX] Error hooking ReplacementSpan draw method for class " + spanClass.getName() + ": " + t.toString());
+                }
+            }
+        }    }
 
     private void showOnline(boolean showOnline) throws Exception {
         var checkOnlineMethod = Unobfuscator.loadCheckOnlineMethod(classLoader);
@@ -1359,167 +1626,43 @@ public class Others extends Feature {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 var message = (Message) param.args[0];
-                if (message.arg1 != 5) return;
+                if (message.arg1 != 5) {
+                    return;
+                }
                 BaseBundle baseBundle = (BaseBundle) message.obj;
                 var jid = baseBundle.getString("jid");
-                if (TextUtils.isEmpty(jid)) return;
+                if (TextUtils.isEmpty(jid)) {
+                    return;
+                }
                 var userjid = new FMessageWpp.UserJid(jid);
-                if (userjid.isGroup()) return;
+                if (userjid.isGroup()) {
+                    return;
+                }
                 var name = WppCore.getContactName(userjid);
                 name = TextUtils.isEmpty(name) ? userjid.getPhoneNumber() : name;
-                if (showOnline)
-                    Utils.showToast(String.format(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.toast_online, "%s is online"), name), Toast.LENGTH_SHORT);
+                if (showOnline) {
+                    Utils.showToast(String.format(FeatureLoader.getModuleString(Utils.getApplication(), R.string.toast_online, "%s is online"), name), Toast.LENGTH_SHORT);
+                }
                 Tasker.sendTaskerEvent(name, WppCore.stripJID(jid), "contact_online");
             }
         });
     }
 
-
     private void hookProps() throws Exception {
         var methodPropsBoolean = Unobfuscator.loadPropsBooleanMethod(classLoader);
         var dataUsageActivityClass = WppCore.getDataUsageActivityClass(classLoader);
-
-        // ──────────────────────────────────────────────────────────────────────
-        // FIX: ArchivedConversationsActivity crashes with
-        //   "Window feature must be requested before adding content"
-        //
-        // Root cause: WhatsApp's obfuscated base activity class (X.0Hi) calls
-        // requestWindowFeature AFTER setContentView inside onCreate.
-        // Our AB property overrides change WhatsApp's internal branching logic
-        // so that the activity takes a code path where setContentView runs
-        // before requestWindowFeature — a sequence that is normally skipped
-        // in vanilla WhatsApp.
-        //
-        // Strategy: We use TWO complementary guards:
-        //   1) ThreadLocal flag to suspend ALL property overrides during the
-        //      entire ArchivedConversationsActivity.onCreate chain (Instrumentation hook).
-        //   2) Nuclear fallback: hook the WhatsApp base activity's onCreate to
-        //      catch and suppress the AndroidRuntimeException so the activity
-        //      can still launch even if some cached property causes the issue.
-        // ──────────────────────────────────────────────────────────────────────
-
-        Class<?> archivedActivityClass;
-        try {
-            archivedActivityClass = classLoader.loadClass(
-                    "com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity");
-        } catch (Throwable t) {
-            archivedActivityClass = null;
-            XposedBridge.log("[WAEX] hookProps: could not load ArchivedConversationsActivity class: " + t);
-        }
-        final Class<?> archivedClass = archivedActivityClass;
-
-        // Guard 1: Suspend property overrides via Instrumentation hooks (covering both instantiation/constructor and onCreate)
-        if (archivedClass != null) {
-            // Hook instantiation
-            XposedHelpers.findAndHookMethod(
-                    android.app.Instrumentation.class,
-                    "newActivity",
-                    ClassLoader.class, String.class, android.content.Intent.class,
-                    new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) {
-                    String className = (String) param.args[1];
-                    if ("com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(className)) {
-                        sSuspendPropOverrides = true;
-                    }
-                }
-            });
-
-            // Hook onCreate entry and exit
-            XposedHelpers.findAndHookMethod(
-                    android.app.Instrumentation.class,
-                    "callActivityOnCreate",
-                    Activity.class, android.os.Bundle.class,
-                    new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) {
-                    if (param.args != null && param.args.length > 0 && param.args[0] != null) {
-                        if ("com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(param.args[0].getClass().getName())) {
-                            sSuspendPropOverrides = true;
-                        }
-                    }
-                }
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) {
-                    if (param.args != null && param.args.length > 0 && param.args[0] != null &&
-                            "com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(param.args[0].getClass().getName())) {
-                        sSuspendPropOverrides = false;
-                    }
-                }
-            });
-        }
-
-        // Guard 2: Walk the class hierarchy of ArchivedConversationsActivity
-        // and hook onCreate on EVERY class in the chain to catch and suppress the AndroidRuntimeException.
-        if (archivedClass != null) {
-            try {
-                Class<?> cursor = archivedClass;
-                while (cursor != null && cursor != Activity.class && cursor != Object.class) {
-                    boolean overridesOnCreate = false;
-                    try {
-                        cursor.getDeclaredMethod("onCreate", android.os.Bundle.class);
-                        overridesOnCreate = true;
-                    } catch (NoSuchMethodException ignored) {}
-
-                    if (overridesOnCreate) {
-                        final Class<?> currentClass = cursor;
-                        XposedHelpers.findAndHookMethod(currentClass, "onCreate",
-                                android.os.Bundle.class, new XC_MethodHook() {
-                            @Override
-                            protected void beforeHookedMethod(MethodHookParam param) {
-                                if (param.thisObject != null) {
-                                    if ("com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(param.thisObject.getClass().getName())) {
-                                        sSuspendPropOverrides = true;
-                                    }
-                                }
-                            }
-                            @Override
-                            protected void afterHookedMethod(MethodHookParam param) {
-                                if (param.thisObject == null ||
-                                        !"com.whatsapp.conversation.conversationslist.ArchivedConversationsActivity".equals(param.thisObject.getClass().getName())) return;
-                                
-                                // Ensure sSuspendPropOverrides remains set during all nested onCreate calls
-                                // but we will let callActivityOnCreate afterHookedMethod clear it finally.
-                                
-                                if (param.hasThrowable()) {
-                                    Throwable thrown = param.getThrowable();
-                                    XposedBridge.log("[WAEX] Exception detected in "
-                                            + currentClass.getSimpleName() + " for "
-                                            + param.thisObject.getClass().getSimpleName()
-                                            + ": " + thrown.getMessage());
-                                }
-                            }
-                        });
-                    }
-                    cursor = cursor.getSuperclass();
-                }
-            } catch (Throwable t) {
-                XposedBridge.log("[WAEX] Failed to hook hierarchy onCreate: " + t);
-            }
-        }
-
         XposedBridge.hookMethod(methodPropsBoolean, new XC_MethodHook() {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Integer)) return;
-                int i = (int) param.args[0];
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                var list = ReflectionUtils.findInstancesOfType(param.args, Integer.class);
+                if (list.isEmpty()) return;
+                int i = (int) list.get(0).second;
 
-                // Skip all overrides while an activity that is sensitive to
-                // layout-order changes is still inside its onCreate() call,
-                // EXCEPT for 10380 which MUST be false to prevent the crash.
-                if (sSuspendPropOverrides) {
-                    if (i == 10380) {
-                        param.setResult(false);
-                    }
-                    return;
-                }
-
-                Boolean propValue = propsBoolean.get(i);
+                var propValue = propsBoolean.get(i);
                 if (propValue != null) {
                     // Fix Bug in Settings Data Usage
                     if (i == 4023) {
-                        Activity currentActivity = WppCore.getCurrentActivity();
-                        if (currentActivity != null && dataUsageActivityClass.isInstance(currentActivity)) return;
+                        if (ReflectionUtils.isCalledFromClass(dataUsageActivityClass)) return;
                     }
                     param.setResult(propValue);
                 }
@@ -1531,14 +1674,9 @@ public class Others extends Feature {
         XposedBridge.hookMethod(methodPropsInteger, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (param.args == null || param.args.length == 0 || !(param.args[0] instanceof Integer)) return;
-                int i = (int) param.args[0];
-
-                // Skip all overrides while a sensitive activity is in onCreate()
-                if (sSuspendPropOverrides) {
-                    return;
-                }
-
+                var list = ReflectionUtils.findInstancesOfType(param.args, Integer.class);
+                if (list.isEmpty()) return;
+                int i = (int) list.get(0).second;
                 var propValue = propsInteger.get(i);
                 if (propValue == null) return;
                 param.setResult(propValue);
@@ -1548,7 +1686,7 @@ public class Others extends Feature {
 
     private void hookSearchbar(String filterChats) throws Exception {
         Method searchbar = Unobfuscator.loadViewAddSearchBarMethod(classLoader);
-        log("ADD HEADER VIEW: " + DexSignUtil.getMethodDescriptor(searchbar));
+        /* Log removed */
         var searchBarID = Utils.getID("my_search_bar", "id");
 
         XposedBridge.hookMethod(searchbar, new XC_MethodHook() {
@@ -1580,7 +1718,6 @@ public class Others extends Feature {
         } catch (Exception ignored) {
         }
 
-
         try {
             Method addSeachBar = Unobfuscator.loadAddOptionSearchBarMethod(classLoader);
             XposedBridge.hookMethod(addSeachBar, new XC_MethodHook() {
@@ -1590,8 +1727,9 @@ public class Others extends Feature {
 
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    if (!Objects.equals(filterChats, "1"))
+                    if (!Objects.equals(filterChats, "1")) {
                         return;
+                    }
                     homeActivity = param.thisObject;
                     if (Modifier.isStatic(param.method.getModifiers())) {
                         homeActivity = param.args[0];
@@ -1632,40 +1770,40 @@ public class Others extends Feature {
     @SuppressLint("SetTextI18n")
     public static void showSelectTextDialog(Context context, String text) {
         try {
-            boolean isDark = (context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
-                    == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+            boolean isDark = (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                    == Configuration.UI_MODE_NIGHT_YES;
             int textColor = isDark ? 0xFFE9EDEF : 0xFF111B21; // WhatsApp light text vs dark text
-            
+
             AlertDialogWpp dialog = new AlertDialogWpp(context);
             dialog.setTitle("Select Text");
-            
+
             TextView contentTextView = new TextView(context);
-            contentTextView.setText(text, android.widget.TextView.BufferType.SPANNABLE);
+            contentTextView.setText(text, TextView.BufferType.SPANNABLE);
             contentTextView.setTextSize(16);
             contentTextView.setTextColor(textColor);
             contentTextView.setTextIsSelectable(true);
             contentTextView.setFocusable(true);
             contentTextView.setFocusableInTouchMode(true);
             contentTextView.setHighlightColor(0x4D00A884); // Semi-transparent WhatsApp Green
-            
+
             // Add vertical padding inside the bottom sheet
             int verticalPadding = (int) (8 * context.getResources().getDisplayMetrics().density);
             contentTextView.setPadding(0, verticalPadding, 0, verticalPadding);
-            
+
             dialog.setView(contentTextView);
-            
+
             dialog.setPositiveButton("COPY ALL", (dialogInterface, which) -> {
-                android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
                 if (clipboard != null) {
-                    android.content.ClipData clip = android.content.ClipData.newPlainText("Copied Text", text);
+                    ClipData clip = ClipData.newPlainText("Copied Text", text);
                     clipboard.setPrimaryClip(clip);
-                    android.widget.Toast.makeText(context, "Copied to clipboard", android.widget.Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show();
                 }
                 dialogInterface.dismiss();
             });
-            
+
             dialog.setNegativeButton("CLOSE", (dialogInterface, which) -> dialogInterface.dismiss());
-            
+
             dialog.show();
         } catch (Throwable t) {
             XposedBridge.log("[WAEX] Error showing select text dialog: " + t.toString());

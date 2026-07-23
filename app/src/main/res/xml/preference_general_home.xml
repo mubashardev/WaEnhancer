@@ -74,6 +74,23 @@
             app:title="@string/disable_version_check" />
 
         <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="customize_supported_versions"
+            app:summary="@string/customize_supported_versions_sum"
+            app:title="@string/customize_supported_versions" />
+
+        <Preference
+            app:dependency="customize_supported_versions"
+            app:key="manage_supported_versions"
+            app:summary="@string/manage_supported_versions_sum"
+            app:title="@string/manage_supported_versions">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetPackage="com.waenhancer"
+                android:targetClass="com.waenhancer.ui.fragments.SupportedVersionsActivity" />
+        </Preference>
+
+        <rikka.material.preference.MaterialSwitchPreference
             android:summary="@string/bootloader_spoofer_sum"
             android:title="@string/bootloader_spoofer"
             app:key="bootloader_spoofer" />
@@ -88,6 +105,11 @@
             android:dependency="bootloader_spoofer_custom"
             android:title="Use Custom keybox.xml file"
             android:summary="No file selected" />
+
+        <Preference
+            android:key="bootloader_spoofer_verify"
+            android:title="Verify Spoofer"
+            android:summary="Check spoofer trust chain, keys, and expiration" />
 
         <rikka.material.preference.MaterialSwitchPreference
             app:key="ampm"

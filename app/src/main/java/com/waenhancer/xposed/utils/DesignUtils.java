@@ -26,12 +26,16 @@ import com.waenhancer.xposed.core.WppCore;
 
 import java.util.HashMap;
 import java.util.Map;
+import android.content.Context;
+import android.content.res.Configuration;
+import android.util.TypedValue;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DesignUtils {
 
     private static SharedPreferences mPrefs;
 
-    private static final java.util.concurrent.ConcurrentHashMap<Integer, Drawable.ConstantState> drawableCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Integer, Drawable.ConstantState> drawableCache = new ConcurrentHashMap<>();
 
     @SuppressLint("UseCompatLoadingForDrawables")
     public static Drawable getDrawable(int id) {
@@ -63,18 +67,25 @@ public class DesignUtils {
 
     @Nullable
     public static Drawable getDrawableByName(String name) {
-        var id = Utils.getID(name, "drawable");
-        if (id == 0)
-            return null;
-        return DesignUtils.getDrawable(id);
+        int id = Utils.getID(name, "drawable");
+        if (id > 0) {
+            Drawable d = DesignUtils.getDrawable(id);
+            if (d != null) return d;
+        }
+        if (XResManager.moduleResources != null) {
+            try {
+                int moduleId = XResManager.moduleResources.getIdentifier(name, "drawable", "com.waenhancer");
+                if (moduleId > 0) {
+                    return XResManager.moduleResources.getDrawable(moduleId, null);
+                }
+            } catch (Throwable ignored) {}
+        }
+        return null;
     }
 
     @Nullable
     public static Drawable getIconByName(String name, boolean isTheme) {
-        var id = Utils.getID(name, "drawable");
-        if (id == 0)
-            return null;
-        var icon = DesignUtils.getDrawable(id);
+        Drawable icon = getDrawableByName(name);
         if (isTheme && icon != null) {
             return DesignUtils.coloredDrawable(icon, isNightMode() ? Color.WHITE : Color.BLACK);
         }
@@ -225,7 +236,7 @@ public class DesignUtils {
         return isNightMode(Utils.getApplication());
     }
 
-    public static boolean isNightMode(android.content.Context context) {
+    public static boolean isNightMode(Context context) {
         try {
             if (context == null) {
                 boolean systemNight = isNightModeBySystem();
@@ -235,11 +246,11 @@ public class DesignUtils {
             }
             
             // Check context configuration first (most accurate for the current activity)
-            int uiMode = context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-            if (uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
+            int uiMode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            if (uiMode == Configuration.UI_MODE_NIGHT_YES) {
                 return true;
             }
-            if (uiMode == android.content.res.Configuration.UI_MODE_NIGHT_NO) {
+            if (uiMode == Configuration.UI_MODE_NIGHT_NO) {
                 // If it's explicitly NO, we might still want to check WhatsApp theme
             }
 
@@ -256,9 +267,9 @@ public class DesignUtils {
     }
 
     public static boolean isNightModeBySystem() {
-        android.content.Context context = Utils.getApplication();
+        Context context = Utils.getApplication();
         if (context == null) return false;
-        return (context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        return (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
     }
 
     public static void setPrefs(SharedPreferences mPrefs) {
@@ -382,16 +393,16 @@ public class DesignUtils {
         return new BitmapDrawable(Utils.getApplication().getResources(), bitmap);
     }
 
-    public static Drawable getSelectableItemBackground(android.content.Context context) {
-        android.util.TypedValue outValue = new android.util.TypedValue();
+    public static Drawable getSelectableItemBackground(Context context) {
+        TypedValue outValue = new TypedValue();
         context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
         return ContextCompat.getDrawable(context, outValue.resourceId);
     }
 
-    public static int resolveColorAttr(android.content.Context context, int attr) {
-        android.util.TypedValue outValue = new android.util.TypedValue();
+    public static int resolveColorAttr(Context context, int attr) {
+        TypedValue outValue = new TypedValue();
         if (context.getTheme().resolveAttribute(attr, outValue, true)) {
-            if (outValue.type >= android.util.TypedValue.TYPE_FIRST_COLOR_INT && outValue.type <= android.util.TypedValue.TYPE_LAST_COLOR_INT) {
+            if (outValue.type >= TypedValue.TYPE_FIRST_COLOR_INT && outValue.type <= TypedValue.TYPE_LAST_COLOR_INT) {
                 return outValue.data;
             } else {
                 return ContextCompat.getColor(context, outValue.resourceId);
@@ -400,25 +411,25 @@ public class DesignUtils {
         return 0;
     }
 
-    public static int getThemeBackgroundColor(android.content.Context context) {
+    public static int getThemeBackgroundColor(Context context) {
         int color = resolveColorAttr(context, android.R.attr.windowBackground);
         if (color == 0) return isNightMode() ? 0xff0b141a : 0xffffffff;
         return color;
     }
 
-    public static int getThemeTextColorPrimary(android.content.Context context) {
+    public static int getThemeTextColorPrimary(Context context) {
         int color = resolveColorAttr(context, android.R.attr.textColorPrimary);
         if (color == 0) return isNightMode() ? 0xffffffff : 0xff000000;
         return color;
     }
 
-    public static int getThemeTextColorSecondary(android.content.Context context) {
+    public static int getThemeTextColorSecondary(Context context) {
         int color = resolveColorAttr(context, android.R.attr.textColorSecondary);
         if (color == 0) return isNightMode() ? 0xff8696a0 : 0xff667781;
         return color;
     }
 
-    public static int getThemeHeaderColor(android.content.Context context) {
+    public static int getThemeHeaderColor(Context context) {
         // Try to find a header-like color or fallback to windowBackground
         int color = resolveColorAttr(context, android.R.attr.colorPrimary);
         if (color == 0) color = resolveColorAttr(context, android.R.attr.background);
@@ -426,7 +437,7 @@ public class DesignUtils {
         return color;
     }
 
-    public static int getThemeAccentColor(android.content.Context context) {
+    public static int getThemeAccentColor(Context context) {
         int color = resolveColorAttr(context, android.R.attr.colorAccent);
         if (color == 0) return 0xff25d366; // WhatsApp Green
         return color;

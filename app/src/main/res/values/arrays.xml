@@ -157,25 +157,19 @@
         <item>2</item>
     </string-array>
     <string-array name="supported_versions_wpp">
-        <item>2.26.16.xx</item>
-        <item>2.26.17.xx</item>
-        <item>2.26.18.xx</item>
-        <item>2.26.19.xx</item>
-        <item>2.26.20.xx</item>
-        <item>2.26.21.xx</item>
-        <item>2.26.22.xx</item>
-        <item>2.26.23.xx</item>
+        <item>2.26.25.xx</item>
+        <item>2.26.26.xx</item>
+        <item>2.26.27.xx</item>
+        <item>2.26.28.xx</item>
+        <item>2.26.29.xx</item>
     </string-array>
 
     <string-array name="supported_versions_business">
-        <item>2.26.16.xx</item>
-        <item>2.26.17.xx</item>
-        <item>2.26.18.xx</item>
-        <item>2.26.19.xx</item>
-        <item>2.26.20.xx</item>
-        <item>2.26.21.xx</item>
-        <item>2.26.22.xx</item>
-        <item>2.26.23.xx</item>
+        <item>2.26.25.xx</item>
+        <item>2.26.26.xx</item>
+        <item>2.26.27.xx</item>
+        <item>2.26.28.xx</item>
+        <item>2.26.29.xx</item>
     </string-array>
 
     <string-array name="image_picker">
@@ -385,6 +379,18 @@
     <string-array name="separate_groups_counter_values">
         <item>conversations</item>
         <item>messages</item>
+    </string-array>
+    <string-array name="pill_design_entries">
+        <item>Regular (Classic)</item>
+        <item>Pro (Refined)</item>
+    </string-array>
+    <string-array name="pill_design_values">
+        <item>regular</item>
+        <item>pro</item>
+    </string-array>
+    <!-- Values in this array require an active Pro license to select -->
+    <string-array name="pill_design_pro_values">
+        <item>pro</item>
     </string-array>
 
 </resources>

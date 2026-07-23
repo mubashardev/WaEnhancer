@@ -34,15 +34,10 @@ public class TypingPrivacy extends Feature {
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 // Safeguard: Check if this was triggered by the AlwaysTyping pro engine
                 try {
-                    Class<?> alwaysTypingCls = Class.forName("com.waenhancer.pro.AlwaysTyping", false, classLoader);
-                    Field isEngineTriggeringField = alwaysTypingCls.getDeclaredField("isEngineTriggering");
-                    isEngineTriggeringField.setAccessible(true);
-                    if (isEngineTriggeringField.getBoolean(null)) {
+                    if ("true".equals(System.getProperty("com.waex.helper.AlwaysTyping.isEngineTriggering"))) {
                         return; // Let the engine send its simulated composing packets
                     }
-                } catch (Throwable ignored) {
-                    // AlwaysTyping class not loaded, or not engine-triggered
-                }
+                } catch (Throwable ignored) {}
 
                 // Look for JID and composing state in the parameters dynamically
                 Object jidObj = null;
@@ -87,7 +82,7 @@ public class TypingPrivacy extends Feature {
                 if (phone == null || phone.isEmpty()) return;
 
                 // Load preferences
-                boolean ghostmode = WppCore.getPrivBoolean("ghostmode", false);
+                boolean ghostmode = prefs.getBoolean("ghostmode_actual", false);
                 boolean ghostmode_t = prefs.getBoolean("ghostmode_t", false);
                 boolean ghostmode_r = prefs.getBoolean("ghostmode_r", false);
 

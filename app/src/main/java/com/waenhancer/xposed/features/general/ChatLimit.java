@@ -106,7 +106,7 @@ public class ChatLimit extends Feature {
         }
 
         var seeMoreMethod = Unobfuscator.loadSeeMoreConstructor(classLoader);
-        logDebug("SeenMore Method: ", DexSignUtil.getMethodDescriptor(seeMoreMethod));
+        /* Log removed */
 
         XposedBridge.hookMethod(seeMoreMethod, new XC_MethodHook() {
             @Override

@@ -7,6 +7,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.lang.reflect.Array;
 
 public class ProtocolTreeNodeWpp {
     public final Object mInstance;
@@ -47,7 +48,7 @@ public class ProtocolTreeNodeWpp {
                 }
             }
 
-            Class<?> selfArrayType = java.lang.reflect.Array.newInstance(TYPE, 0).getClass();
+            Class<?> selfArrayType = Array.newInstance(TYPE, 0).getClass();
             for (Field f : TYPE.getDeclaredFields()) {
                 if (f.getType() == selfArrayType) {
                     fieldChildren = f;
@@ -56,7 +57,7 @@ public class ProtocolTreeNodeWpp {
                 }
             }
 
-            Class<?> keyValueArrayType = java.lang.reflect.Array.newInstance(keyValueClass, 0).getClass();
+            Class<?> keyValueArrayType = Array.newInstance(keyValueClass, 0).getClass();
             for (Field f : TYPE.getDeclaredFields()) {
                 if (f.getType() == keyValueArrayType) {
                     fieldAttributes = f;
@@ -87,7 +88,7 @@ public class ProtocolTreeNodeWpp {
         try {
             Object attrArray = null;
             if (attributes != null && !attributes.isEmpty()) {
-                Object[] arr = (Object[]) java.lang.reflect.Array.newInstance(KeyValueWpp.TYPE, attributes.size());
+                Object[] arr = (Object[]) Array.newInstance(KeyValueWpp.TYPE, attributes.size());
                 for (int i = 0; i < attributes.size(); i++) {
                     arr[i] = attributes.get(i).mInstance;
                 }
@@ -96,7 +97,7 @@ public class ProtocolTreeNodeWpp {
 
             Object childArray = null;
             if (children != null && !children.isEmpty()) {
-                Object[] arr = (Object[]) java.lang.reflect.Array.newInstance(TYPE, children.size());
+                Object[] arr = (Object[]) Array.newInstance(TYPE, children.size());
                 for (int i = 0; i < children.size(); i++) {
                     arr[i] = children.get(i).mInstance;
                 }
@@ -165,7 +166,7 @@ public class ProtocolTreeNodeWpp {
             KeyValueWpp newKv = KeyValueWpp.create(key, value);
             if (newKv == null) return;
 
-            Object[] newArray = (Object[]) java.lang.reflect.Array.newInstance(KeyValueWpp.TYPE, attrs.size() + 1);
+            Object[] newArray = (Object[]) Array.newInstance(KeyValueWpp.TYPE, attrs.size() + 1);
             for (int i = 0; i < attrs.size(); i++) {
                 newArray[i] = attrs.get(i).mInstance;
             }
@@ -186,7 +187,7 @@ public class ProtocolTreeNodeWpp {
                 }
             }
 
-            Object[] newArray = (Object[]) java.lang.reflect.Array.newInstance(KeyValueWpp.TYPE, filtered.size());
+            Object[] newArray = (Object[]) Array.newInstance(KeyValueWpp.TYPE, filtered.size());
             for (int i = 0; i < filtered.size(); i++) {
                 newArray[i] = filtered.get(i);
             }
@@ -206,7 +207,7 @@ public class ProtocolTreeNodeWpp {
                 }
             }
 
-            Object[] newArray = (Object[]) java.lang.reflect.Array.newInstance(KeyValueWpp.TYPE, filtered.size());
+            Object[] newArray = (Object[]) Array.newInstance(KeyValueWpp.TYPE, filtered.size());
             for (int i = 0; i < filtered.size(); i++) {
                 newArray[i] = filtered.get(i);
             }
@@ -219,7 +220,7 @@ public class ProtocolTreeNodeWpp {
     public void modifyKeyValue(String key, String newValue) {
         try {
             List<KeyValueWpp> attrs = getAttributes();
-            Object[] newArray = (Object[]) java.lang.reflect.Array.newInstance(KeyValueWpp.TYPE, attrs.size());
+            Object[] newArray = (Object[]) Array.newInstance(KeyValueWpp.TYPE, attrs.size());
             for (int i = 0; i < attrs.size(); i++) {
                 KeyValueWpp attr = attrs.get(i);
                 if (key.equals(attr.getKey())) {

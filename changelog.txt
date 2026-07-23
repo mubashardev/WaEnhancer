@@ -1,40 +1,10 @@
-
 [Added]
-- **WhatsApp Support**:
-  - Full compatibility with WA/WB versions up to **2.26.23.xx**.
-- **Floating Bottom Navigation Bar**:
-  - Implemented a smooth floating pill-shaped bottom navigation bar with layout adjustments and transitions.
-- **WaEnhancerX Pro Features**:
-  - Introduced the premium license verification framework tied to device hardware (via Telegram bot `@waenhancerx_bot`).
-  - **Always Typing [Pro]**: Added *Always Typing* and *Always Recording Voice* states.
-  - **Message Bomber [Pro]**: Added a message-bombing utility with adjustable delays.
-  - **Media Deletion [Pro]**: Added option to completely delete message media files directly from local storage.
-  - **Status Splitter [Pro]**: Implemented a status video splitter with full obfuscation support to automatically post long status videos.
-  - **Status View Customizations [Pro]**: Custom status playback controls, layouts, fast-forward/rewind gestures, playback speed controllers, play/pause buttons, and options to hide/disable reply bars, quick reactions, and heart buttons.
-- **General Enhancements**:
-  - Added option to make message text selectable inside chat bubbles.
-  - Added toggle to hide the new Meta AI tab on the Home Screen.
-  - Added user configuration to select between embedded settings inside WhatsApp or launch as an external standalone application.
-  - Added a multi-step "Report Issue" flow with title input and validation checks.
+- Added version support for 2.26.29.xx WA/WB
 
 [Improvements]
-- **Database & Query Performance**:
-  - Integrated a one-time database index optimization to resolve lags (especially when the *Separate Groups* feature is active).
-  - Optimized conversation scrolling performance.
-- **UX & Design Polish**:
-  - Rounded custom bottom sheets and alert dialog buttons to match modern pill-shaped designs.
-- **App Size Reduction**:
-  - Decoupled `App.java` from licensing using dynamic reflection, purged verbose debug logs, and removed the unused native `DexKit` dependency to decrease package size.
+- Improved New Chat Dialog
+- Improved Pill Customization
 
-[Fixes]
-- **Media & Audio**:
-  - Fixed sending local media files as voice notes and resolved transcoding issues with the Audio-to-Opus utility.
-  - Fixed crashes in `AudioPlayerDialog` when loading corrupt or unplayable audio files.
-- **Seen Ticks & Online Status**:
-  - Resolved seen tick (Hide Blue Ticks) issues.
-  - Fixed Hide Typing & Recording voice status hooks.
-- **Compatibility & Crash Fixes**:
-  - Resolved `MODE_WORLD_READABLE` exceptions in Xposed initialization.
-  - Fixed nested preference fragment crashes and navigation errors.
-  - Implemented fallback method-resolution logic in `Unobfuscator` for floating action button hook failures.
-  - Restored chat date separators (Today, Yesterday, etc.) that were missing under time customization.
+[Fixed]
+- Floating Pill Customization was not working as expected for some devices
+- Improved custom version support

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
         app:iconSpaceReserved="false"
         app:title="@string/conversation">
@@ -35,7 +36,7 @@
             app:summary="@string/antirevokestatus_sum"
             app:title="@string/antirevokestatus" />
 
-        <com.jaredrummler.android.colorpicker.ColorPreferenceCompat
+        <com.jaredrummler.android.colorpicker.ColorPreferenceWithDefault
             app:cpv_showAlphaSlider="true"
             app:key="deleted_message_color"
             app:summary="@string/deleted_message_color_sum"
@@ -60,6 +61,15 @@
             app:key="removeforwardlimit"
             app:summary="@string/removeforwardlimit_sum"
             app:title="@string/removeforwardlimit" />
+
+        <com.waenhancer.preference.LimitedEditTextPreference
+            android:inputType="number"
+            app:defaultValue="9999"
+            app:dependency="removeforwardlimit"
+            app:key="customforwardlimit"
+            app:maxLength="5"
+            app:summary="@string/customforwardlimit_sum"
+            app:title="@string/customforwardlimit" />
 
         <rikka.material.preference.MaterialSwitchPreference
             app:key="hidetag"
@@ -131,17 +141,21 @@
             app:key="google_translate"
             app:summary="@string/google_translate_sum"
             app:title="@string/google_translate" />
-
         <rikka.material.preference.MaterialSwitchPreference
+            android:enabled="false"
             app:key="verify_blocked_contact"
             app:summary="@string/show_contact_blocked_sum"
             app:title="@string/show_contact_blocked" />
-
         <rikka.material.preference.MaterialSwitchPreference
             app:defaultValue="true"
             app:key="go_to_first_message"
             app:summary="@string/go_to_first_message_sum"
             app:title="@string/go_to_first_message" />
+        <com.waenhancer.preference.ProSwitchPreference
+            app:defaultValue="false"
+            app:key="filter_group_members_messages"
+            app:summary="@string/filter_group_members_messages_sum"
+            app:title="@string/filter_group_members_messages" />
 
         <com.waenhancer.preference.ProSwitchPreference
             app:defaultValue="false"

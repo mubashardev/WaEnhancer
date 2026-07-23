@@ -27,7 +27,13 @@ public class BottomDialogWpp {
             dialog.getWindow().setBackgroundDrawable(null);
             dialog.getWindow().setDimAmount(0);
             var view = dialog.getWindow().getDecorView();
-            view.findViewById(Utils.getID("design_bottom_sheet", "id")).setBackgroundColor(Color.TRANSPARENT);
+            int bSheetId = Utils.getID("design_bottom_sheet", "id");
+            if (bSheetId > 0) {
+                var bSheetView = view.findViewById(bSheetId);
+                if (bSheetView != null) {
+                    bSheetView.setBackgroundColor(Color.TRANSPARENT);
+                }
+            }
             dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         }
     }

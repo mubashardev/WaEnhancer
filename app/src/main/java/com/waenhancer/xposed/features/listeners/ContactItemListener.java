@@ -15,12 +15,13 @@ import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import java.lang.reflect.Field;
 
 public class ContactItemListener extends Feature {
 
     public static HashSet<OnContactItemListener> contactListeners = new HashSet<>();
 
-    private static java.lang.reflect.Field cachedViewField;
+    private static Field cachedViewField;
 
     public ContactItemListener(@NonNull ClassLoader loader, @NonNull SharedPreferences preferences) {
         super(loader, preferences);
@@ -29,9 +30,9 @@ public class ContactItemListener extends Feature {
     @Override
     public void doHook() throws Throwable {
         var onChangeStatus = Unobfuscator.loadOnChangeStatus(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(onChangeStatus));
+        /* Log removed */
         var field1 = Unobfuscator.loadViewHolderField1(classLoader);
-        logDebug(Unobfuscator.getFieldDescriptor(field1));
+        /* Log removed */
         var absViewHolderClass = Unobfuscator.loadAbsViewHolder(classLoader);
         cachedViewField = ReflectionUtils.findFieldUsingFilter(absViewHolderClass, field -> field.getType() == View.class);
         cachedViewField.setAccessible(true);

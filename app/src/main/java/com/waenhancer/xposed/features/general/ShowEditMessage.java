@@ -38,6 +38,13 @@ import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.content.res.ColorStateList;
+import android.view.ContextThemeWrapper;
+import android.view.Gravity;
+import android.widget.CompoundButton;
+import android.widget.RelativeLayout;
+import android.widget.Switch;
+import com.waenhancer.xposed.core.FeatureLoader;
 
 public class ShowEditMessage extends Feature {
 
@@ -51,13 +58,13 @@ public class ShowEditMessage extends Feature {
         if (!prefs.getBoolean("antieditmessages", false)) return;
 
         var onMessageEdit = Unobfuscator.loadMessageEditMethod(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(onMessageEdit));
+        /* Log removed */
 
         var callerMessageEditMethod = Unobfuscator.loadCallerMessageEditMethod(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(callerMessageEditMethod));
+        /* Log removed */
 
         var getEditMessage = Unobfuscator.loadGetEditMessageMethod(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(getEditMessage));
+        /* Log removed */
 
         XposedBridge.hookMethod(onMessageEdit, new XC_MethodHook() {
             @Override
@@ -67,7 +74,10 @@ public class ShowEditMessage extends Feature {
                 var invoked = callerMessageEditMethod.invoke(null, param.args[0]);
                 long timestamp = XposedHelpers.getLongField(invoked, "A00");
                 var fMessage = new FMessageWpp(param.args[0]);
-                var key = fMessage.getKey();
+                var key = fMessage.getOriginalKey();
+                if (key == null) {
+                    key = fMessage.getKey();
+                }
                 if (key == null || key.messageID == null) return;
                 String messageKey = key.messageID;
                 long id = fMessage.getRowId();
@@ -82,11 +92,16 @@ public class ShowEditMessage extends Feature {
                     if (newMessage == null) return;
                 }
                 try {
-                    var message = MessageHistory.getInstance().getMessages(messageKey);
-                    if (message == null) {
+                    var messages = MessageHistory.getInstance().getMessages(messageKey);
+                    if (messages == null || messages.isEmpty()) {
                         MessageHistory.getInstance().insertMessage(messageKey, origMessage, 0);
+                        MessageHistory.getInstance().insertMessage(messageKey, newMessage, timestamp);
+                    } else {
+                        var lastMessage = messages.get(messages.size() - 1);
+                        if (!lastMessage.message.equals(newMessage)) {
+                            MessageHistory.getInstance().insertMessage(messageKey, newMessage, timestamp);
+                        }
                     }
-                    MessageHistory.getInstance().insertMessage(messageKey, newMessage, timestamp);
                 } catch (Exception e) {
                     logDebug(e);
                 }
@@ -100,7 +115,10 @@ public class ShowEditMessage extends Feature {
 
                     @Override
                     public void onItemBind(FMessageWpp fMessage, ViewGroup viewGroup) {
-                        var key = fMessage.getKey();
+                        var key = fMessage.getOriginalKey();
+                        if (key == null) {
+                            key = fMessage.getKey();
+                        }
                         if (key == null || key.messageID == null) {
                             return;
                         }
@@ -218,7 +236,7 @@ public class ShowEditMessage extends Feature {
 
         TextView editView = new TextView(dateView.getContext());
         editView.setId(injectId);
-        editView.setText(" " + indicator + " " + com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.message_original, "Edited"));
+        editView.setText(" " + indicator + " " + FeatureLoader.getModuleString(Utils.getApplication(), R.string.message_original, "Edited"));
         editView.setTextSize(11.0f);
         editView.setTextColor(DesignUtils.getUnSeenColor());
         editView.getPaint().setUnderlineText(true);
@@ -306,7 +324,7 @@ public class ShowEditMessage extends Feature {
             var ctx = (Context) WppCore.getCurrentConversation();
 
             var dialog = new AlertDialogWpp(ctx);
-            dialog.setTitle(com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.edited_history, "Edit History"));
+            dialog.setFullHeight(true);
 
             var adapter = new MessageAdapter(ctx, messages);
             ListView listView = new NoScrollListView(ctx);
@@ -314,7 +332,132 @@ public class ShowEditMessage extends Feature {
             listView.setLayoutParams(layoutParams2);
             listView.setAdapter(adapter);
 
-            dialog.setView(listView);
+            var density = ctx.getResources().getDisplayMetrics().density;
+            
+            // Header Layout (RelativeLayout)
+            var headerLayout = new RelativeLayout(ctx);
+            var headerLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            int pad16 = (int) (16 * density);
+            int pad8 = (int) (8 * density);
+            headerLayout.setPadding(pad16, pad16, pad16, pad8);
+            headerLayout.setMinimumHeight((int) (56 * density));
+            headerLayout.setLayoutParams(headerLp);
+
+            // Title TextView
+            var titleView = new TextView(ctx);
+            titleView.setText(FeatureLoader.getModuleString(Utils.getApplication(), R.string.edited_history, "Edit History"));
+            titleView.setTextSize(20f);
+            titleView.setTypeface(Typeface.DEFAULT_BOLD);
+            titleView.setTextColor(DesignUtils.getPrimaryTextColor());
+            var titleParams = new RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT
+            );
+            titleParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            titleParams.addRule(RelativeLayout.CENTER_VERTICAL);
+            titleView.setLayoutParams(titleParams);
+            headerLayout.addView(titleView);
+
+            // Switch container (LinearLayout horizontal)
+            var switchContainer = new LinearLayout(ctx);
+            switchContainer.setOrientation(LinearLayout.HORIZONTAL);
+            switchContainer.setGravity(Gravity.CENTER_VERTICAL);
+            var switchContainerParams = new RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT
+            );
+            switchContainerParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            switchContainerParams.addRule(RelativeLayout.CENTER_VERTICAL);
+            switchContainer.setLayoutParams(switchContainerParams);
+
+            // Switch Label (TextView)
+            var switchLabel = new TextView(ctx);
+            switchLabel.setText("Show Diff ");
+            switchLabel.setTextSize(12f);
+            switchLabel.setTextColor(DesignUtils.isNightMode() ? 0xFFCCCCCC : 0xFF666666);
+            switchLabel.setPadding(0, 0, (int) (4 * density), 0);
+            switchContainer.addView(switchLabel);
+
+            // Switch (MaterialSwitch by default for M3 style)
+            CompoundButton diffSwitch = null;
+            try {
+                Context modContext = ctx.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
+                boolean isDarkMode = DesignUtils.isNightMode();
+                int themeResId = isDarkMode ? 
+                        com.google.android.material.R.style.Theme_Material3_Dark : 
+                        com.google.android.material.R.style.Theme_Material3_Light;
+                ContextThemeWrapper themedContext = new ContextThemeWrapper(modContext, themeResId);
+                
+                Class<?> switchClass;
+                try {
+                    switchClass = classLoader.loadClass("com.google.android.material.materialswitch.MaterialSwitch");
+                } catch (Throwable t) {
+                    switchClass = ShowEditMessage.class.getClassLoader().loadClass("com.google.android.material.materialswitch.MaterialSwitch");
+                }
+                diffSwitch = (CompoundButton) XposedHelpers.newInstance(switchClass, themedContext);
+            } catch (Throwable t) {
+                XposedBridge.log("[WaEnhancerX] Failed to create themed MaterialSwitch: " + t.getMessage());
+            }
+
+            if (diffSwitch == null) {
+                try {
+                    diffSwitch = (CompoundButton) XposedHelpers.newInstance(
+                            XposedHelpers.findClass("androidx.appcompat.widget.SwitchCompat", classLoader), ctx);
+                } catch (Throwable t2) {
+                    diffSwitch = new Switch(ctx);
+                }
+            }
+
+            var switchLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            int margin4 = (int) (4 * density);
+            switchLp.setMargins(margin4, margin4, margin4, margin4);
+            diffSwitch.setLayoutParams(switchLp);
+            diffSwitch.setChecked(false);
+            diffSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                adapter.setShowDiff(isChecked);
+            });
+
+            // Tint the switch beautifully (matching green theme of WA Alert sheets)
+            try {
+                boolean isDarkMode = DesignUtils.isNightMode();
+                int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_checked },
+                    new int[] { -android.R.attr.state_checked }
+                };
+                int[] thumbColors = new int[] {
+                    isDarkMode ? 0xFF0A3F1F : 0xFF0B6623,
+                    isDarkMode ? 0xFF9E9E9E : 0xFFECECEC
+                };
+                int[] trackColors = new int[] {
+                    isDarkMode ? 0xFF57DF85 : 0xFF50D179,
+                    isDarkMode ? 0x33FFFFFF : 0x33000000
+                };
+                ColorStateList thumbStateList = new ColorStateList(states, thumbColors);
+                ColorStateList trackStateList = new ColorStateList(states, trackColors);
+                XposedHelpers.callMethod(diffSwitch, "setThumbTintList", thumbStateList);
+                XposedHelpers.callMethod(diffSwitch, "setTrackTintList", trackStateList);
+            } catch (Throwable ignored) {}
+
+            switchContainer.addView(diffSwitch);
+            headerLayout.addView(switchContainer);
+
+            // Main container (LinearLayout vertical)
+            var containerLayout = new LinearLayout(ctx);
+            containerLayout.setOrientation(LinearLayout.VERTICAL);
+            containerLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            ));
+            containerLayout.addView(headerLayout);
+            containerLayout.addView(listView);
+
+            dialog.setView(containerLayout);
             dialog.setPositiveButton("OK", (dialogInterface, which) -> dialogInterface.dismiss());
             dialog.show();
         });

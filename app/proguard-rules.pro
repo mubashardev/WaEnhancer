@@ -31,6 +31,10 @@
 -keep public class * implements de.robv.android.xposed.IXposedHookInitPackageResources { *; }
 -keep public class * implements de.robv.android.xposed.IXposedHookZygoteInit { *; }
 
+# Keep Xposed framework classes and references intact to prevent R8 from obfuscating them
+-keep class de.robv.android.xposed.** { *; }
+-dontwarn de.robv.android.xposed.**
+
 # Keep Xposed loading entry point classes and their member signatures
 -keep class com.waenhancer.WppXposed { *; }
 
@@ -39,42 +43,66 @@
     public <init>(java.lang.ClassLoader, android.content.SharedPreferences);
 }
 
-# Keep dynamic ProFeature stubs and classes loaded via reflection
--keep class com.waenhancer.pro.ProFeature {
-    public <init>(java.lang.ClassLoader, android.content.SharedPreferences);
-    native <methods>;
-    protected void setupNativeHooks(java.lang.String[]);
-}
--keep class com.waenhancer.pro.MessageBomber { *; }
--keep class com.waenhancer.pro.DeleteMessageFile { *; }
--keep class com.waenhancer.pro.StatusSplitter { *; }
+# Keep classes referenced by the Pro submodule to prevent NoClassDefFoundError/ClassNotFoundException at runtime
+-keep class com.waenhancer.xposed.core.Feature { *; }
+-keep class com.waenhancer.xposed.core.FeatureLoader { *; }
+-keep class com.waenhancer.xposed.core.WppCore { *; }
+-keep class com.waenhancer.xposed.core.devkit.Unobfuscator { *; }
+-keep class com.waenhancer.xposed.core.components.FMessageWpp { *; }
+-keep class com.waenhancer.xposed.core.components.FMessageWpp$* { *; }
+-keep class com.waenhancer.xposed.features.privacy.CustomPrivacy { *; }
+-keep class com.waenhancer.xposed.utils.Utils { *; }
+-keep class com.waenhancer.xposed.utils.DesignUtils { *; }
+-keep class com.waenhancer.xposed.utils.ReflectionUtils { *; }
+-keep class com.waenhancer.xposed.features.listeners.ConversationItemListener { *; }
+-keep class com.waenhancer.xposed.core.components.AlertDialogWpp { *; }
+-keep class com.waenhancer.xposed.core.db.** { *; }
+-keep class com.waenhancer.R { *; }
+-keep class com.waenhancer.R$* { *; }
+-keep class com.waenhancer.ui.helpers.BottomSheetHelper { *; }
+-keep class com.waenhancer.utils.KeyboxValidator { *; }
+-keep class com.waenhancer.utils.KeyboxValidator$* { *; }
+-keep class com.waenhancer.App { *; }
+-keep class com.waenhancer.BuildConfig { *; }
+-keep class com.waenhancer.preference.SafeSharedPreferences { *; }
+-keep class com.waenhancer.xposed.utils.XPrefManager { *; }
+-keep class com.waenhancer.xposed.utils.XResManager { *; }
+-keep class com.waenhancer.model.FilterItem { *; }
 
--keepclassmembers class * extends com.waenhancer.pro.ProFeature {
-    protected void setupNativeHooks(java.lang.String[]);
-}
+# Keep all classes and members in the pro package (except the obfuscated module) to prevent reflection and JNI issues in release mode
+-keep class !com.waenhancer.pro.FileSizeSpooferPro,com.waenhancer.pro.** { *; }
 
-# Keep Native Security Bridge (JNI signatures must match C++ export names)
--keepclasseswithmembernames class com.waenhancer.pro.utils.SecurityNative {
-    native <methods>;
+# Keep only the reflection entry point of the obfuscated module so its internal logic, methods, and fields can be obfuscated
+-keep class com.waenhancer.pro.FileSizeSpooferPro {
+    public static void applyHooks(java.lang.ClassLoader, android.content.SharedPreferences);
 }
 
 # Keep all IPC bridge stub and AIDL classes intact to maintain process stability
 -keep class com.waenhancer.xposed.bridge.** { *; }
 
+# Keep the plugin API interfaces and support classes intact for helper/pro plugins
+-keep class com.waex.api.** { *; }
+
+# Keep the plugin context implementation classes — the pro helper calls back into these
+# through the IPlugin/IPluginContext/ICoreBridge/IHookService API at runtime.
+# R8's -repackageclasses would move these to package 'Z' and rename their members,
+# causing NoSuchMethodError / AbstractMethodError when the helper plugin calls back.
+-keep class com.waenhancer.xposed.core.plugins.PluginContextImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.IsolatedParentClassLoader { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.CoreBridgeImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.HookServiceImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.ObfuscationServiceImpl { *; }
+-keep class com.waenhancer.xposed.core.plugins.impl.StateServiceImpl { *; }
+
 # =============================================================================
 # 3. LICENSING LAYER REFLECTION SAFETY (GAP CLOSED)
 # =============================================================================
-# Keep the names and reflective entrypoints of LicenseManager, ProStatusManager,
-# and ProConfig to ensure dynamic lookups succeed without throwing ClassNotFoundException.
+# Keep the names and reflective entrypoints of LicenseManager to ensure dynamic lookups succeed.
 -keep class com.waenhancer.xposed.utils.LicenseManager {
     public static void makePrefsWorldReadable(android.content.Context);
     public static void silentCheck(android.content.Context);
     public <init>(...);
 }
-
--keep class com.waenhancer.pro.utils.ProStatusManager { *; }
--keep class com.waenhancer.pro.utils.ProStatusManager$ProStatus { *; }
--keep class com.waenhancer.pro.utils.ProConfig { *; }
 
 # =============================================================================
 # 4. FLAT PACKAGING (REPACKAGING CLASSES TO MATCH COMPETITOR)
@@ -96,12 +124,20 @@
     public <init>(android.content.Context, android.util.AttributeSet);
     public <init>(android.content.Context, android.util.AttributeSet, int);
 }
+# Keep reflective helper methods and preference fields in preference fragments to prevent reflection failure at runtime
+-keepclassmembers class * extends androidx.preference.PreferenceFragmentCompat {
+    protected *** mPrefs;
+    private *** getDefaultSpooferXml();
+    private *** updateKeyboxVerifySummary();
+}
 
-# Keep jStyleParser classes and members to prevent reflection errors in obfuscated builds
+
+# Keep the CSS parser library (jStyleParser) intact to prevent NoSuchFieldException during reflective enum/field lookups
 -keep class cz.vutbr.web.** { *; }
 -keep class org.w3c.css.sac.** { *; }
 -dontwarn cz.vutbr.web.**
 -dontwarn org.w3c.css.sac.**
+
 # Keep PreferenceManager and all its methods intact for Xposed preference mode hook and dynamic preference access
 -keep class androidx.preference.PreferenceManager { *; }
 
@@ -109,8 +145,13 @@
 -keep class com.waenhancer.xposed.core.devkit.** { *; }
 
 # DexKit and OkHttp warning suppression (R8 handles OKHttp automatically)
--keep class io.luckypray.dexkit.** { *; }
--keep class org.luckypray.dexkit.** { *; }
+-keep class org.luckypray.dexkit.DexKitBridge {
+    private long dexKitPtr;
+    native <methods>;
+}
+-keep class org.luckypray.dexkit.DexKitBridge$Companion {
+    native <methods>;
+}
 -dontwarn io.luckypray.dexkit.**
 -dontwarn org.luckypray.dexkit.**
 -dontwarn okhttp3.**
@@ -118,9 +159,11 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.slf4j.**
 
-# Firebase reflection safety
--dontwarn com.google.firebase.**
+# Firebase keep rules — required because App.java and HomeFragment.java access Firebase
+# via reflection (Class.forName / getMethod). Without these, R8 renames or removes
+# the classes and the reflection fails silently with ClassNotFoundException.
 -keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
 
 # Markwon and Commonmark warning suppression
 -dontwarn org.commonmark.**
@@ -134,7 +177,3 @@
 -keep public class * extends androidx.fragment.app.Fragment {
     public <init>();
 }
-
-# Keep all fragment classes in UI fragments and Xposed features others package to prevent ClassNotFoundException
--keep class com.waenhancer.ui.fragments.** { *; }
--keep class com.waenhancer.xposed.features.others.** { *; }

@@ -2,6 +2,11 @@ package com.waenhancer.ui.helpers;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -20,6 +25,31 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.graphics.Typeface;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.InputType;
+import android.text.method.DigitsKeyListener;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.preference.EditTextPreference;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.imageview.ShapeableImageView;
+import com.waenhancer.xposed.utils.DesignUtils;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.text.NumberFormat;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Global helper for showing professional bottom sheets throughout the app.
@@ -28,16 +58,18 @@ import java.util.Set;
 public class BottomSheetHelper {
 
     public interface OnConfirmListener {
+
         void onConfirm();
     }
 
     public interface OnInputConfirmListener {
+
         void onConfirm(String input);
     }
 
     /**
-     * Show a confirmation bottom sheet. If isDestructive is true, the action button
-     * is red.
+     * Show a confirmation bottom sheet. If isDestructive is true, the action
+     * button is red.
      */
     public static void showConfirmation(Context context, String title, String message,
             String confirmText, boolean isDestructive, OnConfirmListener onConfirm) {
@@ -107,6 +139,16 @@ public class BottomSheetHelper {
      */
     public static void showInput(Context context, String title, String hint,
             String confirmText, OnInputConfirmListener onConfirm) {
+        showInput(context, title, null, hint, confirmText, null, onConfirm);
+    }
+
+    public static void showInput(Context context, String title, String defaultValue, String hint,
+            String confirmText, OnInputConfirmListener onConfirm) {
+        showInput(context, title, defaultValue, hint, confirmText, null, onConfirm);
+    }
+
+    public static void showInput(Context context, String title, String defaultValue, String hint,
+            String confirmText, EditTextPreference editPref, OnInputConfirmListener onConfirm) {
         BottomSheetDialog dialog = createDialog(context);
         View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_input, null);
         dialog.setContentView(view);
@@ -114,9 +156,49 @@ public class BottomSheetHelper {
         ((MaterialTextView) view.findViewById(R.id.bs_title)).setText(title);
 
         TextInputLayout inputLayout = view.findViewById(R.id.bs_input_layout);
-        inputLayout.setHint(hint);
+        if (hint != null) {
+            inputLayout.setHint(hint);
+        } else {
+            inputLayout.setHint("Enter value");
+        }
 
         TextInputEditText input = view.findViewById(R.id.bs_input);
+
+        // Pre-fill the previous saved value
+        if (defaultValue != null) {
+            input.setText(defaultValue);
+            input.setSelection(defaultValue.length());
+        }
+
+        // Dynamically apply input type and bindings from the preference
+        if (editPref != null) {
+            EditTextPreference.OnBindEditTextListener bindListener = null;
+            try {
+                Method getListener = EditTextPreference.class.getDeclaredMethod("getOnBindEditTextListener");
+                getListener.setAccessible(true);
+                bindListener = (EditTextPreference.OnBindEditTextListener) getListener.invoke(editPref);
+            } catch (Exception ignored) {}
+
+            if (bindListener != null) {
+                bindListener.onBindEditText(input);
+            } else {
+                String key = editPref.getKey();
+                if (key != null && (key.equals("change_dpi") || key.equals("customforwardlimit"))) {
+                    input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    input.setKeyListener(DigitsKeyListener.getInstance("0123456789"));
+                } else {
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                }
+            }
+        } else {
+            // Safe fallback: check if title or hint suggests numeric input
+            if (title != null && (title.toLowerCase().contains("dpi") || title.toLowerCase().contains("limit") || title.toLowerCase().contains("number"))) {
+                input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                input.setKeyListener(DigitsKeyListener.getInstance("0123456789"));
+            } else {
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+            }
+        }
 
         MaterialButton confirmBtn = view.findViewById(R.id.bs_confirm_btn);
         confirmBtn.setText(confirmText);
@@ -132,13 +214,21 @@ public class BottomSheetHelper {
 
         // Auto-focus the input and show keyboard
         input.requestFocus();
+        input.postDelayed(() -> {
+            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+            }
+        }, 150);
     }
 
     public interface OnSingleChoiceListener {
+
         void onChoice(int index, String value);
     }
 
     public interface OnMultiChoiceListener {
+
         void onChoices(Set<String> values);
     }
 
@@ -254,9 +344,9 @@ public class BottomSheetHelper {
         View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_user_profile, null);
         bottomSheet.setContentView(view);
 
-        com.google.android.material.imageview.ShapeableImageView ivAvatar = view.findViewById(R.id.bsAvatar);
-        com.google.android.material.textview.MaterialTextView tvName = view.findViewById(R.id.bsName);
-        com.google.android.material.textview.MaterialTextView tvUsername = view.findViewById(R.id.bsUsername);
+        ShapeableImageView ivAvatar = view.findViewById(R.id.bsAvatar);
+        MaterialTextView tvName = view.findViewById(R.id.bsName);
+        MaterialTextView tvUsername = view.findViewById(R.id.bsUsername);
 
         LoadingIndicator progressIndicator = view.findViewById(R.id.expressive_loading_progress);
         View contentLayout = view.findViewById(R.id.bsContentLayout);
@@ -279,7 +369,7 @@ public class BottomSheetHelper {
 
         bottomSheet.show();
 
-        android.content.SharedPreferences prefs = context.getSharedPreferences("github_user_cache",
+        SharedPreferences prefs = context.getSharedPreferences("github_user_cache",
                 Context.MODE_PRIVATE);
         long lastFetch = prefs.getLong(username + "_time", 0);
         String cachedJson = prefs.getString(username + "_json", null);
@@ -297,15 +387,15 @@ public class BottomSheetHelper {
 
         client.newCall(request).enqueue(new okhttp3.Callback() {
             @Override
-            public void onFailure(@androidx.annotation.NonNull okhttp3.Call call,
-                    @androidx.annotation.NonNull java.io.IOException e) {
-                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            public void onFailure(@NonNull okhttp3.Call call,
+                    @NonNull IOException e) {
+                new Handler(Looper.getMainLooper()).post(() -> {
                     if (cachedJson != null) {
                         parseAndPopulateProfile(context, view, bottomSheet, cachedJson, htmlUrl, avatarUrl,
                                 contributions);
                     } else {
-                        android.widget.Toast
-                                .makeText(context, "Failed to load user profile", android.widget.Toast.LENGTH_SHORT)
+                        Toast
+                                .makeText(context, "Failed to load user profile", Toast.LENGTH_SHORT)
                                 .show();
                         bottomSheet.dismiss();
                     }
@@ -313,16 +403,16 @@ public class BottomSheetHelper {
             }
 
             @Override
-            public void onResponse(@androidx.annotation.NonNull okhttp3.Call call,
-                    @androidx.annotation.NonNull okhttp3.Response response) throws java.io.IOException {
+            public void onResponse(@NonNull okhttp3.Call call,
+                    @NonNull okhttp3.Response response) throws IOException {
                 if (!response.isSuccessful() || response.body() == null) {
-                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                    new Handler(Looper.getMainLooper()).post(() -> {
                         if (cachedJson != null) {
                             parseAndPopulateProfile(context, view, bottomSheet, cachedJson, htmlUrl, avatarUrl,
                                     contributions);
                         } else {
-                            android.widget.Toast
-                                    .makeText(context, "Error fetching user", android.widget.Toast.LENGTH_SHORT).show();
+                            Toast
+                                    .makeText(context, "Error fetching user", Toast.LENGTH_SHORT).show();
                             bottomSheet.dismiss();
                         }
                     });
@@ -336,9 +426,9 @@ public class BottomSheetHelper {
                             .putString(username + "_json", json)
                             .apply();
 
-                    new android.os.Handler(android.os.Looper.getMainLooper())
+                    new Handler(Looper.getMainLooper())
                             .post(() -> parseAndPopulateProfile(context, view, bottomSheet, json, htmlUrl, avatarUrl,
-                                    contributions));
+                            contributions));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -349,7 +439,7 @@ public class BottomSheetHelper {
     private static void parseAndPopulateProfile(Context context, View view, BottomSheetDialog bottomSheet, String json,
             String fallbackHtmlUrl, String avatarUrl, int contributions) {
         try {
-            org.json.JSONObject obj = new org.json.JSONObject(json);
+            JSONObject obj = new JSONObject(json);
             String name = obj.optString("name", "");
             String login = obj.optString("login", "");
             String location = obj.optString("location", "");
@@ -360,26 +450,27 @@ public class BottomSheetHelper {
             String blog = obj.optString("blog", "");
             String htmlUrl = obj.optString("html_url", fallbackHtmlUrl);
 
-            if (name.isEmpty() || name.equals("null"))
+            if (name.isEmpty() || name.equals("null")) {
                 name = login;
+            }
 
-            com.google.android.material.textview.MaterialTextView tvName = view.findViewById(R.id.bsName);
-            com.google.android.material.textview.MaterialTextView tvLocation = view.findViewById(R.id.bsLocation);
-            com.google.android.material.textview.MaterialTextView tvFollowers = view.findViewById(R.id.bsFollowers);
-            com.google.android.material.textview.MaterialTextView tvBio = view.findViewById(R.id.bsBio);
-            com.google.android.material.textview.MaterialTextView tvContributions = view
+            MaterialTextView tvName = view.findViewById(R.id.bsName);
+            MaterialTextView tvLocation = view.findViewById(R.id.bsLocation);
+            MaterialTextView tvFollowers = view.findViewById(R.id.bsFollowers);
+            MaterialTextView tvBio = view.findViewById(R.id.bsBio);
+            MaterialTextView tvContributions = view
                     .findViewById(R.id.bsContributions);
 
-            android.widget.ImageView ivLocationIcon = view.findViewById(R.id.bsLocationIcon);
+            ImageView ivLocationIcon = view.findViewById(R.id.bsLocationIcon);
             View locationContainer = view.findViewById(R.id.bsLocationContainer);
             View chipsScroll = view.findViewById(R.id.bsChipsScroll);
 
-            com.google.android.material.chip.Chip chipHireable = view.findViewById(R.id.chipHireable);
-            com.google.android.material.chip.Chip chipTwitter = view.findViewById(R.id.chipTwitter);
+            Chip chipHireable = view.findViewById(R.id.chipHireable);
+            Chip chipTwitter = view.findViewById(R.id.chipTwitter);
 
-            com.google.android.material.button.MaterialButton btnGithub = view.findViewById(R.id.bsGithubBtn);
-            com.google.android.material.button.MaterialButton btnWebsite = view.findViewById(R.id.bsWebsiteBtn);
-            com.google.android.material.button.MaterialButton btnContributions = view
+            MaterialButton btnGithub = view.findViewById(R.id.bsGithubBtn);
+            MaterialButton btnWebsite = view.findViewById(R.id.bsWebsiteBtn);
+            MaterialButton btnContributions = view
                     .findViewById(R.id.bsContributionsBtn);
 
             tvName.setText(name);
@@ -437,8 +528,8 @@ public class BottomSheetHelper {
                 chipTwitter.setText("@" + twitter);
                 chipTwitter.setOnClickListener(v -> {
                     try {
-                        context.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://x.com/" + twitter)));
+                        context.startActivity(new Intent(Intent.ACTION_VIEW,
+                                Uri.parse("https://x.com/" + twitter)));
                     } catch (Exception ignored) {
                     }
                 });
@@ -448,11 +539,12 @@ public class BottomSheetHelper {
                 btnWebsite.setVisibility(View.VISIBLE);
                 btnWebsite.setOnClickListener(v -> {
                     String url = blog;
-                    if (!url.startsWith("http"))
+                    if (!url.startsWith("http")) {
                         url = "https://" + url;
+                    }
                     try {
-                        context.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse(url)));
+                        context.startActivity(new Intent(Intent.ACTION_VIEW,
+                                Uri.parse(url)));
                     } catch (Exception ignored) {
                     }
                 });
@@ -464,8 +556,8 @@ public class BottomSheetHelper {
 
             btnGithub.setOnClickListener(v -> {
                 try {
-                    context.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse(htmlUrl)));
+                    context.startActivity(new Intent(Intent.ACTION_VIEW,
+                            Uri.parse(htmlUrl)));
                     bottomSheet.dismiss();
                 } catch (Exception ignored) {
                 }
@@ -477,12 +569,14 @@ public class BottomSheetHelper {
 
             // shimmerLayout.stopShimmer();
             // shimmerLayout.setVisibility(View.GONE);
-            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+            if (progressIndicator != null) {
+                progressIndicator.setVisibility(View.GONE);
+            }
             contentLayout.setVisibility(View.VISIBLE);
 
         } catch (Exception e) {
             e.printStackTrace();
-            android.widget.Toast.makeText(context, "Failed to parse profile", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Failed to parse profile", Toast.LENGTH_SHORT).show();
             bottomSheet.dismiss();
         }
     }
@@ -493,13 +587,13 @@ public class BottomSheetHelper {
         View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_contributions, null);
         bottomSheet.setContentView(view);
 
-        android.widget.ImageButton btnBack = view.findViewById(R.id.bsContribBackBtn);
+        ImageButton btnBack = view.findViewById(R.id.bsContribBackBtn);
         btnBack.setOnClickListener(v -> {
             bottomSheet.dismiss();
             showUserProfile(context, login, avatarUrl, htmlUrl, contributions);
         });
 
-        com.google.android.material.textview.MaterialTextView tvTitle = view.findViewById(R.id.bsContribTitle);
+        MaterialTextView tvTitle = view.findViewById(R.id.bsContribTitle);
         tvTitle.setText(displayName + "'s Contributions");
 
         bottomSheet.show();
@@ -511,7 +605,7 @@ public class BottomSheetHelper {
         }
         contentLayout.setVisibility(View.GONE);
 
-        android.content.SharedPreferences prefs = context.getSharedPreferences("github_user_cache",
+        SharedPreferences prefs = context.getSharedPreferences("github_user_cache",
                 Context.MODE_PRIVATE);
         long lastFetch = prefs.getLong("repo_stats_time", 0);
         String cachedJson = prefs.getString("repo_stats_json", null);
@@ -522,21 +616,21 @@ public class BottomSheetHelper {
         }
 
         okhttp3.Request request = new okhttp3.Request.Builder()
-                .url("https://api.github.com/repos/mubashardev/WaEnhancerX/stats/contributors")
+                .url("https://api.github.com/repos/mubashardev/WaEnhancer/stats/contributors")
                 .header("User-Agent", "WaEnhancerX-App")
                 .header("Accept", "application/vnd.github.v3+json")
                 .build();
 
         client.newCall(request).enqueue(new okhttp3.Callback() {
             @Override
-            public void onFailure(@androidx.annotation.NonNull okhttp3.Call call,
-                    @androidx.annotation.NonNull java.io.IOException e) {
-                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            public void onFailure(@NonNull okhttp3.Call call,
+                    @NonNull IOException e) {
+                new Handler(Looper.getMainLooper()).post(() -> {
                     if (cachedJson != null) {
                         parseAndPopulateContributions(context, view, bottomSheet, cachedJson, login);
                     } else {
-                        android.widget.Toast
-                                .makeText(context, "Failed to load contributions", android.widget.Toast.LENGTH_SHORT)
+                        Toast
+                                .makeText(context, "Failed to load contributions", Toast.LENGTH_SHORT)
                                 .show();
                         bottomSheet.dismiss();
                     }
@@ -544,17 +638,17 @@ public class BottomSheetHelper {
             }
 
             @Override
-            public void onResponse(@androidx.annotation.NonNull okhttp3.Call call,
-                    @androidx.annotation.NonNull okhttp3.Response response) throws java.io.IOException {
+            public void onResponse(@NonNull okhttp3.Call call,
+                    @NonNull okhttp3.Response response) throws IOException {
 
                 // GitHub stats API can return 202 Accepted if calculating
                 if (!response.isSuccessful() || response.body() == null || response.code() == 202) {
-                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                    new Handler(Looper.getMainLooper()).post(() -> {
                         if (cachedJson != null) {
                             parseAndPopulateContributions(context, view, bottomSheet, cachedJson, login);
                         } else {
-                            android.widget.Toast.makeText(context, "GitHub is calculating stats, try again later.",
-                                    android.widget.Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, "GitHub is calculating stats, try again later.",
+                                    Toast.LENGTH_SHORT).show();
                             bottomSheet.dismiss();
                         }
                     });
@@ -568,7 +662,7 @@ public class BottomSheetHelper {
                             .putString("repo_stats_json", json)
                             .apply();
 
-                    new android.os.Handler(android.os.Looper.getMainLooper())
+                    new Handler(Looper.getMainLooper())
                             .post(() -> parseAndPopulateContributions(context, view, bottomSheet, json, login));
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -580,22 +674,22 @@ public class BottomSheetHelper {
     private static void parseAndPopulateContributions(Context context, View view, BottomSheetDialog bottomSheet,
             String json, String login) {
         try {
-            org.json.JSONArray jsonArray = new org.json.JSONArray(json);
+            JSONArray jsonArray = new JSONArray(json);
             int totalCommits = 0;
             long linesAdded = 0;
             long linesDeleted = 0;
 
             for (int i = 0; i < jsonArray.length(); i++) {
-                org.json.JSONObject obj = jsonArray.getJSONObject(i);
-                org.json.JSONObject author = obj.optJSONObject("author");
+                JSONObject obj = jsonArray.getJSONObject(i);
+                JSONObject author = obj.optJSONObject("author");
                 if (author != null) {
                     String authorLogin = author.optString("login");
                     if (authorLogin.equalsIgnoreCase(login)) {
                         totalCommits = obj.optInt("total", 0);
-                        org.json.JSONArray weeks = obj.optJSONArray("weeks");
+                        JSONArray weeks = obj.optJSONArray("weeks");
                         if (weeks != null) {
                             for (int j = 0; j < weeks.length(); j++) {
-                                org.json.JSONObject week = weeks.getJSONObject(j);
+                                JSONObject week = weeks.getJSONObject(j);
                                 linesAdded += week.optLong("a", 0);
                                 linesDeleted += week.optLong("d", 0);
                             }
@@ -605,27 +699,165 @@ public class BottomSheetHelper {
                 }
             }
 
-            com.google.android.material.textview.MaterialTextView tvTotal = view.findViewById(R.id.bsContribTotal);
-            com.google.android.material.textview.MaterialTextView tvAdded = view.findViewById(R.id.bsContribAdded);
-            com.google.android.material.textview.MaterialTextView tvDeleted = view.findViewById(R.id.bsContribDeleted);
+            MaterialTextView tvTotal = view.findViewById(R.id.bsContribTotal);
+            MaterialTextView tvAdded = view.findViewById(R.id.bsContribAdded);
+            MaterialTextView tvDeleted = view.findViewById(R.id.bsContribDeleted);
             // com.facebook.shimmer.ShimmerFrameLayout shimmerLayout = view.findViewById(R.id.bsContribShimmer);
             LoadingIndicator progressIndicator = view.findViewById(R.id.expressive_loading_progress);
             View contentLayout = view.findViewById(R.id.bsContribContent);
 
-            java.text.NumberFormat format = java.text.NumberFormat.getInstance();
+            NumberFormat format = NumberFormat.getInstance();
             tvTotal.setText(format.format(totalCommits));
             tvAdded.setText("+ " + format.format(linesAdded));
             tvDeleted.setText("~ " + format.format(linesDeleted));
 
             // shimmerLayout.stopShimmer();
             // shimmerLayout.setVisibility(View.GONE);
-            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+            if (progressIndicator != null) {
+                progressIndicator.setVisibility(View.GONE);
+            }
             contentLayout.setVisibility(View.VISIBLE);
         } catch (Exception e) {
             e.printStackTrace();
-            android.widget.Toast.makeText(context, "Failed to parse contributions", android.widget.Toast.LENGTH_SHORT)
+            Toast.makeText(context, "Failed to parse contributions", Toast.LENGTH_SHORT)
                     .show();
             bottomSheet.dismiss();
         }
+    }
+
+    public static void showPillDesignChoice(Context context, String title, CharSequence[] entries,
+            CharSequence[] entryValues, String currentValue, OnSingleChoiceListener listener) {
+        BottomSheetDialog dialog = createDialog(context);
+        View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_options, null);
+        dialog.setContentView(view);
+
+        ((MaterialTextView) view.findViewById(R.id.bs_title)).setText(title);
+        LinearLayout container = view.findViewById(R.id.bs_options_container);
+
+        view.findViewById(R.id.bs_buttons_container).setVisibility(View.GONE);
+
+        float density = context.getResources().getDisplayMetrics().density;
+
+        LinearLayout previewContainer = new LinearLayout(context);
+        previewContainer.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams containerLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        int margin16 = (int) (16 * density);
+        containerLp.setMargins(margin16, 0, margin16, margin16);
+        previewContainer.setLayoutParams(containerLp);
+
+        LinearLayout classicCard = createPreviewCard(context, "Classic", false, density, currentValue.equals("regular"));
+        LinearLayout refinedCard = createPreviewCard(context, "Refined (Pro)", true, density, currentValue.equals("pro"));
+
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+        cardLp.setMargins((int) (4 * density), 0, (int) (4 * density), 0);
+        classicCard.setLayoutParams(cardLp);
+        refinedCard.setLayoutParams(cardLp);
+
+        previewContainer.addView(classicCard);
+        previewContainer.addView(refinedCard);
+
+        container.addView(previewContainer);
+
+        List<MaterialRadioButton> radioButtons = new ArrayList<>();
+        LayoutInflater inflater = LayoutInflater.from(context);
+
+        for (int i = 0; i < entries.length; i++) {
+            MaterialRadioButton rb = (MaterialRadioButton) inflater.inflate(R.layout.item_bs_single_choice, container,
+                    false);
+            rb.setText(entries[i]);
+            String val = entryValues[i].toString();
+            if (val.equals(currentValue)) {
+                rb.setChecked(true);
+            }
+            final int index = i;
+            rb.setOnClickListener(v -> {
+                for (MaterialRadioButton btn : radioButtons) {
+                    btn.setChecked(false);
+                }
+                rb.setChecked(true);
+                dialog.dismiss();
+                listener.onChoice(index, val);
+            });
+            radioButtons.add(rb);
+            container.addView(rb);
+        }
+
+        classicCard.setOnClickListener(v -> {
+            dialog.dismiss();
+            listener.onChoice(0, "regular");
+        });
+        refinedCard.setOnClickListener(v -> {
+            dialog.dismiss();
+            listener.onChoice(1, "pro");
+        });
+
+        dialog.show();
+    }
+
+    private static LinearLayout createPreviewCard(Context context, String label, boolean isPro, float density, boolean isSelected) {
+        LinearLayout card = new LinearLayout(context);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        GradientDrawable gd = new GradientDrawable();
+        gd.setCornerRadius(12 * density);
+
+        boolean isNight = (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                == Configuration.UI_MODE_NIGHT_YES;
+
+        int strokeColor;
+        if (isSelected) {
+            int resolved = DesignUtils.resolveColorAttr(context, android.R.attr.colorPrimary);
+            strokeColor = resolved != 0 ? resolved : (isNight ? 0xFF25D366 : 0xFF008069);
+        } else {
+            strokeColor = isNight ? 0x22FFFFFF : 0x15000000;
+        }
+        int strokeWidth = isSelected ? (int) (2 * density) : (int) (1 * density);
+        int bgColor = isNight ? 0xFF2D2D30 : 0xFFFFFFFF;
+
+        gd.setColor(bgColor);
+        gd.setStroke(strokeWidth, strokeColor);
+        card.setBackground(gd);
+
+        int pad = (int) (8 * density);
+        card.setPadding(pad, pad, pad, pad);
+
+        MaterialTextView title = new MaterialTextView(context);
+        title.setText(label);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        title.setTypeface(null, Typeface.BOLD);
+        title.setTextColor(isNight ? 0xFFFFFFFF : 0xFF000000);
+        LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        titleLp.setMargins(0, (int) (4 * density), 0, (int) (8 * density));
+        title.setLayoutParams(titleLp);
+        card.addView(title);
+
+        ImageView gifView = new ImageView(context);
+        gifView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        gifView.setAdjustViewBounds(true);
+        LinearLayout.LayoutParams gifLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                (int) (110 * density)
+        );
+        gifView.setLayoutParams(gifLp);
+        card.addView(gifView);
+
+        String url = isPro
+                ? "https://cdn.jsdelivr.net/gh/mubashardev/WaEnhancer@master/demo/pill_pro.gif"
+                : "https://cdn.jsdelivr.net/gh/mubashardev/WaEnhancer@master/demo/pill_regular.gif";
+
+        com.bumptech.glide.Glide.with(context)
+                .load(url)
+                .placeholder(R.drawable.ic_image)
+                .error(android.R.drawable.stat_notify_error)
+                .into(gifView);
+
+        return card;
     }
 }

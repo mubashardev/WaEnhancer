@@ -1,0 +1,56 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+
+
+        {
+            "name": "Build & Install Debug App",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "echo 'Gradle: Debug APK has been built and installed!'",
+            "preLaunchTask": "gradlew: installWhatsappDebug"
+        },
+        {
+            "name": "Only Build Debug App",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "echo 'Gradle: Debug APK built successfully!'",
+            "preLaunchTask": "gradlew: assembleWhatsappDebug"
+        },
+        {
+            "name": "Only Build Release App",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "echo 'Gradle: Release APK built successfully!'",
+            "preLaunchTask": "gradlew: assembleWhatsappRelease"
+        },
+        {
+            "name": "Build & Install Release App",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "echo 'Gradle: Release APK has been built and installed!'",
+            "preLaunchTask": "gradlew: installWhatsappRelease"
+        },
+        {
+            "name": "Stream Logcat (Debug Console)",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/.vscode/logcat.js",
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "Stream Logcat - All (Debug Console)",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/.vscode/logcat.js",
+            "args": ["all"],
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart"
+        }
+    ]
+}

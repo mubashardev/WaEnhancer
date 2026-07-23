@@ -24,6 +24,9 @@ import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.utils.Utils;
+import java.lang.reflect.Method;
 
 public class MenuStatusListener extends Feature {
 
@@ -57,7 +60,7 @@ public class MenuStatusListener extends Feature {
 
         // Try via FStatus -> FMessage mapper
         try {
-            java.lang.reflect.Method mapMethod = Unobfuscator.loadFStatusToFMessage(obj.getClass().getClassLoader());
+            Method mapMethod = Unobfuscator.loadFStatusToFMessage(obj.getClass().getClassLoader());
             Class<?> fStatusClass = mapMethod.getParameterTypes()[0];
             Field fStatusField = ReflectionUtils.findFieldUsingFilterIfExists(obj.getClass(),
                     f -> fStatusClass.isAssignableFrom(f.getType()));
@@ -149,7 +152,7 @@ public class MenuStatusListener extends Feature {
                         if (waeSubMenu == null) {
                             String waeTitle = "WaEnhancerX";
                             try {
-                                String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(com.waenhancer.xposed.utils.Utils.getApplication(), R.string.app_name, "WaEnhancerX");
+                                String moduleTitle = FeatureLoader.getModuleString(Utils.getApplication(), R.string.app_name, "WaEnhancerX");
                                 if (moduleTitle != null && !moduleTitle.isEmpty()) {
                                     waeTitle = moduleTitle;
                                 }
@@ -190,10 +193,10 @@ public class MenuStatusListener extends Feature {
         return "Menu Status";
     }
 
-    public abstract static class OnMenuItemStatusListener {
+    public interface OnMenuItemStatusListener {
 
-        public abstract MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex);
+        MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex);
 
-        public abstract void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex);
+        void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex);
     }
 }

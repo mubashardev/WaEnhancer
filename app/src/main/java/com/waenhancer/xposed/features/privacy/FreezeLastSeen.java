@@ -19,12 +19,12 @@ public class FreezeLastSeen extends Feature {
     @Override
     public void doHook() throws Exception {
         var freezeLastSeen = prefs.getBoolean("freezelastseen", false);
-        var freezeLastSeenOption = WppCore.getPrivBoolean("freezelastseen", false);
-        var ghostmode = WppCore.getPrivBoolean("ghostmode", false) && prefs.getBoolean("ghostmode", false);
+        var freezeLastSeenOption = prefs.getBoolean("freeze_last_seen_actual", false);
+        var ghostmode = prefs.getBoolean("ghostmode_actual", false);
 
         if (freezeLastSeen || freezeLastSeenOption || ghostmode) {
             var method = Unobfuscator.loadFreezeSeenMethod(classLoader);
-            logDebug(Unobfuscator.getMethodDescriptor(method));
+            /* Log removed */
             XposedBridge.hookMethod(method, XC_MethodReplacement.DO_NOTHING);
         }
     }

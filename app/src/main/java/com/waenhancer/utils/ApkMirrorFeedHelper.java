@@ -13,6 +13,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class ApkMirrorFeedHelper {
     private static final String TAG = "WAEX_ApkMirrorFeedHelper";
@@ -146,17 +149,17 @@ public class ApkMirrorFeedHelper {
     private static void fetchFeedViaWebView(Context context, String url, Set<String> betaVersions, Runnable onDone) {
         new Handler(Looper.getMainLooper()).post(() -> {
             try {
-                android.webkit.WebView webView = new android.webkit.WebView(context.getApplicationContext());
-                android.webkit.WebSettings settings = webView.getSettings();
+                WebView webView = new WebView(context.getApplicationContext());
+                WebSettings settings = webView.getSettings();
                 settings.setJavaScriptEnabled(true);
                 settings.setDomStorageEnabled(true);
                 settings.setUserAgentString("APKUpdater-v3.0.3");
                 
-                webView.setWebViewClient(new android.webkit.WebViewClient() {
+                webView.setWebViewClient(new WebViewClient() {
                     private boolean finished = false;
  
                     @Override
-                    public void onPageFinished(android.webkit.WebView view, String url) {
+                    public void onPageFinished(WebView view, String url) {
                         if (finished) return;
                         finished = true;
                         
@@ -181,7 +184,7 @@ public class ApkMirrorFeedHelper {
                     }
  
                     @Override
-                    public void onReceivedError(android.webkit.WebView view, int errorCode, String description, String failingUrl) {
+                    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                         view.destroy();
                         onDone.run();
                     }
@@ -243,8 +246,8 @@ public class ApkMirrorFeedHelper {
     }
 
     private static void parseXmlFeed(String xmlContent, Set<String> betaVersions) {
-        Set<String> localBeta = new java.util.HashSet<>();
-        Set<String> localStable = new java.util.HashSet<>();
+        Set<String> localBeta = new HashSet<>();
+        Set<String> localStable = new HashSet<>();
 
         Matcher titleMatcher = TITLE_TAG_PATTERN.matcher(xmlContent);
         while (titleMatcher.find()) {

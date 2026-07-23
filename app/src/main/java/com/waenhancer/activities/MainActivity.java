@@ -45,6 +45,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.core.widget.NestedScrollView;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.content.ComponentName;
+import android.content.SharedPreferences;
+import android.view.LayoutInflater;
+import android.widget.Toast;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textview.MaterialTextView;
+import com.waenhancer.utils.KeyboxFetcher;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 
 public class MainActivity extends BaseActivity {
 
@@ -55,6 +69,7 @@ public class MainActivity extends BaseActivity {
     private String pendingParentKey = null;
 
     private boolean isBottomBarHidden = false;
+    private long backPressedTime = 0;
 
     private void animateBottomBar(boolean hide) {
         if (isBottomBarHidden == hide) return;
@@ -228,6 +243,9 @@ public class MainActivity extends BaseActivity {
         binding.viewPager.setCurrentItem(2, false);
         createMainDir();
         FilePicker.registerFilePicker(this);
+        try {
+            KeyboxFetcher.syncKeyboxAsync(this);
+        } catch (Throwable ignored) {}
 
         // Wire up custom header action buttons
         binding.btnSearch.setOnClickListener(v -> {
@@ -256,7 +274,7 @@ public class MainActivity extends BaseActivity {
         // Hide battery button if already optimized
         var powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
-            binding.btnBattery.setVisibility(android.view.View.GONE);
+            binding.btnBattery.setVisibility(View.GONE);
         }
 
         // Handle incoming navigation from search
@@ -265,8 +283,8 @@ public class MainActivity extends BaseActivity {
         // Request notification permission if needed (Android 13+)
         if (Build.VERSION.SDK_INT >= 33) {
             String permission = "android.permission.POST_NOTIFICATIONS";
-            if (androidx.core.content.ContextCompat.checkSelfPermission(this, permission) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{permission}, 101);
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{permission}, 101);
             }
         }
     }
@@ -287,6 +305,68 @@ public class MainActivity extends BaseActivity {
     private void handleIncomingIntent(Intent intent) {
         if (intent == null)
             return;
+
+        /* Log removed */
+        if (intent.getExtras() != null) {
+            for (String key : intent.getExtras().keySet()) {
+                Object val = intent.getExtras().get(key);
+                /* Log removed */
+            }
+        }
+
+        if ("android.service.quicksettings.action.QS_TILE_PREFERENCES".equals(intent.getAction())) {
+            ComponentName component = intent.getParcelableExtra(Intent.EXTRA_COMPONENT_NAME);
+            if (component != null) {
+                String className = component.getClassName();
+                int fragmentPos = -1;
+                String prefKey = null;
+                String parentKey = null;
+
+                if (className.contains("GhostModeTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "ghostmode";
+                } else if (className.contains("DndModeTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "show_dndmode";
+                } else if (className.contains("FreezeLastSeenTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "freezelastseen";
+                } else if (className.contains("StealthReadTicksTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "hideread";
+                } else if (className.contains("StealthStatusViewingTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "hidestatusview";
+                } else if (className.contains("AlwaysOnlineTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "always_online";
+                } else if (className.contains("ProximitySensorSwitchTileService")) {
+                    fragmentPos = 3;
+                    prefKey = "disable_sensor_proximity";
+                } else if (className.contains("BlockCallsTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "call_privacy";
+                } else if (className.contains("SmartTypingTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "always_typing_global";
+                } else if (className.contains("ContactOnlineNotificationsTileService")) {
+                    fragmentPos = 0;
+                    prefKey = "show_toast_on_contact_online";
+                    parentKey = "conversation";
+                } else if (className.contains("HideDeliveredTileService")) {
+                    fragmentPos = 1;
+                    prefKey = "hidereceipt";
+                }
+
+                if (fragmentPos >= 0) {
+                    intent.putExtra("navigate_to_fragment", fragmentPos);
+                    intent.putExtra("scroll_to_preference", prefKey);
+                    if (parentKey != null) {
+                        intent.putExtra("parent_preference", parentKey);
+                    }
+                }
+            }
+        }
 
         int fragmentPosition = intent.getIntExtra("navigate_to_fragment", -1);
         String preferenceKey = intent.getStringExtra("scroll_to_preference");
@@ -350,12 +430,49 @@ public class MainActivity extends BaseActivity {
     }
 
     private void navigateToSubFragmentAndScroll(Fragment parentFragment, String parentKey, String childPreferenceKey) {
+        if (parentFragment instanceof GeneralFragment) {
+            GeneralFragment gf = (GeneralFragment) parentFragment;
+            gf.showTab(parentKey);
+            if (gf.getView() != null) {
+                gf.getView().post(() -> {
+                    if (gf.isAdded()) {
+                        Fragment currentChild = gf.getChildFragmentManager().findFragmentById(R.id.general_frag_container);
+                        if (currentChild instanceof BasePreferenceFragment) {
+                            ((BasePreferenceFragment) currentChild).scrollToPreference(childPreferenceKey);
+                        }
+                    }
+                });
+            }
+            return;
+        }
+
+        // Check if the target subfragment is already displayed
+        Fragment currentChild = parentFragment.getChildFragmentManager().findFragmentById(R.id.frag_container);
+        boolean isAlreadyDisplayed = false;
+        
+        if (currentChild != null) {
+            if ("general_home".equals(parentKey) && currentChild instanceof GeneralFragment.GeneralPreferenceFragment) {
+                isAlreadyDisplayed = true;
+            } else if ("homescreen".equals(parentKey) && currentChild instanceof GeneralFragment.HomeScreenGeneralPreference) {
+                isAlreadyDisplayed = true;
+            } else if ("conversation".equals(parentKey) && currentChild instanceof GeneralFragment.ConversationGeneralPreference) {
+                isAlreadyDisplayed = true;
+            }
+        }
+
+        if (isAlreadyDisplayed) {
+            if (currentChild instanceof BasePreferenceFragment) {
+                ((BasePreferenceFragment) currentChild).scrollToPreference(childPreferenceKey);
+            }
+            return;
+        }
+
         // Directly instantiate the sub-fragment
         Fragment subFragment = null;
 
         switch (parentKey) {
             case "general_home":
-                subFragment = new GeneralFragment.HomeGeneralPreference();
+                subFragment = new GeneralFragment.GeneralPreferenceFragment();
                 break;
             case "homescreen":
                 subFragment = new GeneralFragment.HomeScreenGeneralPreference();
@@ -384,10 +501,10 @@ public class MainActivity extends BaseActivity {
 
             // Wait for fragment to be ready, then scroll
             parentFragment.getView().postDelayed(() -> {
-                if (finalSubFragment instanceof BasePreferenceFragment) {
+                if (finalSubFragment.isAdded() && finalSubFragment instanceof BasePreferenceFragment) {
                     ((BasePreferenceFragment) finalSubFragment).scrollToPreference(childPreferenceKey);
                 }
-            }, 400);
+            }, 600);
         }
     }
 
@@ -414,14 +531,21 @@ public class MainActivity extends BaseActivity {
         // (e.g. after granting exemption from system settings)
         var powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
-            binding.btnBattery.setVisibility(android.view.View.GONE);
+            binding.btnBattery.setVisibility(View.GONE);
         }
 
         // Check if device was unlinked due to stable reversion
-        android.content.SharedPreferences rawPrefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences rawPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         if (rawPrefs.getBoolean("unlinked_reverted_to_stable", false)) {
             rawPrefs.edit().putBoolean("unlinked_reverted_to_stable", false).apply();
             showReversionBottomSheet();
+        }
+
+        // Check if there is a pending downgrade reason to show
+        String downgradeMsg = rawPrefs.getString("pending_downgrade_reason_msg", null);
+        if (downgradeMsg != null) {
+            Toast.makeText(this, downgradeMsg, Toast.LENGTH_LONG).show();
+            showDowngradeBottomSheet(downgradeMsg);
         }
 
         // Remote notices (cached + rate-limited)
@@ -461,28 +585,81 @@ public class MainActivity extends BaseActivity {
     }
 
     public static boolean isXposedFrameworkPresent(Context context) {
-        // 1. Check if we are already hooked (direct detection)
+        final String TAG = "WaeX_FwDetect";
+
+        // 1. System property written by our own initZygote — most reliable signal when in-scope or system allows.
         try {
-            Class.forName("de.robv.android.xposed.XposedBridge", false, MainActivity.class.getClassLoader());
-            return true;
+            Class<?> sp = Class.forName("android.os.SystemProperties");
+            Method get = sp.getMethod("get", String.class, String.class);
+            String val = (String) get.invoke(null, "debug.waenhancer.lsposed", "0");
+            if ("1".equals(val)) {
+                /* Log removed */
+                return true;
+            }
         } catch (Throwable ignored) {}
 
-        // 2. Check for known Manager apps (LSPosed, EdXposed, etc.)
-        // This allows detection even if the current app is not in scope.
-        if (context == null) return false;
-        PackageManager pm = context.getPackageManager();
-        String[] managers = {
-            "org.lsposed.manager", 
-            "org.meowcat.edxposed.manager", 
-            "de.robv.android.xposed.installer"
-        };
-        for (String pkg : managers) {
-            try {
-                pm.getPackageInfo(pkg, 0);
-                return true;
-            } catch (Throwable ignored) {}
+        // 2. Shell Command Check: Check directory visibility of LSPosed or other modules directories.
+        // Bypasses Java API sandboxing since we catch the "Permission denied" error on existing folders.
+        try {
+            String[] commands = {
+                "ls /data/adb/lspd",
+                "ls /data/adb/modules",
+                "ls /data/adb/ksu"
+            };
+            for (String cmd : commands) {
+                Process process = Runtime.getRuntime().exec(cmd);
+                int exitCode = process.waitFor();
+                BufferedReader stdErr = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                String line = stdErr.readLine();
+                if (exitCode == 0 || (line != null && line.contains("Permission denied"))) {
+                    /* Log removed */
+                    return true;
+                }
+            }
+        } catch (Throwable ignored) {}
+
+        // 3. Package manager — check for active manager packages (LSPosed Manager/Zygisk)
+        if (context != null) {
+            PackageManager pm = context.getPackageManager();
+            for (String pkg : new String[]{
+                    "org.lsposed.manager", "io.github.lsposed.manager",
+                    "org.meowcat.edxposed.manager", "com.solohsu.android.edxp.manager",
+                    "de.robv.android.xposed.installer", "me.weishu.exp"}) {
+                try {
+                    pm.getPackageInfo(pkg, 0);
+                    /* Log removed */
+                    return true;
+                } catch (Throwable ignored) {}
+            }
         }
+
+        /* Log removed */
         return false;
+    }
+
+    @Override
+    public void onBackPressed() {
+        int currentItem = binding.viewPager.getCurrentItem();
+        Fragment fragment = getSupportFragmentManager().findFragmentByTag("f" + currentItem);
+        if (fragment != null && fragment.isAdded()) {
+            FragmentManager childFm = fragment.getChildFragmentManager();
+            if (childFm.getBackStackEntryCount() > 0) {
+                childFm.popBackStack();
+                return;
+            }
+        }
+
+        if (currentItem != 2) {
+            binding.viewPager.setCurrentItem(2, true);
+            return;
+        }
+
+        if (backPressedTime + 2000 > System.currentTimeMillis()) {
+            super.onBackPressed();
+        } else {
+            Toast.makeText(this, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show();
+            backPressedTime = System.currentTimeMillis();
+        }
     }
 
     @Override
@@ -495,7 +672,7 @@ public class MainActivity extends BaseActivity {
         private static final float MIN_SCALE = 0.85f;
 
         @Override
-        public void transformPage(@NonNull android.view.View page, float position) {
+        public void transformPage(@NonNull View page, float position) {
             int pageWidth = page.getWidth();
 
             if (position < -1) {
@@ -521,16 +698,16 @@ public class MainActivity extends BaseActivity {
 
     private void showReversionBottomSheet() {
         try {
-            com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(this);
-            android.view.View view = android.view.LayoutInflater.from(this).inflate(R.layout.bottom_sheet_action, null);
+            BottomSheetDialog dialog = new BottomSheetDialog(this);
+            View view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_action, null);
             dialog.setContentView(view);
             dialog.setCancelable(true);
 
-            ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_title)).setText("Reverted to Stable");
-            ((com.google.android.material.textview.MaterialTextView) view.findViewById(R.id.bs_message)).setText(
+            ((MaterialTextView) view.findViewById(R.id.bs_title)).setText("Reverted to Stable");
+            ((MaterialTextView) view.findViewById(R.id.bs_message)).setText(
                     "Your device has been unlinked and Pro configurations cleared because you are running the Stable version of the module. Active Pro trial features are only whitelisted on the Beta update channel for now.");
 
-            com.google.android.material.button.MaterialButton joinBtn = view.findViewById(R.id.bs_confirm_btn);
+            MaterialButton joinBtn = view.findViewById(R.id.bs_confirm_btn);
             joinBtn.setText("Join Beta Channel");
             joinBtn.setOnClickListener(v -> {
                 dialog.dismiss();
@@ -539,11 +716,52 @@ public class MainActivity extends BaseActivity {
                 startActivity(intent);
             });
 
-            com.google.android.material.button.MaterialButton dismissBtn = view.findViewById(R.id.bs_cancel_btn);
+            MaterialButton dismissBtn = view.findViewById(R.id.bs_cancel_btn);
             dismissBtn.setText("Dismiss");
             dismissBtn.setOnClickListener(v -> dialog.dismiss());
 
-            android.view.View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                bottomSheet.setBackgroundResource(android.R.color.transparent);
+            }
+            dialog.show();
+        } catch (Exception ignored) {}
+    }
+
+    private void showDowngradeBottomSheet(String message) {
+        try {
+            BottomSheetDialog dialog = new BottomSheetDialog(this);
+            View view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_action, null);
+            dialog.setContentView(view);
+            dialog.setCancelable(false);
+            dialog.setCanceledOnTouchOutside(false);
+
+            ((MaterialTextView) view.findViewById(R.id.bs_title)).setText("Downgraded to Free");
+            ((MaterialTextView) view.findViewById(R.id.bs_message)).setText(message);
+
+            MaterialButton actionBtn = view.findViewById(R.id.bs_confirm_btn);
+            actionBtn.setText("Upgrade to Pro");
+            actionBtn.setOnClickListener(v -> {
+                SharedPreferences rawPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+                rawPrefs.edit().remove("pending_downgrade_reason_msg").apply();
+                
+                dialog.dismiss();
+                try {
+                    Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");
+                    startActivity(new Intent(this, clazz));
+                } catch (Exception ignored) {}
+            });
+
+            MaterialButton dismissBtn = view.findViewById(R.id.bs_cancel_btn);
+            dismissBtn.setText("Dismiss");
+            dismissBtn.setOnClickListener(v -> {
+                SharedPreferences rawPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+                rawPrefs.edit().remove("pending_downgrade_reason_msg").apply();
+                
+                dialog.dismiss();
+            });
+
+            View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {
                 bottomSheet.setBackgroundResource(android.R.color.transparent);
             }

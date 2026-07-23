@@ -10,7 +10,7 @@ public final class RootUtils {
 
     public static boolean hasRootAccess() {
         String output = runRootCommand("id");
-        return output != null && output.contains("uid=0");
+        return output != null && (output.contains("uid=0") || output.contains("root"));
     }
 
     public static String runRootCommand(String command) {

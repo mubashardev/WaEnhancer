@@ -9,6 +9,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceManager;
+import android.content.SharedPreferences;
+import android.widget.Toast;
+import com.waenhancer.xposed.utils.ProHelper;
 
 
 
@@ -36,7 +39,7 @@ public class LicensePreference extends Preference implements Preference.OnPrefer
         setOnPreferenceClickListener(this);
 
         // Standardize the Pro look and feel to match existing pro switch preferences
-        String titleHtml = "WaEnhancerX Pro <font color='#8B5CF6'><b>[Pro]</b></font>";
+        String titleHtml = "WAEX Helper <font color='#8B5CF6'><b>[Pro]</b></font>";
         setTitle(Html.fromHtml(titleHtml, Html.FROM_HTML_MODE_LEGACY));
 
         updateSummary();
@@ -46,6 +49,10 @@ public class LicensePreference extends Preference implements Preference.OnPrefer
      * Dynamically updates the summary text based on the active license state.
      */
     private void updateSummary() {
+        if (!ProHelper.isPluginInstalled(getContext())) {
+            setSummary("Plugin Required");
+            return;
+        }
         boolean isVerified = getSafeSharedPreferences().getBoolean("is_pro_verified", false);
         if (isVerified) {
             setSummary("Status: Pro Active");
@@ -57,20 +64,24 @@ public class LicensePreference extends Preference implements Preference.OnPrefer
     @Override
     public boolean onPreferenceClick(@NonNull Preference preference) {
         Context context = getContext();
+        if (!ProHelper.isPluginInstalled(context)) {
+            ProHelper.navigateToPluginPack(context);
+            return true;
+        }
         try {
             Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");
             Intent intent = new Intent(context, clazz);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         } catch (ClassNotFoundException e) {
-            android.widget.Toast.makeText(context, "Pro features are not available.", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Pro features are not available.", Toast.LENGTH_SHORT).show();
         }
         return true;
     }
 
     @NonNull
-    private android.content.SharedPreferences getSafeSharedPreferences() {
-        android.content.SharedPreferences prefs = getSharedPreferences();
+    private SharedPreferences getSafeSharedPreferences() {
+        SharedPreferences prefs = getSharedPreferences();
         if (prefs != null) {
             return prefs;
         }

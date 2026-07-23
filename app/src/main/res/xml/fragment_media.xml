@@ -33,6 +33,11 @@
             app:summary="@string/downloadviewonce_sum"
             app:title="@string/downloadviewonce" />
 
+        <rikka.material.preference.MaterialSwitchPreference
+            app:key="download_video_note"
+            app:summary="@string/download_video_note_sum"
+            app:title="@string/download_video_note" />
+
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -231,6 +236,12 @@
             app:key="media_preview"
             app:summary="@string/enable_media_preview_sum"
             app:title="@string/enable_media_preview" />
+
+        <rikka.material.preference.MaterialSwitchPreference
+            android:defaultValue="false"
+            app:key="file_size_spoofer"
+            app:summary="@string/file_size_spoofer_sum"
+            app:title="@string/file_size_spoofer" />
 
     </PreferenceCategory>
 

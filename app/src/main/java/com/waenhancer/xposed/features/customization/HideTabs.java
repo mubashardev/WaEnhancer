@@ -68,7 +68,7 @@ public class HideTabs extends Feature {
         // Keep this hook so we can also remove hidden tabs from the adapter's tab list
         // if the method actually returns an ArrayList (some WA versions).
         var onCreateTabList = Unobfuscator.loadTabListMethod(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(onCreateTabList));
+        /* Log removed */
 
         XposedBridge.hookMethod(onCreateTabList, new XC_MethodHook() {
             @Override
@@ -120,7 +120,7 @@ public class HideTabs extends Feature {
 
         // Hide tab-bar item views; hide entire tab bar if only one tab remains.
         var loadTabFrameClass = Unobfuscator.loadTabFrameClass(classLoader);
-        logDebug(loadTabFrameClass);
+        /* Log removed */
 
         XposedHelpers.findAndHookMethod(loadTabFrameClass, "onAttachedToWindow", new XC_MethodHook() {
             @Override

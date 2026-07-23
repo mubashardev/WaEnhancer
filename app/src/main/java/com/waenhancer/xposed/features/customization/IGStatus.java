@@ -45,9 +45,9 @@ public class IGStatus extends Feature {
         var fabintMethod = Unobfuscator.loadFabMethod(classLoader);
 
         var archivedFragmentClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "ArchivedConversationsFragment");
-        logDebug(archivedFragmentClass);
+        /* Log removed */
         var folderFragmentClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "FolderConversationsFragment");
-        log(archivedFragmentClass);
+        /* Log removed */
 
         var getViewConversationMethod = Unobfuscator.loadGetViewConversationMethod(classLoader);
         XposedBridge.hookMethod(getViewConversationMethod, new XC_MethodHook() {
@@ -91,12 +91,12 @@ public class IGStatus extends Feature {
         });
 
         var onUpdateStatusChanged = Unobfuscator.loadOnUpdateStatusChanged(classLoader);
-        logDebug(Unobfuscator.getMethodDescriptor(onUpdateStatusChanged));
+        /* Log removed */
         var statusInfoClass = Unobfuscator.loadStatusInfoClass(classLoader);
-        logDebug(statusInfoClass);
+        /* Log removed */
 
         var updateModel = onUpdateStatusChanged.getDeclaringClass();
-        logDebug(updateModel);
+        /* Log removed */
 
         XposedBridge.hookAllConstructors(updateModel, new XC_MethodHook() {
             @Override
@@ -113,7 +113,7 @@ public class IGStatus extends Feature {
         });
 
         var onStatusListUpdatesClass = Unobfuscator.loadStatusListUpdatesClass(classLoader);
-        logDebug(onStatusListUpdatesClass);
+        /* Log removed */
 
         XposedBridge.hookAllConstructors(onStatusListUpdatesClass, new XC_MethodHook() {
             @Override
@@ -141,7 +141,7 @@ public class IGStatus extends Feature {
 
 
         var onGetInvokeField = Unobfuscator.loadGetInvokeField(classLoader);
-        logDebug(Unobfuscator.getFieldDescriptor(onGetInvokeField));
+        /* Log removed */
         XposedBridge.hookMethod(onUpdateStatusChanged, new XC_MethodHook() {
 
             @Override

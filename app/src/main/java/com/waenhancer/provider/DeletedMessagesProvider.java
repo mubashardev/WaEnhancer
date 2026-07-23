@@ -10,7 +10,15 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import android.os.ParcelFileDescriptor;
+import java.io.File;
+import java.io.FileNotFoundException;
 import com.waenhancer.xposed.core.db.DelMessageStore;
+import android.content.Context;
+import android.os.Bundle;
+import android.util.Log;
+import com.waenhancer.utils.TaskerHistoryManager;
+import java.util.ArrayList;
 
 public class DeletedMessagesProvider extends ContentProvider {
 
@@ -22,11 +30,13 @@ public class DeletedMessagesProvider extends ContentProvider {
 
     private static final int DELETED_MESSAGES = 1;
     private static final int PREFERENCES = 2;
+    private static final int MEDIA = 3;
     private static final UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     static {
         uriMatcher.addURI(AUTHORITY, PATH_DELETED_MESSAGES, DELETED_MESSAGES);
         uriMatcher.addURI(AUTHORITY, PATH_PREFERENCES, PREFERENCES);
+        uriMatcher.addURI(AUTHORITY, "media/*", MEDIA);
     }
 
     private DelMessageStore dbHelper;
@@ -35,6 +45,32 @@ public class DeletedMessagesProvider extends ContentProvider {
     public boolean onCreate() {
         dbHelper = DelMessageStore.getInstance(getContext());
         return true;
+    }
+
+    @Nullable
+    @Override
+    public ParcelFileDescriptor openFile(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
+        if (uriMatcher.match(uri) == MEDIA) {
+            String keyId = uri.getLastPathSegment();
+            String ext = uri.getQueryParameter("ext");
+            if (ext == null) ext = "";
+            
+            var context = getContext();
+            if (context == null) throw new FileNotFoundException("Context is null");
+            
+            File mediaDir = new File(context.getFilesDir(), "deleted_media");
+            if (!mediaDir.exists()) {
+                mediaDir.mkdirs();
+            }
+            
+            File file = new File(mediaDir, keyId + ext);
+            int fileMode = ParcelFileDescriptor.MODE_READ_ONLY;
+            if (mode.contains("w")) {
+                fileMode = ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_CREATE | ParcelFileDescriptor.MODE_TRUNCATE;
+            }
+            return ParcelFileDescriptor.open(file, fileMode);
+        }
+        return super.openFile(uri, mode);
     }
 
     @Nullable
@@ -83,23 +119,27 @@ public class DeletedMessagesProvider extends ContentProvider {
 
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
+        if (uriMatcher.match(uri) == DELETED_MESSAGES && values != null) {
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            return db.update(DelMessageStore.TABLE_DELETED_FOR_ME, values, selection, selectionArgs);
+        }
         return 0;
     }
 
     @Nullable
     @Override
-    public android.os.Bundle call(@NonNull String method, @Nullable String arg, @Nullable android.os.Bundle extras) {
+    public Bundle call(@NonNull String method, @Nullable String arg, @Nullable Bundle extras) {
         var context = getContext();
         if (context == null) {
             return super.call(method, arg, extras);
         }
 
         var prefs = context.getSharedPreferences(context.getPackageName() + "_preferences",
-                android.content.Context.MODE_PRIVATE);
+                Context.MODE_PRIVATE);
 
         if ("get_preference".equals(method) && extras != null) {
             String key = extras.getString("key");
-            android.os.Bundle result = new android.os.Bundle();
+            Bundle result = new Bundle();
             if (key != null) {
                 Object value = prefs.getAll().get(key);
                 if (value instanceof Boolean) result.putBoolean("value", (Boolean) value);
@@ -117,13 +157,32 @@ public class DeletedMessagesProvider extends ContentProvider {
             String messagePreview = extras.getString("messagePreview");
             if (type != null && targetNumber != null) {
                 try {
-                    com.waenhancer.utils.TaskerHistoryManager.getInstance(context)
+                    TaskerHistoryManager.getInstance(context)
                             .logEvent(type, targetNumber, messagePreview != null ? messagePreview : "");
                 } catch (Exception e) {
-                    android.util.Log.e("DeletedMessagesProvider", "Failed to log tasker event", e);
+                    Log.e("DeletedMessagesProvider", "Failed to log tasker event", e);
                 }
             }
-            return android.os.Bundle.EMPTY;
+            return Bundle.EMPTY;
+        }
+
+        if ("sync_contacts".equals(method) && extras != null) {
+            ArrayList<ContentValues> contacts = extras.getParcelableArrayList("contacts");
+            if (contacts != null && !contacts.isEmpty()) {
+                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                db.beginTransaction();
+                try {
+                    for (ContentValues values : contacts) {
+                        db.insertWithOnConflict(DelMessageStore.TABLE_WA_CONTACTS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                    }
+                    db.setTransactionSuccessful();
+                } catch (Throwable t) {
+                    Log.e("DeletedMessagesProvider", "sync_contacts failed", t);
+                } finally {
+                    db.endTransaction();
+                }
+            }
+            return Bundle.EMPTY;
         }
 
         if ("put_preference".equals(method) && extras != null) {
@@ -140,7 +199,7 @@ public class DeletedMessagesProvider extends ContentProvider {
                 
                 // Also update the XSharedPreferences by making them readable if possible
                 // or rely on Xposed reloading them.
-                return android.os.Bundle.EMPTY;
+                return Bundle.EMPTY;
             }
         }
         return super.call(method, arg, extras);

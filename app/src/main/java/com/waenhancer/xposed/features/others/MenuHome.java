@@ -31,17 +31,23 @@ import java.util.Objects;
 import de.robv.android.xposed.XC_MethodHook;
 import android.content.SharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
+import android.os.Bundle;
+import com.waenhancer.BuildConfig;
+import com.waenhancer.xposed.bridge.client.ProviderSharedPreferences;
+import com.waenhancer.xposed.core.FeatureLoader;
+import de.robv.android.xposed.XposedBridge;
 
 public class MenuHome extends Feature {
 
-    private static final int MENU_ID_OPEN_WAEX = 0x7EAE0001;
-    private static final int MENU_ID_RESTART = 0x7EAE0002;
-    private static final int MENU_ID_GHOST = 0x7EAE0003;
-    private static final int MENU_ID_DND = 0x7EAE0004;
-    private static final int MENU_ID_FREEZE = 0x7EAE0005;
-    private static final int MENU_ID_SUBMENU = 0x7EAE0006;
-    private static final int MENU_ID_NEW_CHAT = 0x7EAE0007;
-    private static final int MENU_ID_RECORDINGS = 0x7EAE0008;
+    private static final int MENU_ID_OPEN_WAEX = 9901;
+    private static final int MENU_ID_RESTART = 9902;
+    private static final int MENU_ID_GHOST = 9903;
+    private static final int MENU_ID_DND = 9904;
+    private static final int MENU_ID_FREEZE = 9905;
+    private static final int MENU_ID_SUBMENU = 9906;
+    private static final int MENU_ID_NEW_CHAT = 9907;
+    private static final int MENU_ID_RECORDINGS = 9908;
+    private static final int MENU_ID_DELIVERED = 9909;
 
     public static final LinkedHashSet<HomeMenuItem> menuItems = new LinkedHashSet<>();
 
@@ -58,6 +64,8 @@ public class MenuHome extends Feature {
     private static Drawable cachedDndOffIcon = null;
     private static Drawable cachedFreezeOnIcon = null;
     private static Drawable cachedFreezeOffIcon = null;
+    private static Drawable cachedDeliveredOnIcon = null;
+    private static Drawable cachedDeliveredOffIcon = null;
     
     private static Drawable cachedNewChatIcon = null;
     private static Drawable cachedRecordingsIcon = null;
@@ -79,6 +87,8 @@ public class MenuHome extends Feature {
             cachedDndOffIcon = DesignUtils.getDrawable(R.drawable.airplane_disabled);
             cachedFreezeOnIcon = DesignUtils.getDrawable(R.drawable.eye_enabled);
             cachedFreezeOffIcon = DesignUtils.getDrawable(R.drawable.eye_disabled);
+            cachedDeliveredOnIcon = DesignUtils.getDrawable(R.drawable.eye_enabled);
+            cachedDeliveredOffIcon = DesignUtils.getDrawable(R.drawable.eye_disabled);
             
             int iconTint = 0xff8696a0;
             if (cachedGhostOnIcon != null) cachedGhostOnIcon.setTint(iconTint);
@@ -87,6 +97,8 @@ public class MenuHome extends Feature {
             if (cachedDndOffIcon != null) cachedDndOffIcon.setTint(iconTint);
             if (cachedFreezeOnIcon != null) cachedFreezeOnIcon.setTint(iconTint);
             if (cachedFreezeOffIcon != null) cachedFreezeOffIcon.setTint(iconTint);
+            if (cachedDeliveredOnIcon != null) cachedDeliveredOnIcon.setTint(iconTint);
+            if (cachedDeliveredOffIcon != null) cachedDeliveredOffIcon.setTint(iconTint);
             
             cachedNewChatIcon = DesignUtils.getDrawableByName("vec_ic_chat_add");
             if (cachedNewChatIcon == null) cachedNewChatIcon = DesignUtils.getDrawable(R.drawable.ic_contacts);
@@ -107,7 +119,7 @@ public class MenuHome extends Feature {
                 menuItems.add((menu, activity) -> InsertGhostModeOption(menu, activity, "1".equals(homeMenuMode)));
                 menuItems.add((menu, activity) -> InsertDNDOption(menu, activity, "1".equals(homeMenuMode)));
                 menuItems.add((menu, activity) -> InsertFreezeLastSeenOption(menu, activity, "1".equals(homeMenuMode)));
-                menuItems.add(this::InsertNewChat);
+                menuItems.add((menu, activity) -> InsertHideDeliveredOption(menu, activity, "1".equals(homeMenuMode)));
                 menuItems.add(this::InsertManageRecordings);
                 menuItems.add((menu, activity) -> InsertRestartButton(menu, activity, false));
                 internalItemsAdded = true;
@@ -117,12 +129,12 @@ public class MenuHome extends Feature {
     }
 
     private void InsertOpenWaex(Menu menu, Activity activity) {
-        String entryPoint = prefs.getString("open_waex", "1");
+        String entryPoint = prefs.getString("open_waex", "2");
         if (!"1".equals(entryPoint)) return; // Only show in home menu if explicitly set to '1'
         if (!prefs.getBoolean("wa_enhancer_button", true)) return;
         if (menu.findItem(MENU_ID_OPEN_WAEX) != null) return;
 
-        String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.waenhancer_settings, "WaEnhancerX Settings");
+        String title = FeatureLoader.getModuleString(activity, R.string.waenhancer_settings, "WaEnhancerX Settings");
         var itemMenu = menu.add(0, MENU_ID_OPEN_WAEX, 0, title);
         
         itemMenu.setOnMenuItemClickListener(item -> {
@@ -132,13 +144,12 @@ public class MenuHome extends Feature {
     }
 
     private void InsertGhostModeOption(Menu menu, Activity activity, boolean buttonAction) {
-        if (!prefs.getBoolean("ghostmode", true)) return;
+        boolean ghostmode = prefs.getBoolean("ghostmode_actual", false);
+        if (!prefs.getBoolean("ghostmode", true) && !ghostmode) return;
         if (menu.findItem(MENU_ID_GHOST) != null) return;
-
-        boolean ghostmode = WppCore.getPrivBoolean("ghostmode", false);
         String title = "Ghost Mode (" + (ghostmode ? "ON" : "OFF") + ")";
         try {
-            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.ghost_mode_s, "Ghost Mode");
+            String moduleTitle = FeatureLoader.getModuleString(activity, R.string.ghost_mode_s, "Ghost Mode");
             if (moduleTitle != null && !moduleTitle.isEmpty()) {
                 title = String.format(moduleTitle, ghostmode ? "ON" : "OFF");
             }
@@ -153,20 +164,20 @@ public class MenuHome extends Feature {
 
         final String finalTitle = title;
         itemMenu.setOnMenuItemClickListener(item -> {
-            boolean current = WppCore.getPrivBoolean("ghostmode", false);
-            showToggleDialog(activity, finalTitle, "ghostmode", current);
+            boolean current = prefs.getBoolean("ghostmode_actual", false);
+            showToggleDialog(activity, finalTitle, "ghostmode_actual", current);
             return true;
         });
     }
 
     private void InsertDNDOption(Menu menu, Activity activity, boolean buttonAction) {
-        if (!prefs.getBoolean("show_dndmode", true)) return;
+        boolean dndmode = prefs.getBoolean("dndmode_actual", false);
+        if (!prefs.getBoolean("show_dndmode", true) && !dndmode) return;
         if (menu.findItem(MENU_ID_DND) != null) return;
 
-        boolean dndmode = WppCore.getPrivBoolean("dndmode", false);
         String title = "DND Mode (" + (dndmode ? "ON" : "OFF") + ")";
         try {
-            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.dnd_mode_s, "DND Mode");
+            String moduleTitle = FeatureLoader.getModuleString(activity, R.string.dnd_mode_s, "DND Mode");
             if (moduleTitle != null && !moduleTitle.isEmpty()) {
                 title = String.format(moduleTitle, dndmode ? "ON" : "OFF");
             }
@@ -181,20 +192,20 @@ public class MenuHome extends Feature {
 
         final String finalTitleDnd = title;
         itemMenu.setOnMenuItemClickListener(item -> {
-            boolean current = WppCore.getPrivBoolean("dndmode", false);
-            showToggleDialog(activity, finalTitleDnd, "dndmode", current);
+            boolean current = prefs.getBoolean("dndmode_actual", false);
+            showToggleDialog(activity, finalTitleDnd, "dndmode_actual", current);
             return true;
         });
     }
 
     private void InsertFreezeLastSeenOption(Menu menu, Activity activity, boolean buttonAction) {
-        if (!prefs.getBoolean("show_freezeLastSeen", true)) return;
+        boolean freeze = prefs.getBoolean("freeze_last_seen_actual", false);
+        if (!prefs.getBoolean("show_freezeLastSeen", true) && !freeze) return;
         if (menu.findItem(MENU_ID_FREEZE) != null) return;
 
-        boolean freeze = WppCore.getPrivBoolean("freeze_last_seen", false);
         String title = "Freeze Last Seen (" + (freeze ? "ON" : "OFF") + ")";
         try {
-            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.freeze_last_seen_s, "Freeze Last Seen");
+            String moduleTitle = FeatureLoader.getModuleString(activity, R.string.freeze_last_seen_s, "Freeze Last Seen");
             if (moduleTitle != null && !moduleTitle.isEmpty()) {
                 title = String.format(moduleTitle, freeze ? "ON" : "OFF");
             }
@@ -209,8 +220,36 @@ public class MenuHome extends Feature {
 
         final String finalTitleFreeze = title;
         itemMenu.setOnMenuItemClickListener(item -> {
-            boolean current = WppCore.getPrivBoolean("freeze_last_seen", false);
-            showToggleDialog(activity, finalTitleFreeze, "freeze_last_seen", current);
+            boolean current = prefs.getBoolean("freeze_last_seen_actual", false);
+            showToggleDialog(activity, finalTitleFreeze, "freeze_last_seen_actual", current);
+            return true;
+        });
+    }
+
+    private void InsertHideDeliveredOption(Menu menu, Activity activity, boolean buttonAction) {
+        boolean hidereceipt = prefs.getBoolean("hidereceipt", false);
+        if (!prefs.getBoolean("show_hidereceipt", true) && !hidereceipt) return;
+        if (menu.findItem(MENU_ID_DELIVERED) != null) return;
+
+        String title = "Hide Delivered (" + (hidereceipt ? "ON" : "OFF") + ")";
+        try {
+            String moduleTitle = FeatureLoader.getModuleString(activity, R.string.hide_delivered_s, "Hide Delivered");
+            if (moduleTitle != null && !moduleTitle.isEmpty()) {
+                title = String.format(moduleTitle, hidereceipt ? "ON" : "OFF");
+            }
+        } catch (Exception ignored) {}
+
+        var itemMenu = menu.add(0, MENU_ID_DELIVERED, 4, title);
+        if (buttonAction && !(menu instanceof SubMenu)) {
+            Drawable icon = hidereceipt ? cachedDeliveredOnIcon : cachedDeliveredOffIcon;
+            if (icon != null) itemMenu.setIcon(icon);
+            itemMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        }
+
+        final String finalTitle = title;
+        itemMenu.setOnMenuItemClickListener(item -> {
+            boolean current = prefs.getBoolean("hidereceipt", false);
+            showToggleDialog(activity, finalTitle, "hidereceipt", current);
             return true;
         });
     }
@@ -219,7 +258,7 @@ public class MenuHome extends Feature {
         if (!prefs.getBoolean("newchat", true)) return;
         if (menu.findItem(MENU_ID_NEW_CHAT) != null) return;
 
-        String title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.new_chat, "New Chat");
+        String title = FeatureLoader.getModuleString(activity, R.string.new_chat, "New Chat");
         var itemMenu = menu.add(0, MENU_ID_NEW_CHAT, 10, title);
 
         itemMenu.setOnMenuItemClickListener(item -> {
@@ -231,13 +270,13 @@ public class MenuHome extends Feature {
             edt.setMaxLines(1);
             edt.setInputType(InputType.TYPE_CLASS_PHONE);
             edt.setTransformationMethod(null);
-            edt.setHint(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.number_with_country_code, "Number with country code"));
+            edt.setHint(FeatureLoader.getModuleString(activity, R.string.number_with_country_code, "Number with country code"));
             view.addView(edt);
 
             new AlertDialogWpp(activity)
                 .setTitle(title)
                 .setView(view)
-                .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.message, "Message"), (dialog, which) -> {
+                .setPositiveButton(FeatureLoader.getModuleString(activity, R.string.message, "Message"), (dialog, which) -> {
                     var number = edt.getText().toString();
                     var numberFomatted = number.replaceAll("[+\\-()/\\s]", "");
                     var intent = new Intent(Intent.ACTION_VIEW);
@@ -245,7 +284,7 @@ public class MenuHome extends Feature {
                     intent.setPackage(Utils.getApplication().getPackageName());
                     activity.startActivity(intent);
                 })
-                .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.cancel, "Cancel"), null)
+                .setNegativeButton(FeatureLoader.getModuleString(activity, R.string.cancel, "Cancel"), null)
                 .show();
             return true;
         });
@@ -257,7 +296,7 @@ public class MenuHome extends Feature {
 
         String title = "Manage Recordings";
         try {
-            String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.manage_recordings, "Manage Recordings");
+            String moduleTitle = FeatureLoader.getModuleString(activity, R.string.manage_recordings, "Manage Recordings");
             if (moduleTitle != null && !moduleTitle.isEmpty()) {
                 title = moduleTitle;
             }
@@ -268,7 +307,7 @@ public class MenuHome extends Feature {
         itemMenu.setOnMenuItemClickListener(item -> {
             try {
                 Intent intent = new Intent();
-                intent.setClassName(com.waenhancer.BuildConfig.APPLICATION_ID, "com.waenhancer.activities.RecordingsActivity");
+                intent.setClassName(BuildConfig.APPLICATION_ID, "com.waenhancer.activities.RecordingsActivity");
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 activity.startActivity(intent);
             } catch (Throwable t) {
@@ -281,13 +320,34 @@ public class MenuHome extends Feature {
     private void showToggleDialog(Activity activity, String title, String key, boolean current) {
         new AlertDialogWpp(activity)
             .setTitle(title)
-            .setMessage(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.restart_wpp, 
+            .setMessage(FeatureLoader.getModuleString(activity, R.string.restart_wpp, 
                 "It is necessary to restart WhatsApp for the changes in WaEnhancer X to take effect.\n\nDo you want to restart?"))
-            .setPositiveButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, android.R.string.ok, "OK"), (dialog, which) -> {
-                WppCore.setPrivBooleanSync(key, !current);
+            .setPositiveButton(FeatureLoader.getModuleString(activity, android.R.string.ok, "OK"), (dialog, which) -> {
+                if ("ghostmode_actual".equals(key) || "dndmode_actual".equals(key) || "freeze_last_seen_actual".equals(key) || "hidereceipt".equals(key)) {
+                    if (prefs instanceof ProviderSharedPreferences) {
+                        prefs.edit().putBoolean(key, !current).commit();
+                    } else {
+                        try {
+                            Bundle extras = new Bundle();
+                            extras.putString("key", key);
+                            extras.putString("type", "boolean");
+                            extras.putBoolean("value", !current);
+                            activity.getContentResolver().call(
+                                Uri.parse("content://com.waenhancer.hookprovider"),
+                                "put_preference",
+                                null,
+                                extras
+                            );
+                        } catch (Throwable t) {
+                            XposedBridge.log("[WAEX] Failed to write preference via provider: " + t.getMessage());
+                        }
+                    }
+                } else {
+                    WppCore.setPrivBooleanSync(key, !current);
+                }
                 Utils.doRestart(activity);
             })
-            .setNegativeButton(com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, android.R.string.cancel, "Cancel"), null)
+            .setNegativeButton(FeatureLoader.getModuleString(activity, android.R.string.cancel, "Cancel"), null)
             .show();
     }
 
@@ -295,7 +355,7 @@ public class MenuHome extends Feature {
         if (!prefs.getBoolean("restartbutton", true)) return;
         if (menu.findItem(MENU_ID_RESTART) != null) return;
 
-        String restartLabel = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.restart_whatsapp, "Restart WhatsApp");
+        String restartLabel = FeatureLoader.getModuleString(activity, R.string.restart_whatsapp, "Restart WhatsApp");
         var itemMenu = menu.add(0, MENU_ID_RESTART, 4, restartLabel);
         
         if (newSettings && !(menu instanceof SubMenu)) {
@@ -337,7 +397,7 @@ public class MenuHome extends Feature {
                 if (subMenuItem == null) {
                     String waeTitle = "WaEnhancerX";
                     try {
-                        String moduleTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, R.string.app_name, "WaEnhancerX");
+                        String moduleTitle = FeatureLoader.getModuleString(activity, R.string.app_name, "WaEnhancerX");
                         if (moduleTitle != null && !moduleTitle.isEmpty()) {
                             waeTitle = moduleTitle;
                         }

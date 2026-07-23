@@ -17,6 +17,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import android.database.ContentObserver;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import de.robv.android.xposed.XposedBridge;
+import java.util.HashSet;
 
 /**
  * A SharedPreferences implementation that writes values back to the module via a ContentProvider.
@@ -55,7 +61,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
             context.getContentResolver().registerContentObserver(
                     Uri.parse("content://" + authority + "/preferences"),
                     true,
-                    new android.database.ContentObserver(new android.os.Handler(android.os.Looper.getMainLooper())) {
+                    new ContentObserver(new Handler(Looper.getMainLooper())) {
                         private long lastHydration = 0;
                         @Override
                         public void onChange(boolean selfChange) {
@@ -77,7 +83,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
                     context.getContentResolver().registerContentObserver(
                         Uri.parse("content://" + AUTHORITY_LEGACY + "/preferences"),
                         true,
-                        new android.database.ContentObserver(new android.os.Handler(android.os.Looper.getMainLooper())) {
+                        new ContentObserver(new Handler(Looper.getMainLooper())) {
                             private long lastHydration = 0;
                             @Override
                             public void onChange(boolean selfChange) {
@@ -204,8 +210,12 @@ public class ProviderSharedPreferences implements SharedPreferences {
             Bundle result = callProvider("get_all_preferences", null);
             if (result == null) {
                 if (fallbackPrefs == null) return;
+                Map<String, ?> fallbackMap = fallbackPrefs.getAll();
+                if (fallbackMap == null || fallbackMap.isEmpty()) {
+                    return;
+                }
                 var editor = localPrefs.edit().clear();
-                for (Map.Entry<String, ?> entry : fallbackPrefs.getAll().entrySet()) {
+                for (Map.Entry<String, ?> entry : fallbackMap.entrySet()) {
                     Object value = entry.getValue();
                     if (value instanceof String) editor.putString(entry.getKey(), (String) value);
                     else if (value instanceof Boolean) editor.putBoolean(entry.getKey(), (Boolean) value);
@@ -219,7 +229,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
             ;
             Serializable serializable = result.getSerializable("prefs");
             if (!(serializable instanceof Map)) {
-                android.util.Log.e("WAEX", "Hydration failed: result 'prefs' is not a Map (type: " + (serializable != null ? serializable.getClass().getName() : "null") + ")");
+                /* Log removed */
                 return;
             }
             Map<?, ?> rawMap = (Map<?, ?>) serializable;
@@ -253,7 +263,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
                     editor.putFloat(key, ((Double) value).floatValue());
                 } else if (value instanceof Set<?>) {
                     Set<?> setValue = (Set<?>) value;
-                    var strings = new java.util.HashSet<String>();
+                    var strings = new HashSet<String>();
                     boolean allStrings = true;
                     for (Object item : setValue) {
                         if (!(item instanceof String)) {
@@ -270,7 +280,7 @@ public class ProviderSharedPreferences implements SharedPreferences {
             editor.commit();
             ;
         } catch (Exception e) {
-            android.util.Log.e("WAEX", "Hydration failed with exception: " + e.getMessage(), e);
+            Log.e("WAEX", "Hydration failed with exception: " + e.getMessage(), e);
         }
     }
 
@@ -391,16 +401,19 @@ public class ProviderSharedPreferences implements SharedPreferences {
         String[] authorities = new String[] { BuildConfig.APPLICATION_ID + AUTHORITY_SUFFIX, AUTHORITY_LEGACY, "com.waenhancer.provider" };
         for (String authority : authorities) {
             try {
+                XposedBridge.log("[WAEX] callProvider: Calling authority: " + authority + ", method: " + method + ", appId: " + BuildConfig.APPLICATION_ID);
                 Bundle result = context.getContentResolver().call(
                         Uri.parse("content://" + authority),
                         method,
                         null,
                         extras);
+                XposedBridge.log("[WAEX] callProvider: Result for " + authority + " is " + (result == null ? "null" : "not null"));
                 if (result != null) {
                     return result;
                 }
             } catch (Throwable e) {
-                android.util.Log.e("WAEX_ProviderSharedPrefs", "Call error (" + authority + "): " + e.getMessage(), e);
+                XposedBridge.log("[WAEX] callProvider: Error (" + authority + "): " + e.getMessage());
+                Log.e("WAEX_ProviderSharedPrefs", "Call error (" + authority + "): " + e.getMessage(), e);
             }
         }
         return null;

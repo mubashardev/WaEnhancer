@@ -20,21 +20,21 @@
             app:summary="%s"
             app:title="@string/changecolor_mode" />
 
-        <com.jaredrummler.android.colorpicker.ColorPreferenceCompat
+        <com.jaredrummler.android.colorpicker.ColorPreferenceWithDefault
             app:cpv_showAlphaSlider="true"
             app:dependency="changecolor"
             app:key="primary_color"
             app:summary="@string/default_color"
             app:title="@string/primary_color" />
 
-        <com.jaredrummler.android.colorpicker.ColorPreferenceCompat
+        <com.jaredrummler.android.colorpicker.ColorPreferenceWithDefault
             app:cpv_showAlphaSlider="true"
             app:dependency="changecolor"
             app:key="background_color"
             app:summary="@string/default_color"
             app:title="@string/background_color" />
 
-        <com.jaredrummler.android.colorpicker.ColorPreferenceCompat
+        <com.jaredrummler.android.colorpicker.ColorPreferenceWithDefault
             app:cpv_showAlphaSlider="true"
             app:dependency="changecolor"
             app:key="text_color"
@@ -96,7 +96,7 @@
             app:key="custom_filters"
             app:title="@string/custom_appearance" />
 
-        <EditTextPreference
+        <Preference
             android:summary="@string/filter_items_by_id_sum"
             app:dependency="custom_filters"
             app:key="filter_items"
@@ -164,14 +164,14 @@
             app:summary="@string/change_blubble_color_sum"
             app:title="@string/change_bubble_colors" />
 
-        <com.jaredrummler.android.colorpicker.ColorPreferenceCompat
+        <com.jaredrummler.android.colorpicker.ColorPreferenceWithDefault
             app:cpv_showAlphaSlider="true"
             app:dependency="bubble_color"
             app:key="bubble_left"
             app:summary="@string/default_color"
             app:title="@string/bubble_left" />
 
-        <com.jaredrummler.android.colorpicker.ColorPreferenceCompat
+        <com.jaredrummler.android.colorpicker.ColorPreferenceWithDefault
             app:cpv_showAlphaSlider="true"
             app:dependency="bubble_color"
             app:key="bubble_right"
@@ -189,12 +189,6 @@
             app:summary="@string/menuwicon_sum"
             app:title="@string/menuwicon" />
 
-
-        <rikka.material.preference.MaterialSwitchPreference
-            app:key="novaconfig"
-            app:summary="@string/novaconfig_sum"
-            app:title="@string/novaconfig" />
-
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -206,34 +200,16 @@
             app:summary="@string/floating_bottom_bar_sum"
             app:title="@string/floating_bottom_bar" />
 
-        <rikka.material.preference.MaterialSwitchPreference
+        <Preference
             app:dependency="floating_bottom_bar"
-            app:key="floating_bottom_bar_scroll_hide"
-            app:summary="@string/floating_bottom_bar_scroll_hide_sum"
-            app:title="@string/floating_bottom_bar_scroll_hide" />
+            app:key="floating_bottom_bar_customizer"
+            app:summary="@string/pill_customization_desc"
+            app:title="@string/pill_customization_title" />
 
-        <rikka.material.preference.MaterialSwitchPreference
-            app:dependency="floating_bottom_bar"
-            app:key="floating_bottom_bar_glass"
-            app:summary="@string/floating_bottom_bar_glass_sum"
-            app:title="@string/floating_bottom_bar_glass" />
-
-        <com.jaredrummler.android.colorpicker.ColorPreferenceCompat
-            app:cpv_showAlphaSlider="false"
-            app:dependency="floating_bottom_bar_glass"
-            app:key="floating_bottom_bar_fill_color"
-            app:summary="@string/default_color"
-            app:title="@string/floating_bottom_bar_fill_color" />
-
-        <com.waenhancer.preference.FloatSeekBarPreference
-            app:defaultValue="35"
-            app:dependency="floating_bottom_bar_glass"
-            app:format="%.0f%%"
-            app:key="floating_bottom_bar_glass_opacity"
-            app:maxValue="100"
-            app:minValue="10"
-            app:title="@string/floating_bottom_bar_glass_opacity"
-            app:valueSpacing="5" />
+        <com.waenhancer.preference.ProSwitchPreference
+            app:key="unlock_premium_customization"
+            app:summary="@string/unlock_premium_customization_sum"
+            app:title="@string/unlock_premium_customization" />
 
     </PreferenceCategory>
 

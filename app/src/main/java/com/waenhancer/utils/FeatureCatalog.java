@@ -130,6 +130,22 @@ public class FeatureCatalog {
                                 "general_home",
                                 Arrays.asList("version", "check", "bypass")));
 
+                catalog.add(new SearchableFeature("customize_supported_versions",
+                                context.getString(R.string.customize_supported_versions),
+                                context.getString(R.string.customize_supported_versions_sum),
+                                SearchableFeature.Category.GENERAL_HOME,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "general_home",
+                                Arrays.asList("version", "supported", "customize", "custom", "add", "list")));
+
+                catalog.add(new SearchableFeature("manage_supported_versions",
+                                context.getString(R.string.manage_supported_versions),
+                                context.getString(R.string.manage_supported_versions_sum),
+                                SearchableFeature.Category.GENERAL_HOME,
+                                SearchableFeature.FragmentType.ACTIVITY,
+                                "SupportedVersionsActivity",
+                                Arrays.asList("version", "supported", "manage", "add", "edit", "delete", "custom", "user", "list")));
+
                 catalog.add(new SearchableFeature("bootloader_spoofer",
                                 context.getString(R.string.bootloader_spoofer),
                                 context.getString(R.string.bootloader_spoofer_sum),
@@ -137,6 +153,23 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.GENERAL,
                                 "general_home",
                                 Arrays.asList("bootloader", "spoofer", "ban")));
+
+                catalog.add(new SearchableFeature("unlock_limited_free",
+                                context.getString(R.string.unlock_limited_free_title),
+                                context.getString(R.string.unlock_limited_free_sum),
+                                SearchableFeature.Category.GENERAL_HOME,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "general_home",
+                                Arrays.asList("install", "download", "helper", "plugin", "pro", "unlock", "pack")));
+
+                catalog.add(new SearchableFeature("pro_plugin_updates",
+                                "Plugin Updates & Changelog",
+                                "Check for updates and view the helper plugin changelog",
+                                SearchableFeature.Category.GENERAL_HOME,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "general_home",
+                                Arrays.asList("plugin", "updates", "changelog", "helper", "pro", "version")));
+
 
                 catalog.add(new SearchableFeature("ampm",
                                 context.getString(R.string.ampm),
@@ -209,7 +242,7 @@ public class FeatureCatalog {
                                 SearchableFeature.Category.GENERAL_HOMESCREEN,
                                 SearchableFeature.FragmentType.GENERAL,
                                 "homescreen",
-                                Arrays.asList("new", "chat", "button")));
+                                Arrays.asList("new", "chat", "button", "fab", "long", "press")));
 
                 catalog.add(new SearchableFeature("restartbutton",
                                 context.getString(R.string.enable_restart_button),
@@ -274,6 +307,14 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.CUSTOMIZATION,
                                 "floating_bottom_bar",
                                 Arrays.asList("floating", "bottom", "bar", "glass", "opacity", "alpha", "transparency")));
+
+                catalog.add(new SearchableFeature("floating_bottom_bar_pill_design",
+                                context.getString(R.string.floating_bottom_bar_pill_design),
+                                "Refined floating navigation pill design.",
+                                SearchableFeature.Category.CUSTOMIZATION,
+                                SearchableFeature.FragmentType.CUSTOMIZATION,
+                                "floating_bottom_bar",
+                                Arrays.asList("floating", "bottom", "bar", "pill", "design", "pro", "navigation")));
 
                 catalog.add(new SearchableFeature("separategroups",
                                 context.getString(R.string.separate_groups),
@@ -460,6 +501,14 @@ public class FeatureCatalog {
                                 "conversation",
                                 Arrays.asList("forward", "limit", "remove")));
 
+                catalog.add(new SearchableFeature("customforwardlimit",
+                                context.getString(R.string.customforwardlimit),
+                                context.getString(R.string.customforwardlimit_sum),
+                                SearchableFeature.Category.GENERAL_CONVERSATION,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "conversation",
+                                Arrays.asList("forward", "limit", "custom", "number", "count", "chats")));
+
                 catalog.add(new SearchableFeature("hidetag",
                                 context.getString(R.string.hidetag),
                                 context.getString(R.string.hidetag_sum),
@@ -571,7 +620,6 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.ACTIVITY,
                                 null,
                                 Arrays.asList("deleted", "messages", "restore", "history", "log")));
-
                 catalog.add(new SearchableFeature("verify_blocked_contact",
                                 context.getString(R.string.show_contact_blocked),
                                 context.getString(R.string.show_contact_blocked_sum),
@@ -579,7 +627,6 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.GENERAL,
                                 "conversation",
                                 Arrays.asList("blocked", "contact", "verify")));
-
                 catalog.add(new SearchableFeature("go_to_first_message",
                                 context.getString(R.string.go_to_first_message),
                                 context.getString(R.string.go_to_first_message_sum),
@@ -587,6 +634,14 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.GENERAL,
                                 "conversation",
                                 Arrays.asList("go", "to", "first", "message", "scroll", "top", "initial")));
+
+                catalog.add(new SearchableFeature("filter_group_members_messages",
+                                context.getString(R.string.filter_group_members_messages),
+                                context.getString(R.string.filter_group_members_messages_sum),
+                                SearchableFeature.Category.GENERAL_CONVERSATION,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "conversation",
+                                Arrays.asList("filter", "group", "members", "messages", "sender", "select")));
 
                 catalog.add(new SearchableFeature("message_bomber",
                                 context.getString(R.string.message_bomber),
@@ -652,6 +707,14 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.GENERAL,
                                 null,
                                 Arrays.asList("toast", "viewed", "status", "notification")));
+
+                catalog.add(new SearchableFeature("send_audio_as_voice_status",
+                                context.getString(R.string.send_audio_as_voice_status),
+                                context.getString(R.string.send_audio_as_voice_status_sum),
+                                SearchableFeature.Category.GENERAL,
+                                SearchableFeature.FragmentType.GENERAL,
+                                null,
+                                Arrays.asList("audio", "voice", "status", "send", "mp3", "opus", "wav", "m4a", "trim", "crop")));
 
                 catalog.add(new SearchableFeature("customize_status_view_category",
                                 context.getString(R.string.customize_status_view_title),
@@ -749,6 +812,14 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.PRIVACY,
                                 null,
                                 Arrays.asList("ghost", "mode", "invisible")));
+
+                catalog.add(new SearchableFeature("show_hidereceipt",
+                                context.getString(R.string.show_hidereceipt_title),
+                                context.getString(R.string.show_hidereceipt_sum),
+                                SearchableFeature.Category.PRIVACY,
+                                SearchableFeature.FragmentType.PRIVACY,
+                                null,
+                                Arrays.asList("hide", "delivered", "receipt", "button")));
 
                 catalog.add(new SearchableFeature("always_online",
                                 context.getString(R.string.always_online),
@@ -943,6 +1014,14 @@ public class FeatureCatalog {
                                 null,
                                 Arrays.asList("download", "view", "once")));
 
+                catalog.add(new SearchableFeature("download_video_note",
+                                context.getString(R.string.download_video_note),
+                                context.getString(R.string.download_video_note_sum),
+                                SearchableFeature.Category.MEDIA,
+                                SearchableFeature.FragmentType.MEDIA,
+                                null,
+                                Arrays.asList("download", "video", "note", "ptv", "gallery")));
+
                 catalog.add(new SearchableFeature("video_limit_size",
                                 context.getString(R.string.increase_video_size_limit),
                                 null,
@@ -1041,6 +1120,14 @@ public class FeatureCatalog {
                                 null,
                                 Arrays.asList("media", "preview", "temporary")));
 
+                catalog.add(new SearchableFeature("file_size_spoofer",
+                                context.getString(R.string.file_size_spoofer),
+                                context.getString(R.string.file_size_spoofer_sum),
+                                SearchableFeature.Category.MEDIA,
+                                SearchableFeature.FragmentType.MEDIA,
+                                null,
+                                Arrays.asList("file", "size", "spoofer", "spoof", "fake", "metadata", "send", "preview", "bubble")));
+
                 catalog.add(new SearchableFeature("pro_status_splitter",
                                 context.getString(R.string.pro_status_splitter),
                                 context.getString(R.string.pro_status_splitter_sum),
@@ -1058,6 +1145,14 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.CUSTOMIZATION,
                                 null,
                                 Arrays.asList("colors", "customization", "theme")));
+
+                catalog.add(new SearchableFeature("unlock_premium_customization",
+                                context.getString(R.string.unlock_premium_customization),
+                                context.getString(R.string.unlock_premium_customization_sum),
+                                SearchableFeature.Category.CUSTOMIZATION,
+                                SearchableFeature.FragmentType.CUSTOMIZATION,
+                                null,
+                                Arrays.asList("premium", "customization", "theme", "icons", "stickers", "ringtones")));
 
                 catalog.add(new SearchableFeature("primary_color",
                                 context.getString(R.string.primary_color),
@@ -1106,6 +1201,14 @@ public class FeatureCatalog {
                                 SearchableFeature.FragmentType.CUSTOMIZATION,
                                 null,
                                 Arrays.asList("custom", "appearance", "filters", "css")));
+
+                catalog.add(new SearchableFeature("filter_items",
+                                context.getString(R.string.filter_items_by_id),
+                                context.getString(R.string.filter_items_by_id_sum),
+                                SearchableFeature.Category.CUSTOMIZATION,
+                                SearchableFeature.FragmentType.CUSTOMIZATION,
+                                "custom_filters",
+                                Arrays.asList("filter", "items", "id", "remove", "behavior", "gone", "color", "opacity", "resize", "pro")));
 
                 catalog.add(new SearchableFeature("animation_list",
                                 context.getString(R.string.list_animations_home_screen),

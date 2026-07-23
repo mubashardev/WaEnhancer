@@ -42,8 +42,23 @@ import io.noties.markwon.html.HtmlPlugin;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import android.content.Context;
+import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
+import android.util.TypedValue;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textview.MaterialTextView;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 public class ChangelogActivity extends BaseActivity {
+
     public static final String EXTRA_TARGET_CHANNEL = "target_channel";
 
     private RecyclerView recyclerView;
@@ -54,7 +69,7 @@ public class ChangelogActivity extends BaseActivity {
     private final List<JSONObject> stableReleases = new ArrayList<>();
     private final List<JSONObject> betaReleases = new ArrayList<>();
     private boolean downgradesEnabled = false;
-    private static final String RELEASES_API = "https://api.github.com/repos/mubashardev/WaEnhancerX/releases";
+    private static final String RELEASES_API = "https://api.github.com/repos/mubashardev/WaEnhancer/releases";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -83,10 +98,12 @@ public class ChangelogActivity extends BaseActivity {
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -94,7 +111,7 @@ public class ChangelogActivity extends BaseActivity {
         // Load initial state
         downgradesEnabled = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("downgrades_enabled", false);
         adapter.setDowngradesEnabled(downgradesEnabled);
-        
+
         recyclerView.setAdapter(adapter);
 
         fetchChangelog();
@@ -115,7 +132,6 @@ public class ChangelogActivity extends BaseActivity {
     // public void onBackPressed() {
     //     navigateToHome();
     // }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_changelog, menu);
@@ -123,7 +139,7 @@ public class ChangelogActivity extends BaseActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             // navigateToHome();
             onBackPressed();
@@ -154,10 +170,12 @@ public class ChangelogActivity extends BaseActivity {
     private void fetchChangelog() {
         // shimmerFrameLayout.setVisibility(View.VISIBLE);
         // shimmerFrameLayout.startShimmer();
-        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+        if (progressIndicator != null) {
+            progressIndicator.setVisibility(View.VISIBLE);
+        }
         tabLayout.setVisibility(View.GONE);
         recyclerView.setVisibility(View.GONE);
-        
+
         CompletableFuture.runAsync(() -> {
             OkHttpClient client = new OkHttpClient.Builder()
                     .connectTimeout(15, TimeUnit.SECONDS)
@@ -178,21 +196,23 @@ public class ChangelogActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     String jsonData = response.body().string();
                     JSONArray releases = new JSONArray(jsonData);
-                    
+
                     categorizeReleases(releases);
-                    
+
                     runOnUiThread(() -> {
                         // shimmerFrameLayout.stopShimmer();
                         // shimmerFrameLayout.setVisibility(View.GONE);
-                        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+                        if (progressIndicator != null) {
+                            progressIndicator.setVisibility(View.GONE);
+                        }
                         tabLayout.setVisibility(View.VISIBLE);
                         recyclerView.setVisibility(View.VISIBLE);
-                        
+
                         String userChannel = getIntent().getStringExtra(EXTRA_TARGET_CHANNEL);
                         if (userChannel == null) {
                             userChannel = PreferenceManager.getDefaultSharedPreferences(this).getString("release_channel", "stable");
                         }
-                        
+
                         int defaultTab = "beta".equals(userChannel) ? 1 : 0;
                         if (tabLayout.getTabAt(defaultTab) != null) {
                             tabLayout.getTabAt(defaultTab).select();
@@ -209,7 +229,9 @@ public class ChangelogActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     // shimmerFrameLayout.stopShimmer();
                     // shimmerFrameLayout.setVisibility(View.GONE);
-                    if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+                    if (progressIndicator != null) {
+                        progressIndicator.setVisibility(View.GONE);
+                    }
                     Toast.makeText(this, "Failed to load changelog: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
@@ -234,11 +256,12 @@ public class ChangelogActivity extends BaseActivity {
     }
 
     private class ChangelogAdapter extends RecyclerView.Adapter<ChangelogViewHolder> {
+
         private final List<JSONObject> releases = new ArrayList<>();
         private final String currentVersion;
         private boolean downgradesEnabled = false;
         private Markwon markwon;
-        private final java.util.Set<String> expandedTags = new java.util.HashSet<>();
+        private final Set<String> expandedTags = new HashSet<>();
 
         public ChangelogAdapter(String currentVersion) {
             this.currentVersion = currentVersion;
@@ -279,17 +302,18 @@ public class ChangelogActivity extends BaseActivity {
     }
 
     private static class ChangelogViewHolder extends RecyclerView.ViewHolder {
-        private final com.google.android.material.textview.MaterialTextView tvVersion;
-        private final com.google.android.material.textview.MaterialTextView tvDate;
-        private final com.google.android.material.textview.MaterialTextView tvBadge;
-        private final com.google.android.material.textview.MaterialTextView tvInstalledBadge;
-        private final com.google.android.material.textview.MaterialTextView tvBody;
-        private final com.google.android.material.button.MaterialButton btnUpdate;
-        private final com.google.android.material.button.MaterialButton btnGithub;
-        private final android.view.View btnUpdateSpacer;
-        private final android.widget.ImageView ivExpandArrow;
-        private final android.view.View layoutCollapsible;
-        private final android.widget.LinearLayout changelogItemsContainer;
+
+        private final MaterialTextView tvVersion;
+        private final MaterialTextView tvDate;
+        private final MaterialTextView tvBadge;
+        private final MaterialTextView tvInstalledBadge;
+        private final MaterialTextView tvBody;
+        private final MaterialButton btnUpdate;
+        private final MaterialButton btnGithub;
+        private final View btnUpdateSpacer;
+        private final ImageView ivExpandArrow;
+        private final View layoutCollapsible;
+        private final LinearLayout changelogItemsContainer;
         private final Markwon markwon;
         private final String currentVersion;
 
@@ -311,8 +335,9 @@ public class ChangelogActivity extends BaseActivity {
         }
 
         private static class ParsedCategory {
+
             final String name;
-            final List<String> items = new java.util.ArrayList<>();
+            final List<String> items = new ArrayList<>();
 
             ParsedCategory(String name) {
                 this.name = name;
@@ -320,7 +345,7 @@ public class ChangelogActivity extends BaseActivity {
         }
 
         private static List<ParsedCategory> parseBody(String body) {
-            List<ParsedCategory> categories = new java.util.ArrayList<>();
+            List<ParsedCategory> categories = new ArrayList<>();
             if (body == null || body.trim().isEmpty()) {
                 return categories;
             }
@@ -376,19 +401,25 @@ public class ChangelogActivity extends BaseActivity {
             return newCat;
         }
 
-        private static int dpToPx(android.content.Context context, int dp) {
-            return (int) android.util.TypedValue.applyDimension(
-                android.util.TypedValue.COMPLEX_UNIT_DIP,
-                dp,
-                context.getResources().getDisplayMetrics()
+        private static int dpToPx(Context context, int dp) {
+            return (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    dp,
+                    context.getResources().getDisplayMetrics()
             );
         }
 
-        public void bind(JSONObject release) {
-            bind(release, false, new java.util.HashSet<>());
+        private static String formatSize(long bytes) {
+            if (bytes <= 0) return "Unknown size";
+            double mb = bytes / (1024.0 * 1024.0);
+            return String.format(Locale.US, "%.2f MB", mb);
         }
 
-        public void bind(JSONObject release, boolean downgradesEnabled, java.util.Set<String> expandedTags) {
+        public void bind(JSONObject release) {
+            bind(release, false, new HashSet<>());
+        }
+
+        public void bind(JSONObject release, boolean downgradesEnabled, Set<String> expandedTags) {
             String tagName = release.optString("tag_name", "Unknown");
             String publishedAt = release.optString("published_at", "");
             String body = release.optString("body", "No description available.");
@@ -396,7 +427,7 @@ public class ChangelogActivity extends BaseActivity {
 
             String normalizedTagName = normalizeVersion(tagName);
             boolean isInstalled = normalizedTagName.equalsIgnoreCase(currentVersion);
-            
+
             long releaseNum = versionToLong(normalizedTagName);
             long installedNum = versionToLong(currentVersion);
             boolean isNewer = releaseNum > installedNum;
@@ -404,8 +435,17 @@ public class ChangelogActivity extends BaseActivity {
             tvVersion.setText(tagName);
             tvDate.setText(formatDate(publishedAt));
             tvBadge.setVisibility(View.GONE); // No need of mentioning Stable/Beta chip on each item
-            
-            tvInstalledBadge.setVisibility(isInstalled ? View.VISIBLE : View.GONE);
+
+            if (isInstalled) {
+                tvInstalledBadge.setVisibility(View.VISIBLE);
+                if (BuildConfig.DEBUG) {
+                    tvInstalledBadge.setText("Installed (Debug)");
+                } else {
+                    tvInstalledBadge.setText("Installed (Release)");
+                }
+            } else {
+                tvInstalledBadge.setVisibility(View.GONE);
+            }
 
             // Handle Expand/Collapse State
             boolean isExpanded = expandedTags.contains(tagName);
@@ -433,21 +473,21 @@ public class ChangelogActivity extends BaseActivity {
                 markwon.setMarkdown(tvBody, body.trim());
             } else {
                 tvBody.setVisibility(View.GONE);
-                android.view.LayoutInflater inflater = android.view.LayoutInflater.from(itemView.getContext());
+                LayoutInflater inflater = LayoutInflater.from(itemView.getContext());
                 for (ParsedCategory category : parsedCategories) {
                     // 1. Inflate Category Header Row
-                    android.view.View headerRow = inflater.inflate(R.layout.item_changelog_row, changelogItemsContainer, false);
-                    com.google.android.material.textview.MaterialTextView tvCatBadge = headerRow.findViewById(R.id.tv_item_badge);
-                    com.google.android.material.textview.MaterialTextView tvCatText = headerRow.findViewById(R.id.tv_item_text);
-                    
+                    View headerRow = inflater.inflate(R.layout.item_changelog_row, changelogItemsContainer, false);
+                    MaterialTextView tvCatBadge = headerRow.findViewById(R.id.tv_item_badge);
+                    MaterialTextView tvCatText = headerRow.findViewById(R.id.tv_item_text);
+
                     tvCatText.setVisibility(View.GONE);
-                    tvCatBadge.setText(category.name.toUpperCase(java.util.Locale.US));
-                    
+                    tvCatBadge.setText(category.name.toUpperCase(Locale.US));
+
                     // Style the category badge based on category name
-                    android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-                    gd.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+                    GradientDrawable gd = new GradientDrawable();
+                    gd.setShape(GradientDrawable.RECTANGLE);
                     gd.setCornerRadius(dpToPx(itemView.getContext(), 6));
-                    
+
                     int bgColor;
                     if ("added".equalsIgnoreCase(category.name)) {
                         bgColor = 0xFF10B981; // Emerald Green
@@ -461,100 +501,191 @@ public class ChangelogActivity extends BaseActivity {
                     gd.setColor(bgColor);
                     tvCatBadge.setBackground(gd);
                     tvCatBadge.setTextColor(0xFFFFFFFF);
-                    
+
                     changelogItemsContainer.addView(headerRow);
-                    
+
                     // 2. Inflate Category Bullet Point Rows
                     for (String itemText : category.items) {
-                        android.view.View itemRow = inflater.inflate(R.layout.item_changelog_row, changelogItemsContainer, false);
-                        com.google.android.material.textview.MaterialTextView tvItemBadge = itemRow.findViewById(R.id.tv_item_badge);
-                        com.google.android.material.textview.MaterialTextView tvItemText = itemRow.findViewById(R.id.tv_item_text);
-                        
+                        View itemRow = inflater.inflate(R.layout.item_changelog_row, changelogItemsContainer, false);
+                        MaterialTextView tvItemBadge = itemRow.findViewById(R.id.tv_item_badge);
+                        MaterialTextView tvItemText = itemRow.findViewById(R.id.tv_item_text);
+
                         tvItemBadge.setVisibility(View.GONE);
                         markwon.setMarkdown(tvItemText, "•  " + itemText);
-                        
-                        android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) tvItemText.getLayoutParams();
+
+                        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) tvItemText.getLayoutParams();
                         lp.leftMargin = dpToPx(itemView.getContext(), 16);
                         tvItemText.setLayoutParams(lp);
-                        
+
                         changelogItemsContainer.addView(itemRow);
                     }
                 }
             }
 
-            boolean showUpdateButton = isNewer || (downgradesEnabled && !isInstalled);
-            btnUpdate.setVisibility(showUpdateButton ? View.VISIBLE : View.GONE);
-            btnUpdateSpacer.setVisibility(showUpdateButton ? View.VISIBLE : View.GONE);
-            
-            if (showUpdateButton && !isNewer) {
-                btnUpdate.setText(R.string.downgrade);
-            } else {
-                btnUpdate.setText(R.string.update);
-            }
-            
-            btnUpdate.setOnClickListener(v -> {
-                String downloadUrl = null;
-                JSONArray assets = release.optJSONArray("assets");
-                if (assets != null) {
-                    for (int j = 0; j < assets.length(); j++) {
-                        JSONObject asset = assets.optJSONObject(j);
-                        if (asset != null) {
-                            String assetName = asset.optString("name", "");
-                            if (assetName.endsWith(".apk")) {
-                                downloadUrl = asset.optString("browser_download_url", "");
-                                break;
+            JSONArray assets = release.optJSONArray("assets");
+            boolean hasReleaseApk = false;
+            boolean hasDebugApk = false;
+            JSONObject releaseAsset = null;
+            JSONObject debugAsset = null;
+            final List<JSONObject> apkAssets = new ArrayList<>();
+            if (assets != null) {
+                for (int j = 0; j < assets.length(); j++) {
+                    JSONObject asset = assets.optJSONObject(j);
+                    if (asset != null) {
+                        String assetName = asset.optString("name", "");
+                        if (assetName.endsWith(".apk")) {
+                            apkAssets.add(asset);
+                            if (assetName.endsWith("_release.apk")) {
+                                hasReleaseApk = true;
+                                releaseAsset = asset;
+                            } else if (assetName.endsWith("_debug.apk")) {
+                                hasDebugApk = true;
+                                debugAsset = asset;
                             }
                         }
                     }
                 }
+            }
 
-                if (downloadUrl != null) {
+            boolean showUpdateButton = isNewer || (downgradesEnabled && !isInstalled);
+            boolean isSwitchingAvailable = false;
+            JSONObject switchAsset = null;
+            String switchText = "";
+
+            if (isInstalled) {
+                if (BuildConfig.DEBUG) {
+                    if (hasReleaseApk) {
+                        isSwitchingAvailable = true;
+                        switchAsset = releaseAsset;
+                        switchText = "Switch to Release";
+                    }
+                } else {
+                    if (hasDebugApk) {
+                        isSwitchingAvailable = true;
+                        switchAsset = debugAsset;
+                        switchText = "Switch to Debug";
+                    }
+                }
+            }
+
+            if (isSwitchingAvailable) {
+                showUpdateButton = true;
+            }
+
+            btnUpdate.setVisibility(showUpdateButton ? View.VISIBLE : View.GONE);
+            btnUpdateSpacer.setVisibility(showUpdateButton ? View.VISIBLE : View.GONE);
+
+            if (isSwitchingAvailable) {
+                btnUpdate.setText(switchText);
+            } else if (showUpdateButton && !isNewer) {
+                btnUpdate.setText(R.string.downgrade);
+            } else {
+                btnUpdate.setText(R.string.update);
+            }
+
+            final boolean finalIsSwitching = isSwitchingAvailable;
+            final JSONObject finalSwitchAsset = switchAsset;
+            final JSONObject finalReleaseAsset = releaseAsset;
+            final JSONObject finalDebugAsset = debugAsset;
+
+            btnUpdate.setOnClickListener(v -> {
+                if (finalIsSwitching && finalSwitchAsset != null) {
+                    String downloadUrl = finalSwitchAsset.optString("browser_download_url", "");
+                    UpdateDownloader.showDownloadDialog(v.getContext(), downloadUrl, tagName, downgradesEnabled);
+                    return;
+                }
+
+                if (apkAssets.isEmpty()) {
+                    try {
+                        Context context = v.getContext();
+                        Intent intent = new Intent(Intent.ACTION_VIEW,
+                                Uri.parse("https://github.com/mubashardev/WaEnhancer/releases"));
+                        context.startActivity(intent);
+                    } catch (Exception ignored) {
+                    }
+                    return;
+                }
+
+                if (apkAssets.size() == 1) {
+                    JSONObject asset = apkAssets.get(0);
+                    String downloadUrl = asset.optString("browser_download_url", "");
                     UpdateDownloader.showDownloadDialog(v.getContext(), downloadUrl, tagName, downgradesEnabled);
                 } else {
-                    try {
-                        android.content.Context context = v.getContext();
-                        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, 
-                                android.net.Uri.parse("https://github.com/mubashardev/WaEnhancerX/releases"));
-                        context.startActivity(intent);
-                    } catch (Exception ignored) {}
+                    final List<JSONObject> choices = new ArrayList<>();
+                    List<String> items = new ArrayList<>();
+
+                    if (finalReleaseAsset != null && finalDebugAsset != null) {
+                        choices.add(finalReleaseAsset);
+                        items.add("Release (Size: " + formatSize(finalReleaseAsset.optLong("size", 0)) + ")");
+                        choices.add(finalDebugAsset);
+                        items.add("Debug (Size: " + formatSize(finalDebugAsset.optLong("size", 0)) + ")");
+                    } else {
+                        for (JSONObject asset : apkAssets) {
+                            choices.add(asset);
+                            String name = asset.optString("name", "");
+                            String type = "APK";
+                            if (name.endsWith("_release.apk")) {
+                                type = "Release";
+                            } else if (name.endsWith("_debug.apk")) {
+                                type = "Debug";
+                            }
+                            items.add(type + " (Size: " + formatSize(asset.optLong("size", 0)) + ")");
+                        }
+                    }
+
+                    new MaterialAlertDialogBuilder(v.getContext())
+                            .setTitle("Select Build Type")
+                            .setItems(items.toArray(new String[0]), (dialog, which) -> {
+                                JSONObject selectedAsset = choices.get(which);
+                                String downloadUrl = selectedAsset.optString("browser_download_url", "");
+                                UpdateDownloader.showDownloadDialog(v.getContext(), downloadUrl, tagName, downgradesEnabled);
+                            })
+                            .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
+                            .show();
                 }
             });
 
-            String htmlUrl = release.optString("html_url", "https://github.com/mubashardev/WaEnhancerX/releases");
+            String htmlUrl = release.optString("html_url", "https://github.com/mubashardev/WaEnhancer/releases");
             btnGithub.setOnClickListener(v -> {
                 try {
-                    android.content.Context context = v.getContext();
-                    android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, 
-                            android.net.Uri.parse(htmlUrl));
+                    Context context = v.getContext();
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse(htmlUrl));
                     context.startActivity(intent);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             });
         }
 
         private String formatDate(String isoDate) {
-            if (isoDate == null || isoDate.isEmpty()) return "";
+            if (isoDate == null || isoDate.isEmpty()) {
+                return "";
+            }
             try {
-                java.text.SimpleDateFormat isoFormat = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US);
-                java.util.Date date = isoFormat.parse(isoDate);
+                SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+                Date date = isoFormat.parse(isoDate);
                 if (date != null) {
-                    java.text.SimpleDateFormat displayFormat = new java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.US);
+                    SimpleDateFormat displayFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.US);
                     return displayFormat.format(date);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
             return isoDate;
         }
     }
 
     private String getCurrentVersion() {
         try {
-            return normalizeVersion(com.waenhancer.BuildConfig.VERSION_NAME);
+            return normalizeVersion(BuildConfig.VERSION_NAME);
         } catch (Exception e) {
             return "";
         }
     }
 
     private static String normalizeVersion(String version) {
-        if (version == null) return "";
+        if (version == null) {
+            return "";
+        }
         String normalized = version.trim();
         if (normalized.startsWith("v") || normalized.startsWith("V")) {
             normalized = normalized.substring(1);
@@ -567,8 +698,10 @@ public class ChangelogActivity extends BaseActivity {
     }
 
     private static long versionToLong(String version) {
-        if (version == null || version.isEmpty()) return 0;
-        
+        if (version == null || version.isEmpty()) {
+            return 0;
+        }
+
         String normalized = normalizeVersion(version);
         String base = normalized;
         int betaNum = 0;
@@ -589,9 +722,15 @@ public class ChangelogActivity extends BaseActivity {
         long major = 0, minor = 0, patch = 0;
         try {
             String[] parts = base.split("\\.");
-            if (parts.length > 0) major = Long.parseLong(parts[0]);
-            if (parts.length > 1) minor = Long.parseLong(parts[1]);
-            if (parts.length > 2) patch = Long.parseLong(parts[2]);
+            if (parts.length > 0) {
+                major = Long.parseLong(parts[0]);
+            }
+            if (parts.length > 1) {
+                minor = Long.parseLong(parts[1]);
+            }
+            if (parts.length > 2) {
+                patch = Long.parseLong(parts[2]);
+            }
         } catch (Exception e) {
             return 0L;
         }

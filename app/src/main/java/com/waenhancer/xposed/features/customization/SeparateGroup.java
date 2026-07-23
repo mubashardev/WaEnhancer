@@ -36,6 +36,10 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import android.os.Handler;
+import android.os.Looper;
+import java.lang.reflect.Modifier;
+import org.luckypray.dexkit.query.enums.StringMatchType;
 
 public class SeparateGroup extends Feature {
 
@@ -56,7 +60,7 @@ public class SeparateGroup extends Feature {
 
         Class<?> bottomNavigationViewCls = Unobfuscator.findFirstClassUsingName(
                 classLoader,
-                org.luckypray.dexkit.query.enums.StringMatchType.EndsWith,
+                StringMatchType.EndsWith,
                 ".BottomNavigationView"
         );
         XposedHelpers.findAndHookMethod(
@@ -89,13 +93,13 @@ public class SeparateGroup extends Feature {
 
     private static Object getEmptyBadge(Class emptyBadgeClass) {
         try {
-            for (java.lang.reflect.Field f : emptyBadgeClass.getDeclaredFields()) {
-                if (java.lang.reflect.Modifier.isStatic(f.getModifiers()) && f.getType() == emptyBadgeClass) {
+            for (Field f : emptyBadgeClass.getDeclaredFields()) {
+                if (Modifier.isStatic(f.getModifiers()) && f.getType() == emptyBadgeClass) {
                     f.setAccessible(true);
                     return f.get(null);
                 }
             }
-            java.lang.reflect.Constructor ctor = emptyBadgeClass.getDeclaredConstructor();
+            Constructor ctor = emptyBadgeClass.getDeclaredConstructor();
             ctor.setAccessible(true);
             return ctor.newInstance();
         } catch (Throwable ignored) {}
@@ -105,15 +109,15 @@ public class SeparateGroup extends Feature {
     @SuppressLint("Range")
     private void hookTabCount() {
         try {
-            XposedBridge.log("[WAEX-SG] hookTabCount starting...");
+            // XposedBridge.log("[WAEX-SG] hookTabCount starting...");
             Method runMethod = Unobfuscator.loadTabCountMethod(classLoader);
-            logDebug(Unobfuscator.getMethodDescriptor(runMethod));
+            /* Log removed */
 
             Method enableCountMethod = Unobfuscator.loadEnableCountTabMethod(classLoader);
             Constructor<?> badgeWrapperConstructor = Unobfuscator.loadEnableCountTabBadgeWrapper(classLoader);
             Constructor<?> badgeItemConstructor = Unobfuscator.loadEnableCountTabBadgeItem(classLoader);
             Class<?> emptyBadgeClass = Unobfuscator.loadEnableCountTabEmptyBadgeClass(classLoader);
-            XposedBridge.log("[WAEX-SG] enableCountMethod found: " + enableCountMethod);
+            // XposedBridge.log("[WAEX-SG] enableCountMethod found: " + enableCountMethod);
 
             XposedBridge.hookMethod(enableCountMethod, new XC_MethodHook() {
                 @Override
@@ -122,28 +126,28 @@ public class SeparateGroup extends Feature {
                     int chatsIdx = tabs.indexOf(CHATS);
                     // Only intercept the CHATS badge call (which carries the total unread count).
                     // We then split it into separate CHATS and GROUPS counts from the DB.
-                    XposedBridge.log("[WAEX-SG] badge call: indexTab=" + indexTab
-                            + " chatsIdx=" + chatsIdx
-                            + " groupsIdx=" + tabs.indexOf(GROUPS)
-                            + " tabs=" + tabs
-                            + " tabInstances=" + tabInstances.keySet());
+                    // XposedBridge.log("[WAEX-SG] badge call: indexTab=" + indexTab
+                            // + " chatsIdx=" + chatsIdx
+                            // + " groupsIdx=" + tabs.indexOf(GROUPS)
+                            // + " tabs=" + tabs
+                            // + " tabInstances=" + tabInstances.keySet());
                     if (indexTab != chatsIdx) return;
                     param.setResult(null);
 
                     Object originalBadge = param.args[1];
-                    XposedBridge.log("[WAEX-SG] Original badge: " + originalBadge 
-                            + " class=" + (originalBadge != null ? originalBadge.getClass().getName() : "null"));
+                    // XposedBridge.log("[WAEX-SG] Original badge: " + originalBadge 
+                            // + " class=" + (originalBadge != null ? originalBadge.getClass().getName() : "null"));
                     if (originalBadge != null) {
                         for (Field f : originalBadge.getClass().getDeclaredFields()) {
                             try {
                                 f.setAccessible(true);
-                                XposedBridge.log("[WAEX-SG]   Field " + f.getName() + " type " + f.getType().getName() + " = " + f.get(originalBadge));
+                                // XposedBridge.log("[WAEX-SG]   Field " + f.getName() + " type " + f.getType().getName() + " = " + f.get(originalBadge));
                                 Object val = f.get(originalBadge);
                                 if (val != null) {
                                     for (Field f2 : val.getClass().getDeclaredFields()) {
                                         try {
                                             f2.setAccessible(true);
-                                            XposedBridge.log("[WAEX-SG]     Subfield " + f2.getName() + " type " + f2.getType().getName() + " = " + f2.get(val));
+                                            // XposedBridge.log("[WAEX-SG]     Subfield " + f2.getName() + " type " + f2.getType().getName() + " = " + f2.get(val));
                                         } catch (Throwable ignored) {}
                                     }
                                 }
@@ -157,7 +161,7 @@ public class SeparateGroup extends Feature {
                             int chatCount = 0;
                             int groupCount = 0;
                             SQLiteDatabase db = MessageStore.getInstance().getDatabase();
-                            XposedBridge.log("[WAEX-SG] DB=" + (db != null ? "OK" : "NULL"));
+                            // XposedBridge.log("[WAEX-SG] DB=" + (db != null ? "OK" : "NULL"));
                             if (db != null) {
                                 try {
                                     // Dynamically retrieve existing columns in the 'chat' table
@@ -203,7 +207,7 @@ public class SeparateGroup extends Feature {
                                                 if (idxServer >= 0) {
                                                     String server = cursor.getString(idxServer);
                                                     int groupTypeVal = idxGroupType >= 0 ? cursor.getInt(idxGroupType) : -1;
-                                                    XposedBridge.log("[WAEX-SG] DB row: server=" + server + " unseen=" + unseen + " group_type=" + groupTypeVal);
+                                                    // XposedBridge.log("[WAEX-SG] DB row: server=" + server + " unseen=" + unseen + " group_type=" + groupTypeVal);
                                                     boolean isGroup = "g.us".equals(server) || "broadcast".equals(server);
                                                     int increment = "messages".equals(counterType) ? unseen : 1;
                                                     if (isGroup) {
@@ -222,9 +226,9 @@ public class SeparateGroup extends Feature {
 
                             final int finalChatCount = chatCount;
                             final int finalGroupCount = groupCount;
-                            XposedBridge.log("[WAEX-SG] counts: chat=" + finalChatCount + " group=" + finalGroupCount);
+                            // XposedBridge.log("[WAEX-SG] counts: chat=" + finalChatCount + " group=" + finalGroupCount);
 
-                            android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+                            Handler handler = new Handler(Looper.getMainLooper());
                             handler.post(() -> {
                                 try {
                                     // Set CHATS badge — no tabInstances check; nav view is already set up
@@ -240,7 +244,7 @@ public class SeparateGroup extends Feature {
                                                 chatsBadge = badgeWrapperConstructor.newInstance(badgeItem);
                                             }
                                         }
-                                        XposedBridge.log("[WAEX-SG] setChats badge=" + chatsBadge + " idx=" + tabs.indexOf(CHATS));
+                                        // XposedBridge.log("[WAEX-SG] setChats badge=" + chatsBadge + " idx=" + tabs.indexOf(CHATS));
                                         XposedBridge.invokeOriginalMethod(
                                                 param.method, param.thisObject,
                                                 new Object[]{param.args[0], chatsBadge, tabs.indexOf(CHATS)});
@@ -259,7 +263,7 @@ public class SeparateGroup extends Feature {
                                                 groupsBadge = badgeWrapperConstructor.newInstance(badgeItem);
                                             }
                                         }
-                                        XposedBridge.log("[WAEX-SG] setGroups badge=" + groupsBadge + " idx=" + tabs.indexOf(GROUPS));
+                                        // XposedBridge.log("[WAEX-SG] setGroups badge=" + groupsBadge + " idx=" + tabs.indexOf(GROUPS));
                                         XposedBridge.invokeOriginalMethod(
                                                 param.method, param.thisObject,
                                                 new Object[]{param.args[0], groupsBadge, tabs.indexOf(GROUPS)});
@@ -274,7 +278,7 @@ public class SeparateGroup extends Feature {
                     }).start();
                 }
             });
-            XposedBridge.log("[WAEX-SG] enableCountMethod hooked successfully");
+            // XposedBridge.log("[WAEX-SG] enableCountMethod hooked successfully");
         } catch (Throwable t) {
             XposedBridge.log("[WAEX-SG] hookTabCount error: " + t);
             t.printStackTrace();
@@ -284,9 +288,9 @@ public class SeparateGroup extends Feature {
     private void hookTabIcon() {
         try {
             Method iconTabMethod = Unobfuscator.loadIconTabMethod(classLoader);
-            logDebug(Unobfuscator.getMethodDescriptor(iconTabMethod));
+            /* Log removed */
             Method menuAddAndroidX = Unobfuscator.loadAddMenuAndroidX(classLoader);
-            logDebug(menuAddAndroidX.toString());
+            /* Log removed */
 
             XposedBridge.hookMethod(iconTabMethod, new XC_MethodHook() {
                 @Override
@@ -314,7 +318,7 @@ public class SeparateGroup extends Feature {
                     }
                 }
             });
-            XposedBridge.log("[WAEX-SG] hookTabIcon hooked successfully");
+            // XposedBridge.log("[WAEX-SG] hookTabIcon hooked successfully");
         } catch (Throwable t) {
             XposedBridge.log("[WAEX-SG] hookTabIcon error: " + t);
             t.printStackTrace();
@@ -334,7 +338,7 @@ public class SeparateGroup extends Feature {
                     }
                 }
             });
-            XposedBridge.log("[WAEX-SG] hookTabName hooked successfully");
+            // XposedBridge.log("[WAEX-SG] hookTabName hooked successfully");
         } catch (Throwable t) {
             XposedBridge.log("[WAEX-SG] hookTabName error: " + t);
             t.printStackTrace();
@@ -345,15 +349,15 @@ public class SeparateGroup extends Feature {
         try {
             Class<?> cFragClass = Unobfuscator.findFirstClassUsingName(
                     classLoader,
-                    org.luckypray.dexkit.query.enums.StringMatchType.EndsWith,
+                    StringMatchType.EndsWith,
                     ".ConversationsFragment"
             );
 
             Method getTabMethod = Unobfuscator.loadGetTabMethod(classLoader);
-            logDebug(Unobfuscator.getMethodDescriptor(getTabMethod));
+            /* Log removed */
 
             Method methodTabInstance = Unobfuscator.loadTabFragmentMethod(classLoader);
-            logDebug(Unobfuscator.getMethodDescriptor(methodTabInstance));
+            /* Log removed */
 
             Constructor<?> recreateFragmentMethod = Unobfuscator.loadRecreateFragmentConstructor(classLoader);
 
@@ -408,8 +412,8 @@ public class SeparateGroup extends Feature {
                     if (index < 0 || index >= tabs.size()) return;
                     int tabId = tabs.get(index);
                     if (tabId == GROUPS || tabId == CHATS) {
-                        java.lang.reflect.Constructor<?>[] constructors = cFragClass.getDeclaredConstructors();
-                        for (java.lang.reflect.Constructor<?> ctor : constructors) {
+                        Constructor<?>[] constructors = cFragClass.getDeclaredConstructors();
+                        for (Constructor<?> ctor : constructors) {
                             if (ctor.getParameterCount() == 0) {
                                 ctor.setAccessible(true);
                                 Object convFragment = ctor.newInstance();
@@ -444,7 +448,7 @@ public class SeparateGroup extends Feature {
 
             // Hook fab method
             Method fabintMethod = Unobfuscator.loadFabMethod(classLoader);
-            logDebug(Unobfuscator.getMethodDescriptor(fabintMethod));
+            /* Log removed */
 
             XposedBridge.hookMethod(fabintMethod, new XC_MethodHook() {
                 @Override
@@ -457,7 +461,7 @@ public class SeparateGroup extends Feature {
 
             // Hook publishResults / getFilters method
             Method publishResultsMethod = Unobfuscator.loadGetFiltersMethod(classLoader);
-            logDebug(Unobfuscator.getMethodDescriptor(publishResultsMethod));
+            /* Log removed */
 
             final Method finalPublishResultsMethod = publishResultsMethod;
             XposedBridge.hookMethod(publishResultsMethod, new XC_MethodHook() {
@@ -478,7 +482,7 @@ public class SeparateGroup extends Feature {
                     XposedHelpers.setIntField(filters, "count", resultList.size());
                 }
             });
-            XposedBridge.log("[WAEX-SG] hookTabInstance hooked successfully");
+            // XposedBridge.log("[WAEX-SG] hookTabInstance hooked successfully");
         } catch (Throwable t) {
             XposedBridge.log("[WAEX-SG] hookTabInstance error: " + t);
             t.printStackTrace();
@@ -502,7 +506,7 @@ public class SeparateGroup extends Feature {
     private void hookTabList() {
         try {
             Method onCreateTabList = Unobfuscator.loadTabListMethod(classLoader);
-            logDebug(Unobfuscator.getMethodDescriptor(onCreateTabList));
+            /* Log removed */
 
             XposedBridge.hookMethod(onCreateTabList, new XC_MethodHook() {
                 @SuppressWarnings("unchecked")
@@ -516,7 +520,7 @@ public class SeparateGroup extends Feature {
                     }
                 }
             });
-            XposedBridge.log("[WAEX-SG] hookTabList hooked successfully");
+            // XposedBridge.log("[WAEX-SG] hookTabList hooked successfully");
         } catch (Throwable t) {
             XposedBridge.log("[WAEX-SG] hookTabList error: " + t);
             t.printStackTrace();

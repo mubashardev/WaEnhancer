@@ -10,13 +10,17 @@ import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
 import com.waenhancer.BuildConfig;
+import android.content.SharedPreferences;
+import android.widget.Toast;
+import com.waenhancer.xposed.utils.ProHelper;
+import rikka.material.preference.MaterialSwitchPreference;
 
 
 /**
  * Refactored ProSwitchPreference: converted from a standard preference to a MaterialSwitchPreference
  * that toggles when Pro is active, or redirects to LicenseActivity when Pro is not active.
  */
-public class ProSwitchPreference extends rikka.material.preference.MaterialSwitchPreference {
+public class ProSwitchPreference extends MaterialSwitchPreference {
 
     public ProSwitchPreference(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
@@ -33,37 +37,44 @@ public class ProSwitchPreference extends rikka.material.preference.MaterialSwitc
         init(context);
     }
 
+    private CharSequence originalSummary;
+    private CharSequence originalTitle;
+
     private void init(Context context) {
-        // Format the title to display the Pro badge
-        CharSequence originalTitle = getTitle();
+        // Save the original summary and title defined in XML
+        originalSummary = getSummary();
+        originalTitle = getTitle();
         if (originalTitle == null) {
             originalTitle = "Pro Feature";
-        }
-        
-        if (BuildConfig.HAS_PRO_FEATURES) {
-            String newTitle = originalTitle + " <font color='#8B5CF6'><b>[Pro]</b></font>";
-            setTitle(Html.fromHtml(newTitle, Html.FROM_HTML_MODE_LEGACY));
-        } else {
-            String newTitle = originalTitle + " <font color='#EF4444'><b>[missing pro module]</b></font>";
-            setTitle(Html.fromHtml(newTitle, Html.FROM_HTML_MODE_LEGACY));
-            setEnabled(false);
         }
 
         updateSummary();
     }
 
     /**
-     * Updates the summary text dynamically based on the verified status.
+     * Updates the summary and title dynamically based on the verified status.
      */
     private void updateSummary() {
-        if (!BuildConfig.HAS_PRO_FEATURES) {
-            setSummary("Pro module not loaded");
+        if (!ProHelper.isPluginInstalled(getContext())) {
+            setSummary("Helper Plugin Required");
+            String newTitle = originalTitle + " <font color='#EF4444'><b>[missing helper plugin]</b></font>";
+            setTitle(Html.fromHtml(newTitle, Html.FROM_HTML_MODE_LEGACY));
+            setEnabled(false);
             return;
         }
 
         boolean isVerified = getSafeSharedPreferences().getBoolean("is_pro_verified", false);
+        boolean limitedFree = ProHelper.isLimitedFreePreferenceEnabled(getKey());
+
+        // Pro badge color: Green (#22C55E) if active/verified/limited-free, Red (#EF4444) if inactive
+        String tagColor = (isVerified || limitedFree) ? "#22C55E" : "#EF4444";
+        String newTitle = originalTitle + " <font color='" + tagColor + "'><b>[Pro]</b></font>";
+        setTitle(Html.fromHtml(newTitle, Html.FROM_HTML_MODE_LEGACY));
+
         if (isVerified) {
-            setSummary("Status: Pro Active");
+            setSummary(originalSummary);
+        } else if (limitedFree) {
+            setSummary(originalSummary != null ? originalSummary + " (Limited Free)" : "Status: Limited Free Active");
         } else {
             setSummary("Activate Pro First");
         }
@@ -71,8 +82,15 @@ public class ProSwitchPreference extends rikka.material.preference.MaterialSwitc
 
     @Override
     protected void onClick() {
+        if (!ProHelper.isPluginInstalled(getContext())) {
+            ProHelper.navigateToPluginPack(getContext());
+            return;
+        }
+
         boolean isVerified = getSafeSharedPreferences().getBoolean("is_pro_verified", false);
-        if (isVerified) {
+        boolean limitedFree = ProHelper.isLimitedFreePreferenceEnabled(getKey());
+
+        if (isVerified || limitedFree) {
             super.onClick();
         } else {
             Context context = getContext();
@@ -82,14 +100,14 @@ public class ProSwitchPreference extends rikka.material.preference.MaterialSwitc
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
             } catch (ClassNotFoundException e) {
-                android.widget.Toast.makeText(context, "Pro features are not available.", android.widget.Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Pro features are not available.", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
     @NonNull
-    private android.content.SharedPreferences getSafeSharedPreferences() {
-        android.content.SharedPreferences prefs = getSharedPreferences();
+    private SharedPreferences getSafeSharedPreferences() {
+        SharedPreferences prefs = getSharedPreferences();
         if (prefs != null) {
             return prefs;
         }

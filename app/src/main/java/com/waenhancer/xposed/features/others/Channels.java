@@ -46,13 +46,13 @@ public class Channels extends Feature {
         if (channels || removechannelRec) {
 
             var removeChannelRecClass = Unobfuscator.loadRemoveChannelRecClass(classLoader);
-            log("RemoveChannelRec: " + removeChannelRecClass);
+            /* Log removed */
             var headerChannelItem = Unobfuscator.loadHeaderChannelItemClass(classLoader);
-            log("HeaderChannelItem: " + headerChannelItem);
+            /* Log removed */
             var listChannelItem = Unobfuscator.loadListChannelItemClass(classLoader);
-            log("ListChannelItem: " + listChannelItem);
+            /* Log removed */
             var listUpdateItems = Unobfuscator.loadListUpdateItems(classLoader);
-            log("ListUpdateItems: " + Unobfuscator.getMethodDescriptor(listUpdateItems));
+            /* Log removed */
             XposedBridge.hookMethod(listUpdateItems, new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {

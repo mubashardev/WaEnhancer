@@ -122,7 +122,9 @@ public class FMessageWpp {
 
     public long getRowId() {
         try {
-            return getFieldIdMessage.getLong(fmessage);
+            if (getFieldIdMessage != null) {
+                return getFieldIdMessage.getLong(fmessage);
+            }
         } catch (Exception e) {
             XposedBridge.log(e);
         }

@@ -373,10 +373,14 @@ public class CustomThemeV2 extends Feature {
         XposedBridge.hookAllConstructors(filterItemClass, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                var view = (View) param.args[0];
-                var textView = (TextView) view.findViewById(Utils.getID("text_view", "id"));
-                if (textView != null) {
-                    textView.setTextColor(DesignUtils.getPrimaryTextColor());
+                if (param.thisObject instanceof TextView) {
+                    ((TextView) param.thisObject).setTextColor(DesignUtils.getPrimaryTextColor());
+                } else if (param.args.length > 0 && param.args[0] instanceof View) {
+                    var view = (View) param.args[0];
+                    var textView = (TextView) view.findViewById(Utils.getID("text_view", "id"));
+                    if (textView != null) {
+                        textView.setTextColor(DesignUtils.getPrimaryTextColor());
+                    }
                 }
             }
         });

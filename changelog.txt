@@ -2,7 +2,7 @@
 - Added support for WA/WB upto 2.26.32.xx
 
 [Fixed]
-
+- Fixed error CustomThemeV2
 
 [Improvements]
 - Optimized Performance

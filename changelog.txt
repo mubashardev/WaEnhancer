@@ -1,11 +1,8 @@
 [Added]
-- Added support for WA/WB upto 2.26.30.xx
+- Added support for WA/WB upto 2.26.32.xx
 
 [Fixed]
-- Crash on startup
-- Fixed Floating Pill design issues
-- Fixed Message Seen Toast
-- Fixed Status Seen Toast
+
 
 [Improvements]
 - Optimized Performance

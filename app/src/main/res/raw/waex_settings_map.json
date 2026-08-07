@@ -626,7 +626,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Message Bomber",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -635,7 +635,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Delete message media file",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -1000,7 +1000,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Send Audio as Voice Status",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -1026,7 +1026,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Status Video Splitter",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -1035,7 +1035,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Remove bottom visible tile",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -1044,7 +1044,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Disable Swipe Up to reply",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -1053,7 +1053,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Remove quick reactions row",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -1062,7 +1062,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Remove heart button",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -1071,7 +1071,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Add option to menu to open reply",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -1080,7 +1080,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Long press to fast forward/rewind",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             },
             {
@@ -1089,7 +1089,7 @@
               "value_type": "string",
               "default": "2.0",
               "title": "Playback speed",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false,
               "dep": "status_video_fast_gesture",
               "entries": [
@@ -1125,7 +1125,7 @@
               "value_type": "boolean",
               "default": false,
               "title": "Show play/pause button in bottom bar",
-              "summary": "Under Development",
+              "summary": "Tap to configure in WaEnhancerX",
               "enabled": false
             }
           ]

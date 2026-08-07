@@ -63,10 +63,12 @@ public class GeneralFragment extends BaseFragment {
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
         });
 
         if (savedInstanceState == null) {
@@ -78,9 +80,12 @@ public class GeneralFragment extends BaseFragment {
 
     private void switchTab(int position) {
         Fragment fragment = switch (position) {
-            case 1 -> new HomeScreenGeneralPreference();
-            case 2 -> new ConversationGeneralPreference();
-            default -> new GeneralPreferenceFragment();
+            case 1 ->
+                new HomeScreenGeneralPreference();
+            case 2 ->
+                new ConversationGeneralPreference();
+            default ->
+                new GeneralPreferenceFragment();
         };
         getChildFragmentManager().beginTransaction()
                 .replace(R.id.general_frag_container, fragment)
@@ -88,7 +93,9 @@ public class GeneralFragment extends BaseFragment {
     }
 
     public void showTab(String parentKey) {
-        if (tabLayout == null) return;
+        if (tabLayout == null) {
+            return;
+        }
         int tabIndex = 0;
         if ("general_home".equals(parentKey) || "general".equals(parentKey)) {
             tabIndex = 0;
@@ -112,6 +119,7 @@ public class GeneralFragment extends BaseFragment {
     }
 
     public static class GeneralPreferenceFragment extends BasePreferenceFragment {
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             super.onCreatePreferences(savedInstanceState, rootKey);
@@ -141,16 +149,22 @@ public class GeneralFragment extends BaseFragment {
 
         private void updatePluginPreference() {
             Context context = getContext();
-            if (context == null) return;
+            if (context == null) {
+                return;
+            }
             Preference pref = findPreference("unlock_limited_free");
             Preference updatesPref = findPreference("pro_plugin_updates");
             PreferenceCategory category = findPreference("plugin_pack_category");
-            if (category == null) return;
+            if (category == null) {
+                return;
+            }
 
             boolean isInstalled = ProHelper.isPluginInstalled(context);
             if (isInstalled) {
                 category.setVisible(true);
-                if (pref != null) pref.setVisible(false);
+                if (pref != null) {
+                    pref.setVisible(false);
+                }
                 if (updatesPref != null) {
                     updatesPref.setVisible(true);
                     updatesPref.setOnPreferenceClickListener(preference -> {
@@ -176,12 +190,15 @@ public class GeneralFragment extends BaseFragment {
                         return true;
                     });
                 }
-                if (updatesPref != null) updatesPref.setVisible(false);
+                if (updatesPref != null) {
+                    updatesPref.setVisible(false);
+                }
             }
         }
     }
 
     public static class HomeScreenGeneralPreference extends BasePreferenceFragment {
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             super.onCreatePreferences(savedInstanceState, rootKey);
@@ -197,6 +214,7 @@ public class GeneralFragment extends BaseFragment {
     }
 
     public static class ConversationGeneralPreference extends BasePreferenceFragment {
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             super.onCreatePreferences(savedInstanceState, rootKey);
@@ -385,8 +403,7 @@ public class GeneralFragment extends BaseFragment {
                 });
             });
         }
-        */
-
+         */
         private void updateProgress(ProgressBar progressBar, TextView label, int progress, String text, Handler mainHandler) {
             mainHandler.post(() -> {
                 ObjectAnimator animator = ObjectAnimator.ofInt(progressBar, "progress", progress);
@@ -416,7 +433,7 @@ public class GeneralFragment extends BaseFragment {
                 RootUtils.runRootCommand("nsenter -t 1 -m -- sh -c '[ -f " + srcDb + "-shm ] && cp " + srcDb + "-shm " + tmpDb + "-shm && chmod 666 " + tmpDb + "-shm || true'");
 
                 if (!new File(tmpDb).exists()) {
-                    Log.w("WaEnhancer", "isDatabaseIndexed: file not visible at " + tmpDb);
+                    Log.w("WaEnhancerX", "isDatabaseIndexed: file not visible at " + tmpDb);
                     return false;
                 }
                 // Open READWRITE so SQLite can replay WAL
@@ -425,13 +442,13 @@ public class GeneralFragment extends BaseFragment {
                 try (Cursor c = db.rawQuery(
                         "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
                     boolean indexed = c != null && c.moveToFirst();
-                    Log.d("WaEnhancer", "isDatabaseIndexed: " + pkgName + " = " + indexed);
+                    Log.d("WaEnhancerX", "isDatabaseIndexed: " + pkgName + " = " + indexed);
                     return indexed;
                 } finally {
                     db.close();
                 }
             } catch (Exception e) {
-                Log.e("WaEnhancer", "isDatabaseIndexed failed for " + pkgName, e);
+                Log.e("WaEnhancerX", "isDatabaseIndexed failed for " + pkgName, e);
                 return false;
             } finally {
                 new File(tmpDb).delete();
@@ -451,7 +468,7 @@ public class GeneralFragment extends BaseFragment {
                 RootUtils.runRootCommand("nsenter -t 1 -m -- sh -c '[ -f " + srcDb + "-shm ] && cp " + srcDb + "-shm " + tmpDb + "-shm && chmod 666 " + tmpDb + "-shm || true'");
 
                 if (!new File(tmpDb).exists()) {
-                    Log.e("WaEnhancer", "createDatabaseIndexes: file not visible at " + tmpDb);
+                    Log.e("WaEnhancerX", "createDatabaseIndexes: file not visible at " + tmpDb);
                     return false;
                 }
 
@@ -460,13 +477,17 @@ public class GeneralFragment extends BaseFragment {
                         SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
                 try {
                     try (Cursor c = db.rawQuery("PRAGMA wal_checkpoint(FULL)", null)) {
-                        if (c != null) c.moveToFirst();
+                        if (c != null) {
+                            c.moveToFirst();
+                        }
                     }
                     db.execSQL("CREATE INDEX IF NOT EXISTS wae_msg_filter_idx ON message (chat_row_id, sender_jid_row_id, from_me, message_type)");
                     db.execSQL("CREATE INDEX IF NOT EXISTS wae_msg_from_me_idx ON message (chat_row_id, from_me, message_type)");
                     // Switch to DELETE journal so we don't need to copy WAL back
                     try (Cursor c = db.rawQuery("PRAGMA journal_mode=DELETE", null)) {
-                        if (c != null) c.moveToFirst();
+                        if (c != null) {
+                            c.moveToFirst();
+                        }
                     }
                 } finally {
                     db.close();
@@ -476,15 +497,16 @@ public class GeneralFragment extends BaseFragment {
                 String uid = RootUtils.runRootCommand("nsenter -t 1 -m -- stat -c %u " + srcDb);
                 String gid = RootUtils.runRootCommand("nsenter -t 1 -m -- stat -c %g " + srcDb);
                 RootUtils.runRootCommand("nsenter -t 1 -m -- cp " + tmpDb + " " + srcDb);
-                if (uid != null && gid != null && !uid.trim().isEmpty() && !gid.trim().isEmpty())
+                if (uid != null && gid != null && !uid.trim().isEmpty() && !gid.trim().isEmpty()) {
                     RootUtils.runRootCommand("nsenter -t 1 -m -- chown " + uid.trim() + ":" + gid.trim() + " " + srcDb);
+                }
                 RootUtils.runRootCommand("nsenter -t 1 -m -- chmod 600 " + srcDb);
                 RootUtils.runRootCommand("nsenter -t 1 -m -- rm -f " + srcDb + "-wal " + srcDb + "-shm");
 
-                Log.d("WaEnhancer", "createDatabaseIndexes: success for " + pkgName);
+                Log.d("WaEnhancerX", "createDatabaseIndexes: success for " + pkgName);
                 return true;
             } catch (Exception e) {
-                Log.e("WaEnhancer", "createDatabaseIndexes failed for " + pkgName, e);
+                Log.e("WaEnhancerX", "createDatabaseIndexes failed for " + pkgName, e);
                 return false;
             } finally {
                 new File(tmpDb).delete();
@@ -492,8 +514,6 @@ public class GeneralFragment extends BaseFragment {
                 new File(tmpDb + "-shm").delete();
             }
         }
-
-
 
         private int getThemeColor(Context context, int attr, int defaultColor) {
             TypedValue typedValue = new TypedValue();

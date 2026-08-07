@@ -315,42 +315,28 @@ public class WdsSettingsTileRenderer {
                         }
                     }
                 } else {
-                    if (isProLocked) {
-                        final String displayTitle = title;
+                    if (isProLocked || !isEnabled) {
+                        final String fKey = key;
                         tile = createWdsRow(context, title, summary, null, v -> {
                             try {
-                                AlertDialogWpp builder = new AlertDialogWpp(context);
-                                builder.asBottomSheet();
-                                builder.setTitle(displayTitle);
-                                builder.setMessage("This is a Premium feature. Please install and activate the Helper Plugin to unlock it.");
-                                builder.setPositiveButton("Activate Pro", (dialog, which) -> {
-                                    try {
-                                        Class<?> clazz = Class.forName("com.waenhancer.activities.LicenseActivity");
-                                        Intent intent = new Intent(context, clazz);
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        context.startActivity(intent);
-                                    } catch (Throwable t) {
-                                        Toast.makeText(context, "Pro license screen not available.", Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent();
+                                intent.setClassName("com.waenhancer", "com.waenhancer.activities.MainActivity");
+                                intent.putExtra("scroll_to_preference", fKey);
+                                
+                                com.waenhancer.model.SearchableFeature feature = com.waenhancer.utils.FeatureCatalog.getAllFeatures(context).stream()
+                                        .filter(f -> f.getKey().equals(fKey))
+                                        .findFirst().orElse(null);
+                                
+                                if (feature != null) {
+                                    intent.putExtra("navigate_to_fragment", feature.getFragmentType().getPosition());
+                                    if (feature.getParentKey() != null) {
+                                        intent.putExtra("parent_preference", feature.getParentKey());
                                     }
-                                });
-                                builder.setNegativeButton("Cancel", null);
-                                builder.show();
+                                }
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                context.startActivity(intent);
                             } catch (Throwable t) {
-                                XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
-                            }
-                        });
-                    } else if (!isEnabled) {
-                        final String displayTitle = title;
-                        tile = createWdsRow(context, title, summary, null, v -> {
-                            try {
-                                AlertDialogWpp builder = new AlertDialogWpp(context);
-                                builder.asBottomSheet();
-                                builder.setTitle(displayTitle);
-                                builder.setMessage("This feature is under development and will be available in the future updates. Stay tuned.");
-                                builder.setPositiveButton("Dismiss", null);
-                                builder.show();
-                            } catch (Throwable t) {
-                                XposedBridge.log("[WAEX] Failed to show pro bottom sheet: " + t.getMessage());
+                                XposedBridge.log("[WAEX] Failed to open module app for key " + fKey + ": " + t.getMessage());
                             }
                         });
                     } else if ("switch".equals(type)) {

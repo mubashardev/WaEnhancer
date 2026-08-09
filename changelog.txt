@@ -4,6 +4,7 @@
 [Fixed]
 - Fixed error CustomThemeV2
 - Fixed Download & Share Status not working in some devices
+- Fixed chat flickering on some devices
 
 [Improvements]
 - Optimized Performance

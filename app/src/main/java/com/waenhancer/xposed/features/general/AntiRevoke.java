@@ -347,18 +347,7 @@ public class AntiRevoke extends Feature {
                                                 
                                                 ;
                                                 
-                                                // Refresh the conversation UI if it's currently open
-                                                try {
-                                                    var mConversation = WppCore.getCurrentConversation();
-                                                    if (mConversation != null) {
-                                                        mConversation.runOnUiThread(() -> {
-                                                            if (mConversation.hasWindowFocus()) {
-                                                                mConversation.startActivity(mConversation.getIntent());
-                                                                mConversation.overridePendingTransition(0, 0);
-                                                            }
-                                                        });
-                                                    }
-                                                } catch (Exception ignored) {}
+                                                // Revocation recorded for UI binding without activity re-creation
                                             }
                                         } catch (Exception e) {
                                             XposedBridge.log("[WAEX] Error recording revocation: " + e.getMessage());

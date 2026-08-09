@@ -140,6 +140,19 @@ public class SettingsInjector extends Feature {
                                     return true;
                                 });
                             }
+                        } else if (!"search".equals(screenId) && ProHelper.isProEnabled()) {
+                            // Sub-screen: inject Pro badge as a custom ActionView at the far right of the toolbar
+                            int proBadgeMenuId = 0x7f0f0bad; // unique stable id
+                            if (menu.findItem(proBadgeMenuId) == null) {
+                                MenuItem badgeItem = menu.add(0, proBadgeMenuId, 0, "PRO");
+                                badgeItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                                // Build badge with right-side spacing baked into the view padding
+                                // (ActionMenuView ignores LayoutParams margins on ActionViews)
+                                View badgeView = buildProBadgeWithEndPadding(activity);
+                                badgeItem.setActionView(badgeView);
+                                // Force the toolbar to redraw with the new ActionView
+                                activity.invalidateOptionsMenu();
+                            }
                         }
                     }
                     return;
@@ -628,7 +641,25 @@ public class SettingsInjector extends Feature {
             summaryText.setMaxLines(2);
             summaryText.setEllipsize(TextUtils.TruncateAt.END);
 
-            textContainer.addView(titleText);
+            LinearLayout titleContainer = new LinearLayout(activity);
+            titleContainer.setOrientation(LinearLayout.HORIZONTAL);
+            titleContainer.setGravity(Gravity.CENTER_VERTICAL);
+            titleContainer.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            titleContainer.addView(titleText);
+
+            // Add Pro badge if user is pro
+            if (ProHelper.isProEnabled()) {
+                View badge = buildProBadge(activity);
+                LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                blp.setMarginStart(dp(activity, 6));
+                badge.setLayoutParams(blp);
+                titleContainer.addView(badge);
+            }
+
+            textContainer.addView(titleContainer);
             textContainer.addView(summaryText);
             rowLayout.addView(textContainer);
 
@@ -1858,11 +1889,14 @@ public class SettingsInjector extends Feature {
                         if (child instanceof TextView) {
                             ((TextView) child).setText(title);
                             titleSet = true;
+                            // Add badge next to title on main/hijacked title view
+                            attachBadgeToTitleView(activity, (TextView) child);
                         } else if (child instanceof ViewGroup) {
                             TextView tv = findTextView(child);
                             if (tv != null) {
                                 tv.setText(title);
                                 titleSet = true;
+                                attachBadgeToTitleView(activity, tv);
                             }
                         }
                     }
@@ -1878,11 +1912,114 @@ public class SettingsInjector extends Feature {
                         params.setMarginStart(dp(activity, 16));
                         titleView.setLayoutParams(params);
                         toolbar.addView(titleView);
+                        attachBadgeToTitleView(activity, titleView);
                     }
+
                 }
             }
         } catch (Throwable ignored) {}
     }
+
+    private void attachBadgeToTitleView(Activity activity, TextView titleView) {
+        if (!ProHelper.isProEnabled() || titleView == null) return;
+        try {
+            // Check if we are on the WaeX main page activity (root)
+            Intent intent = activity.getIntent();
+            String screenId = intent != null ? intent.getStringExtra("waex_screen_id") : null;
+            
+            // We ONLY show the Pro badge next to the title on the WaeX main categories activity (screenId == 'root')
+            // On sub-screens the badge is delivered as a menu ActionView (see menuHook), so do nothing here.
+            if (!"root".equals(screenId)) {
+                // Remove any stale title badge (e.g. from view recycling)
+                ViewGroup parent = (ViewGroup) titleView.getParent();
+                if (parent != null) {
+                    View existingBadge = parent.findViewWithTag("waex_title_pro_badge");
+                    if (existingBadge != null) {
+                        parent.removeView(existingBadge);
+                    }
+                }
+                return;
+            }
+
+            ViewGroup parent = (ViewGroup) titleView.getParent();
+            if (parent == null || parent.findViewWithTag("waex_title_pro_badge") != null) return;
+            
+            // If parent is a horizontal layout, add next to title
+            if (parent instanceof LinearLayout && ((LinearLayout) parent).getOrientation() == LinearLayout.HORIZONTAL) {
+                View badge = buildProBadge(activity);
+                badge.setTag("waex_title_pro_badge");
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                lp.setMarginStart(dp(activity, 6));
+                badge.setLayoutParams(lp);
+                int index = parent.indexOfChild(titleView);
+                parent.addView(badge, index + 1);
+            } else {
+                // Wrap in a horizontal LinearLayout
+                LinearLayout wrapper = new LinearLayout(activity);
+                wrapper.setOrientation(LinearLayout.HORIZONTAL);
+                wrapper.setGravity(Gravity.CENTER_VERTICAL);
+                wrapper.setLayoutParams(titleView.getLayoutParams());
+                
+                int index = parent.indexOfChild(titleView);
+                parent.removeView(titleView);
+                
+                ViewGroup.LayoutParams tvParams = new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                titleView.setLayoutParams(tvParams);
+                wrapper.addView(titleView);
+                
+                View badge = buildProBadge(activity);
+                badge.setTag("waex_title_pro_badge");
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                lp.setMarginStart(dp(activity, 6));
+                badge.setLayoutParams(lp);
+                wrapper.addView(badge);
+                
+                parent.addView(wrapper, index);
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private View buildProBadge(Context context) {
+        return buildProBadgeInternal(context, false);
+    }
+
+    private View buildProBadgeWithEndPadding(Context context) {
+        return buildProBadgeInternal(context, true);
+    }
+
+    private View buildProBadgeInternal(Context context, boolean withEndPadding) {
+        TextView badge = new TextView(context);
+        badge.setText("PRO");
+        badge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9.5f);
+        badge.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+        badge.setGravity(Gravity.CENTER);
+        badge.setSingleLine(true);
+
+        float density = context.getResources().getDisplayMetrics().density;
+        int padH = (int) (6 * density);
+        int padV = (int) (2 * density);
+        // When used as ActionView, bake the right-side margin into the end padding
+        // because ActionMenuView ignores layout margins on ActionViews
+        int endPad = withEndPadding ? (int) (14 * density) : padH;
+        badge.setPadding(padH, padV, endPad, padV);
+
+        // Native WhatsApp Green Pill Design - identical to the tile badge
+        GradientDrawable gd = new GradientDrawable();
+        gd.setShape(GradientDrawable.RECTANGLE);
+        gd.setCornerRadius(100 * density); // Fully rounded pill shape
+        boolean isNight = DesignUtils.isNightMode();
+        int accentColor = isNight ? 0xFF21C063 : 0xFF008069; // Green accent
+        gd.setColor(Color.TRANSPARENT);
+        gd.setStroke((int) (1.2f * density), accentColor);
+        badge.setBackground(gd);
+        badge.setTextColor(accentColor);
+
+        return badge;
+    }
+
 
     private void findTextViews(View view, List<TextView> list) {
         if (view instanceof TextView) {

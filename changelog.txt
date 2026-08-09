@@ -6,3 +6,4 @@
 
 [Improvements]
 - Optimized Performance
+- Improved In-app preferences

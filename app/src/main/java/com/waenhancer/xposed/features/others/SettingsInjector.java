@@ -1434,9 +1434,8 @@ public class SettingsInjector extends Feature {
                     containerLayout.setClipChildren(false);
                     containerLayout.setClipToPadding(false);
                     float density = activity.getResources().getDisplayMetrics().density;
-                    int pad24 = (int) (24 * density);
                     int pad16 = (int) (16 * density);
-                    containerLayout.setPadding(pad24, pad24, pad24, pad24);
+                    containerLayout.setPadding(0, pad16, 0, pad16);
                     scrollView.addView(containerLayout);
 
                     try {

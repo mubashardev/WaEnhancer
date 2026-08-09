@@ -4,9 +4,34 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
-
-
+        {
+            "name": "Build & Install Debug Pro App",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "echo 'Gradle: Debug Pro APK has been built and installed!'",
+            "preLaunchTask": "gradlew: installProDebug"
+        },
+        {
+            "name": "Build & Install Release Pro App",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "echo 'Gradle: Release Pro APK has been built and installed!'",
+            "preLaunchTask": "gradlew: installProRelease"
+        },
+        {
+            "name": "Only Build Debug Pro App",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "echo 'Gradle: Debug Pro APK built successfully!'",
+            "preLaunchTask": "gradlew: assembleProDebug"
+        },
+        {
+            "name": "Only Build Release Pro App",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "echo 'Gradle: Release Pro APK built successfully!'",
+            "preLaunchTask": "gradlew: assembleProRelease"
+        },
         {
             "name": "Build & Install Debug App",
             "type": "node-terminal",

@@ -4,16 +4,100 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "gradlew: installProDebug",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                ":pro:installDebug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        },
+        {
+            "label": "gradlew: installProRelease",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                ":pro:installRelease"
+            ],
+            "group": "build",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        },
+        {
+            "label": "gradlew: assembleProDebug",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                ":pro:assembleDebug"
+            ],
+            "group": "build",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        },
+        {
+            "label": "gradlew: assembleProRelease",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                ":pro:assembleRelease"
+            ],
+            "group": "build",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        },
+        {
             "label": "gradlew: installWhatsappDebug",
             "type": "shell",
             "command": "./gradlew",
             "args": [
                 ":app:installWhatsappDebug"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": "build",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -74,7 +158,7 @@
             "type": "shell",
             "command": "./gradlew",
             "args": [
-                ":app:installWhatsappRelease"
+                ":pro:installWhatsappRelease"
             ],
             "group": "build",
             "options": {
@@ -88,6 +172,20 @@
                 "panel": "shared",
                 "showReuseMessage": true,
                 "clear": false
+            }
+        },
+        {
+            "label": "ADB: Stream Logcat (Pro App Package)",
+            "type": "shell",
+            "command": "adb logcat --package=com.waex.helper",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": false,
+                "clear": true
             }
         },
         {

@@ -43,6 +43,9 @@ public class MediaQuality extends Feature {
         super(loader, preferences);
     }
 
+    private static final int EDGE_WIDTH = 1920;
+    private static final int BITRATE = 10_000 * 1000;
+
     @Override
     public void doHook() throws Exception {
         var videoQuality = prefs.getBoolean("videoquality", false);
@@ -53,12 +56,18 @@ public class MediaQuality extends Feature {
         // Disable manual calculation ProcessMediaQuality
         Others.propsBoolean.put(14447, false);
 
-        // Enable Media Quality selection for Stories
-        var hookMediaQualitySelection = Unobfuscator.loadMediaQualitySelectionMethod(classLoader);
-        XposedBridge.hookMethod(hookMediaQualitySelection, XC_MethodReplacement.returnConstant(true));
+        // Enable Media Quality selection for Stories with dual fallback
+        enableMediaQualityForStories();
 
         if (videoQuality) {
             Others.propsBoolean.put(5549, true);
+            Others.propsBoolean.put(18888, true);
+            for (int key : new int[]{594, 12852, 4686, 3654, 3183, 4685}) {
+                Others.propsInteger.put(key, EDGE_WIDTH);
+            }
+            for (int key : new int[]{3755, 3756, 3757, 3758}) {
+                Others.propsInteger.put(key, 10000);
+            }
 
             var ProcessVideoQualityClass = Unobfuscator.loadProcessVideoQualityClass(classLoader);
             var processVideoQualityFields = Unobfuscator.getAllMapFields(ProcessVideoQualityClass);
@@ -70,15 +79,19 @@ public class MediaQuality extends Feature {
                     var fieldvideoMaxBitrate = processVideoQualityFields.get("videoMaxBitrate");
                     var fieldvideoMaxEdge = processVideoQualityFields.get("videoMaxEdge");
                     var fieldvideoLimitMb = processVideoQualityFields.get("videoLimitMb");
+                    var fieldmainHighBitRate = processVideoQualityFields.get("mainHighBitRate");
+
                     if (fieldvideoLimitMb != null) {
                         fieldvideoLimitMb.setInt(processVideoQuality, maxSize);
                     }
                     if (fieldvideoMaxEdge != null) {
-                        fieldvideoMaxEdge.setInt(processVideoQuality, 3840);
+                        fieldvideoMaxEdge.setInt(processVideoQuality, EDGE_WIDTH);
                     }
                     if (fieldvideoMaxBitrate != null) {
-                        int bitrateBps = 24000 * 1000;
-                        fieldvideoMaxBitrate.setInt(processVideoQuality, bitrateBps);
+                        fieldvideoMaxBitrate.setInt(processVideoQuality, BITRATE);
+                    }
+                    if (fieldmainHighBitRate != null) {
+                        fieldmainHighBitRate.set(processVideoQuality, null);
                     }
                 }
             });
@@ -97,9 +110,15 @@ public class MediaQuality extends Feature {
                         field.setBoolean(videoProcessor, false);
                     }
                     var fieldMediaDataVideoConfiguration = ReflectionUtils.getFieldByType(videoProcessor.getClass(), MediaDataVideoConfiguration);
-                    var mediaDataVideoConfiguration = fieldMediaDataVideoConfiguration.get(videoProcessor);
-                    var fieldforceSingleTranscoding = fieldsMediaDataVideoConfiguration.get("forceSingleTranscoding");
-                    fieldforceSingleTranscoding.setBoolean(mediaDataVideoConfiguration, true);
+                    if (fieldMediaDataVideoConfiguration != null) {
+                        var mediaDataVideoConfiguration = fieldMediaDataVideoConfiguration.get(videoProcessor);
+                        if (mediaDataVideoConfiguration != null) {
+                            var fieldforceSingleTranscoding = fieldsMediaDataVideoConfiguration.get("forceSingleTranscoding");
+                            if (fieldforceSingleTranscoding != null) {
+                                fieldforceSingleTranscoding.setBoolean(mediaDataVideoConfiguration, true);
+                            }
+                        }
+                    }
                 }
             });
 
@@ -468,6 +487,35 @@ public class MediaQuality extends Feature {
         return new Pair<>(scaledWidth, scaledHeight);
     }
 
+
+    private void enableMediaQualityForStories() {
+        boolean legacyHooked = false;
+        try {
+            Method hookMediaQualitySelection = Unobfuscator.loadMediaQualitySelectionMethod(classLoader);
+            XposedBridge.hookMethod(hookMediaQualitySelection, XC_MethodReplacement.returnConstant(true));
+            legacyHooked = true;
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] loadMediaQualitySelectionMethod failed, trying BottomBarConfig: " + t.getMessage());
+        }
+
+        if (!legacyHooked) {
+            try {
+                Class<?> bottomBarConfigClass = Unobfuscator.loadBottomBarConfigClass(classLoader);
+                var fieldsBottomBarConfig = Unobfuscator.getAllMapFields(bottomBarConfigClass);
+                XposedBridge.hookAllConstructors(bottomBarConfigClass, new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        Field supportsHdQuality = fieldsBottomBarConfig.get("supportsHdQuality");
+                        if (supportsHdQuality != null) {
+                            supportsHdQuality.set(param.thisObject, true);
+                        }
+                    }
+                });
+            } catch (Throwable t) {
+                XposedBridge.log("[WAEX] loadBottomBarConfigClass failed: " + t.getMessage());
+            }
+        }
+    }
 
     @NonNull
     @Override

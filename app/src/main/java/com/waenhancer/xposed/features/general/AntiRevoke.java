@@ -347,7 +347,33 @@ public class AntiRevoke extends Feature {
                                                 
                                                 ;
                                                 
-                                                // Revocation recorded for UI binding without activity re-creation
+                                                // Targeted single-item state update: find only the matching message item view and update it
+                                                try {
+                                                    var mConversation = WppCore.getCurrentConversation();
+                                                    if (mConversation != null) {
+                                                        final String finalKeyId = keyId;
+                                                        mConversation.runOnUiThread(() -> {
+                                                            View listView = mConversation.findViewById(Utils.getID("list", "id"));
+                                                            if (listView instanceof ViewGroup) {
+                                                                ViewGroup group = (ViewGroup) listView;
+                                                                int childCount = group.getChildCount();
+                                                                for (int i = 0; i < childCount; i++) {
+                                                                    View child = group.getChildAt(i);
+                                                                    if (child instanceof ViewGroup) {
+                                                                        FMessageWpp childFMsg = (FMessageWpp) XposedHelpers.getAdditionalInstanceField(child, "fMessage");
+                                                                        if (childFMsg != null && finalKeyId.equals(childFMsg.getKey().messageID)) {
+                                                                            TextView dateTextView = child.findViewById(Utils.getID("date", "id"));
+                                                                            TextView messageTextView = child.findViewById(Utils.getID("message_text", "id"));
+                                                                            bindRevokedMessageUI(childFMsg, dateTextView, messageTextView, "antirevoke");
+                                                                            child.invalidate();
+                                                                            break;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                } catch (Exception ignored) {}
                                             }
                                         } catch (Exception e) {
                                             XposedBridge.log("[WAEX] Error recording revocation: " + e.getMessage());

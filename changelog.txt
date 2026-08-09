@@ -3,6 +3,7 @@
 
 [Fixed]
 - Fixed error CustomThemeV2
+- Fixed Download & Share Status not working in some devices
 
 [Improvements]
 - Optimized Performance

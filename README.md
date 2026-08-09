@@ -11,7 +11,8 @@
 ## Star History
 
 
-[![Star History Chart](https://api.star-history.com/chart?repos=mubashardev/WaEnhancer&type=date&legend=top-left&sealed_token=rqcOyQSf9bz9cMgCispMkgxaEZg_NsBmSd8ucE4evj1ng65axCKlZPNMpl7wuk8oyL9sE_vHbbZ6gyirkYbkVBu5ZPjrNzgioRhE55FTHVaOVuxIVlJ0rXwfsk5Zh_mRUZos52cPmKEkosfpyO9g62Z0DK4PZRDqXh5vzAi1e2FkBw2cdl_VIlxJiDgi)](https://www.star-history.com/?repos=mubashardev%2FWaEnhancer&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/chart?repos=mubashardev/WaEnhancer&type=date&legend=top-left&sealed_token=0RiZqvlAPdL3Q0WiNzuCB6z81xGdvwtUdnv9V4AlW1gnrbikGWRpXdgAv2Mmm1K73LsGS86ugZhuiJwhbv4fGlIRGScJmLRp6w79j-Zmux77AGUjMfAd2w)](https://www.star-history.com/?repos=mubashardev%2FWaEnhancer&type=date&legend=top-left)
+
 <!-- [![Youtube Video](http://thumb.mubashar.dev/?id=BIrojFtTGJ8)](https://www.youtube.com/watch?v=BIrojFtTGJ8) -->
 
 ## Why WaEnhancer X?

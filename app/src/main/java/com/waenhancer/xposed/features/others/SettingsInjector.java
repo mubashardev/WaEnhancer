@@ -146,11 +146,19 @@ public class SettingsInjector extends Feature {
                             if (menu.findItem(proBadgeMenuId) == null) {
                                 MenuItem badgeItem = menu.add(0, proBadgeMenuId, 0, "PRO");
                                 badgeItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                                // Build badge with right-side spacing baked into the view padding
-                                // (ActionMenuView ignores LayoutParams margins on ActionViews)
-                                View badgeView = buildProBadgeWithEndPadding(activity);
-                                badgeItem.setActionView(badgeView);
-                                // Force the toolbar to redraw with the new ActionView
+                                
+                                View badge = buildProBadge(activity);
+                                
+                                // Wrap in a container layout so ActionMenuView gives proper right margin and doesn't distort/stretch padding
+                                FrameLayout wrapper = new FrameLayout(activity);
+                                FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(
+                                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                flp.gravity = Gravity.CENTER_VERTICAL;
+                                flp.setMarginEnd(dp(activity, 16));
+                                badge.setLayoutParams(flp);
+                                wrapper.addView(badge);
+                                
+                                badgeItem.setActionView(wrapper);
                                 activity.invalidateOptionsMenu();
                             }
                         }
@@ -1983,14 +1991,6 @@ public class SettingsInjector extends Feature {
     }
 
     private View buildProBadge(Context context) {
-        return buildProBadgeInternal(context, false);
-    }
-
-    private View buildProBadgeWithEndPadding(Context context) {
-        return buildProBadgeInternal(context, true);
-    }
-
-    private View buildProBadgeInternal(Context context, boolean withEndPadding) {
         TextView badge = new TextView(context);
         badge.setText("PRO");
         badge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9.5f);
@@ -2001,12 +2001,9 @@ public class SettingsInjector extends Feature {
         float density = context.getResources().getDisplayMetrics().density;
         int padH = (int) (6 * density);
         int padV = (int) (2 * density);
-        // When used as ActionView, bake the right-side margin into the end padding
-        // because ActionMenuView ignores layout margins on ActionViews
-        int endPad = withEndPadding ? (int) (14 * density) : padH;
-        badge.setPadding(padH, padV, endPad, padV);
+        badge.setPadding(padH, padV, padH, padV);
 
-        // Native WhatsApp Green Pill Design - identical to the tile badge
+        // Native WhatsApp Green Pill Theme Design
         GradientDrawable gd = new GradientDrawable();
         gd.setShape(GradientDrawable.RECTANGLE);
         gd.setCornerRadius(100 * density); // Fully rounded pill shape

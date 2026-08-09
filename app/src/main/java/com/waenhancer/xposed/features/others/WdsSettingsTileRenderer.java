@@ -121,6 +121,11 @@ public class WdsSettingsTileRenderer {
                 String title = cat.getString("title");
                 String summary = cat.optString("summary", "");
 
+                if ("pro_plans".equals(id) && ProHelper.isProEnabled()) {
+                    title = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, com.waenhancer.R.string.pro_status_title, "Pro Subscription");
+                    summary = com.waenhancer.xposed.core.FeatureLoader.getModuleString(activity, com.waenhancer.R.string.pro_status_summary, "Pro features unlocked — manage plan and view active features");
+                }
+
                 String iconName = cat.optString("icon", "ic_settings");
                 Drawable icon = DesignUtils.getDrawableByName(iconName);
                 if (icon == null) {

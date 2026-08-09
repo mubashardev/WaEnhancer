@@ -140,27 +140,6 @@ public class SettingsInjector extends Feature {
                                     return true;
                                 });
                             }
-                        } else if (!"search".equals(screenId) && ProHelper.isProEnabled()) {
-                            // Sub-screen: inject Pro badge as a custom ActionView at the far right of the toolbar
-                            int proBadgeMenuId = 0x7f0f0bad; // unique stable id
-                            if (menu.findItem(proBadgeMenuId) == null) {
-                                MenuItem badgeItem = menu.add(0, proBadgeMenuId, 0, "PRO");
-                                badgeItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                                
-                                View badge = buildProBadge(activity);
-                                
-                                // Wrap in a container layout so ActionMenuView gives proper right margin and doesn't distort/stretch padding
-                                FrameLayout wrapper = new FrameLayout(activity);
-                                FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(
-                                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                                flp.gravity = Gravity.CENTER_VERTICAL;
-                                flp.setMarginEnd(dp(activity, 16));
-                                badge.setLayoutParams(flp);
-                                wrapper.addView(badge);
-                                
-                                badgeItem.setActionView(wrapper);
-                                activity.invalidateOptionsMenu();
-                            }
                         }
                     }
                     return;
@@ -1668,6 +1647,10 @@ public class SettingsInjector extends Feature {
                         }
                     } catch (Exception ignored) {}
                 }
+                
+                if ("root".equals(screenId)) {
+                    title = FeatureLoader.getModuleString(activity, R.string.waenhancer_settings, "WaeX");
+                }
 
                 if (contentView != null) {
                     FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
@@ -1891,101 +1874,18 @@ public class SettingsInjector extends Feature {
                         XposedHelpers.callMethod(toolbar, "setTitle", title);
                     } catch (Throwable ignored) {}
                     
-                    boolean titleSet = false;
                     for (int i = 0; i < toolbar.getChildCount(); i++) {
                         View child = toolbar.getChildAt(i);
                         if (child instanceof TextView) {
                             ((TextView) child).setText(title);
-                            titleSet = true;
-                            // Add badge next to title on main/hijacked title view
-                            attachBadgeToTitleView(activity, (TextView) child);
                         } else if (child instanceof ViewGroup) {
                             TextView tv = findTextView(child);
                             if (tv != null) {
                                 tv.setText(title);
-                                titleSet = true;
-                                attachBadgeToTitleView(activity, tv);
                             }
                         }
                     }
-                    if (!titleSet) {
-                        TextView titleView = new TextView(activity);
-                        titleView.setText(title);
-                        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-                        boolean isNight = DesignUtils.isNightMode();
-                        titleView.setTextColor(isNight ? 0xFFFFFFFF : 0xFF111B21);
-                        titleView.setTypeface(Typeface.DEFAULT_BOLD);
-                        ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
-                                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                        params.setMarginStart(dp(activity, 16));
-                        titleView.setLayoutParams(params);
-                        toolbar.addView(titleView);
-                        attachBadgeToTitleView(activity, titleView);
-                    }
-
                 }
-            }
-        } catch (Throwable ignored) {}
-    }
-
-    private void attachBadgeToTitleView(Activity activity, TextView titleView) {
-        if (!ProHelper.isProEnabled() || titleView == null) return;
-        try {
-            // Check if we are on the WaeX main page activity (root)
-            Intent intent = activity.getIntent();
-            String screenId = intent != null ? intent.getStringExtra("waex_screen_id") : null;
-            
-            // We ONLY show the Pro badge next to the title on the WaeX main categories activity (screenId == 'root')
-            // On sub-screens the badge is delivered as a menu ActionView (see menuHook), so do nothing here.
-            if (!"root".equals(screenId)) {
-                // Remove any stale title badge (e.g. from view recycling)
-                ViewGroup parent = (ViewGroup) titleView.getParent();
-                if (parent != null) {
-                    View existingBadge = parent.findViewWithTag("waex_title_pro_badge");
-                    if (existingBadge != null) {
-                        parent.removeView(existingBadge);
-                    }
-                }
-                return;
-            }
-
-            ViewGroup parent = (ViewGroup) titleView.getParent();
-            if (parent == null || parent.findViewWithTag("waex_title_pro_badge") != null) return;
-            
-            // If parent is a horizontal layout, add next to title
-            if (parent instanceof LinearLayout && ((LinearLayout) parent).getOrientation() == LinearLayout.HORIZONTAL) {
-                View badge = buildProBadge(activity);
-                badge.setTag("waex_title_pro_badge");
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                lp.setMarginStart(dp(activity, 6));
-                badge.setLayoutParams(lp);
-                int index = parent.indexOfChild(titleView);
-                parent.addView(badge, index + 1);
-            } else {
-                // Wrap in a horizontal LinearLayout
-                LinearLayout wrapper = new LinearLayout(activity);
-                wrapper.setOrientation(LinearLayout.HORIZONTAL);
-                wrapper.setGravity(Gravity.CENTER_VERTICAL);
-                wrapper.setLayoutParams(titleView.getLayoutParams());
-                
-                int index = parent.indexOfChild(titleView);
-                parent.removeView(titleView);
-                
-                ViewGroup.LayoutParams tvParams = new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                titleView.setLayoutParams(tvParams);
-                wrapper.addView(titleView);
-                
-                View badge = buildProBadge(activity);
-                badge.setTag("waex_title_pro_badge");
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                lp.setMarginStart(dp(activity, 6));
-                badge.setLayoutParams(lp);
-                wrapper.addView(badge);
-                
-                parent.addView(wrapper, index);
             }
         } catch (Throwable ignored) {}
     }

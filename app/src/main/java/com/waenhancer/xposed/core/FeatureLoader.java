@@ -169,6 +169,12 @@ public class FeatureLoader {
     private static final AtomicLong lastRestartCheckMs = new AtomicLong(0);
     private static boolean hasPromptedOptimization = false;
 
+    private static volatile ClassLoader sProClassLoader = null;
+
+    public static ClassLoader getProClassLoader() {
+        return sProClassLoader;
+    }
+
     public final static String PACKAGE_WPP = "com.whatsapp";
     public final static String PACKAGE_BUSINESS = "com.whatsapp.w4b";
 
@@ -434,13 +440,13 @@ public class FeatureLoader {
                                     try {
                                         if (needFilterIndex) {
                                             try (Cursor c = db.rawQuery(
-                                                    "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
+                                                    "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_msg_filter_01'", null)) {
                                                 filterIndexed = c != null && c.moveToFirst();
                                             }
                                         }
                                         if (needSeparateIndex) {
                                             try (Cursor c = db.rawQuery(
-                                                    "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_chat_unseen_idx'", null)) {
+                                                    "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_chat_unseen_01'", null)) {
                                                 separateIndexed = c != null && c.moveToFirst();
                                             }
                                         }
@@ -1157,7 +1163,7 @@ public class FeatureLoader {
             /* Log removed */
             ClassLoader proLoader = ProHelper.getPluginClassLoader(mApp, loader, xposedFrameworkLoader);
             if (proLoader != null) {
-                System.getProperties().put("com.waex.helper.classloader", proLoader);
+                sProClassLoader = proLoader;
                 /* Log removed */
 
                 // Reflectively verify if the native library loaded successfully

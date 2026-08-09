@@ -24,6 +24,7 @@ import androidx.preference.PreferenceManager;
 import com.waenhancer.App;
 import com.waenhancer.BuildConfig;
 import com.waenhancer.R;
+import com.waenhancer.WppXposed;
 import com.waenhancer.UpdateChecker;
 import com.waenhancer.UpdateDownloader;
 import com.waenhancer.activities.MainActivity;
@@ -1375,23 +1376,7 @@ public class HomeFragment extends BaseFragment {
             } catch (Throwable ignored) {}
         }
         
-        if (apiVal.isEmpty()) {
-            try {
-                Class<?> sp = Class.forName("android.os.SystemProperties");
-                Method get = sp.getMethod("get", String.class, String.class);
-                apiVal = (String) get.invoke(null, "debug.waenhancer.lsposed.api", "");
-            } catch (Throwable ignored) {}
-        }
-        
-        boolean isActive = false;
-        try {
-            Class<?> sp = Class.forName("android.os.SystemProperties");
-            Method get = sp.getMethod("get", String.class, String.class);
-            String val = (String) get.invoke(null, "debug.waenhancer.lsposed", "0");
-            if ("1".equals(val)) {
-                isActive = true;
-            }
-        } catch (Throwable ignored) {}
+        boolean isActive = WppXposed.isModuleActive;
         
         if (!isActive) {
             isActive = ModuleStatus.isModuleActive();

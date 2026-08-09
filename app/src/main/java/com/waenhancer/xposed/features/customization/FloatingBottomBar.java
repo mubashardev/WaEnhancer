@@ -23,6 +23,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.waenhancer.xposed.core.Feature;
+import com.waenhancer.xposed.core.FeatureLoader;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ProHelper;
@@ -874,7 +875,7 @@ public class FloatingBottomBar extends Feature {
 
         if (pillDesignPro || pillDesignIos) {
             try {
-                ClassLoader pluginLoader = (ClassLoader) System.getProperties().get("com.waex.helper.classloader");
+                ClassLoader pluginLoader = FeatureLoader.getProClassLoader();
                 if (pluginLoader != null) {
                     Class<?> pillProClass = Class.forName("com.waex.helper.PillDesignPro", true, pluginLoader);
                     String style = pillDesignIos ? "ios_glass" : "pro";

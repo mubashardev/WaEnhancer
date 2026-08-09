@@ -440,15 +440,13 @@ public class GeneralFragment extends BaseFragment {
                 SQLiteDatabase db = SQLiteDatabase.openDatabase(tmpDb, null,
                         SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
                 try (Cursor c = db.rawQuery(
-                        "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
+                        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_msg_filter_01'", null)) {
                     boolean indexed = c != null && c.moveToFirst();
-                    Log.d("WaEnhancerX", "isDatabaseIndexed: " + pkgName + " = " + indexed);
                     return indexed;
                 } finally {
                     db.close();
                 }
             } catch (Exception e) {
-                Log.e("WaEnhancerX", "isDatabaseIndexed failed for " + pkgName, e);
                 return false;
             } finally {
                 new File(tmpDb).delete();
@@ -460,7 +458,7 @@ public class GeneralFragment extends BaseFragment {
         private boolean createDatabaseIndexes(String pkgName) {
             String srcDb = "/data/data/" + pkgName + "/databases/msgstore.db";
             String cacheDir = requireContext().getCacheDir().getAbsolutePath();
-            String tmpDb = cacheDir + "/wae_idx_" + pkgName + ".db";
+            String tmpDb = cacheDir + "/tmp_idx_" + pkgName + ".db";
             try {
                 // 1. Copy DB + WAL + SHM into our own cache dir (full rw access, SQLite can create WAL here)
                 RootUtils.runRootCommand("nsenter -t 1 -m -- cp " + srcDb + " " + tmpDb + " && chmod 666 " + tmpDb);
@@ -468,7 +466,6 @@ public class GeneralFragment extends BaseFragment {
                 RootUtils.runRootCommand("nsenter -t 1 -m -- sh -c '[ -f " + srcDb + "-shm ] && cp " + srcDb + "-shm " + tmpDb + "-shm && chmod 666 " + tmpDb + "-shm || true'");
 
                 if (!new File(tmpDb).exists()) {
-                    Log.e("WaEnhancerX", "createDatabaseIndexes: file not visible at " + tmpDb);
                     return false;
                 }
 
@@ -481,8 +478,11 @@ public class GeneralFragment extends BaseFragment {
                             c.moveToFirst();
                         }
                     }
-                    db.execSQL("CREATE INDEX IF NOT EXISTS wae_msg_filter_idx ON message (chat_row_id, sender_jid_row_id, from_me, message_type)");
-                    db.execSQL("CREATE INDEX IF NOT EXISTS wae_msg_from_me_idx ON message (chat_row_id, from_me, message_type)");
+                    db.execSQL("DROP INDEX IF EXISTS wae_msg_filter_idx");
+                    db.execSQL("DROP INDEX IF EXISTS wae_msg_from_me_idx");
+                    db.execSQL("DROP INDEX IF EXISTS wae_chat_unseen_idx");
+                    db.execSQL("CREATE INDEX IF NOT EXISTS idx_msg_filter_01 ON message (chat_row_id, sender_jid_row_id, from_me, message_type)");
+                    db.execSQL("CREATE INDEX IF NOT EXISTS idx_msg_from_me_01 ON message (chat_row_id, from_me, message_type)");
                     // Switch to DELETE journal so we don't need to copy WAL back
                     try (Cursor c = db.rawQuery("PRAGMA journal_mode=DELETE", null)) {
                         if (c != null) {

@@ -2091,13 +2091,13 @@ public class SettingsInjector extends Feature {
             try {
                 if (needFilterIndex) {
                     try (Cursor c = db.rawQuery(
-                            "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
+                            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_msg_filter_01'", null)) {
                         filterIndexed = c != null && c.moveToFirst();
                     }
                 }
                 if (needSeparateIndex) {
                     try (Cursor c = db.rawQuery(
-                            "SELECT name FROM sqlite_master WHERE type='index' AND name='wae_chat_unseen_idx'", null)) {
+                            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_chat_unseen_01'", null)) {
                         separateIndexed = c != null && c.moveToFirst();
                     }
                 }

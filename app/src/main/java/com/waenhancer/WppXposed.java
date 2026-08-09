@@ -242,29 +242,12 @@ public class WppXposed implements IXposedHookLoadPackage, IXposedHookInitPackage
         }
     }
 
+    public static boolean isModuleActive = false;
+
     @Override
     public void initZygote(StartupParam startupParam) throws Throwable {
         MODULE_PATH = startupParam.modulePath;
-
-        // Write a system property that persists until reboot.
-        // Reading debug.* properties requires NO permission from any app,
-        // so WaEnhancer can detect LSPosed even when it's not in module scope.
-        // Writing debug.* properties IS allowed from the zygote/root context
-        // that initZygote runs under.
-        try {
-            Class<?> sysProp = Class.forName("android.os.SystemProperties");
-            Method set = sysProp.getMethod("set", String.class, String.class);
-            set.invoke(null, "debug.waenhancer.lsposed", "1");
-            try {
-                int apiVersion = XposedBridge.getXposedVersion();
-                set.invoke(null, "debug.waenhancer.lsposed.api", String.valueOf(apiVersion));
-                /* Log removed */
-            } catch (Throwable t2) {
-                XposedBridge.log("[WAEX] LSPosed marker written: debug.waenhancer.lsposed=1 (Failed to write API version: " + t2.getMessage() + ")");
-            }
-        } catch (Throwable t) {
-            XposedBridge.log("[WAEX] Failed to write LSPosed marker: " + t.getMessage());
-        }
+        isModuleActive = true;
     }
 
 

@@ -3,6 +3,7 @@ package com.waenhancer.xposed.features.general;
 import android.content.Context;
 
 import com.waenhancer.xposed.core.Feature;
+import com.waenhancer.xposed.core.FeatureLoader;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.components.WaContactWpp;
@@ -330,7 +331,7 @@ public class RecoverDeleteForMe extends Feature {
             String mediaPath = null;
             if (message.getKeyId() != null) {
                 try {
-                    ClassLoader proLoader = (ClassLoader) System.getProperties().get("com.waex.helper.classloader");
+                    ClassLoader proLoader = FeatureLoader.getProClassLoader();
                     if (proLoader != null) {
                         Class<?> proClass = proLoader.loadClass("com.waex.helper.RecoverDeletedMediaPro");
                         Method consumeMethod = proClass.getMethod("consumePendingMediaPath", String.class);

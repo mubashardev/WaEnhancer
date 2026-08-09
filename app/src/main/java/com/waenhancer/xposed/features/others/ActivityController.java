@@ -385,10 +385,10 @@ public class ActivityController extends Feature {
             if (dbFile.exists()) {
                 try (SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null,
                         SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS)) {
-                    try (Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='index' AND name='wae_msg_filter_idx'", null)) {
+                    try (Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_msg_filter_01'", null)) {
                         filterIndexExists = c != null && c.moveToFirst();
                     }
-                    try (Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='index' AND name='wae_chat_unseen_idx'", null)) {
+                    try (Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_chat_unseen_01'", null)) {
                         separateIndexExists = c != null && c.moveToFirst();
                     }
                 }
@@ -879,21 +879,17 @@ public class ActivityController extends Feature {
                         XposedBridge.log("[WAEX] Opening database for indexing...");
                         SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null,
                                 SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-                        XposedBridge.log("[WAEX] Database opened. Creating indexes...");
                         try {
+                            sanitizeAndMigrateIndexes(db);
                             if (optFilter) {
-                                XposedBridge.log("[WAEX] Executing CREATE INDEX for wae_msg_filter_idx and wae_msg_from_me_idx...");
-                                db.execSQL("CREATE INDEX IF NOT EXISTS wae_msg_filter_idx ON message (chat_row_id, sender_jid_row_id, from_me, message_type)");
-                                db.execSQL("CREATE INDEX IF NOT EXISTS wae_msg_from_me_idx ON message (chat_row_id, from_me, message_type)");
+                                db.execSQL("CREATE INDEX IF NOT EXISTS idx_msg_filter_01 ON message (chat_row_id, sender_jid_row_id, from_me, message_type)");
+                                db.execSQL("CREATE INDEX IF NOT EXISTS idx_msg_from_me_01 ON message (chat_row_id, from_me, message_type)");
                             }
                             if (optSeparate) {
-                                XposedBridge.log("[WAEX] Executing CREATE INDEX for wae_chat_unseen_idx...");
-                                db.execSQL("CREATE INDEX IF NOT EXISTS wae_chat_unseen_idx ON chat (unseen_message_count, archived, chat_lock, jid_row_id)");
+                                db.execSQL("CREATE INDEX IF NOT EXISTS idx_chat_unseen_01 ON chat (unseen_message_count, archived, chat_lock, jid_row_id)");
                             }
-                            XposedBridge.log("[WAEX] Index creation SQL commands executed successfully.");
                         } finally {
                             db.close();
-                            XposedBridge.log("[WAEX] Database closed.");
                         }
                     } else {
                         XposedBridge.log("[WAEX] dbFile does not exist!");
@@ -1128,6 +1124,17 @@ public class ActivityController extends Feature {
         public void setColorFilter(ColorFilter cf) {}
         @Override
         public int getOpacity() { return PixelFormat.TRANSLUCENT; }
+    }
+
+    public static void sanitizeAndMigrateIndexes(SQLiteDatabase db) {
+        if (db == null || !db.isOpen() || db.isReadOnly()) return;
+        try {
+            db.execSQL("DROP INDEX IF EXISTS wae_msg_filter_idx");
+            db.execSQL("DROP INDEX IF EXISTS wae_msg_from_me_idx");
+            db.execSQL("DROP INDEX IF EXISTS wae_chat_unseen_idx");
+        } catch (Throwable t) {
+            // Safely ignore database locking exceptions
+        }
     }
 
     @NonNull

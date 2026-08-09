@@ -11,6 +11,7 @@ import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
 import com.waenhancer.xposed.core.components.StatusItemWaex;
+import com.waenhancer.xposed.features.media.StatusDownload;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ReflectionUtils;
@@ -167,6 +168,7 @@ public class MenuStatusListener extends Feature {
                     currentStatusList.clear();
                     currentStatusList.addAll(fMessageList);
                     currentIndex = index;
+                    StatusDownload.activeStatusObj = listStatus.get(index);
 
                     if (index < 0 || index >= statusItemList.size()) {
                         XposedBridge.log("[WAEX] MenuStatusListener: index " + index + " out of bounds for statusItemList size " + statusItemList.size());

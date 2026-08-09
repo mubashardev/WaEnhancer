@@ -458,9 +458,26 @@ public class StatusDownload extends Feature {
                         
                         CircularProgressView progressBar = (CircularProgressView) progressBarView;
                         Object status = activeStatusObj;
-                        File file = getMediaFile(status);
+                        StatusItemWaex statusItem = status != null ? StatusItemWaex.from(status) : null;
                         
-                        if (file != null && file.exists()) {
+                        boolean hideLoader = false;
+                        if (statusItem != null) {
+                            if (statusItem.isFromMe() || !statusItem.isMediaFile()) {
+                                hideLoader = true;
+                            } else {
+                                File file = statusItem.getMediaFile();
+                                if (file != null && file.exists()) {
+                                    hideLoader = true;
+                                }
+                            }
+                        } else if (status != null) {
+                            File file = getMediaFile(status);
+                            if (file != null && file.exists()) {
+                                hideLoader = true;
+                            }
+                        }
+                        
+                        if (hideLoader) {
                             progressBar.setVisibility(View.GONE);
                         } else {
                             float progress = getDownloadProgress(status);

@@ -125,6 +125,24 @@ public class Utils {
         }
     }
 
+    public static void openModuleWithTarget(Context context, int fragmentPos, String prefKey) {
+        try {
+            Intent intent = context.getPackageManager().getLaunchIntentForPackage("com.waenhancer");
+            if (intent == null) {
+                intent = new Intent();
+                intent.setComponent(new ComponentName("com.waenhancer", "com.waenhancer.activities.MainActivity"));
+            }
+            intent.putExtra("navigate_to_fragment", fragmentPos);
+            if (prefKey != null) {
+                intent.putExtra("scroll_to_preference", prefKey);
+            }
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(context, "Error launching WaEnhancer X: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public static boolean doRestart(Context context) {
         PackageManager packageManager = context.getPackageManager();
         Intent intent = packageManager.getLaunchIntentForPackage(context.getPackageName());

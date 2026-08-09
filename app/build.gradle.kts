@@ -260,6 +260,8 @@ dependencies {
         implementation(libs.firebase.analytics)
         implementation(libs.firebase.crashlytics)
     }
+
+    testImplementation("junit:junit:4.13.2")
 }
 
 configurations.all {

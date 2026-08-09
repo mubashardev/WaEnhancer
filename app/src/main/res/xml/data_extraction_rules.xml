@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The module stores user secrets, a preserved message database and preserved media. None of
+    it should leave the device through Android's automatic cloud backup or through a
+    device-to-device transfer, both of which the user does not explicitly review.
+
+    Settings the user does want to carry across devices are exported deliberately through the
+    module's own allowlisted backup, which refuses to include secrets.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+        <exclude domain="file" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+        <exclude domain="file" />
+    </device-transfer>
+</data-extraction-rules>

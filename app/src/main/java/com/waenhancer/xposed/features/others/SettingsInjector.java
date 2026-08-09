@@ -1702,6 +1702,29 @@ public class SettingsInjector extends Feature {
             }
             if (matchingPrefs.length() > 0) {
                 BiConsumer<String, String> navigateCallback = (prefKey, ignored) -> {
+                    // Check if clicked preference belongs to module-only screens (spoofer, keybox/pro, custom versions, calls, recording, appearance)
+                    if (prefKey != null) {
+                        if (prefKey.equals("spoofer_mode") || prefKey.startsWith("spoofer_") || prefKey.contains("spoof")) {
+                            com.waenhancer.xposed.utils.Utils.openModuleWithTarget(activity, 0, prefKey);
+                            return;
+                        } else if (prefKey.contains("keybox") || prefKey.contains("license") || prefKey.contains("pro")) {
+                            com.waenhancer.xposed.utils.Utils.openModuleWithTarget(activity, 0, prefKey);
+                            return;
+                        } else if (prefKey.contains("custom_version") || prefKey.contains("version") || prefKey.equals("customize_supported_versions")) {
+                            com.waenhancer.xposed.utils.Utils.openModuleWithTarget(activity, 0, prefKey);
+                            return;
+                        } else if (prefKey.equals("call_privacy") || prefKey.contains("call_") || prefKey.contains("call")) {
+                            com.waenhancer.xposed.utils.Utils.openModuleWithTarget(activity, 1, prefKey);
+                            return;
+                        } else if (prefKey.contains("changecolor") || prefKey.contains("color") || prefKey.contains("theme") || prefKey.contains("wallpaper")) {
+                            com.waenhancer.xposed.utils.Utils.openModuleWithTarget(activity, 2, prefKey);
+                            return;
+                        } else if (prefKey.contains("record") || prefKey.contains("audio") || prefKey.contains("voice_note")) {
+                            com.waenhancer.xposed.utils.Utils.openModuleWithTarget(activity, 3, prefKey);
+                            return;
+                        }
+                    }
+
                     String targetScreenId = prefToSubScreenMap.get(prefKey);
                     if (targetScreenId != null) {
                         Intent intent = new Intent(activity, activity.getClass());

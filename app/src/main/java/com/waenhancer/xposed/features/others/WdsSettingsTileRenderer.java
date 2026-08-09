@@ -45,18 +45,23 @@ import java.util.function.BiConsumer;
 public class WdsSettingsTileRenderer {
 
     public interface PrefChangeListener {
+
         void onPrefChanged(String key, Object newValue);
     }
 
     public static JSONObject loadSettingsMap(Context context) {
         try {
             Resources res = XResManager.moduleResources;
-            if (res == null) res = context.getResources();
+            if (res == null) {
+                res = context.getResources();
+            }
             int resId = res.getIdentifier("waex_settings_map", "raw", "com.waenhancer");
             if (resId == 0) {
                 resId = res.getIdentifier("waex_settings_map", "raw", context.getPackageName());
             }
-            if (resId == 0) return null;
+            if (resId == 0) {
+                return null;
+            }
             InputStream is = res.openRawResource(resId);
             int size = is.available();
             byte[] buffer = new byte[size];
@@ -69,7 +74,9 @@ public class WdsSettingsTileRenderer {
     }
 
     public static String resolveString(Context context, String str) {
-        if (str == null) return "";
+        if (str == null) {
+            return "";
+        }
         if (str.startsWith("@string/")) {
             try {
                 String name = str.substring(8);
@@ -86,10 +93,14 @@ public class WdsSettingsTileRenderer {
                     id = res.getIdentifier(name, "string", "com.waenhancer");
                 }
                 if (id != 0) {
-                    return res.getString(id);
+                    str = res.getString(id);
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
+        // Strip unformatted Android format specifiers (%s, %d, %1$s, etc.) that
+        // have no runtime values to fill — leave the rest of the string intact.
+        str = str.replaceAll("%(?:\\d+\\$)?[sdf]", "").trim();
         return str;
     }
 
@@ -137,7 +148,8 @@ public class WdsSettingsTileRenderer {
                 });
                 container.addView(row);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         ScrollView scrollView = new ScrollView(activity);
         scrollView.setLayoutParams(new ViewGroup.LayoutParams(
@@ -165,7 +177,8 @@ public class WdsSettingsTileRenderer {
                     }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return null;
     }
 
@@ -182,7 +195,8 @@ public class WdsSettingsTileRenderer {
         try {
             JSONArray prefsArray = sub.getJSONArray("prefs");
             renderPrefsArray(activity, container, prefsArray, prefs, listener, false);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         ScrollView scrollView = new ScrollView(activity);
         scrollView.setLayoutParams(new ViewGroup.LayoutParams(
@@ -203,14 +217,14 @@ public class WdsSettingsTileRenderer {
 
         try {
             JSONArray subScreens = category.getJSONArray("sub_screens");
-            
+
             // Add Category tiles for the remaining sub-screens at the TOP
             for (int i = 1; i < subScreens.length(); i++) {
                 JSONObject sub = subScreens.getJSONObject(i);
                 String subId = sub.getString("id");
                 String subTitle = sub.getString("title");
                 String subSummary = sub.optString("summary", "Customize " + subTitle + " settings");
-                
+
                 Drawable icon = null;
                 String iconName = "";
                 if ("home_screen_main".equals(subId)) {
@@ -218,14 +232,14 @@ public class WdsSettingsTileRenderer {
                 } else if ("conversation_main".equals(subId)) {
                     iconName = "ic_home_tab_chats_unfilled";
                 }
-                
+
                 if (!iconName.isEmpty()) {
                     icon = DesignUtils.getDrawableByName(iconName);
                 }
                 if (icon == null) {
                     icon = DesignUtils.getDrawableByName("ic_chevron_right");
                 }
-                
+
                 View catTile = createWdsRow(activity, subTitle, subSummary, icon, iconName, v -> {
                     Intent intent = new Intent(activity, activity.getClass());
                     intent.putExtra("waex_screen_id", subId);
@@ -233,7 +247,7 @@ public class WdsSettingsTileRenderer {
                 });
                 container.addView(catTile);
             }
-            
+
             if (subScreens.length() > 1) {
                 View divider = new View(activity);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (1 * density));
@@ -242,14 +256,15 @@ public class WdsSettingsTileRenderer {
                 divider.setBackgroundColor(0xFF222d34);
                 container.addView(divider);
             }
-            
+
             // Render the first main sub-screen (general_main)
             if (subScreens.length() > 0) {
                 JSONObject mainSub = subScreens.getJSONObject(0);
                 JSONArray prefsArray = mainSub.getJSONArray("prefs");
                 renderPrefsArray(activity, container, prefsArray, prefs, listener, false);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         ScrollView scrollView = new ScrollView(activity);
         scrollView.setLayoutParams(new ViewGroup.LayoutParams(
@@ -271,7 +286,7 @@ public class WdsSettingsTileRenderer {
                 String type = pref.getString("type");
                 String key = pref.getString("key");
                 String title = pref.getString("title");
-                
+
                 boolean isProKey = ProHelper.isProFeature(key);
                 boolean isProEnabled = ProHelper.isProEnabled();
                 boolean limitedFree = ProHelper.isLimitedFreePreferenceEnabled(key);
@@ -300,7 +315,9 @@ public class WdsSettingsTileRenderer {
                         final String fKey = key;
                         final String fActiveValue = activeValue;
                         tile = createWdsRow(context, title, displaySummary, null, v -> {
-                            if (navigateCallback != null) navigateCallback.accept(fKey, "");
+                            if (navigateCallback != null) {
+                                navigateCallback.accept(fKey, "");
+                            }
                         });
                         // Append active value as trailing text if possible
                         if (!TextUtils.isEmpty(activeValue)) {
@@ -311,34 +328,96 @@ public class WdsSettingsTileRenderer {
                                 trailingView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
                                 trailingView.setTextColor(isDarkMode ? 0xFF8696a0 : 0xFF667781);
                                 XposedHelpers.callMethod(tile, "setEndAddon", trailingView);
-                            } catch (Throwable ignored) {}
+                            } catch (Throwable ignored) {
+                            }
                         }
                     }
                 } else {
-                    if (isProLocked || !isEnabled) {
+                    // === MODULE-ONLY PREFERENCE KEYS ===
+                    // These are managed exclusively in the WaEnhancerX module app.
+                    // Appearance / Theme / Colors / CSS
+                    java.util.Set<String> moduleOnlyKeys = new java.util.HashSet<>(java.util.Arrays.asList(
+                            // Theme & Appearance
+                            "thememode", "wae_color_mode", "wae_color_preset",
+                            "changecolor", "changecolor_mode", "primary_color", "background_color", "text_color",
+                            "bubble_color", "bubble_left", "bubble_right",
+                            "wallpaper", "wallpaper_file", "wallpaper_alpha",
+                            "wallpaper_alpha_toolbar", "wallpaper_alpha_navigation",
+                            "unlock_premium_customization", "customize_supported_versions",
+                            // Custom CSS / Filter / Theme Manager
+                            "custom_filters", "filter_items", "css_theme", "change_dpi", "folder_theme",
+                            // Spoofer / Keybox
+                            "bootloader_spoofer", "bootloader_spoofer_custom", "bootloader_spoofer_xml",
+                            "bootloader_spoofer_verify", "file_size_spoofer",
+                            // Call blocking / recording
+                            "call_privacy", "call_type", "call_block_contacts", "call_white_contacts",
+                            "call_recording_enable", "call_recording_calls_tab_menu", "call_recording_path",
+                            "call_recording_mode", "call_recording_whitelist", "call_recording_blacklist",
+                            "call_recording_toast", "call_recording_settings", "call_recording_manage",
+                            // Audio / Voice notes
+                            "send_audio_as_voice_status",
+                            "audio_type", "voicenote_speed", "audio_transcription", "transcription_provider",
+                            "proximity_audios",
+                            // Pro features
+                            "pro_status_splitter",
+                            // Newly added module-only features
+                            "download_local", "hidetabs", "secondstotime"
+                    ));
+
+                    boolean isModuleOnly = isProLocked || !isEnabled || moduleOnlyKeys.contains(key);
+
+                    if (isModuleOnly) {
                         final String fKey = key;
-                        tile = createWdsRow(context, title, summary, null, v -> {
+                        final View.OnClickListener moduleClickListener = v -> {
                             try {
                                 Intent intent = new Intent();
                                 intent.setClassName("com.waenhancer", "com.waenhancer.activities.MainActivity");
                                 intent.putExtra("scroll_to_preference", fKey);
-                                
-                                com.waenhancer.model.SearchableFeature feature = com.waenhancer.utils.FeatureCatalog.getAllFeatures(context).stream()
+
+                                Context moduleContext = context;
+                                try {
+                                    moduleContext = context.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
+                                } catch (Throwable ignored) {}
+
+                                com.waenhancer.model.SearchableFeature feature = com.waenhancer.utils.FeatureCatalog.getAllFeatures(moduleContext).stream()
                                         .filter(f -> f.getKey().equals(fKey))
                                         .findFirst().orElse(null);
-                                
+
                                 if (feature != null) {
                                     intent.putExtra("navigate_to_fragment", feature.getFragmentType().getPosition());
                                     if (feature.getParentKey() != null) {
                                         intent.putExtra("parent_preference", feature.getParentKey());
                                     }
+                                } else {
+                                    // Fallback fragment navigation by key pattern
+                                    if (fKey.contains("color") || fKey.contains("theme") || fKey.contains("wallpaper")
+                                            || fKey.contains("css") || fKey.contains("dpi") || fKey.contains("filter")
+                                            || fKey.contains("bubble") || fKey.contains("changecolor")) {
+                                        intent.putExtra("navigate_to_fragment", 2); // Styles
+                                    } else if (fKey.contains("call")) {
+                                        intent.putExtra("navigate_to_fragment", 1); // Privacy
+                                    } else if (fKey.contains("record") || fKey.contains("audio") || fKey.contains("voice")) {
+                                        intent.putExtra("navigate_to_fragment", 3); // Media
+                                    } else {
+                                        intent.putExtra("navigate_to_fragment", 0); // Home/General
+                                    }
                                 }
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                                 context.startActivity(intent);
                             } catch (Throwable t) {
-                                XposedBridge.log("[WAEX] Failed to open module app for key " + fKey + ": " + t.getMessage());
+                                XposedBridge.log("[WAEX] Failed to open module for key " + fKey + ": " + t.getMessage());
                             }
-                        });
+                        };
+
+                        // Create standard clickable row (matching commit 90f51888)
+                        tile = createWdsRow(context, title, summary, null, moduleClickListener);
+                        
+                        // Attach WaEnhancerX logo trailing indicator
+                        if (tile != null) {
+                            addModuleLogoTrailing(context, tile);
+                        }
+
+
                     } else if ("switch".equals(type)) {
                         boolean def = pref.optBoolean("default", false);
                         tile = createSwitchTile(context, key, title, summary, def, prefs, listener, tileViews, prefsArray, false);
@@ -365,7 +444,8 @@ public class WdsSettingsTileRenderer {
             if (!isSearch) {
                 checkDependencies(prefsArray, prefs, tileViews);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -378,7 +458,7 @@ public class WdsSettingsTileRenderer {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         float density = context.getResources().getDisplayMetrics().density;
-        row.setPadding((int)(16 * density), (int)(12 * density), (int)(16 * density), (int)(12 * density));
+        row.setPadding((int) (16 * density), (int) (12 * density), (int) (16 * density), (int) (12 * density));
 
         TypedValue outValue = new TypedValue();
         context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
@@ -405,7 +485,7 @@ public class WdsSettingsTileRenderer {
             summaryView.setText(resolveString(context, summary));
             summaryView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
             summaryView.setTextColor(secondaryColor);
-            summaryView.setPadding(0, (int)(2 * density), 0, 0);
+            summaryView.setPadding(0, (int) (2 * density), 0, 0);
             textLayout.addView(summaryView);
         }
         row.addView(textLayout);
@@ -418,19 +498,23 @@ public class WdsSettingsTileRenderer {
         wdsSwitch.setFocusable(true);
         LinearLayout.LayoutParams switchLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        switchLp.setMarginStart((int)(8 * density));
+        switchLp.setMarginStart((int) (8 * density));
         wdsSwitch.setLayoutParams(switchLp);
         wdsSwitch.setOnClickListener(v -> {
             boolean newVal = !getSwitchChecked(wdsSwitch);
             setSwitchChecked(wdsSwitch, newVal);
             prefs.edit().putBoolean(key, newVal).apply();
-            if (listener != null) listener.onPrefChanged(key, newVal);
+            if (listener != null) {
+                listener.onPrefChanged(key, newVal);
+            }
         });
         row.addView(wdsSwitch);
 
         // Row click navigates (but not when touching switch area)
         row.setOnClickListener(v -> {
-            if (navigateCallback != null) navigateCallback.accept(key, "");
+            if (navigateCallback != null) {
+                navigateCallback.accept(key, "");
+            }
         });
 
         return row;
@@ -462,7 +546,8 @@ public class WdsSettingsTileRenderer {
                                 initialSelectedIndex = i;
                                 break;
                             }
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                     }
                 } else if ("boolean".equals(valueType)) {
                     boolean defaultVal = pref.optBoolean("default", false);
@@ -516,8 +601,120 @@ public class WdsSettingsTileRenderer {
                     return prefs.getString(key, pref.optString("default", ""));
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return "";
+    }
+
+    /**
+     * Recursively disables clickability on all child views of a ViewGroup so
+     * that touch events are not consumed by children and instead bubble to the
+     * parent's OnClickListener.
+     */
+    private static void disableChildrenClickability(ViewGroup parent) {
+        if (parent == null) {
+            return;
+        }
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            View child = parent.getChildAt(i);
+            child.setClickable(false);
+            child.setFocusable(false);
+            child.setLongClickable(false);
+            if (child instanceof ViewGroup) {
+                disableChildrenClickability((ViewGroup) child);
+            }
+        }
+    }
+
+    /**
+     * Attaches the WaEnhancerX app logo as a small trailing icon on a
+     * preference row. Uses PackageManager to load the app icon reliably, then
+     * appends it as the last child of the tile ViewGroup (works for both
+     * WDSListItem and fallback LinearLayout).
+     */
+    private static void addModuleLogoTrailing(Context context, View tile) {
+        if (tile == null) {
+            return;
+        }
+        try {
+            float density = context.getResources().getDisplayMetrics().density;
+            int sizePx = (int) (24 * density);
+
+            // Load the WaEnhancerX launcher icon via PackageManager (most reliable path)
+            Drawable logo = null;
+            try {
+                logo = context.getPackageManager().getApplicationIcon("com.waenhancer");
+            } catch (Throwable ignored) {
+            }
+
+            // Fallback: createPackageContext + mipmap resource
+            if (logo == null) {
+                try {
+                    Context moduleCtx = context.createPackageContext(
+                            "com.waenhancer",
+                            Context.CONTEXT_IGNORE_SECURITY);
+                    int resId = moduleCtx.getResources().getIdentifier(
+                            "ic_launcher_round", "mipmap", "com.waenhancer");
+                    if (resId != 0) {
+                        logo = moduleCtx.getResources().getDrawable(resId, null);
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+
+            // Last fallback: XResManager
+            if (logo == null) {
+                try {
+                    Resources res = XResManager.moduleResources;
+                    if (res != null) {
+                        int resId = res.getIdentifier("ic_launcher_round", "mipmap", "com.waenhancer");
+                        if (resId != 0) {
+                            logo = res.getDrawable(resId, null);
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+
+            if (logo == null) {
+                return;
+            }
+
+            // Build the trailing ImageView
+            ImageView logoView = new ImageView(context);
+            logoView.setImageDrawable(logo);
+            logoView.setAlpha(0.80f);
+            logoView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+            // Use FrameLayout.LayoutParams in case the parent is a FrameLayout (WDSListItem internals),
+            // but set a generic size and gravity compatible with LinearLayout too.
+            int margin = (int) (8 * density);
+
+            // Append as last child — works for both WDSListItem (FrameLayout/ViewGroup)
+            // and the LinearLayout fallback row.
+            if (tile instanceof ViewGroup) {
+                ViewGroup parent = (ViewGroup) tile;
+                // Use FrameLayout.LayoutParams with CENTER_VERTICAL | END gravity for WDSListItem
+                // and LinearLayout.LayoutParams for the fallback.
+                android.view.ViewGroup.LayoutParams lp;
+                if (parent instanceof LinearLayout) {
+                    LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(sizePx, sizePx);
+                    llp.gravity = Gravity.CENTER_VERTICAL;
+                    llp.setMarginStart(margin);
+                    llp.setMarginEnd(margin);
+                    lp = llp;
+                } else {
+                    FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(sizePx, sizePx);
+                    flp.gravity = Gravity.CENTER_VERTICAL | Gravity.END;
+                    flp.setMarginEnd(margin);
+                    lp = flp;
+                }
+                logoView.setLayoutParams(lp);
+                parent.addView(logoView);
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("[WAEX] addModuleLogoTrailing failed: " + t.getMessage());
+        }
     }
 
     private static View createWdsRow(Context context, String title, String summary, Drawable icon, View.OnClickListener clickListener) {
@@ -528,21 +725,21 @@ public class WdsSettingsTileRenderer {
         try {
             Class<?> wdsListItemClass = context.getClassLoader().loadClass("com.whatsapp.ui.wds.components.list.listitem.WDSListItem");
             View wdsListItem = (View) wdsListItemClass.getConstructor(Context.class, AttributeSet.class).newInstance(context, null);
-            
+
             // Set text/title
             XposedHelpers.callMethod(wdsListItem, "setText", resolveString(context, title));
-            
+
             // Set subtext/summary
             String resolvedSummary = resolveString(context, summary);
             if (!TextUtils.isEmpty(resolvedSummary)) {
                 XposedHelpers.callMethod(wdsListItem, "setSubText", resolvedSummary);
             }
-            
+
             // Set icon
             if (icon != null) {
                 try {
                     float density = context.getResources().getDisplayMetrics().density;
-                    
+
                     // Container FrameLayout of 40dp
                     FrameLayout container = new FrameLayout(context);
                     LinearLayout.LayoutParams containerLp = new LinearLayout.LayoutParams(
@@ -552,14 +749,14 @@ public class WdsSettingsTileRenderer {
                     containerLp.setMarginStart(0);
                     containerLp.setMarginEnd((int) (16 * density));
                     container.setLayoutParams(containerLp);
-                    
+
                     // ImageView centered inside container
                     ImageView iconView = new ImageView(context);
                     iconView.setImageDrawable(icon);
-                    
+
                     boolean isNight = DesignUtils.isNightMode();
                     iconView.setImageTintList(ColorStateList.valueOf(isNight ? 0xFF8696a0 : 0xFF667781));
-                    
+
                     int iconSizeDp = 24;
                     if ("ic_home_tab_status_unfilled".equals(iconName)) {
                         iconSizeDp = 28;
@@ -569,20 +766,22 @@ public class WdsSettingsTileRenderer {
                     );
                     iconLp.gravity = Gravity.CENTER;
                     iconView.setLayoutParams(iconLp);
-                    
+
                     container.addView(iconView);
                     ((ViewGroup) wdsListItem).addView(container, 0);
                 } catch (Throwable t2) {
                     XposedBridge.log("[WAEX] Failed to add leading icon view: " + t2.getMessage());
                 }
             }
-            
+
             if (clickListener != null) {
                 wdsListItem.setOnClickListener(clickListener);
                 wdsListItem.setClickable(true);
                 wdsListItem.setFocusable(true);
+                // Prevent child views from consuming touch events so the parent listener fires.
+                disableChildrenClickability((ViewGroup) wdsListItem);
             }
-            
+
             return wdsListItem;
         } catch (Throwable t) {
             XposedBridge.log("[WAEX] Failed to instantiate WDSListItem, falling back: " + t.getMessage());
@@ -603,7 +802,8 @@ public class WdsSettingsTileRenderer {
         try {
             int nightModeFlags = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
             isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         int primaryTextColor = isDarkMode ? 0xFFe9edef : 0xFF111B21;
         int secondaryTextColor = isDarkMode ? 0xFF8696a0 : 0xFF667781;
         try {
@@ -614,7 +814,8 @@ public class WdsSettingsTileRenderer {
             if (context.getTheme().resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)) {
                 secondaryTextColor = typedValue.data;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         title = resolveString(context, title);
         summary = resolveString(context, summary);
@@ -629,12 +830,12 @@ public class WdsSettingsTileRenderer {
             containerLp.setMarginStart(0);
             containerLp.setMarginEnd((int) (16 * density));
             container.setLayoutParams(containerLp);
-            
+
             // ImageView centered inside container
             ImageView iconView = new ImageView(context);
             iconView.setImageDrawable(icon);
             iconView.setImageTintList(ColorStateList.valueOf(secondaryTextColor));
-            
+
             int iconSizeDp = 24;
             if ("ic_home_tab_status_unfilled".equals(iconName)) {
                 iconSizeDp = 28;
@@ -644,7 +845,7 @@ public class WdsSettingsTileRenderer {
             );
             iconLp.gravity = Gravity.CENTER;
             iconView.setLayoutParams(iconLp);
-            
+
             container.addView(iconView);
             row.addView(container);
         }
@@ -696,7 +897,8 @@ public class WdsSettingsTileRenderer {
         try {
             int nightModeFlags = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
             isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         int primaryTextColor = isDarkMode ? 0xFFe9edef : 0xFF111B21;
         int secondaryTextColor = isDarkMode ? 0xFF8696a0 : 0xFF667781;
         try {
@@ -707,7 +909,8 @@ public class WdsSettingsTileRenderer {
             if (context.getTheme().resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)) {
                 secondaryTextColor = typedValue.data;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         LinearLayout textLayout = new LinearLayout(context);
         textLayout.setOrientation(LinearLayout.VERTICAL);
@@ -743,7 +946,9 @@ public class WdsSettingsTileRenderer {
                 boolean newVal = !getSwitchChecked(finalSwitch);
                 setSwitchChecked(finalSwitch, newVal);
                 prefs.edit().putBoolean(key, newVal).apply();
-                if (listener != null) listener.onPrefChanged(key, newVal);
+                if (listener != null) {
+                    listener.onPrefChanged(key, newVal);
+                }
             });
         } else {
             wdsSwitch.setClickable(false);
@@ -752,7 +957,9 @@ public class WdsSettingsTileRenderer {
                 boolean newVal = !getSwitchChecked(finalSwitch);
                 setSwitchChecked(finalSwitch, newVal);
                 prefs.edit().putBoolean(key, newVal).apply();
-                if (listener != null) listener.onPrefChanged(key, newVal);
+                if (listener != null) {
+                    listener.onPrefChanged(key, newVal);
+                }
                 checkDependencies(prefsArray, prefs, tileViews);
             });
         }
@@ -787,7 +994,8 @@ public class WdsSettingsTileRenderer {
                             initialSelectedIndex = i;
                             break;
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
             } else if ("boolean".equals(valueType)) {
                 boolean defaultVal = pref.optBoolean("default", false);
@@ -820,7 +1028,7 @@ public class WdsSettingsTileRenderer {
             final String rawSummary = summary;
             final int finalInitialSelectedIndex = initialSelectedIndex;
             final View[] rowHolder = new View[1];
-            
+
             rowHolder[0] = createWdsRow(context, title, displaySummary, null, v -> {
                 int selectedIndex = 0;
                 if ("int".equals(valueType)) {
@@ -832,7 +1040,8 @@ public class WdsSettingsTileRenderer {
                                 selectedIndex = i;
                                 break;
                             }
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                     }
                 } else if ("boolean".equals(valueType)) {
                     boolean defaultVal = pref.optBoolean("default", false);
@@ -862,14 +1071,20 @@ public class WdsSettingsTileRenderer {
                     if ("int".equals(valueType)) {
                         int intVal = Integer.parseInt(selectedVal);
                         prefs.edit().putInt(key, intVal).apply();
-                        if (listener != null) listener.onPrefChanged(key, intVal);
+                        if (listener != null) {
+                            listener.onPrefChanged(key, intVal);
+                        }
                     } else if ("boolean".equals(valueType)) {
                         boolean boolVal = Boolean.parseBoolean(selectedVal);
                         prefs.edit().putBoolean(key, boolVal).apply();
-                        if (listener != null) listener.onPrefChanged(key, boolVal);
+                        if (listener != null) {
+                            listener.onPrefChanged(key, boolVal);
+                        }
                     } else {
                         prefs.edit().putString(key, selectedVal).apply();
-                        if (listener != null) listener.onPrefChanged(key, selectedVal);
+                        if (listener != null) {
+                            listener.onPrefChanged(key, selectedVal);
+                        }
                     }
 
                     // Dynamically update the summary text view on selection
@@ -884,7 +1099,8 @@ public class WdsSettingsTileRenderer {
                             }
                             summaryView.setText(newSummary);
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
 
                     dialog.dismiss();
                 });
@@ -929,13 +1145,17 @@ public class WdsSettingsTileRenderer {
                     StringBuilder sb = new StringBuilder();
                     for (int i = 0; i < values.length; i++) {
                         if (checkedStates[i]) {
-                            if (sb.length() > 0) sb.append(",");
+                            if (sb.length() > 0) {
+                                sb.append(",");
+                            }
                             sb.append(values[i]);
                         }
                     }
                     String result = sb.toString();
                     prefs.edit().putString(key, result).apply();
-                    if (listener != null) listener.onPrefChanged(key, result);
+                    if (listener != null) {
+                        listener.onPrefChanged(key, result);
+                    }
                 });
                 builder.setNegativeButton("Cancel", null);
                 builder.show();
@@ -983,12 +1203,17 @@ public class WdsSettingsTileRenderer {
                         int intVal = 0;
                         try {
                             intVal = Integer.parseInt(newVal);
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                         prefs.edit().putInt(key, intVal).apply();
-                        if (listener != null) listener.onPrefChanged(key, intVal);
+                        if (listener != null) {
+                            listener.onPrefChanged(key, intVal);
+                        }
                     } else {
                         prefs.edit().putString(key, newVal).apply();
-                        if (listener != null) listener.onPrefChanged(key, newVal);
+                        if (listener != null) {
+                            listener.onPrefChanged(key, newVal);
+                        }
                     }
                 });
                 builder.setNegativeButton("Cancel", null);
@@ -1011,7 +1236,8 @@ public class WdsSettingsTileRenderer {
                         Intent intent = new Intent();
                         intent.setClassName(context.getPackageName(), "com.waenhancer.activities.DeletedMessagesActivity");
                         context.startActivity(intent);
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
             });
         } catch (Exception e) {
@@ -1046,7 +1272,9 @@ public class WdsSettingsTileRenderer {
                 JSONObject pref = prefsArray.getJSONObject(i);
                 String key = pref.getString("key");
                 View tile = tileViews.get(key);
-                if (tile == null) continue;
+                if (tile == null) {
+                    continue;
+                }
 
                 if (pref.has("dep")) {
                     String depKey = pref.getString("dep");
@@ -1054,7 +1282,8 @@ public class WdsSettingsTileRenderer {
                     tile.setVisibility(depVal ? View.VISIBLE : View.GONE);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private static TextView createWdsTextView(Context context) {

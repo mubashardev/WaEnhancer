@@ -589,7 +589,7 @@ public class MainActivity extends BaseActivity {
     }
 
     public static boolean isXposedFrameworkPresent(Context context) {
-        if (WppXposed.isModuleActive) {
+        if (com.waenhancer.utils.ModuleStatus.isModuleActive()) {
             return true;
         }
 

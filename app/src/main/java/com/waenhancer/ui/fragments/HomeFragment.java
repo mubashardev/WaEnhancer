@@ -32,6 +32,7 @@ import com.waenhancer.activities.ChangelogActivity;
 import com.waenhancer.databinding.FragmentHomeBinding;
 import com.waenhancer.ui.fragments.base.BaseFragment;
 import com.waenhancer.utils.FilePicker;
+import com.waenhancer.utils.ModuleStatus;
 import com.waenhancer.utils.ApkMirrorFeedHelper;
 import com.waenhancer.xposed.core.FeatureLoader;
 import com.waenhancer.xposed.core.WppCore;
@@ -1376,11 +1377,7 @@ public class HomeFragment extends BaseFragment {
             } catch (Throwable ignored) {}
         }
         
-        boolean isActive = WppXposed.isModuleActive;
-        
-        if (!isActive) {
-            isActive = ModuleStatus.isModuleActive();
-        }
+        boolean isActive = ModuleStatus.isModuleActive();
 
         if (apiVal.isEmpty() && !isActive) {
             return "LSPosed|Not Detected";

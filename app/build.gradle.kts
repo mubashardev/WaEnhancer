@@ -226,7 +226,7 @@ dependencies {
     implementation(libs.blurview)
     implementation(libs.colorpicker)
     implementation(libs.dexkit)
-    implementation(libs.libxposed.legacy)
+    compileOnly(libs.libxposed.legacy)
 
     implementation(libs.androidx.activity)
     implementation(libs.androidx.documentfile)

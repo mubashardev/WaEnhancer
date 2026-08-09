@@ -1486,49 +1486,64 @@ public class SettingsInjector extends Feature {
                             }
 
                             // Interactive premium card layout
-                            LinearLayout card = new LinearLayout(activity);
-                            card.setOrientation(LinearLayout.VERTICAL);
-                            card.setPadding(pad16, pad16, pad16, pad16);
-                            card.setClickable(true);
-                            card.setFocusable(true);
-                            
-                            GradientDrawable normalGd = new GradientDrawable();
-                            normalGd.setCornerRadius(12 * density);
-                            normalGd.setColor(dialogBg);
-                            normalGd.setStroke((int) (1 * density), strokeColor);
-                            card.setBackground(normalGd);
+                            // Native row layout redirecting to module app
+                            final String fKey = key;
+                            View.OnClickListener clickListener = v -> {
+                                try {
+                                    Intent intent = new Intent();
+                                    intent.setClassName("com.waenhancer", "com.waenhancer.activities.MainActivity");
+                                    intent.putExtra("scroll_to_preference", fKey);
 
-                            // Apply elevation for physical card shadow look
-                            card.setElevation(5 * density);
+                                    // Get position using reflected FeatureType enum if matching feature is found
+                                    try {
+                                        Object fEnum = sfClass.getMethod("getFragmentType").invoke(feature);
+                                        if (fEnum != null) {
+                                            int pos = (Integer) fEnum.getClass().getMethod("getPosition").invoke(fEnum);
+                                            intent.putExtra("navigate_to_fragment", pos);
+                                        }
+                                        String parentKey = (String) sfClass.getMethod("getParentKey").invoke(feature);
+                                        if (parentKey != null) {
+                                            intent.putExtra("parent_preference", parentKey);
+                                        }
+                                    } catch (Throwable ignored) {
+                                        // Fallback by key pattern
+                                        if (fKey.contains("color") || fKey.contains("theme") || fKey.contains("wallpaper")
+                                                || fKey.contains("css") || fKey.contains("dpi") || fKey.contains("filter")
+                                                || fKey.contains("bubble") || fKey.contains("changecolor")) {
+                                            intent.putExtra("navigate_to_fragment", 2);
+                                        } else if (fKey.contains("call")) {
+                                            intent.putExtra("navigate_to_fragment", 1);
+                                        } else if (fKey.contains("record") || fKey.contains("audio") || fKey.contains("voice")) {
+                                            intent.putExtra("navigate_to_fragment", 3);
+                                        } else {
+                                            intent.putExtra("navigate_to_fragment", 0);
+                                        }
+                                    }
 
-                            LinearLayout.LayoutParams pcLp = new LinearLayout.LayoutParams(
-                                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                            int marginHoriz = (int) (6 * density);
-                            pcLp.setMargins(marginHoriz, (int)(2 * density), marginHoriz, (int)(14 * density));
-                            card.setLayoutParams(pcLp);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                    activity.startActivity(intent);
+                                } catch (Throwable t) {
+                                    XposedBridge.log("[WAEX] Failed to open module for key " + fKey + ": " + t.getMessage());
+                                }
+                            };
 
-                            // Add material ripple foreground
+                            // Use reflectively retrieved values to construct row
+                            View tileRow = null;
                             try {
-                                TypedValue outValue = new TypedValue();
-                                activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
-                                card.setForeground(activity.getDrawable(outValue.resourceId));
-                            } catch (Throwable ignored) {}
+                                Class<?> tileRendererClass = moduleLoader.loadClass("com.waenhancer.xposed.features.others.WdsSettingsTileRenderer");
+                                tileRow = (View) XposedHelpers.callStaticMethod(tileRendererClass, "createWdsRow",
+                                        activity, fTitle, fSummary, (Drawable) null, (String) null, clickListener);
+                                
+                                if (tileRow != null) {
+                                    XposedHelpers.callStaticMethod(tileRendererClass, "addModuleLogoTrailing", activity, tileRow);
+                                }
+                            } catch (Throwable t) {
+                                XposedBridge.log("[WAEX] Failed to render native premium row for key " + fKey + ": " + t.getMessage());
+                            }
 
-                            TextView titleTv = new TextView(activity);
-                            titleTv.setText(fTitle);
-                            titleTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-                            titleTv.setTextColor(accentG);
-                            titleTv.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
-                            card.addView(titleTv);
-
-                            TextView summaryTv = new TextView(activity);
-                            summaryTv.setText(fSummary);
-                            summaryTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-                            summaryTv.setTextColor(secondaryText);
-                            summaryTv.setPadding(0, (int)(4*density), 0, 0);
-                            card.addView(summaryTv);
-
-                            containerLayout.addView(card);
+                            if (tileRow != null) {
+                                containerLayout.addView(tileRow);
+                            }
                         }
                     } catch (Throwable t) {
                         Throwable actual = t;

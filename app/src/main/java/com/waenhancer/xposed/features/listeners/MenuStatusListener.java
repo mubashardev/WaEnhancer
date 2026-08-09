@@ -10,11 +10,13 @@ import androidx.annotation.NonNull;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
+import com.waenhancer.xposed.core.components.StatusItemWaex;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ReflectionUtils;
 import com.waenhancer.R;
 
+import org.luckypray.dexkit.query.enums.StringMatchType;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -86,12 +88,26 @@ public class MenuStatusListener extends Feature {
         var menuStatusMethod = Unobfuscator.loadMenuStatusMethod(classLoader);
         var menuManagerClass = Unobfuscator.loadMenuManagerClass(classLoader);
 
-        Class<?> statusPlaybackBaseFragmentClass =
-                classLoader.loadClass("com.whatsapp.status.playback.fragment.StatusPlaybackBaseFragment");
-        Class<?> statusPlaybackContactFragmentClass =
-                classLoader.loadClass("com.whatsapp.status.playback.fragment.StatusPlaybackContactFragment");
+        Class<?> statusPlaybackBaseFragmentClass;
+        Class<?> statusPlaybackContactFragmentClass;
+
+        try {
+            statusPlaybackBaseFragmentClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "StatusPlaybackBaseFragment");
+        } catch (Throwable t) {
+            statusPlaybackBaseFragmentClass = classLoader.loadClass("com.whatsapp.status.playback.fragment.StatusPlaybackBaseFragment");
+        }
+
+        try {
+            statusPlaybackContactFragmentClass = Unobfuscator.findFirstClassUsingName(classLoader, StringMatchType.EndsWith, "StatusPlaybackContactFragment");
+        } catch (Throwable t) {
+            statusPlaybackContactFragmentClass = classLoader.loadClass("com.whatsapp.status.playback.fragment.StatusPlaybackContactFragment");
+        }
+
+        final Class<?> baseFragClass = statusPlaybackBaseFragmentClass;
+        final Class<?> contactFragClass = statusPlaybackContactFragmentClass;
+
         Field listStatusField = ReflectionUtils.getFieldByExtendType(
-                statusPlaybackContactFragmentClass,
+                contactFragClass,
                 List.class);
 
         XposedBridge.hookMethod(menuStatusMethod, new XC_MethodHook() {
@@ -107,11 +123,11 @@ public class MenuStatusListener extends Feature {
                     }
 
                     Object fragmentInstance;
-                    if (param.thisObject != null && statusPlaybackContactFragmentClass.isInstance(param.thisObject)) {
+                    if (param.thisObject != null && contactFragClass.isInstance(param.thisObject)) {
                         fragmentInstance = param.thisObject;
                     } else {
                         fragmentInstance = fieldObjects.stream()
-                                .filter(obj -> statusPlaybackBaseFragmentClass.isInstance(obj))
+                                .filter(obj -> baseFragClass != null && baseFragClass.isInstance(obj))
                                 .findFirst()
                                 .orElse(null);
                     }
@@ -129,26 +145,39 @@ public class MenuStatusListener extends Feature {
 
                     int index = (int) XposedHelpers.getObjectField(fragmentInstance, "A00");
                     @SuppressWarnings("unchecked")
-                    List<?> listStatus = (List<?>) listStatusField.get(fragmentInstance);
+                    List<?> listStatus = listStatusField != null ? (List<?>) listStatusField.get(fragmentInstance) : null;
+                    XposedBridge.log("[WAEX] MenuStatusListener hook triggered! index: " + index + ", listStatus size: " + (listStatus != null ? listStatus.size() : "null"));
                     if (listStatus == null || listStatus.isEmpty()) return;
 
+                    List<StatusItemWaex> statusItemList = new ArrayList<>();
                     List<FMessageWpp> fMessageList = new ArrayList<>();
                     for (Object obj : listStatus) {
-                        FMessageWpp fMsg = getFMessageFromStatusData(obj);
-                        if (fMsg != null) {
-                            fMessageList.add(fMsg);
+                        StatusItemWaex statusItem = StatusItemWaex.from(obj);
+                        if (statusItem != null) {
+                            statusItemList.add(statusItem);
+                            FMessageWpp fMsg = statusItem.getFMessage();
+                            if (fMsg != null) {
+                                fMessageList.add(fMsg);
+                            }
                         }
                     }
+
+                    XposedBridge.log("[WAEX] MenuStatusListener: parsed " + statusItemList.size() + " statusItems, " + fMessageList.size() + " fMessages");
 
                     currentStatusList.clear();
                     currentStatusList.addAll(fMessageList);
                     currentIndex = index;
 
-                    if (index < 0 || index >= fMessageList.size()) return;
+                    if (index < 0 || index >= statusItemList.size()) {
+                        XposedBridge.log("[WAEX] MenuStatusListener: index " + index + " out of bounds for statusItemList size " + statusItemList.size());
+                        return;
+                    }
+
+                    StatusItemWaex currentStatusItem = statusItemList.get(index);
+                    XposedBridge.log("[WAEX] Current status item: isFromMe=" + currentStatusItem.isFromMe() + ", isMedia=" + currentStatusItem.isMediaFile() + ", mediaFile=" + currentStatusItem.getMediaFile());
 
                     SubMenu waeSubMenu = null;
                     for (OnMenuItemStatusListener menuStatus : menuStatuses) {
-                        // Create submenu on demand to avoid empty menus
                         if (waeSubMenu == null) {
                             String waeTitle = "WaEnhancerX";
                             try {
@@ -166,17 +195,18 @@ public class MenuStatusListener extends Feature {
                             }
                         }
 
-                        var menuItem = menuStatus.addMenu(waeSubMenu, fMessageList, index);
-                        if (menuItem == null) continue;
+                        var menuItem = menuStatus.addMenu(waeSubMenu, currentStatusItem, fMessageList, index);
+                        if (menuItem == null) {
+                            XposedBridge.log("[WAEX] listener " + menuStatus.getClass().getSimpleName() + " returned null menuItem");
+                            continue;
+                        }
 
                         menuItem.setOnMenuItemClickListener(item -> {
-                            menuStatus.onClick(item, fragmentInstance, fMessageList, index);
+                            menuStatus.onClick(item, fragmentInstance, currentStatusItem, fMessageList, index);
                             return true;
                         });
                     }
                     
-                    // Cleanup if empty (though on-demand creation above should handle most cases, 
-                    // some listeners might return null after addMenu was called if they were the only one)
                     if (waeSubMenu != null && !waeSubMenu.hasVisibleItems()) {
                         menu.removeItem(0x7EAD0012);
                     }
@@ -198,5 +228,13 @@ public class MenuStatusListener extends Feature {
         MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex);
 
         void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex);
+
+        default MenuItem addMenu(Menu menu, StatusItemWaex currentItem, List<FMessageWpp> fMessageList, int currentIndex) {
+            return addMenu(menu, fMessageList, currentIndex);
+        }
+
+        default void onClick(MenuItem item, Object fragmentInstance, StatusItemWaex currentItem, List<FMessageWpp> fMessageList, int currentIndex) {
+            onClick(item, fragmentInstance, fMessageList, currentIndex);
+        }
     }
 }

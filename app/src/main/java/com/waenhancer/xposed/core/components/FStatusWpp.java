@@ -7,6 +7,7 @@ import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.ReflectionUtils;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -14,12 +15,18 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
+import android.util.Pair;
+
 public class FStatusWpp {
 
     public static Class<?> TYPE;
+    private static Class<?> classFMediaStatus;
     private static Method methodGetStatusByKey;
     private static Field fieldFStatusKey;
     private static Object mStatusStore = null;
+
+    private static volatile Pair<Field, Method> mediaFileAccessor = null;
+    private static volatile boolean mediaFileAccessorInitialized = false;
 
     private final Object fstatus;
 
@@ -34,6 +41,11 @@ public class FStatusWpp {
         try {
             FStatusKey.initialize(classLoader);
             TYPE = Unobfuscator.loadFStatusClass(classLoader);
+            try {
+                classFMediaStatus = Unobfuscator.loadFMediaStatusClass(classLoader);
+            } catch (Throwable t) {
+                XposedBridge.log("[WAEX] Could not load classFMediaStatus: " + t);
+            }
             Class<?> fStatusKeyClass = Unobfuscator.loadFStatusKeyClass(classLoader);
             fieldFStatusKey = ReflectionUtils.getFieldByType(TYPE, fStatusKeyClass);
             methodGetStatusByKey = Unobfuscator.loadGetStatusByKey(classLoader);
@@ -47,6 +59,46 @@ public class FStatusWpp {
         } catch (Exception e) {
             XposedBridge.log(e);
         }
+    }
+
+    public boolean isMediaFile() {
+        return classFMediaStatus != null && classFMediaStatus.isInstance(fstatus);
+    }
+
+    @Nullable
+    public File getMediaFile() {
+        if (!isMediaFile()) return null;
+        if (!mediaFileAccessorInitialized) {
+            synchronized (FStatusWpp.class) {
+                if (!mediaFileAccessorInitialized) {
+                    if (classFMediaStatus != null) {
+                        for (Field field : classFMediaStatus.getDeclaredFields()) {
+                            field.setAccessible(true);
+                            for (Method method : field.getType().getDeclaredMethods()) {
+                                if (method.getReturnType() == File.class) {
+                                    method.setAccessible(true);
+                                    mediaFileAccessor = new Pair<>(field, method);
+                                    break;
+                                }
+                            }
+                            if (mediaFileAccessor != null) break;
+                        }
+                    }
+                    mediaFileAccessorInitialized = true;
+                }
+            }
+        }
+        if (mediaFileAccessor != null) {
+            try {
+                Object mediaData = mediaFileAccessor.first.get(fstatus);
+                if (mediaData != null) {
+                    return (File) mediaFileAccessor.second.invoke(mediaData);
+                }
+            } catch (Exception e) {
+                XposedBridge.log(e);
+            }
+        }
+        return null;
     }
 
     @Nullable

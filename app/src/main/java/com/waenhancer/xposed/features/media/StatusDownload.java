@@ -13,6 +13,7 @@ import androidx.core.content.FileProvider;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.components.FMessageWpp;
+import com.waenhancer.xposed.core.components.StatusItemWaex;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.features.listeners.MenuStatusListener;
 import com.waenhancer.xposed.utils.MimeTypeUtils;
@@ -73,57 +74,74 @@ public class StatusDownload extends Feature {
         var downloadStatus = new MenuStatusListener.OnMenuItemStatusListener() {
 
             @Override
-            public MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex) {
+            public MenuItem addMenu(Menu menu, StatusItemWaex currentItem, List<FMessageWpp> fMessageList, int currentIndex) {
                 reloadPrefs();
-                if (!prefs.getBoolean("downloadstatus", false)) return null;
+                if (!prefs.getBoolean("downloadstatus", true)) return null;
                 if (menu.findItem(R.string.download) != null) return null;
-                var fMessage = fMessageList.get(currentIndex);
-                if (fMessage.getKey().isFromMe) return null;
-                if (!fMessage.isMediaFile()) return null;
+                if (currentItem == null) return null;
+                if (currentItem.isFromMe()) return null;
+                if (!currentItem.isMediaFile()) return null;
                 
                 MenuItem item = menu.add(0, R.string.download, 0, FeatureLoader.getModuleString(Utils.getApplication(), R.string.download, "Download"));
                 return item;
             }
 
             @Override
-            public void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex) {
+            public void onClick(MenuItem item, Object fragmentInstance, StatusItemWaex currentItem, List<FMessageWpp> fMessageList, int currentIndex) {
                 reloadPrefs();
-                if (!prefs.getBoolean("downloadstatus", false)) return;
-                var fMessage = fMessageList.get(currentIndex);
-                downloadFile(fMessage, fragmentInstance, currentIndex);
+                if (!prefs.getBoolean("downloadstatus", true)) return;
+                if (currentItem != null) {
+                    downloadFile(currentItem, fragmentInstance, currentIndex);
+                }
             }
+
+            @Override
+            public MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex) {
+                return null;
+            }
+
+            @Override
+            public void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex) {}
         };
         MenuStatusListener.getMenuStatuses().add(downloadStatus);
 
         var sharedMenu = new MenuStatusListener.OnMenuItemStatusListener() {
 
             @Override
-            public MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex) {
+            public MenuItem addMenu(Menu menu, StatusItemWaex currentItem, List<FMessageWpp> fMessageList, int currentIndex) {
                 reloadPrefs();
-                if (!prefs.getBoolean("downloadstatus", false)) return null;
-                var fMessage = fMessageList.get(currentIndex);
-                if (fMessage.getKey().isFromMe) return null;
+                if (!prefs.getBoolean("downloadstatus", true)) return null;
                 if (menu.findItem(R.string.share_as_status) != null) return null;
+                if (currentItem == null) return null;
+                if (currentItem.isFromMe()) return null;
                 
                 MenuItem item = menu.add(0, R.string.share_as_status, 0, FeatureLoader.getModuleString(Utils.getApplication(), R.string.share_as_status, "Share as status"));
                 return item;
             }
 
             @Override
-            public void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex) {
+            public void onClick(MenuItem item, Object fragmentInstance, StatusItemWaex currentItem, List<FMessageWpp> fMessageList, int currentIndex) {
                 reloadPrefs();
-                if (!prefs.getBoolean("downloadstatus", false)) return;
-                var fMessageWpp = fMessageList.get(currentIndex);
-                sharedStatus(fMessageWpp, fragmentInstance, currentIndex);
+                if (!prefs.getBoolean("downloadstatus", true)) return;
+                if (currentItem != null) {
+                    sharedStatus(currentItem, fragmentInstance, currentIndex);
+                }
             }
+
+            @Override
+            public MenuItem addMenu(Menu menu, List<FMessageWpp> fMessageList, int currentIndex) {
+                return null;
+            }
+
+            @Override
+            public void onClick(MenuItem item, Object fragmentInstance, List<FMessageWpp> fMessageList, int currentIndex) {}
         };
         MenuStatusListener.getMenuStatuses().add(sharedMenu);
     }
 
-    private void sharedStatus(FMessageWpp fMessageWpp, Object fragmentInstance, int currentIndex) {
+    private void sharedStatus(StatusItemWaex statusItem, Object fragmentInstance, int currentIndex) {
         try {
-            if (!fMessageWpp.isMediaFile()) {
-                // Text-only status: open the text status composer
+            if (!statusItem.isMediaFile()) {
                 Intent intent = new Intent();
                 Class<?> clazz;
                 try {
@@ -133,14 +151,14 @@ public class StatusDownload extends Feature {
                     intent.putExtra("status_composer_mode", 2);
                 }
                 intent.setClassName(Utils.getApplication().getPackageName(), clazz.getName());
-                intent.putExtra("android.intent.extra.TEXT", fMessageWpp.getMessageStr());
+                intent.putExtra("android.intent.extra.TEXT", statusItem.getCaption());
                 WppCore.getCurrentActivity().startActivity(intent);
                 return;
             }
 
-            var file = fMessageWpp.getMediaFile();
-            if (file == null) {
-                file = getFileFromRawStatus(fragmentInstance, currentIndex, fMessageWpp);
+            var file = statusItem.getMediaFile();
+            if (file == null && statusItem.getFMessage() != null) {
+                file = getFileFromRawStatus(fragmentInstance, currentIndex, statusItem.getFMessage());
             }
             if (file == null) {
                 Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.download_not_available, "Please wait until it is fully downloaded in WhatsApp before trying again."), Toast.LENGTH_SHORT);
@@ -161,7 +179,7 @@ public class StatusDownload extends Feature {
             intent.setClassName(Utils.getApplication().getPackageName(), clazz.getName());
             intent.putExtra("jids", new ArrayList<>(Collections.singleton("status@broadcast")));
             intent.putExtra("android.intent.extra.STREAM", new ArrayList<>(Collections.singleton(mediaUri)));
-            String caption = fMessageWpp.getMessageStr();
+            String caption = statusItem.getCaption();
             if (!TextUtils.isEmpty(caption)) {
                 intent.putExtra("android.intent.extra.TEXT", caption);
             }
@@ -173,17 +191,17 @@ public class StatusDownload extends Feature {
         }
     }
 
-    private void downloadFile(FMessageWpp fMessage, Object fragmentInstance, int currentIndex) {
+    private void downloadFile(StatusItemWaex statusItem, Object fragmentInstance, int currentIndex) {
         try {
-            var file = fMessage.getMediaFile();
-            if (file == null) {
-                file = getFileFromRawStatus(fragmentInstance, currentIndex, fMessage);
+            var file = statusItem.getMediaFile();
+            if (file == null && statusItem.getFMessage() != null) {
+                file = getFileFromRawStatus(fragmentInstance, currentIndex, statusItem.getFMessage());
             }
             if (file == null) {
-                Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.download_not_available, "Please wait until it is fully downloaded in WhatsApp before trying again."), 1);
+                Utils.showToast(FeatureLoader.getModuleString(Utils.getApplication(), R.string.download_not_available, "Please wait until it is fully downloaded in WhatsApp before trying again."), Toast.LENGTH_SHORT);
                 return;
             }
-            var userJid = fMessage.getUserJid();
+            var userJid = statusItem.getSenderJid();
             var fileType = file.getName().substring(file.getName().lastIndexOf(".") + 1);
             var destination = getStatusDestination(file);
             var name = Utils.generateName(userJid, fileType);

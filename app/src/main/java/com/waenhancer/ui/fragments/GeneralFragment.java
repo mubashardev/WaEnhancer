@@ -221,22 +221,7 @@ public class GeneralFragment extends BaseFragment {
             setPreferencesFromResource(R.xml.preference_general_conversation, rootKey);
             setDisplayHomeAsUpEnabled(false);
 
-            EditTextPreference customLimitPref = findPreference("customforwardlimit");
-            if (customLimitPref != null) {
-                customLimitPref.setSummaryProvider(preference -> {
-                    String val = customLimitPref.getText();
-                    boolean hasKey = customLimitPref.getSharedPreferences() != null && customLimitPref.getSharedPreferences().contains("customforwardlimit");
-                    if (!hasKey || TextUtils.isEmpty(val)) {
-                        return getString(R.string.customforwardlimit_sum);
-                    }
-                    return val;
-                });
-                customLimitPref.setOnBindEditTextListener(editText -> {
-                    editText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                    editText.setKeyListener(DigitsKeyListener.getInstance("0123456789"));
-                    editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(5)});
-                });
-            }
+
 
             Preference filterPref = findPreference("filter_group_members_messages");
             if (filterPref != null) {

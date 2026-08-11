@@ -459,13 +459,30 @@
               "summary": "Remove forward limit for 5 chats (normal) and 1 chat (multiple times)\n(Note: Use with caution, you may be banned for spam)"
             },
             {
-              "key": "customforwardlimit",
+              "key": "pref_forward_batch_enabled",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Enable Batch Sending",
+              "summary": "Send forwarded messages in batches with delays between sends"
+            },
+            {
+              "key": "pref_forward_batch_count",
               "type": "text",
               "value_type": "string",
-              "default": "9999",
-              "title": "Custom Forward Limit",
-              "summary": "Set a custom max forward limit for chat selection (default: 9999)",
-              "dep": "removeforwardlimit"
+              "default": "3",
+              "title": "Number of Forwards per Batch",
+              "summary": "Number of forwards sent in each batch",
+              "dep": "pref_forward_batch_enabled"
+            },
+            {
+              "key": "pref_forward_batch_delay",
+              "type": "text",
+              "value_type": "string",
+              "default": "10",
+              "title": "Seconds to Delay",
+              "summary": "Delay in seconds between batches",
+              "dep": "pref_forward_batch_enabled"
             },
             {
               "key": "hidetag",

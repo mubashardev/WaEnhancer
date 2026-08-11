@@ -62,14 +62,28 @@
             app:summary="@string/removeforwardlimit_sum"
             app:title="@string/removeforwardlimit" />
 
+        <com.waenhancer.preference.ProSwitchPreference
+            app:key="pref_forward_batch_enabled"
+            app:summary="Send forwarded messages in batches with delays between sends"
+            app:title="Enable Batch Sending" />
+
         <com.waenhancer.preference.LimitedEditTextPreference
             android:inputType="number"
-            app:defaultValue="9999"
-            app:dependency="removeforwardlimit"
-            app:key="customforwardlimit"
-            app:maxLength="5"
-            app:summary="@string/customforwardlimit_sum"
-            app:title="@string/customforwardlimit" />
+            app:defaultValue="3"
+            app:dependency="pref_forward_batch_enabled"
+            app:key="pref_forward_batch_count"
+            app:maxLength="3"
+            app:title="Number of Forwards per Batch"
+            app:useSimpleSummaryProvider="true" />
+
+        <com.waenhancer.preference.LimitedEditTextPreference
+            android:inputType="number"
+            app:defaultValue="10"
+            app:dependency="pref_forward_batch_enabled"
+            app:key="pref_forward_batch_delay"
+            app:maxLength="4"
+            app:title="Seconds to Delay"
+            app:useSimpleSummaryProvider="true" />
 
         <rikka.material.preference.MaterialSwitchPreference
             app:key="hidetag"

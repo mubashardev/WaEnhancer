@@ -493,13 +493,29 @@ public class FeatureCatalog {
                                 "conversation",
                                 Arrays.asList("forward", "limit", "remove")));
 
-                catalog.add(new SearchableFeature("customforwardlimit",
-                                context.getString(R.string.customforwardlimit),
-                                context.getString(R.string.customforwardlimit_sum),
+                catalog.add(new SearchableFeature("pref_forward_batch_enabled",
+                                "Enable Batch Sending",
+                                "Send forwarded messages in batches with delays between sends",
                                 SearchableFeature.Category.GENERAL_CONVERSATION,
                                 SearchableFeature.FragmentType.GENERAL,
                                 "conversation",
-                                Arrays.asList("forward", "limit", "custom", "number", "count", "chats")));
+                                Arrays.asList("forward", "batch", "chunk", "delay", "queue", "sending")));
+
+                catalog.add(new SearchableFeature("pref_forward_batch_count",
+                                "Number of Forwards per Batch",
+                                "Number of forwards sent in each batch",
+                                SearchableFeature.Category.GENERAL_CONVERSATION,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "conversation",
+                                Arrays.asList("forward", "batch", "count", "number")));
+
+                catalog.add(new SearchableFeature("pref_forward_batch_delay",
+                                "Seconds to Delay",
+                                "Delay in seconds between batches",
+                                SearchableFeature.Category.GENERAL_CONVERSATION,
+                                SearchableFeature.FragmentType.GENERAL,
+                                "conversation",
+                                Arrays.asList("forward", "batch", "delay", "seconds", "time")));
 
                 catalog.add(new SearchableFeature("hidetag",
                                 context.getString(R.string.hidetag),

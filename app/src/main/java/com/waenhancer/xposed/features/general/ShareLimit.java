@@ -23,13 +23,7 @@ public class ShareLimit extends Feature {
     public void doHook() throws Exception {
         if (!prefs.getBoolean("removeforwardlimit", false)) return;
 
-        final int limitValue;
-        String limitStr = prefs.getString("customforwardlimit", "9999");
-        int parsedLimit = 9999;
-        try {
-            parsedLimit = Integer.parseInt(limitStr);
-        } catch (NumberFormatException ignored) {}
-        limitValue = parsedLimit;
+        final int limitValue = 9999;
 
         // 1. Hook the final forwarding execution check to ensure the actual sending succeeds
         try {

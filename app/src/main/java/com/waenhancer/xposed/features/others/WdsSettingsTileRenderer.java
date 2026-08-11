@@ -303,9 +303,92 @@ public class WdsSettingsTileRenderer {
                 }
                 String summary = pref.optString("summary", "");
 
+                // === MODULE-ONLY PREFERENCE KEYS ===
+                // These are managed exclusively in the WaEnhancerX module app.
+                java.util.Set<String> moduleOnlyKeys = new java.util.HashSet<>(java.util.Arrays.asList(
+                        // Theme & Appearance
+                        "thememode", "wae_color_mode", "wae_color_preset",
+                        "changecolor", "changecolor_mode", "primary_color", "background_color", "text_color",
+                        "bubble_color", "bubble_left", "bubble_right",
+                        "wallpaper", "wallpaper_file", "wallpaper_alpha",
+                        "wallpaper_alpha_toolbar", "wallpaper_alpha_navigation",
+                        "unlock_premium_customization", "customize_supported_versions",
+                        // Custom CSS / Filter / Theme Manager
+                        "custom_filters", "filter_items", "css_theme", "change_dpi", "folder_theme",
+                        // Spoofer / Keybox
+                        "bootloader_spoofer", "bootloader_spoofer_custom", "bootloader_spoofer_xml",
+                        "bootloader_spoofer_verify", "file_size_spoofer",
+                        // Call blocking / recording
+                        "call_privacy", "call_type", "call_block_contacts", "call_white_contacts",
+                        "call_recording_enable", "call_recording_calls_tab_menu", "call_recording_path",
+                        "call_recording_mode", "call_recording_whitelist", "call_recording_blacklist",
+                        "call_recording_toast", "call_recording_settings", "call_recording_manage",
+                        // Audio / Voice notes
+                        "send_audio_as_voice_status",
+                        "audio_type", "voicenote_speed", "audio_transcription", "transcription_provider",
+                        "proximity_audios",
+                        // Pro features & Batch Forwarding
+                        "pro_status_splitter", "pref_forward_batch_enabled", "pref_forward_batch_count", "pref_forward_batch_delay",
+                        "floating_bottom_bar_pill_design", "floating_bottom_bar_glass", "floating_bottom_bar_glass_opacity", "floating_bottom_bar_fill_color",
+                        "message_bomber", "license_verify", "delete_message_file", "delete_message_file_sent",
+                        "remove_status_bottom_tile", "remove_status_quick_reactions", "remove_status_heart_button",
+                        "status_bottom_play_pause_button", "add_status_reply_menu_item", "status_video_fast_gesture",
+                        "status_video_fast_speed", "disable_status_swipe_up", "waex_sim_enabled", "waex_sim_trigger",
+                        "waex_sim_kind", "filter_group_members_messages", "recover_deleted_media",
+                        // Newly added module-only features
+                        "download_local", "hidetabs", "secondstotime"
+                ));
+
+                boolean isModuleOnly = isProKey || isProLocked || !isEnabled || moduleOnlyKeys.contains(key);
+
                 View tile = null;
 
-                if (isSearch) {
+                if (isModuleOnly) {
+                    final String fKey = key;
+                    final View.OnClickListener moduleClickListener = v -> {
+                        try {
+                            Intent intent = new Intent();
+                            intent.setClassName("com.waenhancer", "com.waenhancer.activities.MainActivity");
+                            intent.putExtra("scroll_to_preference", fKey);
+
+                            Context moduleContext = context;
+                            try {
+                                moduleContext = context.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
+                            } catch (Throwable ignored) {}
+
+                            String dialogTitle = com.waenhancer.xposed.core.FeatureLoader.getModuleString(moduleContext, 0, "Configure in WaEnhancerX");
+                            String dialogMsg = com.waenhancer.xposed.core.FeatureLoader.getModuleString(moduleContext, 0, "This setting must be configured inside the WaEnhancerX module app.");
+
+                            new com.google.android.material.dialog.MaterialAlertDialogBuilder(context)
+                                    .setTitle(dialogTitle)
+                                    .setMessage(dialogMsg)
+                                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                                        try {
+                                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                            context.startActivity(intent);
+                                        } catch (Throwable t) {
+                                            Toast.makeText(context, "Open WaEnhancerX app to change this setting", Toast.LENGTH_LONG).show();
+                                        }
+                                    })
+                                    .setNegativeButton(android.R.string.cancel, null)
+                                    .show();
+                        } catch (Throwable t) {
+                            try {
+                                Intent intent = new Intent();
+                                intent.setClassName("com.waenhancer", "com.waenhancer.activities.MainActivity");
+                                intent.putExtra("scroll_to_preference", fKey);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                context.startActivity(intent);
+                            } catch (Throwable ignored) {}
+                        }
+                    };
+
+                    String activeValue = getActiveValueText(context, pref, prefs);
+                    tile = createWdsRow(context, title, summary, null, moduleClickListener);
+                    if (tile != null) {
+                        addModuleLogoTrailing(context, tile);
+                    }
+                } else if (isSearch) {
                     // In search mode: switch tiles get switch-only toggle + row navigates
                     // All other tiles: row click navigates, no dialogs/inputs shown
                     if ("switch".equals(type) && isEnabled && !isProLocked) {
@@ -314,9 +397,6 @@ public class WdsSettingsTileRenderer {
                         // Simple navigation row for list/multi/text/action
                         String activeValue = (isEnabled && !isProLocked) ? getActiveValueText(context, pref, prefs) : "";
                         String displaySummary = summary;
-                        if (!TextUtils.isEmpty(activeValue) && !TextUtils.isEmpty(displaySummary)) {
-                            displaySummary = displaySummary;  // keep breadcrumb
-                        }
                         final String fKey = key;
                         final String fActiveValue = activeValue;
                         tile = createWdsRow(context, title, displaySummary, null, v -> {
@@ -337,106 +417,19 @@ public class WdsSettingsTileRenderer {
                             }
                         }
                     }
+                } else if ("switch".equals(type)) {
+                    boolean def = pref.optBoolean("default", false);
+                    tile = createSwitchTile(context, key, title, summary, def, prefs, listener, tileViews, prefsArray, false);
+                } else if ("list".equals(type)) {
+                    tile = createListTile(context, pref, prefs, listener);
+                } else if ("multi".equals(type)) {
+                    tile = createMultiTile(context, pref, prefs, listener);
+                } else if ("text".equals(type)) {
+                    tile = createTextTile(context, pref, prefs, listener);
+                } else if ("action".equals(type)) {
+                    tile = createActionTile(context, pref);
                 } else {
-                    // === MODULE-ONLY PREFERENCE KEYS ===
-                    // These are managed exclusively in the WaEnhancerX module app.
-                    // Appearance / Theme / Colors / CSS
-                    java.util.Set<String> moduleOnlyKeys = new java.util.HashSet<>(java.util.Arrays.asList(
-                            // Theme & Appearance
-                            "thememode", "wae_color_mode", "wae_color_preset",
-                            "changecolor", "changecolor_mode", "primary_color", "background_color", "text_color",
-                            "bubble_color", "bubble_left", "bubble_right",
-                            "wallpaper", "wallpaper_file", "wallpaper_alpha",
-                            "wallpaper_alpha_toolbar", "wallpaper_alpha_navigation",
-                            "unlock_premium_customization", "customize_supported_versions",
-                            // Custom CSS / Filter / Theme Manager
-                            "custom_filters", "filter_items", "css_theme", "change_dpi", "folder_theme",
-                            // Spoofer / Keybox
-                            "bootloader_spoofer", "bootloader_spoofer_custom", "bootloader_spoofer_xml",
-                            "bootloader_spoofer_verify", "file_size_spoofer",
-                            // Call blocking / recording
-                            "call_privacy", "call_type", "call_block_contacts", "call_white_contacts",
-                            "call_recording_enable", "call_recording_calls_tab_menu", "call_recording_path",
-                            "call_recording_mode", "call_recording_whitelist", "call_recording_blacklist",
-                            "call_recording_toast", "call_recording_settings", "call_recording_manage",
-                            // Audio / Voice notes
-                            "send_audio_as_voice_status",
-                            "audio_type", "voicenote_speed", "audio_transcription", "transcription_provider",
-                            "proximity_audios",
-                            // Pro features
-                            "pro_status_splitter",
-                            // Newly added module-only features
-                            "download_local", "hidetabs", "secondstotime"
-                    ));
-
-                    boolean isModuleOnly = isProLocked || !isEnabled || moduleOnlyKeys.contains(key);
-
-                    if (isModuleOnly) {
-                        final String fKey = key;
-                        final View.OnClickListener moduleClickListener = v -> {
-                            try {
-                                Intent intent = new Intent();
-                                intent.setClassName("com.waenhancer", "com.waenhancer.activities.MainActivity");
-                                intent.putExtra("scroll_to_preference", fKey);
-
-                                Context moduleContext = context;
-                                try {
-                                    moduleContext = context.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
-                                } catch (Throwable ignored) {}
-
-                                com.waenhancer.model.SearchableFeature feature = com.waenhancer.utils.FeatureCatalog.getAllFeatures(moduleContext).stream()
-                                        .filter(f -> f.getKey().equals(fKey))
-                                        .findFirst().orElse(null);
-
-                                if (feature != null) {
-                                    intent.putExtra("navigate_to_fragment", feature.getFragmentType().getPosition());
-                                    if (feature.getParentKey() != null) {
-                                        intent.putExtra("parent_preference", feature.getParentKey());
-                                    }
-                                } else {
-                                    // Fallback fragment navigation by key pattern
-                                    if (fKey.contains("color") || fKey.contains("theme") || fKey.contains("wallpaper")
-                                            || fKey.contains("css") || fKey.contains("dpi") || fKey.contains("filter")
-                                            || fKey.contains("bubble") || fKey.contains("changecolor")) {
-                                        intent.putExtra("navigate_to_fragment", 2); // Styles
-                                    } else if (fKey.contains("call")) {
-                                        intent.putExtra("navigate_to_fragment", 1); // Privacy
-                                    } else if (fKey.contains("record") || fKey.contains("audio") || fKey.contains("voice")) {
-                                        intent.putExtra("navigate_to_fragment", 3); // Media
-                                    } else {
-                                        intent.putExtra("navigate_to_fragment", 0); // Home/General
-                                    }
-                                }
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                context.startActivity(intent);
-                            } catch (Throwable t) {
-                                XposedBridge.log("[WAEX] Failed to open module for key " + fKey + ": " + t.getMessage());
-                            }
-                        };
-
-                        // Create standard clickable row (matching commit 90f51888)
-                        tile = createWdsRow(context, title, summary, null, moduleClickListener);
-                        
-                        // Attach WaEnhancerX logo trailing indicator
-                        if (tile != null) {
-                            addModuleLogoTrailing(context, tile);
-                        }
-
-
-                    } else if ("switch".equals(type)) {
-                        boolean def = pref.optBoolean("default", false);
-                        tile = createSwitchTile(context, key, title, summary, def, prefs, listener, tileViews, prefsArray, false);
-                    } else if ("list".equals(type)) {
-                        tile = createListTile(context, pref, prefs, listener);
-                    } else if ("multi".equals(type)) {
-                        tile = createMultiTile(context, pref, prefs, listener);
-                    } else if ("text".equals(type)) {
-                        tile = createTextTile(context, pref, prefs, listener);
-                    } else if ("action".equals(type)) {
-                        tile = createActionTile(context, pref);
-                    } else {
-                        tile = createWdsRow(context, title, summary, null, null);
-                    }
+                    tile = createWdsRow(context, title, summary, null, null);
                 }
 
                 if (tile != null) {

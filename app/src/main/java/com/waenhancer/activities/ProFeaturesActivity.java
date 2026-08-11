@@ -81,17 +81,7 @@ public class ProFeaturesActivity extends BaseActivity {
             if (allFeatures != null) {
                 for (SearchableFeature feature : allFeatures) {
                     String key = feature.getKey();
-                    if ("file_size_spoofer".equals(key)
-                            || "filter_group_members_messages".equals(key)
-                            || "message_bomber".equals(key)
-                            || "delete_message_file".equals(key)
-                            || "pro_status_splitter".equals(key)
-                            || "customize_status_view_category".equals(key)
-                            || "waex_sim_enabled".equals(key)
-                            || "floating_bottom_bar_pill_design".equals(key)
-                            || "filter_items".equals(key)
-                            || "unlock_premium_customization".equals(key)
-                            || "send_audio_as_voice_status".equals(key)) {
+                    if (ProHelper.isMainProFeature(key)) {
 
                         if (ProHelper.isLimitedFreePreferenceEnabled(key)) {
                             if ("unlock_premium_customization".equals(key)) {

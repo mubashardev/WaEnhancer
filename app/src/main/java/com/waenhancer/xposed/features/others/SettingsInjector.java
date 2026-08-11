@@ -1479,18 +1479,8 @@ public class SettingsInjector extends Feature {
                             String fSummary = (String) sfClass.getMethod("getSummary").invoke(feature);
                             
                             boolean isProFeature = false;
-                            if ("file_size_spoofer".equals(key)
-                                    || "filter_group_members_messages".equals(key)
-                                    || "message_bomber".equals(key) 
-                                    || "delete_message_file".equals(key) 
-                                    || "pro_status_splitter".equals(key)
-                                    || "customize_status_view_category".equals(key)
-                                    || "waex_sim_enabled".equals(key)
-                                    || "floating_bottom_bar_pill_design".equals(key)
-                                    || "filter_items".equals(key)
-                                    || "unlock_premium_customization".equals(key)
-                                    || "send_audio_as_voice_status".equals(key)) {
-                                
+                            boolean isProCheck = (Boolean) phClass.getMethod("isMainProFeature", String.class).invoke(null, key);
+                            if (isProCheck) {
                                 boolean isLimited = (Boolean) phClass.getMethod("isLimitedFreePreferenceEnabled", String.class).invoke(null, key);
                                 if (!isLimited) {
                                     isProFeature = true;

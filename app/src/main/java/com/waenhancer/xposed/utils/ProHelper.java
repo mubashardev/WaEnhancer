@@ -1184,7 +1184,30 @@ public class ProHelper {
                 || key.equals("file_size_spoofer")
                 || key.equals("filter_group_members_messages")
                 || key.equals("unlock_premium_customization")
-                || key.equals("recover_deleted_media");
+                || key.equals("recover_deleted_media")
+                || key.equals("pref_forward_batch_enabled")
+                || key.equals("pref_forward_batch_count")
+                || key.equals("pref_forward_batch_delay")
+                || key.equals("floating_bottom_bar_pill_design")
+                || key.equals("filter_items")
+                || key.equals("customize_status_view_category");
+    }
+
+    public static boolean isMainProFeature(String key) {
+        if (key == null) return false;
+        return key.equals("message_bomber") 
+                || key.equals("delete_message_file") 
+                || key.equals("pro_status_splitter")
+                || key.equals("waex_sim_enabled")
+                || key.equals("send_audio_as_voice_status")
+                || key.equals("file_size_spoofer")
+                || key.equals("filter_group_members_messages")
+                || key.equals("unlock_premium_customization")
+                || key.equals("recover_deleted_media")
+                || key.equals("pref_forward_batch_enabled")
+                || key.equals("floating_bottom_bar_pill_design")
+                || key.equals("filter_items")
+                || key.equals("customize_status_view_category");
     }
 
     private static boolean isProFeature(Preference pref) {

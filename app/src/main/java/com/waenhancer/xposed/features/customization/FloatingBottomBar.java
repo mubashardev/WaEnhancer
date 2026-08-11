@@ -871,7 +871,7 @@ public class FloatingBottomBar extends Feature {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             bar.setOutlineProvider(ViewOutlineProvider.BACKGROUND);
-            bar.setClipToOutline(true);
+            bar.setClipToOutline(!pillDesignPro && !pillDesignIos);
         }
 
         int sideMargin = (int) (userSideMarginDp * density);

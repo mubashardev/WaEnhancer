@@ -613,6 +613,14 @@
               "summary": "The new iOS-style message context menu will be enabled."
             },
             {
+              "key": "unlock_premium_customization",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Unlock WA Plus Features",
+              "summary": "Unlock official WhatsApp Plus subscription features including app icons, themes, and premium stickers."
+            },
+            {
               "key": "animation_emojis",
               "type": "switch",
               "value_type": "boolean",
@@ -854,6 +862,33 @@
                 {
                   "label": "Show Button in 3 dot Menu",
                   "value": "2"
+                }
+              ]
+            },
+            {
+              "key": "waex_sim_enabled",
+              "type": "switch",
+              "value_type": "boolean",
+              "default": false,
+              "title": "Always Typing / Voice Recording",
+              "summary": "Simulate typing or recording status automatically when in chat"
+            },
+            {
+              "key": "waex_sim_trigger",
+              "type": "list",
+              "value_type": "string",
+              "default": "0",
+              "title": "Trigger Mode",
+              "summary": "%s",
+              "dep": "waex_sim_enabled",
+              "entries": [
+                {
+                  "label": "Automatically on Chat Open",
+                  "value": "0"
+                },
+                {
+                  "label": "Manual Trigger Button",
+                  "value": "1"
                 }
               ]
             },
@@ -1748,14 +1783,6 @@
                   "value": "hyperspace_out"
                 }
               ]
-            },
-            {
-              "key": "unlock_premium_customization",
-              "type": "switch",
-              "value_type": "boolean",
-              "default": false,
-              "title": "Unlock Premium Customization",
-              "summary": "Unlocks exclusive visual themes, native app icons, premium sticker packs, and custom ringtones"
             }
           ]
         }

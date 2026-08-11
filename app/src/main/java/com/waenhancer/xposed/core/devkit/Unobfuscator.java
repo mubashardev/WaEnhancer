@@ -265,7 +265,7 @@ public class Unobfuscator {
                     "HandleMeComposing/sendComposing");
             if (method == null)
                 throw new Exception("GhostMode method not found");
-            if (method.getParameterTypes().length > 2 && method.getParameterTypes()[2] == int.class)
+            if (method.getParameterTypes().length >= 3)
                 return method;
             throw new Exception("GhostMode method not found parameter type");
         });

@@ -67,7 +67,8 @@
 -keep class com.waenhancer.preference.SafeSharedPreferences { *; }
 -keep class com.waenhancer.xposed.utils.XPrefManager { *; }
 -keep class com.waenhancer.xposed.utils.XResManager { *; }
--keep class com.waenhancer.model.FilterItem { *; }
+-keep class com.waenhancer.utils.** { *; }
+-keep class com.waenhancer.model.** { *; }
 
 # Keep all classes and members in the pro package (except the obfuscated module) to prevent reflection and JNI issues in release mode
 -keep class !com.waenhancer.pro.FileSizeSpooferPro,com.waenhancer.pro.** { *; }
@@ -144,14 +145,8 @@
 # Keep DevKit Unobfuscator packages completely intact to preserve stack trace method signatures and avoid cache collisions
 -keep class com.waenhancer.xposed.core.devkit.** { *; }
 
-# DexKit and OkHttp warning suppression (R8 handles OKHttp automatically)
--keep class org.luckypray.dexkit.DexKitBridge {
-    private long dexKitPtr;
-    native <methods>;
-}
--keep class org.luckypray.dexkit.DexKitBridge$Companion {
-    native <methods>;
-}
+# DexKit rules
+-keep class org.luckypray.dexkit.** { *; }
 -dontwarn io.luckypray.dexkit.**
 -dontwarn org.luckypray.dexkit.**
 -dontwarn okhttp3.**

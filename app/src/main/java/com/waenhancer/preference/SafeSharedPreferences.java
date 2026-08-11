@@ -149,7 +149,107 @@ public class SafeSharedPreferences implements SharedPreferences {
 
     @Override
     public Editor edit() {
-        return delegate.edit();
+        return new EditorWrapper(delegate.edit());
+    }
+
+    private class EditorWrapper implements Editor {
+        private final Editor delegateEditor;
+
+        EditorWrapper(Editor delegateEditor) {
+            this.delegateEditor = delegateEditor;
+        }
+
+        @Override
+        public Editor putString(String key, @Nullable String value) {
+            delegateEditor.putString(key, value);
+            syncToProvider(key, "string", value);
+            return this;
+        }
+
+        @Override
+        public Editor putStringSet(String key, @Nullable Set<String> values) {
+            delegateEditor.putStringSet(key, values);
+            return this;
+        }
+
+        @Override
+        public Editor putInt(String key, int value) {
+            delegateEditor.putInt(key, value);
+            syncToProvider(key, "int", value);
+            return this;
+        }
+
+        @Override
+        public Editor putLong(String key, long value) {
+            delegateEditor.putLong(key, value);
+            syncToProvider(key, "long", value);
+            return this;
+        }
+
+        @Override
+        public Editor putFloat(String key, float value) {
+            delegateEditor.putFloat(key, value);
+            syncToProvider(key, "float", value);
+            return this;
+        }
+
+        @Override
+        public Editor putBoolean(String key, boolean value) {
+            delegateEditor.putBoolean(key, value);
+            syncToProvider(key, "boolean", value);
+            return this;
+        }
+
+        @Override
+        public Editor remove(String key) {
+            delegateEditor.remove(key);
+            try {
+                com.waenhancer.App app = com.waenhancer.App.getInstance();
+                if (app != null) {
+                    android.os.Bundle extras = new android.os.Bundle();
+                    extras.putString("key", key);
+                    app.getContentResolver().call(
+                            android.net.Uri.parse("content://com.waenhancer.hookprovider"),
+                            "remove_preference", null, extras);
+                }
+            } catch (Throwable ignored) {}
+            return this;
+        }
+
+        @Override
+        public Editor clear() {
+            delegateEditor.clear();
+            return this;
+        }
+
+        @Override
+        public boolean commit() {
+            return delegateEditor.commit();
+        }
+
+        @Override
+        public void apply() {
+            delegateEditor.apply();
+        }
+
+        private void syncToProvider(String key, String type, Object value) {
+            try {
+                com.waenhancer.App app = com.waenhancer.App.getInstance();
+                if (app != null) {
+                    android.os.Bundle extras = new android.os.Bundle();
+                    extras.putString("key", key);
+                    extras.putString("type", type);
+                    if (value instanceof Boolean) extras.putBoolean("value", (Boolean) value);
+                    else if (value instanceof String) extras.putString("value", (String) value);
+                    else if (value instanceof Integer) extras.putInt("value", (Integer) value);
+                    else if (value instanceof Long) extras.putLong("value", (Long) value);
+                    else if (value instanceof Float) extras.putFloat("value", (Float) value);
+                    app.getContentResolver().call(
+                            android.net.Uri.parse("content://com.waenhancer.hookprovider"),
+                            "put_preference", null, extras);
+                }
+            } catch (Throwable ignored) {}
+        }
     }
 
     @Override

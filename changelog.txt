@@ -1,11 +1,5 @@
-[Added]
-- Added support for WA/WB upto 2.26.32.xx
-
 [Fixed]
-- Fixed error CustomThemeV2
-- Fixed Download & Share Status not working in some devices
-- Fixed chat flickering on some devices
+- Fixed main screen floating menu applying to other screens tabs
 
 [Improvements]
 - Optimized Performance
-- Improved In-app preferences

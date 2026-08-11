@@ -78,10 +78,10 @@ public final class PreferenceSchema {
         add(entries, "admin_grp", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
         add(entries, "alertsticker", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
         add(entries, "always_online", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
-        add(entries, "always_typing_contacts", Type.STRING, Sensitivity.PRIVATE_SETTING, Store.PRIVATE);
-        add(entries, "always_typing_global", Type.BOOLEAN, Sensitivity.PRIVATE_SETTING, Store.PRIVATE);
-        add(entries, "always_typing_global_mode", Type.STRING, Sensitivity.PRIVATE_SETTING, Store.PRIVATE);
-        add(entries, "always_typing_global_target", Type.STRING, Sensitivity.PRIVATE_SETTING, Store.PRIVATE);
+        add(entries, "always_typing_contacts", Type.STRING, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
+        add(entries, "waex_sim_enabled", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
+        add(entries, "waex_sim_trigger", Type.STRING, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
+        add(entries, "waex_sim_kind", Type.STRING, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
         add(entries, "ampm", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
         add(entries, "animation_emojis", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
         add(entries, "animation_list", Type.STRING, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
@@ -189,6 +189,7 @@ public final class PreferenceSchema {
         add(entries, "floating_bottom_bar_scroll_hide_mode", Type.STRING, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
         add(entries, "floating_bottom_bar_text_size", Type.FLOAT, Sensitivity.PRIVATE_SETTING, Store.PRIVATE);
         add(entries, "floatingmenu", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
+        add(entries, "unlock_premium_customization", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
         add(entries, "folder_theme", Type.STRING, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
         add(entries, "force_english", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);
         add(entries, "force_restore_backup_feature", Type.BOOLEAN, Sensitivity.PUBLIC_SETTING, Store.PUBLIC);

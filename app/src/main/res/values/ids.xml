@@ -13,4 +13,5 @@
     <item name="wae_status_gesture_fast_rewind" type="id" />
     <item name="wae_status_gesture_orig_listener" type="id" />
     <item name="wae_device_source_tag" type="id" />
+    <item name="waex_typing_trigger_btn" type="id" />
 </resources>

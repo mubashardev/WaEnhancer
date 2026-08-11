@@ -318,8 +318,7 @@ public class CustomPrivacy extends Feature {
         Spinner spinner = new Spinner(activity);
         String[] options = {
                 FeatureLoader.getModuleString(activity, R.string.always_typing_off, "Off"),
-                FeatureLoader.getModuleString(activity, R.string.always_typing_chat, "When in their chat (Safe & Active)"),
-                FeatureLoader.getModuleString(activity, R.string.always_typing_app, "Always when using WhatsApp [Max 2 contacts]")
+                FeatureLoader.getModuleString(activity, R.string.always_typing_chat, "When in chat (Safe & Active)")
         };
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 activity,
@@ -328,7 +327,7 @@ public class CustomPrivacy extends Feature {
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-        spinner.setSelection(alwaysTypingVal);
+        spinner.setSelection(alwaysTypingVal > 1 ? 1 : alwaysTypingVal);
         customLayout.addView(spinner);
 
         TextView typeLabelView = new TextView(activity);
@@ -355,52 +354,15 @@ public class CustomPrivacy extends Feature {
         typeSpinner.setVisibility(alwaysTypingVal == 0 ? View.GONE : View.VISIBLE);
         customLayout.addView(typeSpinner);
 
-        TextView warningView = new TextView(activity);
-        warningView.setText(FeatureLoader.getModuleString(activity, R.string.always_typing_warning, "⚠️ Limit to at most 1–2 contacts to protect your account from server-side spam filters."));
-        warningView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        warningView.setTextColor(0xFFD32F2F); // Red warning color
-        warningView.setPadding(0, Utils.dipToPixels(4), 0, 0);
-        warningView.setVisibility(alwaysTypingVal == 2 ? View.VISIBLE : View.GONE);
-        customLayout.addView(warningView);
-
-        TextView delayNoteView = new TextView(activity);
-        delayNoteView.setText(FeatureLoader.getModuleString(activity, R.string.always_typing_delay_note, "ℹ️ It will add random delays on the homepage to avoid being marked as spam by WhatsApp."));
-        delayNoteView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        delayNoteView.setTextColor(0xFF757575); // Gray note color
-        delayNoteView.setPadding(0, Utils.dipToPixels(4), 0, 0);
-        delayNoteView.setVisibility(alwaysTypingVal == 2 ? View.VISIBLE : View.GONE);
-        customLayout.addView(delayNoteView);
-
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position == 0) {
                     typeLabelView.setVisibility(View.GONE);
                     typeSpinner.setVisibility(View.GONE);
-                    warningView.setVisibility(View.GONE);
-                    delayNoteView.setVisibility(View.GONE);
                 } else {
                     typeLabelView.setVisibility(View.VISIBLE);
                     typeSpinner.setVisibility(View.VISIBLE);
-                    if (position == 2) {
-                        SharedPreferences pprefs = WppCore.getPrivPrefs();
-                        int currentCount = getAppScopedAlwaysTypingCount(pprefs, number);
-                        if (currentCount >= 2) {
-                            AlertDialogWpp limitBuilder = new AlertDialogWpp(activity);
-                            limitBuilder.setTitle(FeatureLoader.getModuleString(activity, R.string.always_typing_dialog_title, "Protect Your Account"));
-                            limitBuilder.setMessage(FeatureLoader.getModuleString(activity, R.string.always_typing_dialog_desc, "To prevent WhatsApp servers from flagging your account for concurrent typing patterns, Always Typing (App-Scoped) can only be enabled for up to 2 contacts at a time. Please disable it for another contact first."));
-                            limitBuilder.setPositiveButton("OK", null);
-                            limitBuilder.show();
-
-                            spinner.setSelection(previousSelection[0]);
-                            return;
-                        }
-                        warningView.setVisibility(View.VISIBLE);
-                        delayNoteView.setVisibility(View.VISIBLE);
-                    } else {
-                        warningView.setVisibility(View.GONE);
-                        delayNoteView.setVisibility(View.GONE);
-                    }
                 }
                 previousSelection[0] = position;
             }

@@ -15,6 +15,8 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 
+import com.waenhancer.model.SearchableFeature;
+import com.waenhancer.utils.FeatureCatalog;
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
@@ -1467,11 +1469,9 @@ public class SettingsInjector extends Feature {
                             moduleContext = activity.createPackageContext("com.waenhancer", Context.CONTEXT_IGNORE_SECURITY);
                         } catch (Throwable ignored) {}
                         
-                        Class<?> fcClass = moduleLoader.loadClass("com.waenhancer.utils.FeatureCatalog");
-                        List<?> allFeatures = (List<?>) fcClass.getMethod("getAllFeatures", Context.class).invoke(null, moduleContext);
-                        
-                        Class<?> sfClass = moduleLoader.loadClass("com.waenhancer.model.SearchableFeature");
-                        Class<?> phClass = moduleLoader.loadClass("com.waenhancer.xposed.utils.ProHelper");
+                        List<SearchableFeature> allFeatures = FeatureCatalog.getAllFeatures(moduleContext);
+                        Class<?> sfClass = SearchableFeature.class;
+                        Class<?> phClass = ProHelper.class;
 
                         for (Object feature : allFeatures) {
                             String key = (String) sfClass.getMethod("getKey").invoke(feature);
@@ -1485,7 +1485,7 @@ public class SettingsInjector extends Feature {
                                     || "delete_message_file".equals(key) 
                                     || "pro_status_splitter".equals(key)
                                     || "customize_status_view_category".equals(key)
-                                    || "always_typing_global".equals(key)
+                                    || "waex_sim_enabled".equals(key)
                                     || "floating_bottom_bar_pill_design".equals(key)
                                     || "filter_items".equals(key)
                                     || "unlock_premium_customization".equals(key)
@@ -1544,15 +1544,12 @@ public class SettingsInjector extends Feature {
                                 }
                             };
 
-                            // Use reflectively retrieved values to construct row
+                            // Use values to construct row
                             View tileRow = null;
                             try {
-                                Class<?> tileRendererClass = moduleLoader.loadClass("com.waenhancer.xposed.features.others.WdsSettingsTileRenderer");
-                                tileRow = (View) XposedHelpers.callStaticMethod(tileRendererClass, "createWdsRow",
-                                        activity, fTitle, fSummary, (Drawable) null, (String) null, clickListener);
-                                
+                                tileRow = WdsSettingsTileRenderer.createWdsRow(activity, fTitle, fSummary, (Drawable) null, (String) null, clickListener);
                                 if (tileRow != null) {
-                                    XposedHelpers.callStaticMethod(tileRendererClass, "addModuleLogoTrailing", activity, tileRow);
+                                    WdsSettingsTileRenderer.addModuleLogoTrailing(activity, tileRow);
                                 }
                             } catch (Throwable t) {
                                 XposedBridge.log("[WAEX] Failed to render native premium row for key " + fKey + ": " + t.getMessage());

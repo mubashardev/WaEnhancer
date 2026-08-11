@@ -716,6 +716,10 @@ public class WppCore {
         if (currentActivity == null) return new FMessageWpp.UserJid();
 
         int currentHash = System.identityHashCode(currentActivity);
+        if (currentActivity.isFinishing() || currentActivity.isDestroyed()) {
+            cachedUserJid = null;
+            return new FMessageWpp.UserJid();
+        }
         if (cachedUserJid != null && cachedActivityHash == currentHash) {
             return cachedUserJid;
         }

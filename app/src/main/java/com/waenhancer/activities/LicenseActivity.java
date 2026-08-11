@@ -298,7 +298,7 @@ public class LicenseActivity extends BaseActivity {
                     int minVersion = ProHelper.getPluginMinWaexVersion(this);
                     String minVersionName = ProHelper.getVersionNameFromCode(minVersion);
                     if (tvHelperWarning != null) {
-                        tvHelperWarning.setText("Plugin requires a newer version of the main app (v" + minVersionName + " required). Tap to view updates.");
+                        tvHelperWarning.setText("Helper Plugin requires a newer version of the main app (v" + minVersionName + " required). Tap to view updates.");
                     }
                     helperWarningCard.setOnClickListener(v -> {
                         try {

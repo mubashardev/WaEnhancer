@@ -637,7 +637,7 @@ public class WdsSettingsTileRenderer {
      * appends it as the last child of the tile ViewGroup (works for both
      * WDSListItem and fallback LinearLayout).
      */
-    private static void addModuleLogoTrailing(Context context, View tile) {
+    public static void addModuleLogoTrailing(Context context, View tile) {
         if (tile == null) {
             return;
         }
@@ -722,11 +722,11 @@ public class WdsSettingsTileRenderer {
         }
     }
 
-    private static View createWdsRow(Context context, String title, String summary, Drawable icon, View.OnClickListener clickListener) {
+    public static View createWdsRow(Context context, String title, String summary, Drawable icon, View.OnClickListener clickListener) {
         return createWdsRow(context, title, summary, icon, null, clickListener);
     }
 
-    private static View createWdsRow(Context context, String title, String summary, Drawable icon, String iconName, View.OnClickListener clickListener) {
+    public static View createWdsRow(Context context, String title, String summary, Drawable icon, String iconName, View.OnClickListener clickListener) {
         try {
             Class<?> wdsListItemClass = context.getClassLoader().loadClass("com.whatsapp.ui.wds.components.list.listitem.WDSListItem");
             View wdsListItem = (View) wdsListItemClass.getConstructor(Context.class, AttributeSet.class).newInstance(context, null);

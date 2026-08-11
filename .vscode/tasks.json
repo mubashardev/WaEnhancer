@@ -158,7 +158,7 @@
             "type": "shell",
             "command": "./gradlew",
             "args": [
-                ":pro:installWhatsappRelease"
+                ":app:installWhatsappRelease"
             ],
             "group": "build",
             "options": {

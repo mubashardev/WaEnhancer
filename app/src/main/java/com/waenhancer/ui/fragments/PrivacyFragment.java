@@ -82,25 +82,10 @@ public class PrivacyFragment extends BasePreferenceFragment {
             return true;
         });
 
-        var alwaysTypingGlobal = (TwoStatePreference) findPreference("always_typing_global");
-        var targetPref = (ListPreference) findPreference("always_typing_global_target");
-        var modePref = (ListPreference) findPreference("always_typing_global_mode");
-        var contactPicker = (ContactPickerPreference) findPreference("always_typing_contacts");
-
+        var alwaysTypingGlobal = (TwoStatePreference) findPreference("waex_sim_enabled");
         if (alwaysTypingGlobal != null) {
-            // Only check for conflicts if the feature is currently enabled
-            // This avoids triggering a root access prompt on every screen load
-            if (alwaysTypingGlobal.isChecked()) {
-                boolean initialGhostT = mPrefs.getBoolean("ghostmode_t", false);
-                boolean initialGhostR = mPrefs.getBoolean("ghostmode_r", false);
-                if (initialGhostT || initialGhostR) {
-                    alwaysTypingGlobal.setChecked(false);
-                }
-            }
-
             alwaysTypingGlobal.setOnPreferenceChangeListener((preference, newValue) -> {
                 if (newValue instanceof Boolean && (Boolean) newValue) {
-                    // Check module-level prefs first (no root needed)
                     boolean ghostmode_t = mPrefs.getBoolean("ghostmode_t", false);
                     boolean ghostmode_r = mPrefs.getBoolean("ghostmode_r", false);
                     
@@ -110,34 +95,59 @@ public class PrivacyFragment extends BasePreferenceFragment {
                             .setMessage("Always Typing Simulation cannot be enabled while Hide Typing or Hide Recording is enabled globally. Please disable them first.")
                             .setPositiveButton(android.R.string.ok, null)
                             .show();
-                        return false; // Block enabling
-                    }
-                    
-                    if (contactPicker != null && contactPicker.isVisible()) {
-                        new Handler(Looper.getMainLooper()).post(() -> {
-                            contactPicker.onPreferenceClick(contactPicker);
-                        });
+                        return false;
                     }
                 }
+                try {
+                    android.os.Bundle extras = new android.os.Bundle();
+                    extras.putString("key", "waex_sim_enabled");
+                    extras.putString("type", "boolean");
+                    extras.putBoolean("value", Boolean.TRUE.equals(newValue));
+                    requireContext().getContentResolver().call(
+                            android.net.Uri.parse("content://com.waenhancer.hookprovider"),
+                            "put_preference", null, extras);
+                } catch (Throwable t) {}
                 return true;
             });
         }
 
-        if (targetPref != null && modePref != null && contactPicker != null) {
-            // Initialize state
-            updateAlwaysTypingPrefs(targetPref.getValue(), modePref.getValue(), targetPref, modePref, contactPicker);
+        var alwaysTypingTriggerMode = (ListPreference) findPreference("waex_sim_trigger");
+        var alwaysTypingKind = findPreference("waex_sim_kind");
+        if (alwaysTypingTriggerMode != null) {
+            if (alwaysTypingKind != null) {
+                String currentTrigger = alwaysTypingTriggerMode.getValue();
+                alwaysTypingKind.setVisible(!"1".equals(currentTrigger));
+            }
 
-            targetPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                String newTarget = (String) newValue;
-                updateAlwaysTypingPrefs(newTarget, modePref.getValue(), targetPref, modePref, contactPicker);
-                new Handler(Looper.getMainLooper()).post(this::updateAlwaysTypingConflicts);
+            alwaysTypingTriggerMode.setOnPreferenceChangeListener((preference, newValue) -> {
+                String valStr = String.valueOf(newValue);
+                if (alwaysTypingKind != null) {
+                    alwaysTypingKind.setVisible(!"1".equals(valStr));
+                }
+                try {
+                    android.os.Bundle extras = new android.os.Bundle();
+                    extras.putString("key", "waex_sim_trigger");
+                    extras.putString("type", "string");
+                    extras.putString("value", valStr);
+                    requireContext().getContentResolver().call(
+                            android.net.Uri.parse("content://com.waenhancer.hookprovider"),
+                            "put_preference", null, extras);
+                } catch (Throwable t) {}
                 return true;
             });
+        }
 
-            modePref.setOnPreferenceChangeListener((preference, newValue) -> {
-                String newMode = (String) newValue;
-                updateAlwaysTypingPrefs(targetPref.getValue(), newMode, targetPref, modePref, contactPicker);
-                new Handler(Looper.getMainLooper()).post(this::updateAlwaysTypingConflicts);
+        if (alwaysTypingKind != null) {
+            alwaysTypingKind.setOnPreferenceChangeListener((preference, newValue) -> {
+                try {
+                    android.os.Bundle extras = new android.os.Bundle();
+                    extras.putString("key", "waex_sim_kind");
+                    extras.putString("type", "string");
+                    extras.putString("value", String.valueOf(newValue));
+                    requireContext().getContentResolver().call(
+                            android.net.Uri.parse("content://com.waenhancer.hookprovider"),
+                            "put_preference", null, extras);
+                } catch (Throwable t) {}
                 return true;
             });
         }
@@ -160,59 +170,12 @@ public class PrivacyFragment extends BasePreferenceFragment {
         
         if (ghostmodeTPref != null) ghostmodeTPref.setOnPreferenceChangeListener(hideTypingChangeListener);
         if (ghostmodeRPref != null) ghostmodeRPref.setOnPreferenceChangeListener(hideTypingChangeListener);
-
-        var checkContactsPref = findPreference("always_typing_check_contacts");
-        if (checkContactsPref != null) {
-            checkContactsPref.setOnPreferenceClickListener(pref -> {
-                showCheckContactsBottomSheet();
-                return true;
-            });
-        }
-
-        // Initialize conflicts check on load
-        updateAlwaysTypingConflicts();
-    }
-
-    private void updateAlwaysTypingPrefs(String target, String mode,
-                                         ListPreference targetPref,
-                                         ListPreference modePref,
-                                         ContactPickerPreference contactPicker) {
-        Preference delayNotePref = findPreference("always_typing_delay_note");
-        if ("0".equals(target)) {
-            // All Contacts -> Only conversation mode is allowed
-            modePref.setValue("1");
-            modePref.setEnabled(false);
-            contactPicker.setVisible(false);
-            if (delayNotePref != null) {
-                delayNotePref.setVisible(false);
-            }
-        } else {
-            // Specific Contacts -> Allow choosing mode
-            modePref.setEnabled(true);
-            contactPicker.setVisible(true);
-
-            // Set max selection based on mode
-            if ("2".equals(mode)) {
-                // Global Simulation Mode (App-scoped) -> Max 2 contacts
-                contactPicker.setMaxSelection(2);
-                if (delayNotePref != null) {
-                    delayNotePref.setVisible(true);
-                }
-            } else {
-                // Conversation Mode -> Unlimited
-                contactPicker.setMaxSelection(-1);
-                if (delayNotePref != null) {
-                    delayNotePref.setVisible(false);
-                }
-            }
-        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
         setDisplayHomeAsUpEnabled(false);
-        updateAlwaysTypingConflicts();
     }
 
     @Override
@@ -342,7 +305,7 @@ public class PrivacyFragment extends BasePreferenceFragment {
     private List<ContactPrivacyInfo> getConflictingContacts() {
         List<ContactPrivacyInfo> conflicts = new ArrayList<>();
         
-        var globalPref = (TwoStatePreference) findPreference("always_typing_global");
+        var globalPref = (TwoStatePreference) findPreference("waex_sim_enabled");
         if (globalPref == null || !globalPref.isChecked()) {
             return conflicts;
         }
@@ -384,7 +347,7 @@ public class PrivacyFragment extends BasePreferenceFragment {
         var checkContactsPref = findPreference("always_typing_check_contacts");
         if (warningPref == null || checkContactsPref == null) return;
 
-        var globalPref = (TwoStatePreference) findPreference("always_typing_global");
+        var globalPref = (TwoStatePreference) findPreference("waex_sim_enabled");
         boolean isEnabled = globalPref != null && globalPref.isChecked();
 
         // We no longer scan in the background to avoid repeated root prompts.

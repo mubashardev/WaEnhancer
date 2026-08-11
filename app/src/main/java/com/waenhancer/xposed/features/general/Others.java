@@ -38,6 +38,7 @@ import org.json.JSONObject;
 import org.luckypray.dexkit.query.enums.StringMatchType;
 import org.luckypray.dexkit.util.DexSignUtil;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;

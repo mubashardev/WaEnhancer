@@ -2,6 +2,7 @@ package com.waenhancer.xposed.features.customization;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -24,9 +25,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.waenhancer.xposed.core.Feature;
 import com.waenhancer.xposed.core.FeatureLoader;
+import com.waenhancer.xposed.core.WppCore;
 import com.waenhancer.xposed.core.devkit.Unobfuscator;
 import com.waenhancer.xposed.utils.DesignUtils;
 import com.waenhancer.xposed.utils.ProHelper;
+import com.waenhancer.xposed.utils.Utils;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -112,6 +115,9 @@ public class FloatingBottomBar extends Feature {
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         View view = (View) param.thisObject;
                         if (view.getId() == View.NO_ID) return;
+                        Class<?> homeClass = WppCore.getHomeActivityClass(classLoader);
+                        Activity activity = Utils.getActivityFromView(view);
+                        if (homeClass == null || activity == null || !homeClass.isInstance(activity)) return;
                         try {
                             String entryName = view.getResources().getResourceEntryName(view.getId());
                             if ("bottom_nav".equals(entryName) || "navigation_bar".equals(entryName) || "tab_layout".equals(entryName)) {
@@ -159,6 +165,9 @@ public class FloatingBottomBar extends Feature {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     View view = (View) param.thisObject;
+                    Class<?> homeClass = WppCore.getHomeActivityClass(classLoader);
+                    Activity activity = Utils.getActivityFromView(view);
+                    if (homeClass == null || activity == null || !homeClass.isInstance(activity)) return;
                     if (view instanceof ViewGroup) {
                         scheduleSetup((ViewGroup) view);
                     }

@@ -349,7 +349,7 @@ public class MainActivity extends BaseActivity {
                     prefKey = "call_privacy";
                 } else if (className.contains("SmartTypingTileService")) {
                     fragmentPos = 1;
-                    prefKey = "always_typing_global";
+                    prefKey = "waex_sim_enabled";
                 } else if (className.contains("ContactOnlineNotificationsTileService")) {
                     fragmentPos = 0;
                     prefKey = "show_toast_on_contact_online";

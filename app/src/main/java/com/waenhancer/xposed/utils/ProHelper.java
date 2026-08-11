@@ -727,12 +727,10 @@ public class ProHelper {
                 || prefKey.equals("status_video_fast_speed")
                 || prefKey.equals("disable_status_swipe_up")) {
             hookKey = "customize_status_control_class";
-        } else if (prefKey.equals("always_typing_global")
-                || prefKey.equals("always_typing_global_target")
-                || prefKey.equals("always_typing_global_mode")
-                || prefKey.equals("always_typing_contacts")
-                || prefKey.equals("always_typing_global_type")) {
-            hookKey = "always_typing_global";
+        } else if (prefKey.equals("waex_sim_enabled")
+                || prefKey.equals("waex_sim_trigger")
+                || prefKey.equals("waex_sim_kind")) {
+            hookKey = "waex_sim_enabled";
         } else if (prefKey.equals("send_audio_as_voice_status")) {
             hookKey = "send_audio_as_voice_status";
         } else if (prefKey.equals("filter_group_members_messages")) {
@@ -970,7 +968,7 @@ public class ProHelper {
                             String minVersionName = getVersionNameFromCode(minVersion);
                             String titleHtml = "<b><font color='#D32F2F'>🔑 v" + minVersionName + " Required</font></b>";
                             activationPref.setTitle(Html.fromHtml(titleHtml, Html.FROM_HTML_MODE_LEGACY));
-                            activationPref.setSummary("Plugin requires a newer version of the main app. Tap to view updates.");
+                            activationPref.setSummary("Helper Plugin requires a newer version of the main app. Tap to view updates.");
                             activationPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                                 @Override
                                 public boolean onPreferenceClick(@NonNull Preference preference) {
@@ -1179,11 +1177,9 @@ public class ProHelper {
                 || key.equals("status_video_fast_gesture")
                 || key.equals("status_video_fast_speed")
                 || key.equals("disable_status_swipe_up")
-                || key.equals("always_typing_global")
-                || key.equals("always_typing_global_target")
-                || key.equals("always_typing_global_mode")
-                || key.equals("always_typing_contacts")
-                || key.equals("always_typing_global_type")
+                || key.equals("waex_sim_enabled")
+                || key.equals("waex_sim_trigger")
+                || key.equals("waex_sim_kind")
                 || key.equals("send_audio_as_voice_status")
                 || key.equals("file_size_spoofer")
                 || key.equals("filter_group_members_messages")
@@ -1223,12 +1219,10 @@ public class ProHelper {
                 || key.equals("disable_status_swipe_up")) {
             return "customize_status_control_class";
         }
-        if (key.equals("always_typing_global")
-                || key.equals("always_typing_global_target")
-                || key.equals("always_typing_global_mode")
-                || key.equals("always_typing_contacts")
-                || key.equals("always_typing_global_type")) {
-            return "always_typing_global";
+        if (key.equals("waex_sim_enabled")
+                || key.equals("waex_sim_trigger")
+                || key.equals("waex_sim_kind")) {
+            return "waex_sim_enabled";
         }
         if (key.equals("send_audio_as_voice_status")) {
             return "send_audio_as_voice_status";

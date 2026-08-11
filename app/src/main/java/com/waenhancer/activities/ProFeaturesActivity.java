@@ -87,7 +87,7 @@ public class ProFeaturesActivity extends BaseActivity {
                             || "delete_message_file".equals(key)
                             || "pro_status_splitter".equals(key)
                             || "customize_status_view_category".equals(key)
-                            || "always_typing_global".equals(key)
+                            || "waex_sim_enabled".equals(key)
                             || "floating_bottom_bar_pill_design".equals(key)
                             || "filter_items".equals(key)
                             || "unlock_premium_customization".equals(key)

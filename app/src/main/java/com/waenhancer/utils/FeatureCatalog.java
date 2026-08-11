@@ -388,7 +388,7 @@ public class FeatureCatalog {
                                 "homescreen",
                                 Arrays.asList("status", "profile", "photo", "circle")));
 
-                catalog.add(new SearchableFeature("always_typing_global",
+                catalog.add(new SearchableFeature("waex_sim_enabled",
                                 context.getString(R.string.always_typing_global),
                                 context.getString(R.string.always_typing_global_sum),
                                 SearchableFeature.Category.PRIVACY,
@@ -396,15 +396,7 @@ public class FeatureCatalog {
                                 null,
                                 Arrays.asList("always", "typing", "simulate", "composing", "smart", "privacy")));
 
-                catalog.add(new SearchableFeature("always_typing_contacts",
-                                context.getString(R.string.select_contacts),
-                                null,
-                                SearchableFeature.Category.PRIVACY,
-                                SearchableFeature.FragmentType.PRIVACY,
-                                null,
-                                Arrays.asList("always", "typing", "contacts", "select", "picker")));
-
-                catalog.add(new SearchableFeature("always_typing_global_type",
+                catalog.add(new SearchableFeature("waex_sim_kind",
                                 context.getString(R.string.always_typing_global_type_title),
                                 context.getString(R.string.always_typing_global_type_sum),
                                 SearchableFeature.Category.PRIVACY,
@@ -412,13 +404,13 @@ public class FeatureCatalog {
                                 null,
                                 Arrays.asList("always", "typing", "recording", "voice", "status", "kind")));
 
-                catalog.add(new SearchableFeature("always_typing_global_mode",
-                                context.getString(R.string.always_typing_global_mode_title),
-                                context.getString(R.string.always_typing_global_mode_sum),
+                catalog.add(new SearchableFeature("waex_sim_trigger",
+                                context.getString(R.string.always_typing_trigger_mode_title),
+                                context.getString(R.string.always_typing_global_sum),
                                 SearchableFeature.Category.PRIVACY,
                                 SearchableFeature.FragmentType.PRIVACY,
                                 null,
-                                Arrays.asList("always", "typing", "mode", "activation", "scoped", "whatsapp")));
+                                Arrays.asList("always", "typing", "mode", "trigger", "button", "chat", "open")));
 
                 // GENERAL FRAGMENT - Conversation sub-preferences
                 catalog.add(new SearchableFeature("showonline",

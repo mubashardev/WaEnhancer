@@ -871,6 +871,7 @@ public class FloatingBottomBar extends Feature {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             bar.setOutlineProvider(ViewOutlineProvider.BACKGROUND);
+            bar.setClipToOutline(true);
         }
 
         int sideMargin = (int) (userSideMarginDp * density);
@@ -888,7 +889,13 @@ public class FloatingBottomBar extends Feature {
                 if (pluginLoader != null) {
                     Class<?> pillProClass = Class.forName("com.waex.helper.PillDesignPro", true, pluginLoader);
                     String style = pillDesignIos ? "ios_glass" : "pro";
-                    pillProClass.getMethod("applyProDesign", View.class, float.class, String.class).invoke(null, bar, density, style);
+                    try {
+                        pillProClass.getMethod("applyProDesign", View.class, float.class, String.class, int.class, float.class)
+                                .invoke(null, bar, density, style, glassFillColor, glassOpacity);
+                    } catch (NoSuchMethodException e) {
+                        pillProClass.getMethod("applyProDesign", View.class, float.class, String.class)
+                                .invoke(null, bar, density, style);
+                    }
                 }
             } catch (Throwable t) {
                 XposedBridge.log("[WAEX-FBB] Failed to load PillDesignPro: " + t.getMessage());
@@ -896,32 +903,71 @@ public class FloatingBottomBar extends Feature {
         }
     }
 
-    private GradientDrawable createGlassShape(Context ctx, float density, boolean includeFill) {
+    private android.graphics.drawable.Drawable createGlassShape(Context ctx, float density, boolean includeFill) {
         int userRadius = prefs.getInt("floating_bottom_bar_radius", userRadiusDp);
         float finalRadius = userRadius * density;
-        GradientDrawable glassShape = new GradientDrawable();
-        glassShape.setShape(GradientDrawable.RECTANGLE);
-        glassShape.setCornerRadius(finalRadius);
-        glassShape.setColor(includeFill ? getGlassOverlayColor(ctx) : 0x00000000);
-        glassShape.setStroke(Math.max(1, (int) (0.6f * density)), getGlassStrokeColor(ctx));
-        return glassShape;
+        boolean isNight = DesignUtils.isNightMode(ctx);
+
+        // Layer 0: Frosted Glass Gradient Base Fill
+        GradientDrawable baseShape = new GradientDrawable();
+        baseShape.setShape(GradientDrawable.RECTANGLE);
+        baseShape.setCornerRadius(finalRadius);
+
+        if (includeFill) {
+            if (glassFillColor != 0) {
+                baseShape.setColor(getGlassOverlayColor(ctx));
+            } else {
+                int startColor = isNight ? 0x77222E36 : 0xAAECF2F8;
+                int endColor = isNight ? 0x44141C22 : 0x77D8E2EC;
+                baseShape.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
+                baseShape.setColors(new int[]{startColor, endColor});
+            }
+        } else {
+            baseShape.setColor(0x00000000);
+        }
+
+        // Layer 1: Glass Refraction Stroke + Edge Highlight
+        int strokeWidth = Math.max(1, (int) (1.0f * density));
+        int strokeColor = isNight ? 0x55FFFFFF : 0x44FFFFFF;
+        baseShape.setStroke(strokeWidth, strokeColor);
+
+        // Layer 2: Top Specular Glare Reflection Line
+        GradientDrawable topGlint = new GradientDrawable();
+        topGlint.setShape(GradientDrawable.RECTANGLE);
+        topGlint.setCornerRadius(finalRadius);
+        topGlint.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
+        topGlint.setColors(new int[]{ 0x50FFFFFF, 0x00FFFFFF });
+
+        android.graphics.drawable.LayerDrawable layerDrawable = new android.graphics.drawable.LayerDrawable(
+                new android.graphics.drawable.Drawable[]{ baseShape, topGlint }
+        );
+        int topInset = Math.max(1, (int) (1.5f * density));
+        layerDrawable.setLayerInset(1, strokeWidth, strokeWidth, strokeWidth, (int) (18 * density));
+
+        return layerDrawable;
     }
 
     private static int getGlassOverlayColor(Context ctx) {
+        boolean isNight = DesignUtils.isNightMode(ctx);
         int alpha = Math.max(0, Math.min(255, Math.round((glassOpacity / 100f) * 255f)));
-        int rgb = resolveGlassFillColor(ctx) & 0x00FFFFFF;
-        return (alpha << 24) | rgb;
+        int baseRgb = resolveGlassFillColor(ctx) & 0x00FFFFFF;
+
+        if (glassOpacity == 35f) {
+            alpha = isNight ? 0x55 : 0x77;
+        }
+
+        return (alpha << 24) | baseRgb;
     }
 
     private static int resolveGlassFillColor(Context ctx) {
         if (glassFillColor != 0) {
             return glassFillColor;
         }
-        return DesignUtils.isNightMode(ctx) ? 0xff1f2c34 : 0xffffffff;
+        return DesignUtils.isNightMode(ctx) ? 0x1a232a : 0xf2f4f8;
     }
 
     private static int getGlassStrokeColor(Context ctx) {
-        return DesignUtils.isNightMode(ctx) ? 0x22FFFFFF : 0x26000000;
+        return DesignUtils.isNightMode(ctx) ? 0x55FFFFFF : 0x44FFFFFF;
     }
 
     private static void applyPillShadow(View view, float density) {

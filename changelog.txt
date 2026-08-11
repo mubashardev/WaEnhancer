@@ -1,6 +1,7 @@
 [Fixed]
 - Fixed bottom floating menu glassmorphism effect
 - Fixed main screen floating menu applying to other screens tabs
+- Fixed minor bugs in injected WaeX settings
 
 [Improvements]
 - Optimized Performance

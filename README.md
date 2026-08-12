@@ -5,8 +5,8 @@
 
   
   [![Downloads](https://img.shields.io/github/downloads/mubashardev/WaEnhancer/total?label=Downloads)](https://github.com/mubashardev/WaEnhancer/releases)
-  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@WaEnhancerX&label=Channel&showOnline=true)](https://t.me/WaEnhancerX)
-  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@WaEnhancerXHub&label=Community&showOnline=true)](https://t.me/WaEnhancerXHub)
+  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@WaEnhancerX&label=Channel&showOnline=true)](https://t.me/s/WaEnhancerX)
+  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@WaEnhancerXHub&label=Community&showOnline=true)](https://t.me/s/WaEnhancerXHub)
 
   > **Legal & DMCA Disclaimer:** WaEnhancer X is a community-driven, independent fork. It is not affiliated with, endorsed by, or in any way associated with WhatsApp Inc. or Meta Platforms, Inc. This project is provided "as is" for research and educational purposes. Use at your own risk.
 </div>
@@ -215,7 +215,7 @@ All legacy logic and core methods adapted from Dev4Mod are explicitly attributed
 #
 
 <div align="center">
-  <a href="https://t.me/waenhancerx">
+  <a href="https://t.me/s/Waenhancerx">
     <img src="https://telegram-badge.pages.dev/api/telegram-badge?channelId=@waenhancerx&style=button&label=Join+Telegram&color=2AABEE&radius=5&padding=24" alt="Join Telegram" />
   </a>
 </div>

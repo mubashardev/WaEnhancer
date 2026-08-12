@@ -4,7 +4,7 @@
 
 
   
-  [![Downloads](https://img.shields.io/github/downloads/mubashardev/WaEnhancer/total?label=Downloads&color=%2300ff94&style=flat)](https://github.com/mubashardev/WaEnhancer/releases)
+  [![Downloads](https://img.shields.io/github/downloads/mubashardev/WaEnhancer/total?label=Downloads)](https://github.com/mubashardev/WaEnhancer/releases)
   [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@WaEnhancerX&label=Channel&showOnline=true)](https://t.me/WaEnhancerX)
   [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@WaEnhancerXHub&label=Community&showOnline=true)](https://t.me/WaEnhancerXHub)
 

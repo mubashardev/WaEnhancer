@@ -2,8 +2,11 @@
 <div align="center">
   <p><strong>WaEnhancer X is a powerful Xposed/LSPosed module that supercharges your WhatsApp experience with advanced privacy, customization, and utility features.</strong></p>
 
-  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@waenhancerx&label=Channel&showOnline=true)](https://t.me/waenhancerx)
-  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@waenhancerxhub&label=Community&showOnline=true)](https://t.me/waenhancerxhub)
+
+  
+  [![Downloads](https://img.shields.io/github/downloads/mubashardev/WaEnhancer/total?label=Downloads&color=%2300ff94&style=flat)](https://github.com/mubashardev/WaEnhancer/releases)
+  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@WaEnhancerX&label=Channel&showOnline=true)](https://t.me/WaEnhancerX)
+  [![Telegram](https://telegram-badge.pages.dev/api/telegram-badge?channelId=@WaEnhancerXHub&label=Community&showOnline=true)](https://t.me/WaEnhancerXHub)
 
   > **Legal & DMCA Disclaimer:** WaEnhancer X is a community-driven, independent fork. It is not affiliated with, endorsed by, or in any way associated with WhatsApp Inc. or Meta Platforms, Inc. This project is provided "as is" for research and educational purposes. Use at your own risk.
 </div>

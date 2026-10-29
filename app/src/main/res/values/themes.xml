@@ -1,0 +1,23 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. Force Light mode with Theme.Material3.Light.NoActionBar -->
+    <style name="Base.Theme.WaEnhancerX" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/primary_accent</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:windowBackground">@color/background_color</item>
+        
+        <item name="colorSurface">@color/background_color</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <item name="colorSurfaceVariant">@color/secondary_surface</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        
+        <item name="android:statusBarColor">@color/background_color</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <style name="Theme.WaEnhancerX" parent="Base.Theme.WaEnhancerX" />
+</resources>

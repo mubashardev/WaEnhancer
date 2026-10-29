@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="Privacy Settings">
+        <Preference
+            app:key="pref_privacy_last_seen"
+            app:title="Freeze Last Seen"
+            app:summary="Keep your online status frozen at current time" />
+        <Preference
+            app:key="pref_privacy_blue_ticks"
+            app:title="Hide Read Receipts"
+            app:summary="Do not send blue ticks when reading chats" />
+        <Preference
+            app:key="pref_privacy_anti_delete"
+            app:title="Anti-Delete Messages"
+            app:summary="Prevent others from revoking messages sent to you" />
+    </PreferenceCategory>
+</PreferenceScreen>

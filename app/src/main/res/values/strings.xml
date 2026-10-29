@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Wa Enhancer X</string>
+    <string name="title_privacy">Privacy</string>
+    <string name="title_media">Media</string>
+    <string name="title_chats">Chats</string>
+    <string name="title_status">Status</string>
+    <string name="title_interface">Interface</string>
+    <string name="title_utilities">Utilities</string>
+</resources>

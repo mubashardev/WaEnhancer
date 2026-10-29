@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="Chats &amp; Conversation Customization">
+        <Preference
+            app:key="pref_chats_pin_limit"
+            app:title="Unlimited Pin Chats"
+            app:summary="Bypass default WhatsApp pinned chats threshold" />
+        <Preference
+            app:key="pref_chats_custom_tags"
+            app:title="Chats Categorization Tags"
+            app:summary="Manage custom chat classification labels" />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="Status / Stories Settings">
+        <Preference
+            app:key="pref_status_save"
+            app:title="Save Stories"
+            app:summary="Enable download action for image and video status" />
+        <Preference
+            app:key="pref_status_hide_view"
+            app:title="Hide Status Views"
+            app:summary="Anonymously view status uploads of other contacts" />
+    </PreferenceCategory>
+</PreferenceScreen>

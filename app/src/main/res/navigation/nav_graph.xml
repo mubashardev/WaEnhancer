@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/splashFragment">
+
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.waenhancer.SplashFragment"
+        android:label="SplashFragment"
+        tools:layout="@layout/fragment_splash">
+        <action
+            android:id="@+id/action_splash_to_welcome"
+            app:destination="@id/welcomeFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_splash_to_dashboard"
+            app:destination="@id/dashboardFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/welcomeFragment"
+        android:name="com.waenhancer.WelcomeFragment"
+        android:label="WelcomeFragment"
+        tools:layout="@layout/fragment_welcome">
+        <action
+            android:id="@+id/action_welcome_to_dashboard"
+            app:destination="@id/dashboardFragment"
+            app:popUpTo="@id/welcomeFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.waenhancer.DashboardFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_dashboard">
+        <action
+            android:id="@+id/action_dashboard_to_globalSearch"
+            app:destination="@id/globalSearchFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_notifications"
+            app:destination="@id/notificationsFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_privacyPref"
+            app:destination="@id/privacyPrefFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_mediaPref"
+            app:destination="@id/mediaPrefFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_chatsPref"
+            app:destination="@id/chatsPrefFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_statusPref"
+            app:destination="@id/statusPrefFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_interfacePref"
+            app:destination="@id/interfacePrefFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_utilitiesPref"
+            app:destination="@id/utilitiesPrefFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/globalSearchFragment"
+        android:name="com.waenhancer.GlobalSearchFragment"
+        android:label="Search"
+        tools:layout="@layout/fragment_global_search">
+        <action
+            android:id="@+id/action_search_to_privacyPref"
+            app:destination="@id/privacyPrefFragment" />
+        <action
+            android:id="@+id/action_search_to_mediaPref"
+            app:destination="@id/mediaPrefFragment" />
+        <action
+            android:id="@+id/action_search_to_chatsPref"
+            app:destination="@id/chatsPrefFragment" />
+        <action
+            android:id="@+id/action_search_to_statusPref"
+            app:destination="@id/statusPrefFragment" />
+        <action
+            android:id="@+id/action_search_to_interfacePref"
+            app:destination="@id/interfacePrefFragment" />
+        <action
+            android:id="@+id/action_search_to_utilitiesPref"
+            app:destination="@id/utilitiesPrefFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/notificationsFragment"
+        android:name="com.waenhancer.NotificationsFragment"
+        android:label="Notifications"
+        tools:layout="@layout/fragment_notifications" />
+
+    <!-- Preference fragments -->
+    <fragment
+        android:id="@+id/privacyPrefFragment"
+        android:name="com.waenhancer.PrivacyPrefFragment"
+        android:label="Privacy Preferences" />
+
+    <fragment
+        android:id="@+id/mediaPrefFragment"
+        android:name="com.waenhancer.MediaPrefFragment"
+        android:label="Media Preferences" />
+
+    <fragment
+        android:id="@+id/chatsPrefFragment"
+        android:name="com.waenhancer.ChatsPrefFragment"
+        android:label="Chats Preferences" />
+
+    <fragment
+        android:id="@+id/statusPrefFragment"
+        android:name="com.waenhancer.StatusPrefFragment"
+        android:label="Status Preferences" />
+
+    <fragment
+        android:id="@+id/interfacePrefFragment"
+        android:name="com.waenhancer.InterfacePrefFragment"
+        android:label="Interface Preferences" />
+
+    <fragment
+        android:id="@+id/utilitiesPrefFragment"
+        android:name="com.waenhancer.UtilitiesPrefFragment"
+        android:label="Utilities Preferences" />
+
+</navigation>

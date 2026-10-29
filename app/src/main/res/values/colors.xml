@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Design System Colors -->
+    <color name="primary_accent">#0047FF</color>
+    <color name="background_color">#FFFFFF</color>
+    <color name="secondary_surface">#F9F9F9</color>
+    <color name="border_color">#E5E5E5</color>
+    <color name="text_primary">#111111</color>
+    <color name="text_secondary">#666666</color>
+    <color name="success_color">#16A34A</color>
+    <color name="warning_color">#F59E0B</color>
+    <color name="danger_color">#DC2626</color>
+</resources>
